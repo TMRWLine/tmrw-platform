@@ -181,9 +181,16 @@ export function getUniversalComplianceBadges(created_at: string): ComplianceBadg
 export interface Athlete {
   id: string;
   name: string;
+  full_name?: string | null;
+  initials?: string | null;
+  tier_tag?: string | null;
+  distance_km?: number | null;
+  media_intelligence?: Record<string, unknown> | null;
   sport: string | null;
   current_club: string | null;
+  club?: string | null;
   agreement_status: AgreementStatus;
+  licence_status?: string | null;
   profile_data: {
     position?: string;
     ranking?: number;
@@ -192,17 +199,18 @@ export interface Athlete {
     market_value_aud?: number;
     market_value_nzd?: number;
   } | null;
-  location: string | null;
+  location: string | Record<string, unknown> | null;
   postcode: string | null;
   latitude: number | null;
   longitude: number | null;
   follower_count: number | null;
   gender: string | null;
+  ip_lock?: boolean | null;
   master_licence_signed: boolean;
   nrl_tpa_registered: boolean;
   shute_shield_compliant: boolean;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export type SponsorCategory =
@@ -310,6 +318,88 @@ export interface CampaignApplication {
   status: ApplicationStatus;
   created_at: string;
 }
+
+/** Spatial catchment bands used by the tier selector. */
+export type SpatialTierCode = 1 | 2 | 3;
+
+export interface SpatialTier {
+  code: SpatialTierCode;
+  label: string;
+  catchment: string;
+  title: string;
+  price: string;
+  minKm: number;
+  maxKm: number | null;
+}
+
+export const SPATIAL_TIERS: SpatialTier[] = [
+  {
+    code: 1,
+    label: '01',
+    catchment: '≤ 5 km catchment',
+    title: 'Storefront Radius',
+    price: 'A$2k – 8k / activation',
+    minKm: 0,
+    maxKm: 5,
+  },
+  {
+    code: 2,
+    label: '02',
+    catchment: '5 – 25 km cluster',
+    title: 'Metro Reach',
+    price: 'A$8k – 24k / activation',
+    minKm: 5,
+    maxKm: 25,
+  },
+  {
+    code: 3,
+    label: '03',
+    catchment: '> 25 km network',
+    title: 'Regional IP',
+    price: 'A$24k – 60k+ / activation',
+    minKm: 25,
+    maxKm: null,
+  },
+];
+
+/** Commercial sponsorship tiers offered in the checkout drawer. */
+export type SponsorshipTierKey = 'TIER_1' | 'TIER_2' | 'TIER_3';
+
+export interface SponsorshipPackage {
+  key: SponsorshipTierKey;
+  label: string;
+  title: string;
+  blurb: string;
+  budgetCents: number;
+  priceLabel: string;
+}
+
+export const SPONSORSHIP_PACKAGES: SponsorshipPackage[] = [
+  {
+    key: 'TIER_1',
+    label: 'Tier 1',
+    title: 'Product In-Kind',
+    blurb: 'Gear, nutrition, and equipment supply with content obligations.',
+    budgetCents: 500_000,
+    priceLabel: 'A$5,000',
+  },
+  {
+    key: 'TIER_2',
+    label: 'Tier 2',
+    title: 'Regional Hub',
+    blurb: 'Postcode-targeted paid activation across the metro cluster.',
+    budgetCents: 1_800_000,
+    priceLabel: 'A$18,000',
+  },
+  {
+    key: 'TIER_3',
+    label: 'Tier 3',
+    title: 'Run-of-Network',
+    blurb: 'Enterprise commitment across the full league roster.',
+    budgetCents: 4_200_000,
+    priceLabel: 'A$42,000',
+  },
+];
 
 export interface OutreachRequest {
   athleteName: string;

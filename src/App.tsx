@@ -8,7 +8,6 @@ import {
   RefreshCw,
   Copy,
   Check,
-  Users,
   Shield,
   ShieldCheck,
   Handshake,
@@ -33,7 +32,16 @@ import {
   Maximize2,
   Globe,
 } from 'lucide-react';
-import type { Athlete, AthleteLocation, MatchedSponsor, Sponsor, Agreement } from './types';
+import type {
+  Athlete,
+  AthleteLocation,
+  MatchedSponsor,
+  Sponsor,
+  Agreement,
+  SpatialTierCode,
+  SponsorshipTierKey,
+} from './types';
+import { SPATIAL_TIERS, SPONSORSHIP_PACKAGES } from './types';
 import { fetchAgreements } from './api';
 import { getSportComplianceBadges, getUniversalComplianceBadges } from './types';
 import { BrandKitTab } from './components/AthleteProfileModal';
@@ -45,18 +53,27 @@ import { Navbar, type NavView } from './components/Navbar';
 import { AdminDrawer } from './components/AdminDrawer';
 import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { Hero } from './components/Hero';
-import { SponsorshipTiers, type TierKey } from './components/SponsorshipTiers';
+import { SpatialCatchment } from './components/SpatialCatchment';
+import { InstitutionalBlindspot, LifecycleStrip } from './components/EnterpriseDeck';
+import { SponsorDrawer } from './components/SponsorDrawer';
 
 import {
   fetchAthletes,
+  fetchAthletesNearby,
+  fetchAthletesByTier,
+  createCampaignSponsorship,
   fetchSponsors,
   fetchNearbySponsors,
   fetchSponsorsByRadius,
   generateContractReview,
   formatCurrency,
   signMasterLicence,
+  normalizeAthlete,
 } from './api';
 import MapView from './MapView';
+import { athleteInitials, displayName } from './lib/formatName';
+import { formatLocationHex } from './lib/postgis';
+import { supabase } from './lib/supabase';
 
 type View = 'athlete' | 'sponsor' | 'marketplace' | 'campaigns';
 
@@ -99,8 +116,29 @@ export function MarketplaceApp() {
   const [mediaStudioOpen, setMediaStudioOpen] = useState(false);
   const [mediaStudioAthlete, setMediaStudioAthlete] = useState<Athlete | null>(null);
   const [navView, setNavView] = useState<NavView>('roster');
-  const [selectedTier, setSelectedTier] = useState<TierKey>('tier2');
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>('all');
+  const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
+
+  const [drawerAthlete, setDrawerAthlete] = useState<Athlete | null>(null);
+  const [booking, setBooking] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setListError(null);
+      try {
+        const s = await fetchSponsors();
+        if (!cancelled) setSponsors(s);
+      } catch (e) {
+        if (!cancelled) setListError(e instanceof Error ? e.message : 'Failed to load data');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,10 +146,22 @@ export function MarketplaceApp() {
       setLoadingList(true);
       setListError(null);
       try {
-        const [a, s] = await Promise.all([fetchAthletes(), fetchSponsors()]);
-        if (cancelled) return;
-        setAthletes(a);
-        setSponsors(s);
+        let rows: Athlete[];
+        const tier = SPATIAL_TIERS.find((t) => t.code === catchmentTier);
+        if (tier) {
+          rows = await fetchAthletesByTier(tier);
+        } else if (radiusFilter === 'all') {
+          if (!supabase) {
+            rows = await fetchAthletes();
+          } else {
+            const { data, error } = await supabase.from('athletes').select('*');
+            if (error) throw new Error(`Failed to load athletes: ${error.message}`);
+            rows = (data ?? []).map((row) => normalizeAthlete(row as Record<string, unknown>));
+          }
+        } else {
+          rows = await fetchAthletesNearby(radiusFilter === '25km' ? 25 : 50);
+        }
+        if (!cancelled) setAthletes(rows);
       } catch (e) {
         if (!cancelled) setListError(e instanceof Error ? e.message : 'Failed to load data');
       } finally {
@@ -121,7 +171,42 @@ export function MarketplaceApp() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [radiusFilter, catchmentTier]);
+
+  function openSponsorDrawer(athlete: Athlete) {
+    setDrawerAthlete(athlete);
+    setBookingError(null);
+    setBookingConfirmed(false);
+  }
+
+  async function handleConfirmSponsorship(tier: SponsorshipTierKey, postcode: string) {
+    if (!drawerAthlete) return;
+    const pkg = SPONSORSHIP_PACKAGES.find((p) => p.key === tier);
+    if (!pkg) return;
+
+    setBooking(true);
+    setBookingError(null);
+    try {
+      const updated = await createCampaignSponsorship({
+        athleteId: drawerAthlete.id,
+        tier,
+        budgetCents: pkg.budgetCents,
+        storePostcode: postcode,
+      });
+      const next: Athlete = updated ?? {
+        ...drawerAthlete,
+        licence_status: 'ACTIVE',
+        agreement_status: 'active',
+      };
+      setAthletes((prev) => prev.map((a) => (a.id === next.id ? { ...a, ...next } : a)));
+      setDrawerAthlete(next);
+      setBookingConfirmed(true);
+    } catch (e) {
+      setBookingError(e instanceof Error ? e.message : 'Failed to create sponsorship');
+    } finally {
+      setBooking(false);
+    }
+  }
 
   async function handleFindNearby(athlete: Athlete) {
     setActiveAthlete(athlete);
@@ -164,7 +249,7 @@ export function MarketplaceApp() {
     }));
     try {
       const res = await generateContractReview({
-        athleteName: activeAthlete.name,
+        athleteName: displayName(activeAthlete?.name),
         sportType: sport,
         sponsorCategory: sponsor.merchant_category ?? 'Sponsorship',
       });
@@ -291,10 +376,10 @@ export function MarketplaceApp() {
           </p>
         </div>
 
-        {loadingList && (
+        {loadingList && view !== 'athlete' && (
           <div className="state">
             <div className="spinner" />
-            Loading {view === 'athlete' ? 'athletes' : 'sponsors'}…
+            Loading sponsors…
           </div>
         )}
 
@@ -307,37 +392,54 @@ export function MarketplaceApp() {
           </div>
         )}
 
-        {!loadingList && !listError && view === 'athlete' && (
+        {!listError && view === 'athlete' && (
           <>
-            <SponsorshipTiers selected={selectedTier} onSelect={setSelectedTier} />
+            <SpatialCatchment
+              selected={catchmentTier}
+              matchCount={loadingList ? null : athletes.length}
+              loading={loadingList}
+              onSelect={(code) => {
+                setCatchmentTier(code);
+                if (code != null) setRadiusFilter('all');
+              }}
+            />
             <div className="radius-filter">
               <span className="radius-filter-label">Radius:</span>
               <div className="radius-toggle">
                 <button
-                  className={radiusFilter === '25km' ? 'active' : ''}
-                  onClick={() => setRadiusFilter('25km')}
-                >25km</button>
+                  className={catchmentTier === null && radiusFilter === '25km' ? 'active' : ''}
+                  onClick={() => { setCatchmentTier(null); setRadiusFilter('25km'); }}
+                >25KM</button>
                 <button
-                  className={radiusFilter === '50km' ? 'active' : ''}
-                  onClick={() => setRadiusFilter('50km')}
-                >50km</button>
+                  className={catchmentTier === null && radiusFilter === '50km' ? 'active' : ''}
+                  onClick={() => { setCatchmentTier(null); setRadiusFilter('50km'); }}
+                >50KM</button>
                 <button
-                  className={radiusFilter === 'all' ? 'active' : ''}
-                  onClick={() => setRadiusFilter('all')}
-                >All Postcodes</button>
+                  className={catchmentTier === null && radiusFilter === 'all' ? 'active' : ''}
+                  onClick={() => { setCatchmentTier(null); setRadiusFilter('all'); }}
+                >ALL</button>
               </div>
             </div>
-            <div className="grid">
-              {athletes.map((a) => (
-                <AthleteCard
-                  key={a.id}
-                  athlete={a}
-                  onFindNearby={() => handleFindNearby(a)}
-                  onProfile={() => openProfile(a)}
-                  onMediaStudio={() => { setMediaStudioAthlete(a); setMediaStudioOpen(true); }}
-                />
-              ))}
-            </div>
+            {loadingList ? (
+              <div className="state">
+                <div className="spinner" />
+                Loading athletes…
+              </div>
+            ) : (
+              <div className="grid">
+                {athletes.filter(Boolean).map((a, i) => (
+                  <AthleteCard
+                    key={a.id ?? `athlete-${i}`}
+                    athlete={a}
+                    onFindNearby={() => openSponsorDrawer(a)}
+                    onProfile={() => openProfile(a)}
+                    onMediaStudio={() => { setMediaStudioAthlete(a); setMediaStudioOpen(true); }}
+                  />
+                ))}
+              </div>
+            )}
+            <InstitutionalBlindspot />
+            <LifecycleStrip />
           </>
         )}
 
@@ -353,6 +455,22 @@ export function MarketplaceApp() {
           <CampaignHub athletes={athletes} sponsors={sponsors} />
         )}
       </main>
+
+      {drawerAthlete && (
+        <SponsorDrawer
+          athlete={drawerAthlete}
+          submitting={booking}
+          error={bookingError}
+          confirmed={bookingConfirmed}
+          onConfirm={handleConfirmSponsorship}
+          onClose={() => setDrawerAthlete(null)}
+          onFindNearby={() => {
+            const target = drawerAthlete;
+            setDrawerAthlete(null);
+            handleFindNearby(target);
+          }}
+        />
+      )}
 
       {panelOpen && (
         <>
@@ -559,33 +677,28 @@ export function MarketplaceApp() {
   );
 }
 
-function getAthleteCurrency(athlete: Athlete): string {
-  const loc = (athlete.location ?? '').toLowerCase();
+function getAthleteCurrency(athlete?: Athlete | null): string {
+  const loc = (typeof athlete?.location === 'string' ? athlete.location : '').toLowerCase();
   if (loc.includes('brazil') || loc.includes('brasil')) return 'BRL';
   if (loc.includes('new zealand') || loc.includes('zealand')) return 'NZD';
-  if (athlete.profile_data?.market_value_nzd != null) return 'NZD';
+  if (athlete?.profile_data?.market_value_nzd != null) return 'NZD';
   return 'AUD';
 }
 
-function initials(name: string): string {
-  return name
-    .split(' ')
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+function initials(name?: string | null): string {
+  return athleteInitials(name);
 }
 
-function statusBadge(status: string): { label: string; cls: string } {
-  switch (status) {
+function statusBadge(status?: string | null): { label: string; cls: string } {
+  switch ((status ?? '').toLowerCase().replace(/\s+/g, '_')) {
     case 'active':
-      return { label: 'Active', cls: 'success' };
+      return { label: 'ACTIVE', cls: 'success' };
     case 'pending':
-      return { label: 'Pending', cls: 'warning' };
+      return { label: 'PENDING', cls: 'warning' };
     case 'expired':
-      return { label: 'Expired', cls: 'warning' };
+      return { label: 'EXPIRED', cls: 'warning' };
     default:
-      return { label: 'No agreement', cls: '' };
+      return { label: 'NO AGREEMENT', cls: '' };
   }
 }
 
@@ -600,44 +713,51 @@ function AthleteCard({
   onProfile: () => void;
   onMediaStudio: () => void;
 }) {
-  const st = statusBadge(athlete.agreement_status);
-  const leagueTag = getLeagueTag(athlete.sport);
+  const st = statusBadge(athlete?.licence_status ?? athlete?.agreement_status);
+  const leagueTag = athlete?.tier_tag?.toUpperCase() || getLeagueTag(athlete?.sport);
+  const locationHex = formatLocationHex(
+    athlete?.location,
+    athlete?.latitude,
+    athlete?.longitude
+  );
+  const ipLocked = athlete?.ip_lock === true;
+  const sportLabel = (athlete?.sport ?? '—').toUpperCase();
   return (
     <div className="athlete-card">
       <div className="athlete-card-top">
-        <div className="athlete-avatar">{initials(athlete.name)}</div>
+        <div className="athlete-avatar">{athlete?.initials || initials(athlete?.name)}</div>
         <div className="athlete-card-info">
-          <h3 className="athlete-card-name">{athlete.name}</h3>
-          <span className="athlete-card-sport">{athlete.sport ?? '—'}</span>
+          <h3 className="athlete-card-name">{displayName(athlete?.name)}</h3>
+          <span className="athlete-card-sport">{sportLabel}</span>
         </div>
         <span className={`athlete-status ${st.cls}`}>{st.label}</span>
       </div>
       <div className="athlete-card-tags">
-        {athlete.location && (
-          <span className="athlete-tag">
-            <MapPin size={11} /> {athlete.location}
+        {locationHex && (
+          <span className="athlete-tag athlete-location-hex" title={locationHex}>
+            <MapPin size={11} /> {locationHex}
           </span>
         )}
-        {athlete.postcode && (
+        {athlete?.postcode && (
           <span className="athlete-tag">{athlete.postcode}</span>
         )}
         {leagueTag && (
           <span className="athlete-league-badge">{leagueTag}</span>
         )}
-        {athlete.master_licence_signed && (
+        {ipLocked && (
           <span className="athlete-tag ip-lock">
-            <ShieldCheck size={11} /> IP Lock
+            <ShieldCheck size={11} /> IP LOCK
           </span>
         )}
       </div>
       <div className="athlete-card-actions">
         <button className="btn btn-primary athlete-sponsor-btn" onClick={onFindNearby}>
-          <Handshake size={14} /> Sponsor Athlete
+          <Handshake size={14} /> SPONSOR ATHLETE
         </button>
         <button className="athlete-icon-btn" onClick={onProfile} aria-label="View profile">
-          <Users size={15} />
+          <Eye size={15} />
         </button>
-        <button className="athlete-icon-btn" onClick={onMediaStudio} aria-label="AI Media Studio">
+        <button className="athlete-icon-btn" onClick={onMediaStudio} aria-label="Video reel">
           <Film size={15} />
         </button>
       </div>
@@ -652,14 +772,15 @@ export default function App() {
 function getLeagueTag(sport: string | null): string | null {
   if (!sport) return null;
   const s = sport.toLowerCase();
-  if (s.includes('basketball')) return '@nbl1';
-  if (s.includes('soccer') || s.includes('football')) return '@nplnsw';
-  if (s.includes('rugby') && s.includes('union')) return '@shuteshield';
-  if (s.includes('rugby') && s.includes('league')) return '@nrl';
-  if (s.includes('afl')) return '@vfl';
-  if (s.includes('netball')) return '@ssn';
-  if (s.includes('cricket')) return '@nswpremier';
-  if (s.includes('combat')) return '@csa';
+  if (s.includes('touch')) return '@SHUTESHIELD';
+  if (s.includes('basketball')) return '@NBL1';
+  if (s.includes('soccer') || s.includes('football')) return '@NPLNSW';
+  if (s.includes('rugby') && s.includes('union')) return '@SHUTESHIELD';
+  if (s.includes('rugby') && s.includes('league')) return '@NRL';
+  if (s.includes('afl')) return '@VFL';
+  if (s.includes('netball')) return '@SSN';
+  if (s.includes('cricket')) return '@NSWPREMIER';
+  if (s.includes('combat')) return '@CSA';
   return null;
 }
 
@@ -755,9 +876,9 @@ function ProfileModal({
       <div className="panel-overlay" onClick={onClose} />
       <div className="modal" role="dialog" aria-label="Athlete profile">
         <div className="modal-head">
-          <div className="modal-avatar">{initials(athlete.name)}</div>
+          <div className="modal-avatar">{initials(athlete?.name)}</div>
           <div style={{ flex: 1 }}>
-            <h2>{athlete.name}</h2>
+            <h2>{displayName(athlete?.name)}</h2>
             <div className="sub">
               {athlete.sport ?? '—'}
               {athlete.current_club ? ` · ${athlete.current_club}` : ''}
@@ -1221,7 +1342,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         </div>
         <p className="ledger-desc">
           Financial breakdown for the active sponsorship deal with{' '}
-          <strong>{athlete.name}</strong>. GST is calculated at 10% on the gross deal value.
+          <strong>{displayName(athlete?.name)}</strong>. GST is calculated at 10% on the gross deal value.
           The platform collects a 20% commission on the Ex-GST amount; the remaining 80% is
           released to the athlete's connected account via Stripe Connect split payment.
         </p>
@@ -1413,7 +1534,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
       <StatementsPanel
         grossExGst={grossExGst}
         currency={currency}
-        athleteName={athlete.name}
+        athleteName={displayName(athlete?.name)}
         startDate={startDate}
         endDate={endDate}
       />
@@ -1421,7 +1542,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
       {/* Two-Way In-App Messaging */}
       <MessageThread
         agreementId={activeDeal?.id ?? null}
-        athleteName={athlete.name}
+        athleteName={displayName(athlete?.name)}
       />
     </div>
   );
