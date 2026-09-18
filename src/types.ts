@@ -467,7 +467,7 @@ export const HUNTER_BLIGH_COLLAB_DROPS: CollabDrop[] = [
   {
     id: 'drop-signature-court-tee',
     athleteName: 'Hunter Bligh',
-    title: 'Signature Court Tee — Limited Edition of 100',
+    title: 'Signature Court Tee - Limited Edition of 100',
     priceAud: 60,
     status: 'limited',
     statusLabel: 'Limited edition',

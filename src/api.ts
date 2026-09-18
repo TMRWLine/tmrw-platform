@@ -153,8 +153,8 @@ export async function fetchCatchmentCounts(
 }
 
 function isHunterBligh(athlete?: Athlete | null): boolean {
-  const n = athleteDisplayName(athlete).toLowerCase();
-  return n === 'hunter bligh';
+  const hay = `${athlete?.name ?? ''} ${athlete?.full_name ?? ''} ${athleteDisplayName(athlete)}`.toLowerCase();
+  return hay.includes('bligh');
 }
 
 function mockCollabDrops(athlete?: Athlete | null): CollabDrop[] {

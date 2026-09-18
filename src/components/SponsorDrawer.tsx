@@ -13,7 +13,7 @@ import {
   Zap,
 } from 'lucide-react';
 import type { Athlete, CollabDrop, SponsorshipTierKey } from '../types';
-import { COLLAB_SPLIT, SPONSORSHIP_PACKAGES } from '../types';
+import { COLLAB_SPLIT, HUNTER_BLIGH_COLLAB_DROPS, SPONSORSHIP_PACKAGES } from '../types';
 import { athleteDisplayName, athleteInitials } from '../lib/formatName';
 import { fetchCollabDrops, formatCurrency } from '../api';
 
@@ -111,6 +111,12 @@ function simulateSettlement(drop: CollabDrop, athleteName: string): DropSettleme
   };
 }
 
+function seedCollabDrops(athlete?: Athlete | null): CollabDrop[] {
+  const name = athleteDisplayName(athlete);
+  const hay = `${athlete?.name ?? ''} ${athlete?.full_name ?? ''} ${name}`.toLowerCase();
+  return hay.includes('bligh') ? [...HUNTER_BLIGH_COLLAB_DROPS] : [];
+}
+
 export function SponsorDrawer({
   athlete,
   submitting,
@@ -133,18 +139,21 @@ export function SponsorDrawer({
   const [postcode, setPostcode] = useState(athlete?.postcode ?? '2000');
   const [authorizingId, setAuthorizingId] = useState<string | null>(null);
   const [settlement, setSettlement] = useState<DropSettlement | null>(null);
-  const [drops, setDrops] = useState<CollabDrop[]>([]);
+  const [drops, setDrops] = useState<CollabDrop[]>(() => seedCollabDrops(athlete));
   const pkg = SPONSORSHIP_PACKAGES.find((p) => p.key === tier) ?? SPONSORSHIP_PACKAGES[1];
   const name = athleteDisplayName(athlete);
 
   useEffect(() => {
+    const seed = seedCollabDrops(athlete);
+    setDrops(seed);
     let cancelled = false;
     (async () => {
       try {
         const rows = await fetchCollabDrops(athlete);
-        if (!cancelled) setDrops(Array.isArray(rows) ? rows : []);
+        if (cancelled) return;
+        setDrops(Array.isArray(rows) && rows.length > 0 ? rows : seed);
       } catch {
-        if (!cancelled) setDrops([]);
+        if (!cancelled) setDrops(seed);
       }
     })();
     return () => {
@@ -163,7 +172,7 @@ export function SponsorDrawer({
 
   return (
     <>
-      <div className="panel-overlay" onClick={onClose} />
+      <div className="sponsor-drawer-overlay" onClick={onClose} />
       <aside className="sponsor-drawer" role="dialog" aria-label="Sponsor athlete checkout">
         <div className="sponsor-drawer-head">
           <div className="athlete-avatar">{athlete?.initials || athleteInitials(name)}</div>
@@ -179,16 +188,20 @@ export function SponsorDrawer({
           </button>
         </div>
 
-        <div className="sponsor-drawer-tabs">
+        <div className="sponsor-drawer-tabs" role="tablist" aria-label="Sponsorship surfaces">
           <button
             type="button"
+            role="tab"
+            aria-selected={tab === 'tiers'}
             className={tab === 'tiers' ? 'active' : ''}
             onClick={() => setTab('tiers')}
           >
-            <Layers size={13} /> Commercial Tiers
+            <Layers size={13} /> Commercial Sponsorship
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={tab === 'drops'}
             className={tab === 'drops' ? 'active' : ''}
             onClick={() => setTab('drops')}
           >
@@ -289,7 +302,7 @@ export function SponsorDrawer({
 
             {drops.length === 0 && (
               <div className="drop-empty">
-                No active merchandise drops configured for this athlete
+                No active merchandise drops configured for this athlete.
               </div>
             )}
 
@@ -305,7 +318,7 @@ export function SponsorDrawer({
                     <div className="drop-card-meta">
                       <span className={`drop-status drop-status-${drop.status}`}>{drop.statusLabel}</span>
                       <h3>{drop.title}</h3>
-                      <div className="drop-price">{formatCurrency(drop.priceAud, 'AUD')}</div>
+                      <div className="drop-price">A${drop.priceAud}</div>
                     </div>
                   </div>
 
@@ -323,7 +336,7 @@ export function SponsorDrawer({
                   </div>
 
                   <div className="drop-split">
-                    <span className="sponsor-drawer-label">Split telemetry</span>
+                    <span className="sponsor-drawer-label">Transparent commercial split</span>
                     <div className="drop-split-row">
                       <div>
                         <strong>{split.athletePayoutPct}%</strong>
@@ -335,7 +348,7 @@ export function SponsorDrawer({
                       </div>
                       <div>
                         <strong>{split.communityFundPct}%</strong>
-                        <span>Community Fund</span>
+                        <span>Grassroots Community Sports Fund</span>
                       </div>
                     </div>
                     <div className="drop-batch-note">
@@ -381,7 +394,7 @@ export function SponsorDrawer({
                 <div className="drop-invoice">
                   <div className="ledger-head">
                     <Receipt size={16} />
-                    <h3>Enterprise tax invoice</h3>
+                    <h3>RCTI tax invoice</h3>
                   </div>
                   <dl className="drop-invoice-grid">
                     <div>
