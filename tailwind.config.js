@@ -9,33 +9,23 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: [
-          'Inter',
-          'Helvetica Neue',
-          'Helvetica',
-          'Arial',
-          'system-ui',
-          'sans-serif',
-        ],
-        mono: [
-          'IBM Plex Mono',
-          'SFMono-Regular',
-          'ui-monospace',
-          'Menlo',
-          'Consolas',
-          'monospace',
-        ],
+        sans: ['Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'system-ui', 'sans-serif'],
+        serif: ['Georgia', 'serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       colors: {
-        'brand-black': '#0A0A0C',
-        'brand-carbon': '#121214',
-        'brand-zinc': '#1E1E22',
-        'brand-cotton': '#FBFBF9',
-        'brand-cobalt': '#0052FF',
-        'brand-volt': '#D4FF00',
-        'brand-emerald': '#00D664',
-        'border-hairline': 'rgba(255, 255, 255, 0.08)',
-        'border-hairline-light': 'rgba(0, 0, 0, 0.08)',
+        brand: {
+          black: '#000000',
+          white: '#FFFFFF',
+          cotton: '#FBFBF9',
+          cyan: '#009FDA',
+          magenta: '#D10074',
+          yellow: '#F9E300',
+          cobalt: '#0052FF',
+          volt: '#D4FF00',
+          zinc: '#121214',
+          hairline: 'rgba(255, 255, 255, 0.12)',
+        },
       },
       clipPath: {
         'blade-23': 'polygon(0 0, calc(100% - 42.45px) 0, 100% 100%, 0 100%)',

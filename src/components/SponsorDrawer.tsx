@@ -59,7 +59,7 @@ function merchArt(kind: CollabDrop['art'] | string | undefined) {
   if (kind === 'socks') {
     return (
       <svg className="drop-art-svg" viewBox="0 0 80 80" aria-hidden="true">
-        <rect width="80" height="80" fill="#00D664" />
+        <rect width="80" height="80" fill="#009FDA" />
         <path d="M30 16h12v28c0 10-6 16-14 16s-14-6-14-16V28h8v16c0 4 2 7 6 7s6-3 6-7V16z" fill="#FBFBF9" />
         <path d="M50 16h12v28c0 10-6 16-14 16" fill="none" stroke="#FBFBF9" strokeWidth="4" />
       </svg>
@@ -266,12 +266,12 @@ export function SponsorDrawer({
   return (
     <>
       <div className="sponsor-drawer-overlay" onClick={onClose} />
-      <aside className="sponsor-drawer border-grid bg-brand-cotton font-sans" role="dialog" aria-label="Sponsor athlete checkout">
+      <aside className="sponsor-drawer border-grid bg-brand-zinc text-brand-white rounded-none" role="dialog" aria-label="Sponsor athlete checkout">
         <div className="sponsor-drawer-head">
           <div className="athlete-avatar">{athlete?.initials || athleteInitials(name)}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h2>{name}</h2>
-            <div className="sub">
+            <h2 className="font-serif text-brand-white">{name}</h2>
+            <div className="sub font-mono">
               {(athlete?.sport ?? 'Athlete').toUpperCase()}
               {athlete?.postcode ? ` · ${athlete.postcode}` : ''}
             </div>
@@ -319,7 +319,7 @@ export function SponsorDrawer({
               </span>
             </div>
             <div className="sponsor-drawer-actions">
-              <button className="btn btn-primary" onClick={onClose}>
+              <button className="sponsor-btn-confirm rounded-none bg-brand-white text-brand-black" onClick={onClose}>
                 Done
               </button>
             </div>
@@ -329,14 +329,14 @@ export function SponsorDrawer({
             <div className="sponsor-match-head">
               <div>
                 <span className="sponsor-drawer-label">Map &amp; match</span>
-                <h3>PostGIS catchment · postcode 3000</h3>
+            <h3 className="font-serif text-brand-white">PostGIS catchment · postcode 3000</h3>
                 <p>Athlete radius overlay with verified local sponsor pins.</p>
               </div>
-              <button type="button" className="btn btn-ghost" onClick={() => setShowMatch(false)}>
+              <button type="button" className="sponsor-btn-nearby rounded-none bg-brand-cobalt text-brand-white" onClick={() => setShowMatch(false)}>
                 Back to tiers
               </button>
             </div>
-            <div className="sponsor-match-metrics font-mono border-grid">
+            <div className="sponsor-match-metrics font-mono border-grid text-brand-volt">
               3 Verified Partners · 5.8k Weekly Postcode Impressions · 100% Exclusivity Available
             </div>
 
@@ -390,7 +390,7 @@ export function SponsorDrawer({
                   <button
                     key={p.key}
                     type="button"
-                    className={`sponsor-tier-option ${tier === p.key ? 'selected' : ''}`}
+                    className={`sponsor-tier-option rounded-none border-grid ${tier === p.key ? 'selected' : ''}`}
                     aria-pressed={tier === p.key}
                     onClick={() => setTier(p.key)}
                     disabled={submitting}
@@ -434,14 +434,18 @@ export function SponsorDrawer({
 
             <div className="sponsor-drawer-actions">
               <button
-                className="btn btn-primary"
+                className="sponsor-btn-confirm rounded-none bg-brand-white text-brand-black"
                 onClick={() => onConfirm(tier, postcode.trim() || '2000')}
                 disabled={submitting}
               >
                 {submitting ? <Loader2 size={14} className="spin" /> : <ShieldCheck size={14} />}
                 {submitting ? 'Booking…' : `Confirm ${pkg.label}`}
               </button>
-              <button className="btn btn-ghost" onClick={() => void openNearbyMatch()} disabled={submitting}>
+              <button
+                className="sponsor-btn-nearby rounded-none bg-brand-cobalt text-brand-white"
+                onClick={() => void openNearbyMatch()}
+                disabled={submitting}
+              >
                 <MapPin size={14} /> Nearby sponsors
               </button>
             </div>
@@ -492,15 +496,15 @@ export function SponsorDrawer({
                     <span className="sponsor-drawer-label">Transparent commercial split</span>
                     <div className="drop-split-row">
                       <div>
-                        <strong>{split.athletePayoutPct}%</strong>
+                        <strong className="drop-split-tag drop-split-tag-cyan">{split.athletePayoutPct}%</strong>
                         <span>Athlete Payout</span>
                       </div>
                       <div>
-                        <strong>{split.platformFeePct}%</strong>
+                        <strong className="drop-split-tag drop-split-tag-white">{split.platformFeePct}%</strong>
                         <span>Platform Fee</span>
                       </div>
                       <div>
-                        <strong>{split.communityFundPct}%</strong>
+                        <strong className="drop-split-tag drop-split-tag-volt">{split.communityFundPct}%</strong>
                         <span>Grassroots Community Sports Fund</span>
                       </div>
                     </div>
@@ -510,7 +514,7 @@ export function SponsorDrawer({
                   </div>
 
                   <button
-                    className="athlete-sponsor-btn drop-authorize bg-brand-emerald"
+                    className="athlete-sponsor-btn drop-authorize rounded-none bg-brand-white text-brand-black"
                     onClick={() => authorizeDrop(drop)}
                     disabled={busy || authorizingId != null}
                   >

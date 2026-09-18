@@ -314,7 +314,7 @@ export function MarketplaceApp() {
   const panelOpen = activeAthlete !== null;
 
   return (
-    <div className="app-shell bg-brand-cotton text-brand-black font-sans bg-grain">
+    <div className="app-shell bg-brand-black text-brand-white font-sans bg-grain">
       <header className="topnav glass-header border-grid">
         <div className="brand">
           <div className="brand-lockup">
@@ -745,7 +745,7 @@ function AthleteCard({
         )}
       </div>
       <div className="athlete-card-actions">
-        <button className="athlete-sponsor-btn bg-brand-emerald" onClick={onFindNearby}>
+        <button className="athlete-sponsor-btn bg-brand-white text-brand-black rounded-none" onClick={onFindNearby}>
           Sponsor Athlete
         </button>
         <button className="athlete-icon-btn" onClick={onProfile} aria-label="View profile">
