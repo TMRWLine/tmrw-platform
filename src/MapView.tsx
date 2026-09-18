@@ -6,6 +6,8 @@ import { displayName } from './lib/formatName';
 interface MapViewProps {
   athlete: AthleteLocation | null;
   sponsors: MatchedSponsor[];
+  catchmentMeters?: number;
+  className?: string;
 }
 
 // Custom DivIcons styled to match the dark theme.
@@ -27,7 +29,7 @@ function makeSponsorIcon() {
   });
 }
 
-export default function MapView({ athlete, sponsors }: MapViewProps) {
+export default function MapView({ athlete, sponsors, catchmentMeters = 5000, className }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
@@ -52,10 +54,15 @@ export default function MapView({ athlete, sponsors }: MapViewProps) {
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
-    // Fix: Leaflet needs invalidateSize after the container becomes visible.
-    setTimeout(() => map.invalidateSize(), 100);
+    const resize = () => map.invalidateSize();
+    const t1 = window.setTimeout(resize, 80);
+    const t2 = window.setTimeout(resize, 320);
+    window.addEventListener('resize', resize);
 
     return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.removeEventListener('resize', resize);
       map.remove();
       mapRef.current = null;
       layerRef.current = null;
@@ -80,6 +87,15 @@ export default function MapView({ athlete, sponsors }: MapViewProps) {
       if (athlete.nrl_tpa_registered) compliance.push('NRL TPA');
       if (athlete.shute_shield_compliant) compliance.push('Shute Shield');
       const complianceLine = compliance.length > 0 ? `<br/><span class="popup-sub">${compliance.join(' &middot; ')}</span>` : '';
+      if (catchmentMeters > 0) {
+        L.circle(pos, {
+          radius: catchmentMeters,
+          color: '#10B981',
+          fillColor: '#10B981',
+          fillOpacity: 0.12,
+          weight: 2,
+        }).addTo(layer);
+      }
       L.marker(pos, { icon: makeAthleteIcon() })
         .addTo(layer)
         .bindPopup(
@@ -123,9 +139,10 @@ export default function MapView({ athlete, sponsors }: MapViewProps) {
         map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
       }
     }
-  }, [athlete, sponsors]);
+    window.setTimeout(() => map.invalidateSize(), 80);
+  }, [athlete, sponsors, catchmentMeters]);
 
-  return <div ref={containerRef} className="map-container" />;
+  return <div ref={containerRef} className={className ? `map-container ${className}` : 'map-container'} />;
 }
 
 function escapeHtml(str: string): string {

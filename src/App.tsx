@@ -460,11 +460,6 @@ export function MarketplaceApp() {
           confirmed={bookingConfirmed}
           onConfirm={handleConfirmSponsorship}
           onClose={() => setDrawerAthlete(null)}
-          onFindNearby={() => {
-            const a = drawerAthlete;
-            setDrawerAthlete(null);
-            if (a) handleFindNearby(a);
-          }}
         />
       )}
 

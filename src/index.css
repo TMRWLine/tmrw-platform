@@ -1078,6 +1078,27 @@ button { font-family: inherit; cursor: pointer; }
 }
 .drop-invoice-grid dd { margin: 2px 0 0; font-size: 12px; font-weight: 600; }
 
+.sponsor-match-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.sponsor-match-head h3 { margin: 4px 0 0; font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+.sponsor-match-head p { margin: 4px 0 0; font-size: 12px; color: var(--text-muted); line-height: 1.45; }
+.sponsor-drawer .map-container,
+.sponsor-match-map {
+  min-height: 280px; height: 280px; margin-bottom: 0; flex-shrink: 0;
+}
+.sponsor-match-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sponsor-match-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px; border: var(--hairline); border-radius: 10px; background: var(--bg-card);
+}
+.sponsor-match-card strong { display: block; font-size: 14px; }
+.sponsor-match-card span { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.sponsor-match-card em {
+  font-style: normal; font-size: 12px; font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap;
+}
+
 /* ===== Radius filter toggle ===== */
 .radius-filter {
   display: flex; align-items: center; gap: 10px; margin-bottom: 18px;

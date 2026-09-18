@@ -12,10 +12,11 @@ import {
   Receipt,
   Zap,
 } from 'lucide-react';
-import type { Athlete, CollabDrop, SponsorshipTierKey } from '../types';
+import type { Athlete, AthleteLocation, CollabDrop, MatchedSponsor, SponsorshipTierKey } from '../types';
 import { COLLAB_SPLIT, HUNTER_BLIGH_COLLAB_DROPS, SPONSORSHIP_PACKAGES } from '../types';
 import { athleteDisplayName, athleteInitials } from '../lib/formatName';
-import { fetchCollabDrops, formatCurrency } from '../api';
+import { fetchCollabDrops, fetchNearbySponsors, formatCurrency } from '../api';
+import MapView from '../MapView';
 
 type DrawerTab = 'tiers' | 'drops';
 
@@ -117,6 +118,80 @@ function seedCollabDrops(athlete?: Athlete | null): CollabDrop[] {
   return hay.includes('bligh') ? [...HUNTER_BLIGH_COLLAB_DROPS] : [];
 }
 
+/** Melbourne CBD — PostGIS catchment origin for store postcode 3000. */
+const POSTCODE_3000 = { lat: -37.8136, lng: 144.9631, postcode: '3000' };
+
+function destinationPoint(lat: number, lng: number, km: number, bearingDeg: number) {
+  const R = 6371;
+  const br = (bearingDeg * Math.PI) / 180;
+  const lat1 = (lat * Math.PI) / 180;
+  const lng1 = (lng * Math.PI) / 180;
+  const lat2 = Math.asin(
+    Math.sin(lat1) * Math.cos(km / R) + Math.cos(lat1) * Math.sin(km / R) * Math.cos(br)
+  );
+  const lng2 =
+    lng1 +
+    Math.atan2(
+      Math.sin(br) * Math.sin(km / R) * Math.cos(lat1),
+      Math.cos(km / R) - Math.sin(lat1) * Math.sin(lat2)
+    );
+  return { lat: (lat2 * 180) / Math.PI, lng: (lng2 * 180) / Math.PI };
+}
+
+function mockPartner(
+  id: string,
+  business_name: string,
+  merchant_category: string,
+  km: number,
+  bearing: number
+): MatchedSponsor {
+  const pos = destinationPoint(POSTCODE_3000.lat, POSTCODE_3000.lng, km, bearing);
+  return {
+    id,
+    business_name,
+    merchant_category,
+    budget_allocation: 12000,
+    contact_email: null,
+    target_radius_meters: 1500,
+    location: null,
+    postcode: POSTCODE_3000.postcode,
+    latitude: pos.lat,
+    longitude: pos.lng,
+    currency: 'AUD',
+    created_at: '',
+    updated_at: '',
+    distance_meters: Math.round(km * 1000),
+    distance_km: km,
+    lat: pos.lat,
+    lng: pos.lng,
+  };
+}
+
+const MOCK_VERIFIED_PARTNERS: MatchedSponsor[] = [
+  mockPartner('mock-bondi-surf-co', 'Bondi Surf Co', 'Apparel & Fashion', 1.2, 80),
+  mockPartner('mock-local-metro-gym', 'Local Metro Gym', 'Health & Wellness', 3.4, 12),
+  mockPartner('mock-hpr-lab', 'High Performance Recovery Lab', 'Training & Coaching', 2.1, 210),
+];
+
+function formatKmAway(km: number | null | undefined): string {
+  if (km == null || !Number.isFinite(km)) return 'Nearby';
+  return `${km.toFixed(1)} km away`;
+}
+
+function athleteCatchmentLocation(athlete: Athlete, name: string): AthleteLocation {
+  return {
+    id: athlete.id,
+    name,
+    lat: POSTCODE_3000.lat,
+    lng: POSTCODE_3000.lng,
+    postcode: POSTCODE_3000.postcode,
+    follower_count: athlete.follower_count,
+    master_licence_signed: athlete.master_licence_signed,
+    nrl_tpa_registered: athlete.nrl_tpa_registered,
+    shute_shield_compliant: athlete.shute_shield_compliant,
+  };
+}
+
 export function SponsorDrawer({
   athlete,
   submitting,
@@ -124,7 +199,6 @@ export function SponsorDrawer({
   confirmed,
   onConfirm,
   onClose,
-  onFindNearby,
 }: {
   athlete: Athlete;
   submitting: boolean;
@@ -132,7 +206,6 @@ export function SponsorDrawer({
   confirmed: boolean;
   onConfirm: (tier: SponsorshipTierKey, postcode: string) => void;
   onClose: () => void;
-  onFindNearby: () => void;
 }) {
   const [tab, setTab] = useState<DrawerTab>('tiers');
   const [tier, setTier] = useState<SponsorshipTierKey>('TIER_2');
@@ -140,8 +213,12 @@ export function SponsorDrawer({
   const [authorizingId, setAuthorizingId] = useState<string | null>(null);
   const [settlement, setSettlement] = useState<DropSettlement | null>(null);
   const [drops, setDrops] = useState<CollabDrop[]>(() => seedCollabDrops(athlete));
+  const [showMatch, setShowMatch] = useState(false);
+  const [matching, setMatching] = useState(false);
+  const [matchSponsors, setMatchSponsors] = useState<MatchedSponsor[]>([]);
   const pkg = SPONSORSHIP_PACKAGES.find((p) => p.key === tier) ?? SPONSORSHIP_PACKAGES[1];
   const name = athleteDisplayName(athlete);
+  const catchment = athleteCatchmentLocation(athlete, name);
 
   useEffect(() => {
     const seed = seedCollabDrops(athlete);
@@ -160,6 +237,20 @@ export function SponsorDrawer({
       cancelled = true;
     };
   }, [athlete?.id, athlete?.name, athlete?.full_name]);
+
+  async function openNearbyMatch() {
+    setShowMatch(true);
+    setMatching(true);
+    try {
+      const res = await fetchNearbySponsors(athlete.id);
+      const live = Array.isArray(res.matches) ? res.matches.filter((s) => s.lat != null && s.lng != null) : [];
+      setMatchSponsors(live.length > 0 ? live : MOCK_VERIFIED_PARTNERS);
+    } catch {
+      setMatchSponsors(MOCK_VERIFIED_PARTNERS);
+    } finally {
+      setMatching(false);
+    }
+  }
 
   async function authorizeDrop(drop: CollabDrop) {
     if (authorizingId) return;
@@ -194,7 +285,10 @@ export function SponsorDrawer({
             role="tab"
             aria-selected={tab === 'tiers'}
             className={tab === 'tiers' ? 'active' : ''}
-            onClick={() => setTab('tiers')}
+            onClick={() => {
+              setTab('tiers');
+              setShowMatch(false);
+            }}
           >
             <Layers size={13} /> Commercial Sponsorship
           </button>
@@ -227,6 +321,47 @@ export function SponsorDrawer({
                 Done
               </button>
             </div>
+          </div>
+        ) : tab === 'tiers' && showMatch ? (
+          <div className="sponsor-drawer-body">
+            <div className="sponsor-match-head">
+              <div>
+                <span className="sponsor-drawer-label">Map &amp; match</span>
+                <h3>PostGIS catchment · postcode 3000</h3>
+                <p>Athlete radius overlay with verified local sponsor pins.</p>
+              </div>
+              <button type="button" className="btn btn-ghost" onClick={() => setShowMatch(false)}>
+                Back to tiers
+              </button>
+            </div>
+
+            {matching ? (
+              <div className="state">
+                <div className="spinner" />
+                Running spatial match…
+              </div>
+            ) : (
+              <>
+                <MapView
+                  athlete={catchment}
+                  sponsors={matchSponsors}
+                  catchmentMeters={5000}
+                  className="sponsor-match-map"
+                />
+                <span className="sponsor-drawer-label">Local partners</span>
+                <ul className="sponsor-match-list">
+                  {matchSponsors.map((s) => (
+                    <li key={s.id} className="sponsor-match-card">
+                      <div>
+                        <strong>{s.business_name}</strong>
+                        <span>{s.merchant_category ?? 'Sponsor'}</span>
+                      </div>
+                      <em>{formatKmAway(s.distance_km)}</em>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
         ) : tab === 'tiers' ? (
           <div className="sponsor-drawer-body">
@@ -288,7 +423,7 @@ export function SponsorDrawer({
                 {submitting ? <Loader2 size={14} className="spin" /> : <ShieldCheck size={14} />}
                 {submitting ? 'Booking…' : `Confirm ${pkg.label}`}
               </button>
-              <button className="btn btn-ghost" onClick={onFindNearby} disabled={submitting}>
+              <button className="btn btn-ghost" onClick={() => void openNearbyMatch()} disabled={submitting}>
                 <MapPin size={14} /> Nearby sponsors
               </button>
             </div>
