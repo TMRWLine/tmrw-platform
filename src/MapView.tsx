@@ -8,9 +8,10 @@ interface MapViewProps {
   sponsors: MatchedSponsor[];
   catchmentMeters?: number;
   className?: string;
+  selectedSponsorId?: string | null;
+  onSelectSponsor?: (id: string) => void;
 }
 
-// Custom DivIcons styled to match the dark theme.
 function makeAthleteIcon() {
   return L.divIcon({
     className: 'map-pin-athlete',
@@ -20,34 +21,43 @@ function makeAthleteIcon() {
   });
 }
 
-function makeSponsorIcon() {
+function makeSponsorIcon(selected = false) {
   return L.divIcon({
-    className: 'map-pin-sponsor',
-    html: '<div class="pin-dot pin-sponsor"></div>',
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
+    className: selected ? 'map-pin-sponsor is-selected' : 'map-pin-sponsor',
+    html: `<div class="pin-dot pin-sponsor${selected ? ' is-selected' : ''}"></div>`,
+    iconSize: selected ? [18, 18] : [14, 14],
+    iconAnchor: selected ? [9, 9] : [7, 7],
   });
 }
 
-export default function MapView({ athlete, sponsors, catchmentMeters = 5000, className }: MapViewProps) {
+export default function MapView({
+  athlete,
+  sponsors,
+  catchmentMeters = 5000,
+  className,
+  selectedSponsorId = null,
+  onSelectSponsor,
+}: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
+  const markerByIdRef = useRef<Map<string, L.Marker>>(new Map());
+  const onSelectRef = useRef(onSelectSponsor);
+  onSelectRef.current = onSelectSponsor;
 
-  // Initialize the map once.
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
     const map = L.map(containerRef.current, {
-      center: [39.5, -98.35],
-      zoom: 4,
+      center: [-37.8136, 144.9631],
+      zoom: 13,
       scrollWheelZoom: false,
       attributionControl: true,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
-      subdomains: 'abcd',
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      subdomains: 'abc',
       maxZoom: 19,
     }).addTo(map);
 
@@ -66,27 +76,28 @@ export default function MapView({ athlete, sponsors, catchmentMeters = 5000, cla
       map.remove();
       mapRef.current = null;
       layerRef.current = null;
+      markerByIdRef.current.clear();
     };
   }, []);
 
-  // Update markers when data changes.
   useEffect(() => {
     const layer = layerRef.current;
     const map = mapRef.current;
     if (!layer || !map) return;
 
     layer.clearLayers();
+    markerByIdRef.current.clear();
 
     const points: L.LatLngExpression[] = [];
 
-    // Athlete marker
     if (athlete && athlete.lat != null && athlete.lng != null) {
       const pos: L.LatLngExpression = [athlete.lat, athlete.lng];
       const compliance: string[] = [];
       if (athlete.master_licence_signed) compliance.push('Master Licence');
       if (athlete.nrl_tpa_registered) compliance.push('NRL TPA');
       if (athlete.shute_shield_compliant) compliance.push('Shute Shield');
-      const complianceLine = compliance.length > 0 ? `<br/><span class="popup-sub">${compliance.join(' &middot; ')}</span>` : '';
+      const complianceLine =
+        compliance.length > 0 ? `<br/><span class="popup-sub">${compliance.join(' &middot; ')}</span>` : '';
       if (catchmentMeters > 0) {
         L.circle(pos, {
           radius: catchmentMeters,
@@ -104,12 +115,9 @@ export default function MapView({ athlete, sponsors, catchmentMeters = 5000, cla
       points.push(pos);
     }
 
-    // Sponsor markers + radius circles
     sponsors.forEach((s) => {
       if (s.lat == null || s.lng == null) return;
       const pos: L.LatLngExpression = [s.lat, s.lng];
-
-      // Radius circle showing the sponsor's catchment area
       if (s.target_radius_meters) {
         L.circle(pos, {
           radius: s.target_radius_meters,
@@ -121,28 +129,53 @@ export default function MapView({ athlete, sponsors, catchmentMeters = 5000, cla
         }).addTo(layer);
       }
 
-      L.marker(pos, { icon: makeSponsorIcon() })
+      const marker = L.marker(pos, { icon: makeSponsorIcon(false) })
         .addTo(layer)
-        .bindPopup(
-          `<div class="map-popup"><strong>${escapeHtml(s.business_name)}</strong><br/>` +
-            `<span class="popup-sub">${escapeHtml(s.merchant_category ?? 'Sponsor')} &middot; ${formatDistance(s.distance_km)} &middot; ${formatRadius(s.target_radius_meters)}${s.currency ? ' &middot; ' + escapeHtml(s.currency) : ''}</span></div>`
-        );
+        .bindPopup(sponsorPopupHtml(s));
+      marker.on('click', () => onSelectRef.current?.(s.id));
+      markerByIdRef.current.set(s.id, marker);
       points.push(pos);
     });
 
-    // Fit bounds to show all markers
     if (points.length > 0) {
       if (points.length === 1) {
-        map.setView(points[0], 12);
+        map.setView(points[0], 13);
       } else {
         const bounds = L.latLngBounds(points);
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
       }
     }
     window.setTimeout(() => map.invalidateSize(), 80);
+    const selectedId = selectedSponsorId;
+    if (selectedId) {
+      const selectedMarker = markerByIdRef.current.get(selectedId);
+      selectedMarker?.setIcon(makeSponsorIcon(true));
+    }
   }, [athlete, sponsors, catchmentMeters]);
 
+  useEffect(() => {
+    const map = mapRef.current;
+    markerByIdRef.current.forEach((marker, id) => {
+      marker.setIcon(makeSponsorIcon(id === selectedSponsorId));
+    });
+    if (!map || !selectedSponsorId) return;
+    const marker = markerByIdRef.current.get(selectedSponsorId);
+    if (!marker) return;
+    map.panTo(marker.getLatLng(), { animate: true });
+    window.setTimeout(() => marker.openPopup(), 120);
+  }, [selectedSponsorId]);
+
   return <div ref={containerRef} className={className ? `map-container ${className}` : 'map-container'} />;
+}
+
+function sponsorPopupHtml(s: MatchedSponsor): string {
+  const category = s.merchant_category ?? 'Sponsor';
+  const distance = formatDistance(s.distance_km);
+  const bits = [distance, `Confirmed · ${escapeHtml(category)}`].filter(Boolean);
+  return (
+    `<div class="map-popup"><strong>${escapeHtml(s.business_name)}</strong><br/>` +
+    `<span class="popup-sub">${bits.join(' · ')}</span></div>`
+  );
 }
 
 function escapeHtml(str: string): string {
@@ -156,12 +189,6 @@ function escapeHtml(str: string): string {
 
 function formatDistance(km: number | undefined): string {
   if (km == null) return '';
-  if (km < 1) return `${Math.round(km * 1000)} m`;
-  return `${km.toFixed(1)} km`;
-}
-
-function formatRadius(m: number | undefined): string {
-  if (m == null) return '';
-  if (m >= 1000) return `${(m / 1000).toFixed(0)} km radius`;
-  return `${m} m radius`;
+  if (km < 1) return `${Math.round(km * 1000)} m away`;
+  return `${km.toFixed(1)} km away`;
 }

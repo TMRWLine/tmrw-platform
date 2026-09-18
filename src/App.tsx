@@ -314,8 +314,8 @@ export function MarketplaceApp() {
   const panelOpen = activeAthlete !== null;
 
   return (
-    <div className="app-shell">
-      <header className="topnav glass-header">
+    <div className="app-shell bg-brand-cotton text-brand-black font-sans bg-grain">
+      <header className="topnav glass-header border-grid">
         <div className="brand">
           <div className="brand-lockup">
             <span>tmrw</span>
@@ -353,7 +353,7 @@ export function MarketplaceApp() {
             onMediaStudio={() => { setMediaStudioAthlete(null); setMediaStudioOpen(true); }}
           />
         )}
-        <div className="page-head" id="athlete-roster">
+        <div className="page-head editorial-copy" id="athlete-roster">
           <h1>
             {view === 'athlete'
               ? 'Athlete Roster'
@@ -709,7 +709,7 @@ function AthleteCard({
   const ipLocked = athlete?.ip_lock === true || athlete?.master_licence_signed === true;
   const name = athleteDisplayName(athlete);
   return (
-    <div className="athlete-card">
+    <div className="athlete-card border-grid">
       <div className="athlete-card-top">
         <div className="athlete-avatar">{athlete?.initials || initials(name)}</div>
         <div className="athlete-card-info">
@@ -723,7 +723,7 @@ function AthleteCard({
       </div>
       <div className="athlete-card-tags">
         {athlete?.postcode && (
-          <span className="athlete-tag">
+          <span className="athlete-tag font-mono">
             <Crosshair size={11} /> {athlete.postcode}
           </span>
         )}
@@ -745,7 +745,7 @@ function AthleteCard({
         )}
       </div>
       <div className="athlete-card-actions">
-        <button className="athlete-sponsor-btn" onClick={onFindNearby}>
+        <button className="athlete-sponsor-btn bg-brand-emerald" onClick={onFindNearby}>
           Sponsor Athlete
         </button>
         <button className="athlete-icon-btn" onClick={onProfile} aria-label="View profile">

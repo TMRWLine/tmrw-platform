@@ -1,30 +1,52 @@
+import plugin from 'tailwindcss/plugin';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  corePlugins: {
+    preflight: false,
+  },
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
-        display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+        sans: [
+          'Inter',
+          'Helvetica Neue',
+          'Helvetica',
+          'Arial',
+          'system-ui',
+          'sans-serif',
+        ],
+        mono: [
+          'IBM Plex Mono',
+          'SFMono-Regular',
+          'ui-monospace',
+          'Menlo',
+          'Consolas',
+          'monospace',
+        ],
       },
       colors: {
-        obsidian: {
-          DEFAULT: '#0a0a0c',
-          surface: '#121318',
-          border: '#1e1f26',
-        },
-        accent: {
-          primary: '#f97316',
-          hover: '#ea580c',
-          magenta: '#ec4899',
-        },
+        'brand-black': '#0A0A0C',
+        'brand-carbon': '#121214',
+        'brand-zinc': '#1E1E22',
+        'brand-cotton': '#FBFBF9',
+        'brand-cobalt': '#0052FF',
+        'brand-volt': '#D4FF00',
+        'brand-emerald': '#00D664',
+        'border-hairline': 'rgba(255, 255, 255, 0.08)',
+        'border-hairline-light': 'rgba(0, 0, 0, 0.08)',
+      },
+      clipPath: {
+        'blade-23': 'polygon(0 0, calc(100% - 42.45px) 0, 100% 100%, 0 100%)',
+        'blade-shutter': 'polygon(42.45px 0, 100% 0, calc(100% - 42.45px) 100%, 0 100%)',
       },
       animation: {
         'fade-up': 'fadeUp 0.8s ease-out forwards',
         'fade-in': 'fadeIn 0.6s ease-out forwards',
         'scroll-bounce': 'scrollBounce 2s ease-in-out infinite',
         'glow-pulse': 'glowPulse 3s ease-in-out infinite',
-        'marquee': 'marquee 30s linear infinite',
+        marquee: 'marquee 30s linear infinite',
       },
       keyframes: {
         fadeUp: {
@@ -50,5 +72,14 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(function ({ matchUtilities, theme }) {
+      matchUtilities(
+        {
+          clip: (value) => ({ clipPath: value }),
+        },
+        { values: theme('clipPath') }
+      );
+    }),
+  ],
 };

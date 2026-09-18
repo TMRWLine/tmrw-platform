@@ -59,7 +59,7 @@ function merchArt(kind: CollabDrop['art'] | string | undefined) {
   if (kind === 'socks') {
     return (
       <svg className="drop-art-svg" viewBox="0 0 80 80" aria-hidden="true">
-        <rect width="80" height="80" fill="#10B981" />
+        <rect width="80" height="80" fill="#00D664" />
         <path d="M30 16h12v28c0 10-6 16-14 16s-14-6-14-16V28h8v16c0 4 2 7 6 7s6-3 6-7V16z" fill="#FBFBF9" />
         <path d="M50 16h12v28c0 10-6 16-14 16" fill="none" stroke="#FBFBF9" strokeWidth="4" />
       </svg>
@@ -168,9 +168,9 @@ function mockPartner(
 }
 
 const MOCK_VERIFIED_PARTNERS: MatchedSponsor[] = [
-  mockPartner('mock-bondi-surf-co', 'Bondi Surf Co', 'Apparel & Fashion', 1.2, 80),
-  mockPartner('mock-local-metro-gym', 'Local Metro Gym', 'Health & Wellness', 3.4, 12),
-  mockPartner('mock-hpr-lab', 'High Performance Recovery Lab', 'Training & Coaching', 2.1, 210),
+  mockPartner('mock-fitzroy-athletics', 'Fitzroy Athletics Club', 'Apparel & Training', 1.2, 45),
+  mockPartner('mock-swanston-recovery', 'Swanston Street Recovery Lab', 'Health & Performance', 2.1, 5),
+  mockPartner('mock-city-sports-clinic', 'Melbourne City Sports Clinic', 'Physiotherapy', 3.4, 250),
 ];
 
 function formatKmAway(km: number | null | undefined): string {
@@ -216,6 +216,7 @@ export function SponsorDrawer({
   const [showMatch, setShowMatch] = useState(false);
   const [matching, setMatching] = useState(false);
   const [matchSponsors, setMatchSponsors] = useState<MatchedSponsor[]>([]);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
   const pkg = SPONSORSHIP_PACKAGES.find((p) => p.key === tier) ?? SPONSORSHIP_PACKAGES[1];
   const name = athleteDisplayName(athlete);
   const catchment = athleteCatchmentLocation(athlete, name);
@@ -241,6 +242,7 @@ export function SponsorDrawer({
   async function openNearbyMatch() {
     setShowMatch(true);
     setMatching(true);
+    setSelectedPartnerId(null);
     try {
       const res = await fetchNearbySponsors(athlete.id);
       const live = Array.isArray(res.matches) ? res.matches.filter((s) => s.lat != null && s.lng != null) : [];
@@ -264,7 +266,7 @@ export function SponsorDrawer({
   return (
     <>
       <div className="sponsor-drawer-overlay" onClick={onClose} />
-      <aside className="sponsor-drawer" role="dialog" aria-label="Sponsor athlete checkout">
+      <aside className="sponsor-drawer border-grid bg-brand-cotton font-sans" role="dialog" aria-label="Sponsor athlete checkout">
         <div className="sponsor-drawer-head">
           <div className="athlete-avatar">{athlete?.initials || athleteInitials(name)}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -334,6 +336,9 @@ export function SponsorDrawer({
                 Back to tiers
               </button>
             </div>
+            <div className="sponsor-match-metrics font-mono border-grid">
+              3 Verified Partners · 5.8k Weekly Postcode Impressions · 100% Exclusivity Available
+            </div>
 
             {matching ? (
               <div className="state">
@@ -347,18 +352,31 @@ export function SponsorDrawer({
                   sponsors={matchSponsors}
                   catchmentMeters={5000}
                   className="sponsor-match-map"
+                  selectedSponsorId={selectedPartnerId}
+                  onSelectSponsor={setSelectedPartnerId}
                 />
                 <span className="sponsor-drawer-label">Local partners</span>
                 <ul className="sponsor-match-list">
-                  {matchSponsors.map((s) => (
-                    <li key={s.id} className="sponsor-match-card">
-                      <div>
-                        <strong>{s.business_name}</strong>
-                        <span>{s.merchant_category ?? 'Sponsor'}</span>
-                      </div>
-                      <em>{formatKmAway(s.distance_km)}</em>
-                    </li>
-                  ))}
+                  {matchSponsors.map((s) => {
+                    const selected = selectedPartnerId === s.id;
+                    return (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          className={`sponsor-match-card ${selected ? 'selected' : ''}`}
+                          aria-pressed={selected}
+                          onClick={() => setSelectedPartnerId(s.id)}
+                        >
+                          <div className="sponsor-match-card-copy">
+                            <strong>{s.business_name}</strong>
+                            <span>{s.merchant_category ?? 'Sponsor'}</span>
+                            <em>{formatKmAway(s.distance_km)}</em>
+                          </div>
+                          <span className="sponsor-match-select">Select as Activation Partner</span>
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               </>
             )}
@@ -379,7 +397,7 @@ export function SponsorDrawer({
                   >
                     <div className="sponsor-tier-option-top">
                       <span className="sponsor-tier-option-label">{p.label}</span>
-                      <span className="sponsor-tier-option-price">{p.priceLabel}</span>
+                      <span className="sponsor-tier-option-price font-mono">{p.priceLabel}</span>
                     </div>
                     <div className="sponsor-tier-option-title">{p.title}</div>
                     <p className="sponsor-tier-option-blurb">{p.blurb}</p>
@@ -449,11 +467,11 @@ export function SponsorDrawer({
               return (
                 <article key={drop.id} className={`drop-card ${done ? 'authorized' : ''}`}>
                   <div className="drop-card-top">
-                    <div className="drop-art">{merchArt(drop.art)}</div>
+                    <div className="drop-art clip-blade-23">{merchArt(drop.art)}</div>
                     <div className="drop-card-meta">
                       <span className={`drop-status drop-status-${drop.status}`}>{drop.statusLabel}</span>
                       <h3>{drop.title}</h3>
-                      <div className="drop-price">A${drop.priceAud}</div>
+                      <div className="drop-price font-mono">A${drop.priceAud}</div>
                     </div>
                   </div>
 
@@ -492,7 +510,7 @@ export function SponsorDrawer({
                   </div>
 
                   <button
-                    className="athlete-sponsor-btn drop-authorize"
+                    className="athlete-sponsor-btn drop-authorize bg-brand-emerald"
                     onClick={() => authorizeDrop(drop)}
                     disabled={busy || authorizingId != null}
                   >
@@ -516,10 +534,10 @@ export function SponsorDrawer({
                   <Zap size={16} />
                   <h3>Stripe Connect split transfer</h3>
                 </div>
-                <p className="drop-settlement-event">
+                <p className="drop-settlement-event font-mono">
                   Webhook {settlement.stripeEventId} · {settlement.batchSize} × {settlement.dropTitle}
                 </p>
-                <ul className="drop-settlement-log">
+                <ul className="drop-settlement-log font-mono">
                   {settlement.transfers.map((t) => (
                     <li key={t.transferId}>
                       {t.transferId} → {t.destination} · {formatCurrency(t.amount, 'AUD')}
