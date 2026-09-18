@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import type { Athlete } from '../types';
 import { getSportComplianceBadges, getUniversalComplianceBadges } from '../types';
+import { athleteInitials, displayName, firstName } from '../lib/formatName';
 import { signMasterLicence } from '../api';
 import {
   isTwelveLabsConfigured,
@@ -210,7 +211,7 @@ export function BrandKitTab({ athlete, onSigned }: BrandKitTabProps) {
               </div>
               <div className="highlight-overlay-top">
                 <div className="highlight-badge">{athlete.sport ?? 'Sport'}</div>
-                <div className="highlight-name">{athlete.name}</div>
+                <div className="highlight-name">{displayName(athlete?.name)}</div>
               </div>
               <div className="highlight-center">
                 {!playing ? (
@@ -324,7 +325,7 @@ export function BrandKitTab({ athlete, onSigned }: BrandKitTabProps) {
           <Users size={15} /> Brand Assets &amp; Downloads
         </h3>
         <div className="info-grid">
-          <InfoRow label="Watermark ID" value={`WM-${athlete.id.slice(0, 8).toUpperCase()}`} />
+          <InfoRow label="Watermark ID" value={`WM-${(athlete?.id ?? 'unknown').slice(0, 8).toUpperCase()}`} />
           <InfoRow
             label="Licence Status"
             value={signed ? 'Licensed (2yr MOU)' : 'Unlicensed'}
@@ -477,12 +478,7 @@ function EventTimeline({
 /* ---------- Generated SVG Brand Logos ---------- */
 
 function BrandLogoSVG({ athlete, variant }: { athlete: Athlete; variant: 'shield' | 'monogram' | 'wordmark' }) {
-  const initials = athlete.name
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const initials = athleteInitials(athlete?.name);
 
   if (variant === 'monogram') {
     return (
@@ -496,7 +492,7 @@ function BrandLogoSVG({ athlete, variant }: { athlete: Athlete; variant: 'shield
   }
 
   if (variant === 'wordmark') {
-    const firstName = athlete.name.split(' ')[0] ?? 'Athlete';
+    const givenName = firstName(athlete?.name);
     return (
       <svg viewBox="0 0 200 80" width="140" height="56" xmlns="http://www.w3.org/2000/svg" className="brand-logo-svg">
         <circle cx="24" cy="40" r="18" fill="#000000" stroke="#000000" strokeWidth="2.5" />
@@ -504,7 +500,7 @@ function BrandLogoSVG({ athlete, variant }: { athlete: Athlete; variant: 'shield
           {initials}
         </text>
         <text x="52" y="38" fill="#000000" fontSize="16" fontWeight="700" fontFamily="Inter, sans-serif">
-          {firstName.toUpperCase()}
+          {givenName.toUpperCase()}
         </text>
         <text x="52" y="54" fill="#5A5A58" fontSize="8" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing="1.5">
           tmrw/.
@@ -534,12 +530,7 @@ function BrandLogoSVG({ athlete, variant }: { athlete: Athlete; variant: 'shield
 /* ---------- Dynamic SVG Brand Overlay (on video) ---------- */
 
 function BrandOverlaySVG({ athlete, signed }: { athlete: Athlete; signed: boolean }) {
-  const initials = athlete.name
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const initials = athleteInitials(athlete?.name);
 
   return (
     <svg
@@ -565,7 +556,7 @@ function BrandOverlaySVG({ athlete, signed }: { athlete: Athlete; signed: boolea
           {initials}
         </text>
         <text x="36" y="298" fill="#FFFFFF" fontSize="8" fontWeight="600" fontFamily="Inter, sans-serif">
-          {athlete.name.toUpperCase().slice(0, 18)}
+          {displayName(athlete?.name).toUpperCase().slice(0, 18)}
         </text>
         <text x="36" y="308" fill={signed ? '#FFFFFF' : '#888'} fontSize="6" fontFamily="Inter, sans-serif" letterSpacing="0.5">
           {signed ? 'LICENCED · 2YR MOU' : 'UNLICENCED'}
@@ -578,7 +569,7 @@ function BrandOverlaySVG({ athlete, signed }: { athlete: Athlete; signed: boolea
 /* ---------- Watermark SVG ---------- */
 
 function WatermarkSVG({ athlete }: { athlete: Athlete }) {
-  const wmId = `WM-${athlete.id.slice(0, 8).toUpperCase()}`;
+  const wmId = `WM-${(athlete?.id ?? 'unknown').slice(0, 8).toUpperCase()}`;
   return (
     <svg viewBox="0 0 200 200" width="180" height="180" xmlns="http://www.w3.org/2000/svg" className="watermark-svg">
       <circle cx="100" cy="100" r="92" fill="#000000" stroke="#000000" strokeWidth="3" />

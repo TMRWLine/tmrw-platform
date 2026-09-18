@@ -12,6 +12,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import type { Athlete } from '../types';
+import { displayName } from '../lib/formatName';
 import {
   generateAthleteHighlights,
   searchSponsorExposures,
@@ -121,7 +122,7 @@ function HighlightTab({
             <option value="">Choose an athlete…</option>
             {athletes.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.name} — {a.sport ?? 'athlete'}
+                {displayName(a?.name)} — {a.sport ?? 'athlete'}
               </option>
             ))}
           </select>

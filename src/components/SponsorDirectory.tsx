@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { Athlete, Sponsor } from '../types';
 import { formatCurrency, generateContractReview } from '../api';
+import { athleteInitials, displayName } from '../lib/formatName';
 
 type IndustryFilter = 'all' | 'fitness' | 'auto' | 'food' | 'apparel' | 'physio';
 
@@ -201,7 +202,7 @@ export function SponsorDirectory({
     setOutreach({ loading: true, result: null, error: null, copied: false });
     try {
       const res = await generateContractReview({
-        athleteName: athlete.name,
+        athleteName: displayName(athlete?.name),
         sportType: athlete.sport ?? 'athlete',
         sponsorCategory: pitchSponsor.merchant_category ?? 'Sponsorship',
       });
@@ -401,10 +402,10 @@ export function SponsorDirectory({
                     <div className="detail-athlete-card" key={athlete.id}>
                       <div className="detail-athlete-top">
                         <div className="avatar" style={{ width: 34, height: 34, fontSize: 12 }}>
-                          {athlete.name.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+                          {athleteInitials(athlete?.name)}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div className="detail-athlete-name">{athlete.name}</div>
+                          <div className="detail-athlete-name">{displayName(athlete?.name)}</div>
                           <div className="detail-athlete-sub">
                             {athlete.sport ?? '—'}
                             {athlete.current_club ? ` · ${athlete.current_club}` : ''}
@@ -494,7 +495,7 @@ export function SponsorDirectory({
                   <option value="">Choose an athlete…</option>
                   {athletes.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.name} — {a.sport ?? 'athlete'}
+                      {displayName(a?.name)} — {a.sport ?? 'athlete'}
                       {a.current_club ? ` (${a.current_club})` : ''}
                     </option>
                   ))}
@@ -504,10 +505,10 @@ export function SponsorDirectory({
               {selectedAthlete && (
                 <div className="pitch-athlete-preview">
                   <div className="avatar" style={{ width: 36, height: 36, fontSize: 13 }}>
-                    {selectedAthlete.name.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+                    {athleteInitials(selectedAthlete?.name)}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <strong>{selectedAthlete.name}</strong>
+                    <strong>{displayName(selectedAthlete?.name)}</strong>
                     <div className="sub" style={{ fontSize: 12 }}>
                       {selectedAthlete.sport ?? '—'}
                       {selectedAthlete.current_club ? ` · ${selectedAthlete.current_club}` : ''}

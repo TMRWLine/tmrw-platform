@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Send, Loader2, MessagesSquare, AlertCircle } from 'lucide-react';
 import type { Message, SenderType } from '../types';
 import { fetchMessages, sendMessage } from '../api';
+import { firstName } from '../lib/formatName';
 
 export function MessageThread({
   agreementId,
@@ -132,7 +133,7 @@ export function MessageThread({
             className={senderType === 'athlete' ? 'active' : ''}
             onClick={() => setSenderType('athlete')}
           >
-            As {athleteName.split(' ')[0]}
+            As {firstName(athleteName)}
           </button>
         </div>
         <div className="msg-input-row">

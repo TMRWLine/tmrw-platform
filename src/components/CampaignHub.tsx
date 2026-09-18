@@ -3,6 +3,7 @@ import { Megaphone, Plus, Loader2, MapPin, DollarSign, Target, Send, AlertCircle
 import type { Athlete, Campaign, CampaignApplication, Sponsor } from '../types';
 import { fetchCampaigns, createCampaign, fetchApplications, applyToCampaign } from '../api';
 import { formatCurrency } from '../api';
+import { displayName } from '../lib/formatName';
 
 export function CampaignHub({
   athletes,
@@ -139,20 +140,20 @@ export function CampaignHub({
       )}
 
       <div className="grid">
-        {campaigns.map((c) => {
+        {campaigns.filter(Boolean).map((c) => {
           const sponsor = sponsors.find((s) => s.id === c.sponsor_id);
           const campaignApps = apps[c.id] ?? [];
           return (
-            <div className="card campaign-card" key={c.id}>
+            <div className="card campaign-card" key={c.id ?? c.title}>
               <div className="card-top">
                 <div className="avatar">
                   <Megaphone size={18} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <h3>{c.title}</h3>
+                  <h3>{c.title ?? 'Untitled campaign'}</h3>
                   <div className="sub">{sponsor?.business_name ?? 'Unknown sponsor'}</div>
                 </div>
-                <span className={`badge ${c.status === 'active' ? 'success' : ''}`}>{c.status}</span>
+                <span className={`badge ${c.status === 'active' ? 'success' : ''}`}>{c.status ?? 'draft'}</span>
               </div>
 
               {c.description && <p className="campaign-desc">{c.description}</p>}
@@ -178,7 +179,7 @@ export function CampaignHub({
                     const athlete = athletes.find((a) => a.id === app.athlete_id);
                     return (
                       <div key={app.id} className="campaign-app-row">
-                        <span>{athlete?.name ?? 'Unknown athlete'}</span>
+                        <span>{displayName(athlete?.name, 'Unknown athlete')}</span>
                         <span className={`badge ${app.status === 'accepted' ? 'success' : app.status === 'declined' ? '' : 'accent'}`}>
                           {app.status}
                         </span>
@@ -202,7 +203,7 @@ export function CampaignHub({
                 >
                   <option value="">Apply as…</option>
                   {athletes.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
+                    <option key={a.id} value={a.id}>{displayName(a?.name)}</option>
                   ))}
                 </select>
               </div>

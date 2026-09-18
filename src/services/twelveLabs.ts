@@ -6,6 +6,7 @@
  */
 
 import type { Athlete } from '../types';
+import { lastName } from '../lib/formatName';
 
 export interface HighlightClip {
   id: string;
@@ -92,7 +93,7 @@ export async function generateAthleteHighlights(
 ): Promise<HighlightClip[]> {
   await delay(1400);
   const actions = sportActions(athlete?.sport ?? null);
-  const name = athlete?.name?.split(' ').slice(-1)[0] ?? 'Athlete';
+  const name = lastName(athlete?.name);
   const watermark = athlete?.current_club ? `${athlete.current_club} × SponsorMatch` : 'SponsorMatch';
 
   return actions.map((a, i) => {

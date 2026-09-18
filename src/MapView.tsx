@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import type { AthleteLocation, MatchedSponsor } from './types';
+import { displayName } from './lib/formatName';
 
 interface MapViewProps {
   athlete: AthleteLocation | null;
@@ -82,7 +83,7 @@ export default function MapView({ athlete, sponsors }: MapViewProps) {
       L.marker(pos, { icon: makeAthleteIcon() })
         .addTo(layer)
         .bindPopup(
-          `<div class="map-popup"><strong>${escapeHtml(athlete.name)}</strong><br/><span class="popup-sub">Athlete${athlete.postcode ? ' &middot; ' + escapeHtml(athlete.postcode) : ''}${athlete.follower_count != null ? ' &middot; ' + athlete.follower_count.toLocaleString() + ' followers' : ''}</span>${complianceLine}</div>`
+          `<div class="map-popup"><strong>${escapeHtml(displayName(athlete?.name))}</strong><br/><span class="popup-sub">Athlete${athlete.postcode ? ' &middot; ' + escapeHtml(athlete.postcode) : ''}${athlete.follower_count != null ? ' &middot; ' + athlete.follower_count.toLocaleString() + ' followers' : ''}</span>${complianceLine}</div>`
         );
       points.push(pos);
     }

@@ -6,6 +6,7 @@
  */
 
 import type { Athlete } from '../types';
+import { lastName } from './formatName';
 
 const API_BASE = 'https://api.twelvelabs.io/v1.3';
 
@@ -258,8 +259,8 @@ export async function ingestMatchFootage(
  * labels so the Brand Kit UI remains fully functional for demos.
  */
 export function generateMockEvents(athlete: Athlete): TwelveLabsEvent[] {
-  const sport = (athlete.sport ?? '').toLowerCase();
-  const name = athlete.name.split(' ').slice(-1)[0] ?? athlete.name;
+  const sport = (athlete?.sport ?? '').toLowerCase();
+  const name = lastName(athlete?.name);
 
   if (sport.includes('rugby')) {
     return [
