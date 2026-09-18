@@ -1,4 +1,20 @@
-import type { Athlete, AthleteLocation, MatchedSponsor, MatchSponsorsResponse, OutreachRequest, OutreachResponse, Agreement, Message, SenderType, Campaign, CampaignApplication, AgreementStatus, SpatialTier, SponsorshipTierKey } from './types';
+import type {
+  Athlete,
+  AthleteLocation,
+  MatchedSponsor,
+  MatchSponsorsResponse,
+  OutreachRequest,
+  OutreachResponse,
+  Agreement,
+  Message,
+  SenderType,
+  Campaign,
+  CampaignApplication,
+  AgreementStatus,
+  SpatialTier,
+  SpatialTierCode,
+} from './types';
+import { SPATIAL_TIERS } from './types';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { parseEwkbPoint } from './lib/postgis';
 
@@ -61,7 +77,6 @@ function byDistance(a: Athlete, b: Athlete): number {
   return (a.distance_km ?? Infinity) - (b.distance_km ?? Infinity);
 }
 
-/** Attach a haversine distance when the RPC is unavailable. */
 function withDistance(rows: Athlete[], lat: number, lng: number): Athlete[] {
   return rows
     .map((a) => ({
@@ -94,10 +109,8 @@ export async function fetchAthletesNearby(
 }
 
 /**
- * Athletes in a spatial catchment band via `get_athletes_by_tier`.
- *
- * The deployed function returns the full roster with `distance_km`, so the
- * band bounds (tier 1 ≤5km, tier 2 5–25km, tier 3 >25km) are applied here.
+ * Athletes in a spatial catchment band via `get_athletes_by_tier`, which takes
+ * the tier code ('01' | '02' | '03') and filters by distance server-side.
  */
 export async function fetchAthletesByTier(
   tier: SpatialTier,
@@ -112,60 +125,29 @@ export async function fetchAthletesByTier(
     tier_code: tier.code,
   });
 
-  const rows = error
-    ? withDistance(await fetchAthletes(), lat, lng)
-    : ((data ?? []) as Record<string, unknown>[]).map((row) => normalizeAthlete(row));
-
-  return rows
-    .filter((a) => {
+  if (error) {
+    return withDistance(await fetchAthletes(), lat, lng).filter((a) => {
       const km = a.distance_km;
       if (km == null) return false;
       return km >= tier.minKm && (tier.maxKm == null || km <= tier.maxKm);
-    })
-    .sort(byDistance);
-}
-
-/**
- * Books a sponsorship through `create_campaign_sponsorship` and returns the
- * athlete with its refreshed licence status.
- */
-export async function createCampaignSponsorship(params: {
-  athleteId: string;
-  tier: SponsorshipTierKey;
-  budgetCents: number;
-  storeLat?: number;
-  storeLon?: number;
-  storePostcode: string;
-}): Promise<Athlete | null> {
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase is not configured');
+    });
   }
 
-  const { error } = await supabase.rpc('create_campaign_sponsorship', {
-    p_athlete_id: params.athleteId,
-    p_budget_cents: params.budgetCents,
-    p_store_lat: params.storeLat ?? ROSTER_ORIGIN.lat,
-    p_store_lon: params.storeLon ?? ROSTER_ORIGIN.lng,
-    p_store_postcode: params.storePostcode,
-    p_tier: params.tier,
-  });
-  if (error) throw new Error(`Failed to create sponsorship: ${error.message}`);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => normalizeAthlete(row)).sort(byDistance);
+}
 
-  const { data } = await supabase.from('athletes').select('*').eq('id', params.athleteId).maybeSingle();
-  if (!data) return null;
-
-  const athlete = normalizeAthlete(data as Record<string, unknown>);
-  if (athlete.agreement_status === 'active') return athlete;
-
-  // The RPC books the campaign; promote the licence badge if it didn't.
-  const { data: updated } = await supabase
-    .from('athletes')
-    .update({ licence_status: 'ACTIVE' })
-    .eq('id', params.athleteId)
-    .select('*')
-    .maybeSingle();
-
-  return updated ? normalizeAthlete(updated as Record<string, unknown>) : athlete;
+/** Live "in range" totals for each catchment band, keyed by tier code. */
+export async function fetchCatchmentCounts(
+  lat: number = ROSTER_ORIGIN.lat,
+  lng: number = ROSTER_ORIGIN.lng
+): Promise<Record<SpatialTierCode, number>> {
+  const entries = await Promise.all(
+    SPATIAL_TIERS.map(async (tier) => {
+      const rows = await fetchAthletesByTier(tier, lat, lng);
+      return [tier.code, rows.length] as const;
+    })
+  );
+  return Object.fromEntries(entries) as Record<SpatialTierCode, number>;
 }
 
 export async function fetchSponsors(): Promise<MatchedSponsor[]> {
@@ -175,34 +157,13 @@ export async function fetchSponsors(): Promise<MatchedSponsor[]> {
     .select('*')
     .order('created_at', { ascending: true });
   if (error) throw new Error(`Failed to load sponsors: ${error.message}`);
-  return (data ?? []).map((s) => normalizeSponsor(s as Record<string, unknown>));
-}
-
-/** Map live sponsor rows (monthly_ad_budget_aud / target_radius_km) onto the UI shape. */
-export function normalizeSponsor(row: Record<string, unknown>): MatchedSponsor {
-  const radiusKm = typeof row.target_radius_km === 'number' ? row.target_radius_km : null;
-  const budget =
-    typeof row.budget_allocation === 'number'
-      ? row.budget_allocation
-      : typeof row.monthly_ad_budget_aud === 'number'
-        ? row.monthly_ad_budget_aud
-        : 0;
-  return {
-    ...(row as unknown as MatchedSponsor),
-    budget_allocation: budget,
-    currency: (row.currency as string | null) ?? 'AUD',
-    contact_email: (row.contact_email as string | null) ?? null,
-    target_radius_meters:
-      typeof row.target_radius_meters === 'number'
-        ? row.target_radius_meters
-        : radiusKm != null
-          ? radiusKm * 1000
-          : 0,
+  return (data ?? []).map((s) => ({
+    ...(s as MatchedSponsor),
     distance_meters: 0,
     distance_km: 0,
-    lat: (row.latitude as number | null) ?? null,
-    lng: (row.longitude as number | null) ?? null,
-  };
+    lat: (s as MatchedSponsor).latitude ?? null,
+    lng: (s as MatchedSponsor).longitude ?? null,
+  }));
 }
 
 export async function fetchAgreements(athleteId?: string): Promise<Agreement[]> {
@@ -265,7 +226,7 @@ export async function fetchSponsorsByRadius(
     .select('*')
     .order('created_at', { ascending: true });
   if (error) throw new Error(`Failed to load sponsors: ${error.message}`);
-  const all = (data ?? []).map((s) => normalizeSponsor(s as Record<string, unknown>));
+  const all = (data ?? []) as MatchedSponsor[];
   return all
     .map((s) => ({
       ...s,

@@ -8,9 +8,9 @@ import {
   RefreshCw,
   Copy,
   Check,
+  User,
   Shield,
   ShieldCheck,
-  Handshake,
   PenLine,
   Film,
   BadgeCheck,
@@ -31,6 +31,7 @@ import {
   Lock,
   Maximize2,
   Globe,
+  Crosshair,
 } from 'lucide-react';
 import type {
   Athlete,
@@ -41,7 +42,7 @@ import type {
   SpatialTierCode,
   SponsorshipTierKey,
 } from './types';
-import { SPATIAL_TIERS, SPONSORSHIP_PACKAGES } from './types';
+import { SPATIAL_TIERS } from './types';
 import { fetchAgreements } from './api';
 import { getSportComplianceBadges, getUniversalComplianceBadges } from './types';
 import { BrandKitTab } from './components/AthleteProfileModal';
@@ -54,26 +55,22 @@ import { AdminDrawer } from './components/AdminDrawer';
 import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { Hero } from './components/Hero';
 import { SpatialCatchment } from './components/SpatialCatchment';
-import { InstitutionalBlindspot, LifecycleStrip } from './components/EnterpriseDeck';
 import { SponsorDrawer } from './components/SponsorDrawer';
 
 import {
   fetchAthletes,
   fetchAthletesNearby,
   fetchAthletesByTier,
-  createCampaignSponsorship,
+  fetchCatchmentCounts,
   fetchSponsors,
   fetchNearbySponsors,
   fetchSponsorsByRadius,
   generateContractReview,
   formatCurrency,
   signMasterLicence,
-  normalizeAthlete,
 } from './api';
 import MapView from './MapView';
-import { athleteInitials, displayName } from './lib/formatName';
-import { formatLocationHex } from './lib/postgis';
-import { supabase } from './lib/supabase';
+import { athleteInitials, athleteDisplayName } from './lib/formatName';
 
 type View = 'athlete' | 'sponsor' | 'marketplace' | 'campaigns';
 
@@ -118,7 +115,7 @@ export function MarketplaceApp() {
   const [navView, setNavView] = useState<NavView>('roster');
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>('all');
   const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
-
+  const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
   const [drawerAthlete, setDrawerAthlete] = useState<Athlete | null>(null);
   const [booking, setBooking] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
@@ -143,6 +140,21 @@ export function MarketplaceApp() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      try {
+        const counts = await fetchCatchmentCounts();
+        if (!cancelled) setCatchmentCounts(counts);
+      } catch {
+        if (!cancelled) setCatchmentCounts(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
       setLoadingList(true);
       setListError(null);
       try {
@@ -151,13 +163,7 @@ export function MarketplaceApp() {
         if (tier) {
           rows = await fetchAthletesByTier(tier);
         } else if (radiusFilter === 'all') {
-          if (!supabase) {
-            rows = await fetchAthletes();
-          } else {
-            const { data, error } = await supabase.from('athletes').select('*');
-            if (error) throw new Error(`Failed to load athletes: ${error.message}`);
-            rows = (data ?? []).map((row) => normalizeAthlete(row as Record<string, unknown>));
-          }
+          rows = await fetchAthletes();
         } else {
           rows = await fetchAthletesNearby(radiusFilter === '25km' ? 25 : 50);
         }
@@ -172,41 +178,6 @@ export function MarketplaceApp() {
       cancelled = true;
     };
   }, [radiusFilter, catchmentTier]);
-
-  function openSponsorDrawer(athlete: Athlete) {
-    setDrawerAthlete(athlete);
-    setBookingError(null);
-    setBookingConfirmed(false);
-  }
-
-  async function handleConfirmSponsorship(tier: SponsorshipTierKey, postcode: string) {
-    if (!drawerAthlete) return;
-    const pkg = SPONSORSHIP_PACKAGES.find((p) => p.key === tier);
-    if (!pkg) return;
-
-    setBooking(true);
-    setBookingError(null);
-    try {
-      const updated = await createCampaignSponsorship({
-        athleteId: drawerAthlete.id,
-        tier,
-        budgetCents: pkg.budgetCents,
-        storePostcode: postcode,
-      });
-      const next: Athlete = updated ?? {
-        ...drawerAthlete,
-        licence_status: 'ACTIVE',
-        agreement_status: 'active',
-      };
-      setAthletes((prev) => prev.map((a) => (a.id === next.id ? { ...a, ...next } : a)));
-      setDrawerAthlete(next);
-      setBookingConfirmed(true);
-    } catch (e) {
-      setBookingError(e instanceof Error ? e.message : 'Failed to create sponsorship');
-    } finally {
-      setBooking(false);
-    }
-  }
 
   async function handleFindNearby(athlete: Athlete) {
     setActiveAthlete(athlete);
@@ -249,7 +220,7 @@ export function MarketplaceApp() {
     }));
     try {
       const res = await generateContractReview({
-        athleteName: displayName(activeAthlete?.name),
+        athleteName: athleteDisplayName(activeAthlete),
         sportType: sport,
         sponsorCategory: sponsor.merchant_category ?? 'Sponsorship',
       });
@@ -292,6 +263,33 @@ export function MarketplaceApp() {
     setProfileAthlete(athlete);
     setProfileTab('overview');
     setSignError(null);
+  }
+
+  function openSponsorDrawer(athlete: Athlete) {
+    setDrawerAthlete(athlete);
+    setBookingError(null);
+    setBookingConfirmed(false);
+  }
+
+  async function handleConfirmSponsorship(tier: SponsorshipTierKey, postcode: string) {
+    if (!drawerAthlete || booking || !tier || !postcode.trim()) return;
+    setBooking(true);
+    setBookingError(null);
+    try {
+      await new Promise((r) => setTimeout(r, 700));
+      const next: Athlete = {
+        ...drawerAthlete,
+        licence_status: 'ACTIVE',
+        agreement_status: 'active',
+      };
+      setDrawerAthlete(next);
+      setAthletes((prev) => prev.map((a) => (a.id === next.id ? { ...a, ...next } : a)));
+      setBookingConfirmed(true);
+    } catch (e) {
+      setBookingError(e instanceof Error ? e.message : 'Failed to book sponsorship');
+    } finally {
+      setBooking(false);
+    }
   }
 
   async function handleSignMOU() {
@@ -396,12 +394,12 @@ export function MarketplaceApp() {
           <>
             <SpatialCatchment
               selected={catchmentTier}
-              matchCount={loadingList ? null : athletes.length}
-              loading={loadingList}
+              counts={catchmentCounts}
               onSelect={(code) => {
                 setCatchmentTier(code);
-                if (code != null) setRadiusFilter('all');
+                setRadiusFilter('all');
               }}
+              onClear={() => setCatchmentTier(null)}
             />
             <div className="radius-filter">
               <span className="radius-filter-label">Radius:</span>
@@ -409,15 +407,15 @@ export function MarketplaceApp() {
                 <button
                   className={catchmentTier === null && radiusFilter === '25km' ? 'active' : ''}
                   onClick={() => { setCatchmentTier(null); setRadiusFilter('25km'); }}
-                >25KM</button>
+                >25km</button>
                 <button
                   className={catchmentTier === null && radiusFilter === '50km' ? 'active' : ''}
                   onClick={() => { setCatchmentTier(null); setRadiusFilter('50km'); }}
-                >50KM</button>
+                >50km</button>
                 <button
                   className={catchmentTier === null && radiusFilter === 'all' ? 'active' : ''}
                   onClick={() => { setCatchmentTier(null); setRadiusFilter('all'); }}
-                >ALL</button>
+                >All Postcodes</button>
               </div>
             </div>
             {loadingList ? (
@@ -438,8 +436,6 @@ export function MarketplaceApp() {
                 ))}
               </div>
             )}
-            <InstitutionalBlindspot />
-            <LifecycleStrip />
           </>
         )}
 
@@ -465,9 +461,9 @@ export function MarketplaceApp() {
           onConfirm={handleConfirmSponsorship}
           onClose={() => setDrawerAthlete(null)}
           onFindNearby={() => {
-            const target = drawerAthlete;
+            const a = drawerAthlete;
             setDrawerAthlete(null);
-            handleFindNearby(target);
+            if (a) handleFindNearby(a);
           }}
         />
       )}
@@ -480,7 +476,7 @@ export function MarketplaceApp() {
               <div>
                 <h2>Matched Sponsors</h2>
                 <div className="sub">
-                  For {activeAthlete!.name} · {activeAthlete!.sport ?? 'athlete'}
+                  For {athleteDisplayName(activeAthlete)} · {activeAthlete!.sport ?? 'athlete'}
                 </div>
               </div>
               <button
@@ -653,7 +649,7 @@ export function MarketplaceApp() {
 
       {showADMModal && activeAthlete && (
         <ADMModal
-          athleteName={activeAthlete.name}
+          athleteName={athleteDisplayName(activeAthlete)}
           matches={matches}
           manualOverride={manualOverride}
           onToggleOverride={() => setManualOverride(!manualOverride)}
@@ -663,7 +659,7 @@ export function MarketplaceApp() {
 
       {showSignModal && profileAthlete && (
         <SignMOUModal
-          athleteName={profileAthlete.name}
+          athleteName={athleteDisplayName(profileAthlete)}
           signing={signing}
           error={signError}
           onConfirm={handleSignMOU}
@@ -678,7 +674,7 @@ export function MarketplaceApp() {
 }
 
 function getAthleteCurrency(athlete?: Athlete | null): string {
-  const loc = (typeof athlete?.location === 'string' ? athlete.location : '').toLowerCase();
+  const loc = typeof athlete?.location === 'string' ? athlete.location.toLowerCase() : '';
   if (loc.includes('brazil') || loc.includes('brasil')) return 'BRL';
   if (loc.includes('new zealand') || loc.includes('zealand')) return 'NZD';
   if (athlete?.profile_data?.market_value_nzd != null) return 'NZD';
@@ -692,13 +688,13 @@ function initials(name?: string | null): string {
 function statusBadge(status?: string | null): { label: string; cls: string } {
   switch ((status ?? '').toLowerCase().replace(/\s+/g, '_')) {
     case 'active':
-      return { label: 'ACTIVE', cls: 'success' };
+      return { label: 'Active', cls: 'active' };
     case 'pending':
-      return { label: 'PENDING', cls: 'warning' };
+      return { label: 'Pending', cls: 'pending' };
     case 'expired':
-      return { label: 'EXPIRED', cls: 'warning' };
+      return { label: 'Expired', cls: 'warning' };
     default:
-      return { label: 'NO AGREEMENT', cls: '' };
+      return { label: 'No agreement', cls: '' };
   }
 }
 
@@ -714,51 +710,54 @@ function AthleteCard({
   onMediaStudio: () => void;
 }) {
   const st = statusBadge(athlete?.licence_status ?? athlete?.agreement_status);
-  const leagueTag = athlete?.tier_tag?.toUpperCase() || getLeagueTag(athlete?.sport);
-  const locationHex = formatLocationHex(
-    athlete?.location,
-    athlete?.latitude,
-    athlete?.longitude
-  );
-  const ipLocked = athlete?.ip_lock === true;
-  const sportLabel = (athlete?.sport ?? '—').toUpperCase();
+  const leagueTag = (athlete?.tier_tag || getLeagueTag(athlete?.sport))?.toLowerCase();
+  const ipLocked = athlete?.ip_lock === true || athlete?.master_licence_signed === true;
+  const name = athleteDisplayName(athlete);
   return (
     <div className="athlete-card">
       <div className="athlete-card-top">
-        <div className="athlete-avatar">{athlete?.initials || initials(athlete?.name)}</div>
+        <div className="athlete-avatar">{athlete?.initials || initials(name)}</div>
         <div className="athlete-card-info">
-          <h3 className="athlete-card-name">{displayName(athlete?.name)}</h3>
-          <span className="athlete-card-sport">{sportLabel}</span>
+          <h3 className="athlete-card-name">{name}</h3>
+          <span className="athlete-card-sport">{athlete?.sport ?? '—'}</span>
         </div>
-        <span className={`athlete-status ${st.cls}`}>{st.label}</span>
+        <span className={`athlete-status ${st.cls}`}>
+          {st.cls === 'active' && <span className="status-dot" />}
+          {st.label}
+        </span>
       </div>
       <div className="athlete-card-tags">
-        {locationHex && (
-          <span className="athlete-tag athlete-location-hex" title={locationHex}>
-            <MapPin size={11} /> {locationHex}
+        {athlete?.postcode && (
+          <span className="athlete-tag">
+            <Crosshair size={11} /> {athlete.postcode}
           </span>
         )}
-        {athlete?.postcode && (
-          <span className="athlete-tag">{athlete.postcode}</span>
-        )}
-        {leagueTag && (
-          <span className="athlete-league-badge">{leagueTag}</span>
-        )}
+        {leagueTag && <span className="athlete-league-badge">{leagueTag}</span>}
         {ipLocked && (
           <span className="athlete-tag ip-lock">
-            <ShieldCheck size={11} /> IP LOCK
+            <ShieldCheck size={11} /> IP Lock
+          </span>
+        )}
+        {athlete?.nrl_tpa_registered && (
+          <span className="athlete-tag">
+            <BadgeCheck size={11} /> NRL TPA
+          </span>
+        )}
+        {athlete?.shute_shield_compliant && (
+          <span className="athlete-tag">
+            <BadgeCheck size={11} /> Shute Shield
           </span>
         )}
       </div>
       <div className="athlete-card-actions">
-        <button className="btn btn-primary athlete-sponsor-btn" onClick={onFindNearby}>
-          <Handshake size={14} /> SPONSOR ATHLETE
+        <button className="athlete-sponsor-btn" onClick={onFindNearby}>
+          Sponsor Athlete
         </button>
         <button className="athlete-icon-btn" onClick={onProfile} aria-label="View profile">
-          <Eye size={15} />
+          <User size={16} />
         </button>
-        <button className="athlete-icon-btn" onClick={onMediaStudio} aria-label="Video reel">
-          <Film size={15} />
+        <button className="athlete-icon-btn" onClick={onMediaStudio} aria-label="AI Media Studio">
+          <Film size={16} />
         </button>
       </div>
     </div>
@@ -772,15 +771,14 @@ export default function App() {
 function getLeagueTag(sport: string | null): string | null {
   if (!sport) return null;
   const s = sport.toLowerCase();
-  if (s.includes('touch')) return '@SHUTESHIELD';
-  if (s.includes('basketball')) return '@NBL1';
-  if (s.includes('soccer') || s.includes('football')) return '@NPLNSW';
-  if (s.includes('rugby') && s.includes('union')) return '@SHUTESHIELD';
-  if (s.includes('rugby') && s.includes('league')) return '@NRL';
-  if (s.includes('afl')) return '@VFL';
-  if (s.includes('netball')) return '@SSN';
-  if (s.includes('cricket')) return '@NSWPREMIER';
-  if (s.includes('combat')) return '@CSA';
+  if (s.includes('basketball')) return '@nbl1';
+  if (s.includes('soccer') || s.includes('football')) return '@nplnsw';
+  if (s.includes('rugby') && s.includes('union')) return '@shuteshield';
+  if (s.includes('rugby') && s.includes('league')) return '@nrl';
+  if (s.includes('afl')) return '@vfl';
+  if (s.includes('netball')) return '@ssn';
+  if (s.includes('cricket')) return '@nswpremier';
+  if (s.includes('combat')) return '@csa';
   return null;
 }
 
@@ -876,9 +874,9 @@ function ProfileModal({
       <div className="panel-overlay" onClick={onClose} />
       <div className="modal" role="dialog" aria-label="Athlete profile">
         <div className="modal-head">
-          <div className="modal-avatar">{initials(athlete?.name)}</div>
+          <div className="modal-avatar">{initials(athleteDisplayName(athlete))}</div>
           <div style={{ flex: 1 }}>
-            <h2>{displayName(athlete?.name)}</h2>
+            <h2>{athleteDisplayName(athlete)}</h2>
             <div className="sub">
               {athlete.sport ?? '—'}
               {athlete.current_club ? ` · ${athlete.current_club}` : ''}
@@ -1342,7 +1340,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         </div>
         <p className="ledger-desc">
           Financial breakdown for the active sponsorship deal with{' '}
-          <strong>{displayName(athlete?.name)}</strong>. GST is calculated at 10% on the gross deal value.
+          <strong>{athleteDisplayName(athlete)}</strong>. GST is calculated at 10% on the gross deal value.
           The platform collects a 20% commission on the Ex-GST amount; the remaining 80% is
           released to the athlete's connected account via Stripe Connect split payment.
         </p>
@@ -1534,7 +1532,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
       <StatementsPanel
         grossExGst={grossExGst}
         currency={currency}
-        athleteName={displayName(athlete?.name)}
+        athleteName={athleteDisplayName(athlete)}
         startDate={startDate}
         endDate={endDate}
       />
@@ -1542,7 +1540,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
       {/* Two-Way In-App Messaging */}
       <MessageThread
         agreementId={activeDeal?.id ?? null}
-        athleteName={displayName(athlete?.name)}
+        athleteName={athleteDisplayName(athlete)}
       />
     </div>
   );

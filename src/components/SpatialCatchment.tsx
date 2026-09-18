@@ -1,46 +1,31 @@
-import { Loader2, Store, Building2, Network } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { SPATIAL_TIERS, type SpatialTierCode } from '../types';
-
-const TIER_ICONS: Record<SpatialTierCode, React.ReactNode> = {
-  1: <Store size={20} />,
-  2: <Building2 size={20} />,
-  3: <Network size={20} />,
-};
 
 export function SpatialCatchment({
   selected,
-  matchCount,
-  loading,
+  counts,
   onSelect,
+  onClear,
 }: {
   selected: SpatialTierCode | null;
-  matchCount: number | null;
-  loading: boolean;
-  onSelect: (code: SpatialTierCode | null) => void;
+  counts: Record<SpatialTierCode, number> | null;
+  onSelect: (code: SpatialTierCode) => void;
+  onClear: () => void;
 }) {
   return (
-    <div className="catchment-section">
+    <section className="catchment-section">
       <div className="catchment-header">
         <div>
-          <h2>Spatial Catchment Selector</h2>
-          <p>Select a catchment to query athletes by PostGIS distance from Sydney CBD</p>
+          <span className="catchment-eyebrow">02 —— SPONSORSHIP TIERS</span>
+          <h2>Buy reach by radius.</h2>
+          <p>
+            Select a spatial tier to live-filter the roster below by proximity to your store
+            network.
+          </p>
         </div>
-        {selected != null && (
-          <div className="catchment-summary">
-            {loading ? (
-              <>
-                <Loader2 size={13} className="spin" /> Querying catchment…
-              </>
-            ) : (
-              <>
-                <strong>{matchCount ?? 0}</strong> athletes in band
-                <button className="catchment-clear" onClick={() => onSelect(null)}>
-                  Clear
-                </button>
-              </>
-            )}
-          </div>
-        )}
+        <button className="catchment-clear" onClick={onClear} disabled={selected == null}>
+          Clear tier filter
+        </button>
       </div>
 
       <div className="catchment-grid">
@@ -52,19 +37,42 @@ export function SpatialCatchment({
               type="button"
               className={`catchment-card ${isSelected ? 'selected' : ''}`}
               aria-pressed={isSelected}
-              onClick={() => onSelect(isSelected ? null : tier.code)}
+              onClick={() => onSelect(tier.code)}
             >
-              <div className="catchment-card-top">
-                <span className="catchment-card-index">{tier.label}</span>
-                <span className="catchment-card-icon">{TIER_ICONS[tier.code]}</span>
+              <div className="catchment-card-head">
+                <span className="catchment-card-index">{tier.code}</span>
+                <span className="catchment-card-catchment">{tier.catchment}</span>
               </div>
-              <div className="catchment-card-catchment">{tier.catchment}</div>
-              <div className="catchment-card-title">{tier.title}</div>
+
+              <h3 className="catchment-card-title">{tier.title}</h3>
               <div className="catchment-card-price">{tier.price}</div>
+
+              <ul className="catchment-card-features">
+                {tier.features.map((feature) => (
+                  <li key={feature}>
+                    <Check size={13} /> {feature}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="catchment-card-foot">
+                <span className="catchment-card-range">
+                  In range <strong>{counts?.[tier.code] ?? '—'}</strong>
+                </span>
+                <span className="catchment-card-cta">
+                  {isSelected ? (
+                    <>
+                      Filtering roster <ChevronDown size={13} />
+                    </>
+                  ) : (
+                    'Select tier'
+                  )}
+                </span>
+              </div>
             </button>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

@@ -319,50 +319,49 @@ export interface CampaignApplication {
   created_at: string;
 }
 
-/** Spatial catchment bands used by the tier selector. */
-export type SpatialTierCode = 1 | 2 | 3;
+/** Spatial catchment bands used by the "Buy reach by radius" tier selector. */
+export type SpatialTierCode = '01' | '02' | '03';
 
 export interface SpatialTier {
   code: SpatialTierCode;
-  label: string;
   catchment: string;
   title: string;
   price: string;
+  features: string[];
   minKm: number;
   maxKm: number | null;
 }
 
 export const SPATIAL_TIERS: SpatialTier[] = [
   {
-    code: 1,
-    label: '01',
-    catchment: '≤ 5 km catchment',
+    code: '01',
+    catchment: '≤ 5 KM CATCHMENT',
     title: 'Storefront Radius',
-    price: 'A$2k – 8k / activation',
+    price: 'A$2k–8k / activation',
+    features: ['Single-store activation', 'In-aisle & window IP', 'Same-postcode geo-match'],
     minKm: 0,
     maxKm: 5,
   },
   {
-    code: 2,
-    label: '02',
-    catchment: '5 – 25 km cluster',
+    code: '02',
+    catchment: '5 – 25 KM CLUSTER',
     title: 'Metro Reach',
-    price: 'A$8k – 24k / activation',
+    price: 'A$8k–24k / activation',
+    features: ['Multi-store rollout', 'TwelveLabs airtime tracking', 'Regional league exposure'],
     minKm: 5,
     maxKm: 25,
   },
   {
-    code: 3,
-    label: '03',
-    catchment: '> 25 km network',
+    code: '03',
+    catchment: '> 25 KM NETWORK',
     title: 'Regional IP',
-    price: 'A$24k – 60k+ / activation',
+    price: 'A$24k–60k+ / activation',
+    features: ['Network-wide campaign', 'Exclusivity windows', 'Priority settlement rail'],
     minKm: 25,
     maxKm: null,
   },
 ];
 
-/** Commercial sponsorship tiers offered in the checkout drawer. */
 export type SponsorshipTierKey = 'TIER_1' | 'TIER_2' | 'TIER_3';
 
 export interface SponsorshipPackage {
@@ -398,6 +397,88 @@ export const SPONSORSHIP_PACKAGES: SponsorshipPackage[] = [
     blurb: 'Enterprise commitment across the full league roster.',
     budgetCents: 4_200_000,
     priceLabel: 'A$42,000',
+  },
+];
+
+export type CollabDropStatus = 'preorder' | 'ready' | 'limited';
+
+export interface CollabSplitTelemetry {
+  athletePayoutPct: number;
+  platformFeePct: number;
+  communityFundPct: number;
+}
+
+export interface CollabDrop {
+  id: string;
+  athleteName: string;
+  title: string;
+  priceAud: number;
+  status: CollabDropStatus;
+  statusLabel: string;
+  fulfillment: string;
+  sla: string;
+  inventoryLabel: string;
+  remaining: number | null;
+  editionSize: number | null;
+  batchSize: number;
+  split: CollabSplitTelemetry;
+  art: 'hoodie' | 'socks' | 'tee';
+}
+
+export const COLLAB_SPLIT: CollabSplitTelemetry = {
+  athletePayoutPct: 70,
+  platformFeePct: 20,
+  communityFundPct: 10,
+};
+
+export const HUNTER_BLIGH_COLLAB_DROPS: CollabDrop[] = [
+  {
+    id: 'drop-bondi-hoodie-2026',
+    athleteName: 'Hunter Bligh',
+    title: 'Bondi Postcode 2026 Core Hoodie',
+    priceAud: 95,
+    status: 'preorder',
+    statusLabel: 'Pre-order window open',
+    fulfillment: 'Printful fulfillment',
+    sla: '3–5 business days',
+    inventoryLabel: 'Pre-order · made to order',
+    remaining: null,
+    editionSize: null,
+    batchSize: 48,
+    split: COLLAB_SPLIT,
+    art: 'hoodie',
+  },
+  {
+    id: 'drop-grip-socks-3pk',
+    athleteName: 'Hunter Bligh',
+    title: 'Hunter Bligh x Local Hero Grip Socks 3-Pack',
+    priceAud: 35,
+    status: 'ready',
+    statusLabel: 'Ready to ship',
+    fulfillment: '3PL Bondi Junction',
+    sla: '3–5 business days',
+    inventoryLabel: 'In warehouse · ready to ship',
+    remaining: 216,
+    editionSize: null,
+    batchSize: 36,
+    split: COLLAB_SPLIT,
+    art: 'socks',
+  },
+  {
+    id: 'drop-signature-court-tee',
+    athleteName: 'Hunter Bligh',
+    title: 'Signature Court Tee — Limited Edition of 100',
+    priceAud: 60,
+    status: 'limited',
+    statusLabel: 'Limited edition',
+    fulfillment: 'Printful fulfillment',
+    sla: '3–5 business days',
+    inventoryLabel: '42 remaining',
+    remaining: 42,
+    editionSize: 100,
+    batchSize: 42,
+    split: COLLAB_SPLIT,
+    art: 'tee',
   },
 ];
 
