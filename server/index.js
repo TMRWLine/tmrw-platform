@@ -4,16 +4,18 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-// Load .env (Vite doesn't inject env vars into a standalone Node process).
+// Load .env / .env.local (Vite doesn't inject env vars into a standalone Node process).
 const __dirname = dirname(fileURLToPath(import.meta.url));
-try {
-  const envFile = readFileSync(join(__dirname, '..', '.env'), 'utf8');
-  for (const line of envFile.split('\n')) {
-    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+for (const name of ['.env', '.env.local']) {
+  try {
+    const envFile = readFileSync(join(__dirname, '..', name), 'utf8');
+    for (const line of (envFile ?? '').split('\n')) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+      if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+    }
+  } catch {
+    /* optional in hosted env */
   }
-} catch {
-  /* .env optional in hosted env */
 }
 
 const PORT = process.env.PROXY_PORT || 3001;
@@ -55,9 +57,29 @@ app.get('/api/match-sponsors', async (req, res) => {
       return res.status(500).json({ error: 'Supabase anon key not configured on the server' });
     }
 
-    // Step 1: fetch the athlete's location and new fields.
+    const emptyPayload = (id, extra = {}) => ({
+      athlete: {
+        id,
+        name: extra.name ?? null,
+        lat: extra.lat ?? null,
+        lng: extra.lng ?? null,
+        postcode: extra.postcode ?? null,
+        follower_count: extra.follower_count ?? null,
+        master_licence_signed: Boolean(extra.master_licence_signed),
+        nrl_tpa_registered: Boolean(extra.nrl_tpa_registered),
+        shute_shield_compliant: Boolean(extra.shute_shield_compliant),
+      },
+      matches: [],
+    });
+
+    // PostgREST returns 400 if `id` is not a UUID — never forward that to the drawer.
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(athleteId)) {
+      return res.status(200).json(emptyPayload(athleteId));
+    }
+
+    // Step 1: fetch the athlete with select=* so missing optional columns never 400.
     const athleteRes = await fetch(
-      `${supabaseRestUrl}/rest/v1/athletes?id=eq.${encodeURIComponent(athleteId)}&select=id,name,location,latitude,longitude,postcode,follower_count,master_licence_signed,nrl_tpa_registered,shute_shield_compliant`,
+      `${supabaseRestUrl}/rest/v1/athletes?id=eq.${encodeURIComponent(athleteId)}&select=*`,
       {
         headers: {
           apikey: SUPABASE_ANON_KEY,
@@ -67,15 +89,22 @@ app.get('/api/match-sponsors', async (req, res) => {
       }
     );
     if (!athleteRes.ok) {
-      return res.status(502).json({ error: `Failed to load athlete (${athleteRes.status})` });
+      return res.status(200).json(emptyPayload(athleteId));
     }
     const athleteRows = await athleteRes.json();
     if (!Array.isArray(athleteRows) || athleteRows.length === 0) {
-      return res.status(404).json({ error: 'Athlete not found' });
+      return res.status(200).json(emptyPayload(athleteId));
     }
-    const athlete = athleteRows[0];
-    if (!athlete.location) {
-      return res.status(400).json({ error: 'Athlete has no location set' });
+    const athlete = athleteRows[0] ?? {};
+    if (!athlete.location && athlete.latitude == null && athlete.longitude == null) {
+      return res.status(200).json(emptyPayload(athlete.id ?? athleteId, {
+        name: athlete.name ?? athlete.full_name ?? null,
+        postcode: athlete.postcode ?? null,
+        follower_count: athlete.follower_count ?? null,
+        master_licence_signed: Boolean(athlete.master_licence_signed ?? athlete.ip_lock),
+        nrl_tpa_registered: Boolean(athlete.nrl_tpa_registered),
+        shute_shield_compliant: Boolean(athlete.shute_shield_compliant),
+      }));
     }
 
     // Step 2: run the spatial match via the PostGIS RPC.

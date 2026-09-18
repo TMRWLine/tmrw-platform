@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   X,
   Loader2,
@@ -13,9 +13,9 @@ import {
   Zap,
 } from 'lucide-react';
 import type { Athlete, CollabDrop, SponsorshipTierKey } from '../types';
-import { HUNTER_BLIGH_COLLAB_DROPS, SPONSORSHIP_PACKAGES } from '../types';
+import { COLLAB_SPLIT, SPONSORSHIP_PACKAGES } from '../types';
 import { athleteDisplayName, athleteInitials } from '../lib/formatName';
-import { formatCurrency } from '../api';
+import { fetchCollabDrops, formatCurrency } from '../api';
 
 type DrawerTab = 'tiers' | 'drops';
 
@@ -42,7 +42,7 @@ export interface DropSettlement {
   };
 }
 
-function merchArt(kind: CollabDrop['art']) {
+function merchArt(kind: CollabDrop['art'] | string | undefined) {
   if (kind === 'hoodie') {
     return (
       <svg className="drop-art-svg" viewBox="0 0 80 80" aria-hidden="true">
@@ -75,11 +75,12 @@ function merchArt(kind: CollabDrop['art']) {
 
 function simulateSettlement(drop: CollabDrop, athleteName: string): DropSettlement {
   const grossExGst = drop.priceAud * drop.batchSize;
+  const split = drop.split ?? COLLAB_SPLIT;
   const gst = Math.round(grossExGst * 0.1 * 100) / 100;
   const totalIncGst = grossExGst + gst;
-  const athletePayout = Math.round(grossExGst * (drop.split.athletePayoutPct / 100) * 100) / 100;
-  const platformFee = Math.round(grossExGst * (drop.split.platformFeePct / 100) * 100) / 100;
-  const communityFund = Math.round(grossExGst * (drop.split.communityFundPct / 100) * 100) / 100;
+  const athletePayout = Math.round(grossExGst * (split.athletePayoutPct / 100) * 100) / 100;
+  const platformFee = Math.round(grossExGst * (split.platformFeePct / 100) * 100) / 100;
+  const communityFund = Math.round(grossExGst * (split.communityFundPct / 100) * 100) / 100;
   const nonce = Math.random().toString(36).slice(2, 10);
   const day = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   return {
@@ -132,13 +133,24 @@ export function SponsorDrawer({
   const [postcode, setPostcode] = useState(athlete?.postcode ?? '2000');
   const [authorizingId, setAuthorizingId] = useState<string | null>(null);
   const [settlement, setSettlement] = useState<DropSettlement | null>(null);
+  const [drops, setDrops] = useState<CollabDrop[]>([]);
   const pkg = SPONSORSHIP_PACKAGES.find((p) => p.key === tier) ?? SPONSORSHIP_PACKAGES[1];
   const name = athleteDisplayName(athlete);
 
-  const drops = useMemo(() => {
-    const target = name.toLowerCase();
-    return HUNTER_BLIGH_COLLAB_DROPS.filter((d) => d.athleteName.toLowerCase() === target);
-  }, [name]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await fetchCollabDrops(athlete);
+        if (!cancelled) setDrops(Array.isArray(rows) ? rows : []);
+      } catch {
+        if (!cancelled) setDrops([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [athlete?.id, athlete?.name, athlete?.full_name]);
 
   async function authorizeDrop(drop: CollabDrop) {
     if (authorizingId) return;
@@ -277,15 +289,15 @@ export function SponsorDrawer({
 
             {drops.length === 0 && (
               <div className="drop-empty">
-                No active collab drops for this athlete. Hunter Bligh currently holds the live
-                merch window.
+                No active merchandise drops configured for this athlete
               </div>
             )}
 
-            {drops.map((drop) => {
+            {(drops ?? []).filter(Boolean).map((drop) => {
               const busy = authorizingId === drop.id;
               const done = settlement?.dropId === drop.id;
-              const gross = drop.priceAud * drop.batchSize;
+              const gross = (drop.priceAud ?? 0) * (drop.batchSize || 1);
+              const split = drop.split ?? COLLAB_SPLIT;
               return (
                 <article key={drop.id} className={`drop-card ${done ? 'authorized' : ''}`}>
                   <div className="drop-card-top">
@@ -314,15 +326,15 @@ export function SponsorDrawer({
                     <span className="sponsor-drawer-label">Split telemetry</span>
                     <div className="drop-split-row">
                       <div>
-                        <strong>{drop.split.athletePayoutPct}%</strong>
+                        <strong>{split.athletePayoutPct}%</strong>
                         <span>Athlete Payout</span>
                       </div>
                       <div>
-                        <strong>{drop.split.platformFeePct}%</strong>
+                        <strong>{split.platformFeePct}%</strong>
                         <span>Platform Fee</span>
                       </div>
                       <div>
-                        <strong>{drop.split.communityFundPct}%</strong>
+                        <strong>{split.communityFundPct}%</strong>
                         <span>Community Fund</span>
                       </div>
                     </div>

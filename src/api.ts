@@ -13,10 +13,12 @@ import type {
   AgreementStatus,
   SpatialTier,
   SpatialTierCode,
+  CollabDrop,
 } from './types';
-import { SPATIAL_TIERS } from './types';
+import { COLLAB_SPLIT, HUNTER_BLIGH_COLLAB_DROPS, SPATIAL_TIERS } from './types';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { parseEwkbPoint } from './lib/postgis';
+import { athleteDisplayName } from './lib/formatName';
 
 const API_BASE = '/api';
 
@@ -150,6 +152,72 @@ export async function fetchCatchmentCounts(
   return Object.fromEntries(entries) as Record<SpatialTierCode, number>;
 }
 
+function isHunterBligh(athlete?: Athlete | null): boolean {
+  const n = athleteDisplayName(athlete).toLowerCase();
+  return n === 'hunter bligh';
+}
+
+function mockCollabDrops(athlete?: Athlete | null): CollabDrop[] {
+  if (!athlete || !isHunterBligh(athlete)) return [];
+  return Array.isArray(HUNTER_BLIGH_COLLAB_DROPS) ? HUNTER_BLIGH_COLLAB_DROPS : [];
+}
+
+function normalizeCollabDrop(row: Record<string, unknown> | CollabDrop | null | undefined): CollabDrop | null {
+  if (!row || typeof row !== 'object') return null;
+  const r = row as Record<string, unknown>;
+  const title = String(r.title ?? '').trim();
+  const price = typeof r.priceAud === 'number' ? r.priceAud : Number(r.price_aud);
+  if (!title || !Number.isFinite(price)) return null;
+  const art = r.art === 'hoodie' || r.art === 'socks' || r.art === 'tee' ? r.art : 'tee';
+  const rawSplit = r.split && typeof r.split === 'object' ? (r.split as Record<string, unknown>) : null;
+  const split = {
+    athletePayoutPct: Number(rawSplit?.athletePayoutPct ?? rawSplit?.athlete_payout_pct) || COLLAB_SPLIT.athletePayoutPct,
+    platformFeePct: Number(rawSplit?.platformFeePct ?? rawSplit?.platform_fee_pct) || COLLAB_SPLIT.platformFeePct,
+    communityFundPct: Number(rawSplit?.communityFundPct ?? rawSplit?.community_fund_pct) || COLLAB_SPLIT.communityFundPct,
+  };
+  return {
+    id: String(r.id ?? title),
+    athleteName: String(r.athleteName ?? r.athlete_name ?? ''),
+    title,
+    priceAud: price,
+    status: r.status === 'preorder' || r.status === 'ready' || r.status === 'limited' ? r.status : 'ready',
+    statusLabel: String(r.statusLabel ?? r.status_label ?? 'Active'),
+    fulfillment: String(r.fulfillment ?? 'Printful fulfillment'),
+    sla: String(r.sla ?? '3–5 business days'),
+    inventoryLabel: String(r.inventoryLabel ?? r.inventory_label ?? 'In stock'),
+    remaining: typeof r.remaining === 'number' ? r.remaining : null,
+    editionSize: typeof r.editionSize === 'number' ? r.editionSize : typeof r.edition_size === 'number' ? r.edition_size : null,
+    batchSize: typeof r.batchSize === 'number' && r.batchSize > 0 ? r.batchSize : typeof r.batch_size === 'number' && r.batch_size > 0 ? r.batch_size : 1,
+    split,
+    art,
+  };
+}
+
+/**
+ * Load collab merch drops for an athlete. Missing tables, 400s, and empty
+ * payloads all resolve to an array (mock catalog for Hunter Bligh, otherwise []).
+ */
+export async function fetchCollabDrops(athlete?: Athlete | null): Promise<CollabDrop[]> {
+  const fallback = mockCollabDrops(athlete);
+  if (!athlete?.id || !isSupabaseConfigured || !supabase) return fallback;
+
+  try {
+    const { data, error } = await supabase
+      .from('collab_drops')
+      .select('*')
+      .eq('athlete_id', athlete.id);
+
+    if (error || data == null) return fallback;
+    const rows = Array.isArray(data) ? data : [];
+    const mapped = rows
+      .map((row) => normalizeCollabDrop(row as Record<string, unknown>))
+      .filter((d): d is CollabDrop => d != null);
+    return mapped.length > 0 ? mapped : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function fetchSponsors(): Promise<MatchedSponsor[]> {
   if (!isSupabaseConfigured || !supabase) return [];
   const { data, error } = await supabase
@@ -194,26 +262,26 @@ export function formatCurrency(amount: number | null | undefined, currency: stri
 export async function fetchNearbySponsors(
   athleteId: string
 ): Promise<MatchSponsorsResponse> {
-  const res = await fetch(
-    `${API_BASE}/match-sponsors?athleteId=${encodeURIComponent(athleteId)}`,
-    { headers: { Accept: 'application/json' } }
-  );
-  if (!res.ok) {
-    let msg = `Match request failed (${res.status})`;
-    try {
-      const body = await res.json();
-      if (body?.error) msg = body.error;
-    } catch {
-      /* ignore parse error */
-    }
-    throw new Error(msg);
+  if (!athleteId?.trim()) {
+    return { athlete: null, matches: [] };
   }
-  const json = (await res.json()) as MatchSponsorsResponse & { error?: string };
-  if (json.error) throw new Error(json.error);
-  return {
-    athlete: json.athlete ?? null,
-    matches: Array.isArray(json.matches) ? json.matches : [],
-  };
+  try {
+    const res = await fetch(
+      `${API_BASE}/match-sponsors?athleteId=${encodeURIComponent(athleteId)}`,
+      { headers: { Accept: 'application/json' } }
+    );
+    if (!res.ok) {
+      return { athlete: null, matches: [] };
+    }
+    const json = (await res.json()) as MatchSponsorsResponse & { error?: string };
+    if (json.error) return { athlete: json.athlete ?? null, matches: [] };
+    return {
+      athlete: json.athlete ?? null,
+      matches: Array.isArray(json.matches) ? json.matches : [],
+    };
+  } catch {
+    return { athlete: null, matches: [] };
+  }
 }
 
 export async function fetchSponsorsByRadius(
