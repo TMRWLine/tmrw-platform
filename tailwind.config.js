@@ -22,7 +22,7 @@ export default {
           magenta: '#D10074',
           yellow: '#F9E300',
           cobalt: '#0052FF',
-          volt: '#D4FF00',
+          volt: '#D2FF00',
           zinc: '#121214',
           hairline: 'rgba(255, 255, 255, 0.12)',
         },

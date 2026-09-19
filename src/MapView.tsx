@@ -65,8 +65,8 @@ export default function MapView({
     mapRef.current = map;
 
     const resize = () => map.invalidateSize();
-    const t1 = window.setTimeout(resize, 80);
-    const t2 = window.setTimeout(resize, 320);
+    const t1 = window.setTimeout(resize, 200);
+    const t2 = window.setTimeout(resize, 400);
     window.addEventListener('resize', resize);
 
     return () => {
@@ -145,7 +145,8 @@ export default function MapView({
         map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
       }
     }
-    window.setTimeout(() => map.invalidateSize(), 80);
+    window.setTimeout(() => map.invalidateSize(), 200);
+    window.setTimeout(() => map.invalidateSize(), 400);
     const selectedId = selectedSponsorId;
     if (selectedId) {
       const selectedMarker = markerByIdRef.current.get(selectedId);
@@ -165,7 +166,11 @@ export default function MapView({
     window.setTimeout(() => marker.openPopup(), 120);
   }, [selectedSponsorId]);
 
-  return <div ref={containerRef} className={className ? `map-container ${className}` : 'map-container'} />;
+  return (
+    <div className={['relative h-full w-full overflow-hidden', className].filter(Boolean).join(' ')}>
+      <div ref={containerRef} className="map-container relative h-full w-full overflow-hidden" />
+    </div>
+  );
 }
 
 function sponsorPopupHtml(s: MatchedSponsor): string {

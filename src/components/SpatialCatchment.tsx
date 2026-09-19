@@ -40,12 +40,15 @@ export function SpatialCatchment({
               onClick={() => onSelect(tier.code)}
             >
               <div className="catchment-card-head">
-                <span className="catchment-card-index">{tier.code}</span>
-                <span className="catchment-card-catchment">{tier.catchment}</span>
+                <span className="catchment-card-index text-zinc-400 font-mono">
+                  {tier.code} {tier.catchment}
+                </span>
               </div>
 
-              <h3 className="catchment-card-title">{tier.title}</h3>
-              <div className="catchment-card-price">{tier.price}</div>
+              <h3 className="catchment-card-title text-white font-bold text-xl tracking-tight">
+                {tier.title}
+              </h3>
+              <div className="catchment-card-price font-mono text-white/80">{tier.price}</div>
 
               <ul className="catchment-card-features">
                 {tier.features.map((feature) => (

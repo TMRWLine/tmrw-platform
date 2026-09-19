@@ -347,14 +347,16 @@ export function SponsorDrawer({
               </div>
             ) : (
               <>
-                <MapView
-                  athlete={catchment}
-                  sponsors={matchSponsors}
-                  catchmentMeters={5000}
-                  className="sponsor-match-map"
-                  selectedSponsorId={selectedPartnerId}
-                  onSelectSponsor={setSelectedPartnerId}
-                />
+                <div className="relative isolate h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc">
+                  <MapView
+                    athlete={catchment}
+                    sponsors={matchSponsors}
+                    catchmentMeters={5000}
+                    className="relative h-full w-full overflow-hidden"
+                    selectedSponsorId={selectedPartnerId}
+                    onSelectSponsor={setSelectedPartnerId}
+                  />
+                </div>
                 <span className="sponsor-drawer-label">Local partners</span>
                 <ul className="sponsor-match-list">
                   {matchSponsors.map((s) => {
@@ -399,7 +401,9 @@ export function SponsorDrawer({
                       <span className="sponsor-tier-option-label">{p.label}</span>
                       <span className="sponsor-tier-option-price font-mono">{p.priceLabel}</span>
                     </div>
-                    <div className="sponsor-tier-option-title">{p.title}</div>
+                    <div className="sponsor-tier-option-title text-white font-bold text-xl tracking-tight">
+                      {p.title}
+                    </div>
                     <p className="sponsor-tier-option-blurb">{p.blurb}</p>
                   </button>
                 ))}

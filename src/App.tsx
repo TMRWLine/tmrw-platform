@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import Lenis from '@studio-freight/lenis';
 import {
   MapPin,
   X,
@@ -48,14 +49,15 @@ import { getSportComplianceBadges, getUniversalComplianceBadges } from './types'
 import { BrandKitTab } from './components/AthleteProfileModal';
 import { MessageThread } from './components/MessageThread';
 import { StatementsPanel } from './components/StatementsPanel';
-import { SponsorDirectory } from './components/SponsorDirectory';
-import { CampaignHub } from './components/CampaignHub';
 import { Navbar, type NavView } from './components/Navbar';
 import { AdminDrawer } from './components/AdminDrawer';
 import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { Hero } from './components/Hero';
+import { HeroFluidReveal } from './components/HeroFluidReveal';
+import { LandingNarrative } from './components/LandingNarrative';
 import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDrawer } from './components/SponsorDrawer';
+import { AthletePortal } from './components/AthletePortal';
 
 import {
   fetchAthletes,
@@ -72,7 +74,7 @@ import {
 import MapView from './MapView';
 import { athleteInitials, athleteDisplayName } from './lib/formatName';
 
-type View = 'athlete' | 'sponsor' | 'marketplace' | 'campaigns';
+type AppView = 'landing' | 'sponsor' | 'athlete';
 
 export type RadiusFilter = '25km' | '50km' | 'all';
 
@@ -86,7 +88,7 @@ type OutreachState = {
 type ProfileTab = 'overview' | 'brandkit' | 'agreement';
 
 export function MarketplaceApp() {
-  const [view, setView] = useState<View>('athlete');
+  const [view, setView] = useState<AppView>('landing');
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [loadingList, setLoadingList] = useState(true);
@@ -112,7 +114,8 @@ export function MarketplaceApp() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [mediaStudioOpen, setMediaStudioOpen] = useState(false);
   const [mediaStudioAthlete, setMediaStudioAthlete] = useState<Athlete | null>(null);
-  const [navView, setNavView] = useState<NavView>('roster');
+  const [navView, setNavView] = useState<NavView | null>(null);
+  const [athleteFocus, setAthleteFocus] = useState<'overview' | 'drops'>('overview');
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>('all');
   const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
   const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
@@ -120,6 +123,27 @@ export function MarketplaceApp() {
   const [booking, setBooking] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (view !== 'landing') return;
+
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    });
+
+    let frame = 0;
+    function raf(time: number) {
+      lenis.raf(time);
+      frame = requestAnimationFrame(raf);
+    }
+    frame = requestAnimationFrame(raf);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      lenis.destroy();
+    };
+  }, [view]);
 
   useEffect(() => {
     let cancelled = false;
@@ -271,6 +295,42 @@ export function MarketplaceApp() {
     setBookingConfirmed(false);
   }
 
+  function enterSponsorWorkspace() {
+    setView('sponsor');
+    setNavView('sponsor');
+  }
+
+  function enterAthletePortal(focus: 'overview' | 'drops' = 'overview') {
+    setAthleteFocus(focus);
+    setView('athlete');
+    setNavView(focus === 'drops' ? 'drops' : 'athlete');
+  }
+
+  const hunterAthlete =
+    athletes.find((a) => `${a.name ?? ''} ${a.full_name ?? ''}`.toLowerCase().includes('bligh')) ?? null;
+
+  const catchment3000: AthleteLocation = {
+    id: 'postcode-3000',
+    name: 'Postcode 3000',
+    lat: -37.8136,
+    lng: 144.9631,
+    postcode: '3000',
+    follower_count: null,
+    master_licence_signed: true,
+    nrl_tpa_registered: false,
+    shute_shield_compliant: true,
+  };
+
+  const workspaceSponsors: MatchedSponsor[] = (sponsors ?? [])
+    .filter((s) => s.latitude != null && s.longitude != null)
+    .map((s) => ({
+      ...s,
+      lat: s.latitude,
+      lng: s.longitude,
+      distance_meters: 0,
+      distance_km: 0,
+    }));
+
   async function handleConfirmSponsorship(tier: SponsorshipTierKey, postcode: string) {
     if (!drawerAthlete || booking || !tier || !postcode.trim()) return;
     setBooking(true);
@@ -315,24 +375,36 @@ export function MarketplaceApp() {
 
   return (
     <div className="app-shell bg-brand-black text-brand-white font-sans bg-grain">
-      <header className="topnav glass-header border-grid">
-        <div className="brand">
-          <div className="brand-lockup">
-            <span>tmrw</span>
-            <span className="brand-slash">/</span>
-            <span className="brand-dot" />
+      <header className="topnav glass-header bg-transparent">
+        <button
+          type="button"
+          onClick={() => {
+            setView('landing');
+            setNavView(null);
+            setAthleteFocus('overview');
+          }}
+          style={{ background: 'transparent', backgroundColor: 'transparent', border: 'none', padding: 0, margin: 0, boxShadow: 'none' }}
+          className="text-left cursor-pointer group focus:outline-none !bg-transparent !border-0 !shadow-none"
+          aria-label="Return to home"
+        >
+          <div className="flex items-baseline tracking-tight font-sans font-extrabold text-2xl leading-none !bg-transparent">
+            <span className="text-[#FFFFFF]">tmrw</span>
+            <span className="text-[#FFFFFF] animate-pulse drop-shadow-[0_0_8px_rgba(255,255,255,0.85)] mx-[1px]">
+              /
+            </span>
+            <span className="text-[#FFFFFF]">.</span>
           </div>
-          <div className="brand-tagline">Line Up Your Future</div>
-        </div>
+          <span className="block text-[10px] font-mono tracking-[0.25em] text-zinc-400 mt-1 uppercase leading-none !bg-transparent">
+            LINE UP YOUR FUTURE
+          </span>
+        </button>
         <Navbar
           activeView={navView}
           onNavigate={(v) => {
-            setNavView(v);
-            if (v === 'roster') setView('athlete');
-            else if (v === 'campaign') setView('campaigns');
-            else if (v === 'media') { setMediaStudioAthlete(null); setMediaStudioOpen(true); }
+            if (v === 'sponsor') enterSponsorWorkspace();
+            else if (v === 'drops') enterAthletePortal('drops');
+            else enterAthletePortal('overview');
           }}
-          onOpenAdmin={() => setAdminOpen(true)}
         />
       </header>
 
@@ -346,40 +418,27 @@ export function MarketplaceApp() {
         />
       )}
 
-      <main className="page">
-        {view === 'athlete' && !loadingList && !listError && (
+      {view === 'landing' ? (
+        <div className="landing-scroll">
           <Hero
-            onExplore={() => document.getElementById('athlete-roster')?.scrollIntoView({ behavior: 'smooth' })}
-            onMediaStudio={() => { setMediaStudioAthlete(null); setMediaStudioOpen(true); }}
+            FluidCanvas={HeroFluidReveal}
+            onSponsorAccess={enterSponsorWorkspace}
+            onAthletePortal={enterAthletePortal}
           />
-        )}
+          <LandingNarrative onSponsor={enterSponsorWorkspace} onAthlete={enterAthletePortal} />
+        </div>
+      ) : (
+      <main className="page">
         <div className="page-head editorial-copy" id="athlete-roster">
           <h1>
-            {view === 'athlete'
-              ? 'Athlete Roster'
-              : view === 'sponsor'
-                ? 'Sponsor Directory'
-                : view === 'marketplace'
-                  ? 'Sponsor Marketplace Directory'
-                  : 'Campaign Hub'}
+            {view === 'sponsor' ? 'Sponsor Discovery Workspace' : 'Athlete Commercial Dashboard'}
           </h1>
           <p>
-            {view === 'athlete'
-              ? `${athletes.length} athletes · find nearby sponsors and generate outreach copy`
-              : view === 'sponsor'
-                ? `${sponsors.length} sponsors · browse merchant categories and budgets`
-                : view === 'marketplace'
-                  ? 'Multi-criteria search · filter by sport, gender, followers, and radius'
-                  : 'Sponsors post open briefs · athletes apply based on postcode proximity'}
+            {view === 'sponsor'
+              ? 'PostGIS radius filters · postcode 3000 catchment · live partner map'
+              : 'Hunter Bligh overview · pending payouts · collab merch rail'}
           </p>
         </div>
-
-        {loadingList && view !== 'athlete' && (
-          <div className="state">
-            <div className="spinner" />
-            Loading sponsors…
-          </div>
-        )}
 
         {listError && (
           <div className="state">
@@ -390,7 +449,7 @@ export function MarketplaceApp() {
           </div>
         )}
 
-        {!listError && view === 'athlete' && (
+        {view === 'sponsor' && !listError && (
           <>
             <SpatialCatchment
               selected={catchmentTier}
@@ -418,6 +477,14 @@ export function MarketplaceApp() {
                 >All Postcodes</button>
               </div>
             </div>
+            <div className="relative isolate h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc">
+              <MapView
+                athlete={catchment3000}
+                sponsors={workspaceSponsors}
+                catchmentMeters={5000}
+                className="relative h-full w-full overflow-hidden"
+              />
+            </div>
             {loadingList ? (
               <div className="state">
                 <div className="spinner" />
@@ -439,18 +506,15 @@ export function MarketplaceApp() {
           </>
         )}
 
-        {!loadingList && !listError && view === 'sponsor' && (
-          <SponsorDirectory athletes={athletes} sponsors={sponsors} />
-        )}
-
-        {!loadingList && !listError && view === 'marketplace' && (
-          <SponsorDirectory athletes={athletes} sponsors={sponsors} />
-        )}
-
-        {!loadingList && !listError && view === 'campaigns' && (
-          <CampaignHub athletes={athletes} sponsors={sponsors} />
+        {view === 'athlete' && (
+          <AthletePortal
+            athlete={hunterAthlete}
+            focus={athleteFocus}
+            onOpenDrops={() => setAthleteFocus('drops')}
+          />
         )}
       </main>
+      )}
 
       {drawerAthlete && (
         <SponsorDrawer
@@ -502,7 +566,9 @@ export function MarketplaceApp() {
               )}
               {!matching && !matchError && matches.length === 0 && athleteLocation && (
                 <div className="radius-slider-section">
-                  <MapView athlete={athleteLocation} sponsors={[]} />
+                  <div className="relative isolate h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc">
+                    <MapView athlete={athleteLocation} sponsors={[]} className="relative h-full w-full overflow-hidden" />
+                  </div>
                   <div className="radius-slider-body">
                     <div className="radius-slider-head">
                       <MapPin size={16} />
@@ -567,7 +633,9 @@ export function MarketplaceApp() {
                 </div>
               )}
               {!matching && !matchError && (matches.length > 0 || (athleteLocation && matches.length === 0 && !athleteLocation)) && (
-                <MapView athlete={athleteLocation} sponsors={matches} />
+                <div className="relative isolate h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc">
+                  <MapView athlete={athleteLocation} sponsors={matches} className="relative h-full w-full overflow-hidden" />
+                </div>
               )}
               {!matching && !matchError && matches.length > 2 && (
                 <div className="carousel">
