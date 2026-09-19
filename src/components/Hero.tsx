@@ -49,22 +49,27 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
       style={{ ['--rake-offset' as string]: 'calc(100vh * 0.424475)' }}
     >
       <div className="hero-pane hero-pane-copy">
-        <div className="hero-eyebrow font-mono">
-          <span className="text-white font-bold">TMRW/.</span>
-          <span> // PERFORMANCE STACK</span>
+        <div className="font-mono text-xs tracking-widest uppercase mb-4 flex items-center gap-2">
+          <span className="text-white font-bold">tmrw/.</span>
+          <span className="text-[#D2FF00] font-semibold">// THE NEW STANDARD</span>
         </div>
-        <h1 className="hero-headline">The Stadiums Are Loud. The Suburbs Carry the Soul.</h1>
-        <div className="hero-hud font-mono" aria-label="Commercial telemetry">
-          [3,000 VERIFIED PLAYERS // BRISBANE 2032 RUNWAY // ZERO LEGAL FRICTION]
-        </div>
+        <h1 className="hero-headline tracking-tight">The Stadiums Are Loud. The Suburbs Carry the Soul.</h1>
+        <p className="hero-subhead">
+          The operating system connecting national brands directly to the players, fighters, and ballers who run
+          our neighbourhoods.
+        </p>
         <div className="hero-cta-row">
-          <button type="button" className="hero-cta-primary" onClick={onSponsorAccess}>
-            Enterprise Sponsor Access -&gt;
+          <button type="button" className="hero-cta-primary" onClick={onAthletePortal}>
+            Get Backed as a Player →
           </button>
-          <button type="button" className="hero-cta-secondary border-grid" onClick={onAthletePortal}>
-            Athlete NIL Portal
+          <button type="button" className="hero-cta-secondary border-grid" onClick={onSponsorAccess}>
+            Sponsor Your Suburbs →
           </button>
         </div>
+        <p className="hero-trust text-zinc-400 text-xs font-mono">
+          Free forever for players. Zero agency drag for brands. Three thousand verified athletes ready across
+          Australia and New Zealand.
+        </p>
       </div>
       <div
         className="hero-pane hero-pane-media relative overflow-hidden"

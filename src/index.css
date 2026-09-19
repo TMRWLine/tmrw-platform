@@ -213,6 +213,24 @@ button {
   color: var(--text); font-weight: 700;
   border-bottom: 2px solid var(--text);
 }
+.nav-actions {
+  display: flex; align-items: center; gap: 10px;
+}
+.nav-cta-primary,
+.nav-cta-ghost {
+  height: 36px; padding: 0 14px; border-radius: 0;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+  cursor: pointer; white-space: nowrap;
+}
+.nav-cta-primary {
+  background: #FFFFFF; color: #000000; border: none;
+}
+.nav-cta-primary.is-active { background: #D2FF00; color: #000000; }
+.nav-cta-ghost {
+  background: transparent; color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.nav-cta-ghost.is-active { border-color: #FFFFFF; }
 
 /* Compliance badge */
 .compliance-badge-nav {
@@ -658,6 +676,8 @@ button {
   }
   .nav-links.open { display: flex; }
   .nav-links button { padding: 14px 20px; border-bottom: var(--hairline); }
+  .nav-cta-primary,
+  .nav-cta-ghost { height: 32px; padding: 0 10px; font-size: 11px; }
 }
 
 /* ===== AI Media Studio modal ===== */
@@ -838,6 +858,18 @@ button {
   font-stretch: condensed;
 }
 
+.hero-subhead {
+  margin: 0; max-width: 46ch;
+  font-size: 16px; line-height: 1.55;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.hero-trust {
+  margin: 8px 0 0;
+  max-width: 48ch;
+  line-height: 1.5;
+}
+
 .hero-hud {
   display: flex; flex-wrap: wrap; gap: 0;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -963,7 +995,8 @@ button {
 .landing-chapter-cotton { background: #FBFBF9; color: #08080A; }
 .landing-chapter-carbon { background: #08080A; color: #FFFFFF; }
 .landing-kicker {
-  margin: 0 0 18px; font-size: 11px; letter-spacing: 0.16em; font-weight: 700; color: #0052FF;
+  margin: 0 0 18px; font-size: 12px; letter-spacing: 0.1em; font-weight: 600;
+  text-transform: uppercase; color: #0052FF;
 }
 .landing-kicker-volt { color: #D2FF00; }
 .landing-display {
@@ -979,6 +1012,56 @@ button {
 }
 .landing-lede { margin: 0 0 32px; font-size: 16px; line-height: 1.55; max-width: 62ch; color: #08080A; }
 .landing-lede-light { color: rgba(255,255,255,0.72); }
+.landing-compare {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border: 1px solid rgba(8,8,10,0.16);
+}
+.landing-compare article {
+  padding: 28px 24px;
+  border-right: 1px solid rgba(8,8,10,0.16);
+}
+.landing-compare article:last-child { border-right: 0; }
+.landing-compare h3 {
+  margin: 0 0 16px; font-size: 18px; letter-spacing: -0.03em;
+}
+.landing-compare ul { margin: 0; padding: 0 0 0 18px; }
+.landing-compare li {
+  margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: rgba(8,8,10,0.72);
+}
+.landing-compare li:last-child { margin-bottom: 0; }
+.landing-feature-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 0; margin-bottom: 36px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.landing-feature-grid article {
+  padding: 28px 24px;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  background: #08080A;
+}
+.landing-feature-grid article:nth-child(2n) { border-right: 0; }
+.landing-feature-grid article:nth-last-child(-n+2) { border-bottom: 0; }
+.landing-feature-grid h3 {
+  margin: 0 0 10px; font-size: 18px; letter-spacing: -0.03em; color: #FFFFFF;
+}
+.landing-feature-grid p {
+  margin: 0; font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.68);
+}
+.landing-chapter-hairline { border-top: 1px solid rgba(255,255,255,0.12); }
+.landing-tier-copy {
+  margin: 12px 0 0; font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.68);
+}
+.landing-close { border-top: 1px solid rgba(255,255,255,0.12); }
+@media (max-width: 900px) {
+  .landing-compare,
+  .landing-feature-grid { grid-template-columns: 1fr; }
+  .landing-compare article { border-right: 0; border-bottom: 1px solid rgba(8,8,10,0.16); }
+  .landing-compare article:last-child { border-bottom: 0; }
+  .landing-feature-grid article { border-right: 0; }
+  .landing-feature-grid article:nth-last-child(-n+2) { border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .landing-feature-grid article:last-child { border-bottom: 0; }
+}
 .reach-pill {
   display: inline-flex; align-items: center;
   background: #08080A; color: #FFFFFF;
@@ -1036,6 +1119,19 @@ button {
   background: #000000; color: rgba(255,255,255,0.55);
   border-top: 1px solid rgba(255,255,255,0.12);
   font-size: 11px; letter-spacing: 0.08em;
+}
+.landing-footer-brand {
+  align-items: flex-start;
+  padding: 36px clamp(24px, 6vw, 80px) 28px;
+  gap: 24px;
+}
+.landing-footer-mark {
+  background: transparent; border: none; padding: 0; margin: 0;
+  text-align: left; cursor: pointer;
+}
+.landing-footer-legal {
+  margin: 0; max-width: 62ch; line-height: 1.55;
+  color: rgba(255,255,255,0.45);
 }
 .landing-status { display: inline-flex; align-items: center; gap: 8px; color: #FFFFFF; }
 .landing-status-node {

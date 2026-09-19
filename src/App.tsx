@@ -49,7 +49,7 @@ import { getSportComplianceBadges, getUniversalComplianceBadges } from './types'
 import { BrandKitTab } from './components/AthleteProfileModal';
 import { MessageThread } from './components/MessageThread';
 import { StatementsPanel } from './components/StatementsPanel';
-import { Navbar, type NavView } from './components/Navbar';
+import { Navbar, type LandingSectionId, type NavView } from './components/Navbar';
 import { AdminDrawer } from './components/AdminDrawer';
 import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { Hero } from './components/Hero';
@@ -116,6 +116,7 @@ export function MarketplaceApp() {
   const [mediaStudioAthlete, setMediaStudioAthlete] = useState<Athlete | null>(null);
   const [navView, setNavView] = useState<NavView | null>(null);
   const [athleteFocus, setAthleteFocus] = useState<'overview' | 'drops'>('overview');
+  const [landingSection, setLandingSection] = useState<LandingSectionId | null>(null);
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>('all');
   const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
   const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
@@ -144,6 +145,16 @@ export function MarketplaceApp() {
       lenis.destroy();
     };
   }, [view]);
+
+  useEffect(() => {
+    if (view !== 'landing' || !landingSection) return;
+    const id = landingSection;
+    const t = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setLandingSection(null);
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [view, landingSection]);
 
   useEffect(() => {
     let cancelled = false;
@@ -306,6 +317,12 @@ export function MarketplaceApp() {
     setNavView(focus === 'drops' ? 'drops' : 'athlete');
   }
 
+  function goLandingSection(id: LandingSectionId) {
+    setView('landing');
+    setNavView(null);
+    setLandingSection(id);
+  }
+
   const hunterAthlete =
     athletes.find((a) => `${a.name ?? ''} ${a.full_name ?? ''}`.toLowerCase().includes('bligh')) ?? null;
 
@@ -378,11 +395,7 @@ export function MarketplaceApp() {
       <header className="topnav glass-header bg-transparent">
         <button
           type="button"
-          onClick={() => {
-            setView('landing');
-            setNavView(null);
-            setAthleteFocus('overview');
-          }}
+          onClick={() => setView('landing')}
           style={{ background: 'transparent', backgroundColor: 'transparent', border: 'none', padding: 0, margin: 0, boxShadow: 'none' }}
           className="text-left cursor-pointer group focus:outline-none !bg-transparent !border-0 !shadow-none"
           aria-label="Return to home"
@@ -394,17 +407,15 @@ export function MarketplaceApp() {
             </span>
             <span className="text-[#FFFFFF]">.</span>
           </div>
-          <span className="block text-[10px] font-mono tracking-[0.25em] text-zinc-400 mt-1 uppercase leading-none !bg-transparent">
+          <span className="block text-[10px] font-mono tracking-[0.3em] text-zinc-400 mt-1 uppercase leading-none !bg-transparent">
             LINE UP YOUR FUTURE
           </span>
         </button>
         <Navbar
           activeView={navView}
-          onNavigate={(v) => {
-            if (v === 'sponsor') enterSponsorWorkspace();
-            else if (v === 'drops') enterAthletePortal('drops');
-            else enterAthletePortal('overview');
-          }}
+          onSection={goLandingSection}
+          onJoinRoster={() => enterAthletePortal('overview')}
+          onEnterprise={enterSponsorWorkspace}
         />
       </header>
 
