@@ -19,50 +19,52 @@ export function LandingNarrative({
           className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent"
           aria-labelledby="breakdown-heading"
         >
-          <div className="pt-24 pb-16 px-8 md:px-16 h-full box-border">
-          <div className="font-mono text-xs tracking-widest uppercase mb-3 flex items-center gap-2">
-            <span className="text-[#D2FF00] font-semibold">// THE ARBITRAGE</span>
-          </div>
-          <h2
-            id="breakdown-heading"
-            className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tight !leading-[0.88] text-white mt-0"
-          >
-            THE MILLION-DOLLAR VANITY <span className="font-serif italic font-normal text-[#D2FF00]">TRAP.</span>
-          </h2>
-          <p className="text-zinc-400 text-sm md:text-base max-w-2xl mt-5 mb-8 leading-relaxed">
-            A broadcast logo on a national jersey buys boardroom ego. It does not put a single paying customer through
-            a suburban dealership, showroom, or retail register this Saturday. Traditional sports agencies burn eight
-            figures chasing the top one per cent. We decentralise that capital into the hometown champions your
-            customers actually follow, trust, and emulate.
-          </p>
-          <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <article className="border border-white/10 bg-white/[0.02] backdrop-blur-md p-6 md:p-8 flex flex-col justify-between">
-              <div className="flex items-center justify-between pb-4 border-b border-white/10 font-mono text-[11px] tracking-widest uppercase text-zinc-500">
-                <span>THE OLD WAY // LEGACY AGENCIES</span>
-                <span className="text-zinc-600">[DEPRECATING]</span>
+            <div className="relative w-full min-h-screen h-screen overflow-hidden flex flex-col justify-between pt-32 md:pt-36 pb-16 px-8 md:px-16 bg-transparent box-border">
+            <div>
+              <div className="font-mono text-xs tracking-widest uppercase mb-3 text-[#D2FF00]">
+                // THE ARBITRAGE
               </div>
-              <ul className="space-y-4 pt-6 m-0 list-none p-0 font-mono text-xs text-zinc-400">
-                <li>Nine-month legal cycles for a single jersey patch.</li>
-                <li>Passive broadcast airtime that viewers scroll past.</li>
-                <li>Store managers watch central marketing budgets vanish.</li>
-                <li>First-graders work shifts and buy their own boots.</li>
-              </ul>
-            </article>
-            <article className="border border-[#D2FF00]/40 bg-[#D2FF00]/[0.02] backdrop-blur-md p-6 md:p-8 flex flex-col justify-between shadow-[0_0_40px_rgba(210,255,0,0.03)]">
-              <div className="flex items-center justify-between pb-4 border-b border-white/10 font-mono text-[11px] tracking-widest uppercase text-[#D2FF00]">
-                <span className="font-bold">THE TMRW/. STANDARD</span>
-                <span className="text-[10px] text-black bg-[#D2FF00] px-2 py-0.5 font-bold font-mono">
-                  ACTIVE DEPLOYMENT
-                </span>
-              </div>
-              <ul className="space-y-4 pt-6 m-0 list-none p-0 font-mono text-xs text-zinc-200">
-                <li>Deploy fifty verified hometown athletes before kickoff.</li>
-                <li>Unfiltered community loyalty within fifteen kilometres of your doors.</li>
-                <li>Measurable customer foot traffic on Saturday morning.</li>
-                <li>Direct contractual backing and verified commercial status.</li>
-              </ul>
-            </article>
-          </div>
+              <h2
+                id="breakdown-heading"
+                className="text-5xl md:text-7xl font-black uppercase tracking-tight !leading-[0.88] text-white mt-0"
+              >
+                THE MILLION-DOLLAR VANITY <span className="font-serif italic font-normal text-[#D2FF00]">TRAP.</span>
+              </h2>
+              <p className="text-zinc-400 text-sm md:text-base max-w-2xl mt-4 leading-relaxed">
+                A broadcast logo on a national jersey buys boardroom ego. It does not put a single paying customer
+                through a suburban dealership, showroom, or retail register this Saturday. Traditional sports agencies
+                burn eight figures chasing the top one per cent. We decentralise that capital into the hometown
+                champions your customers actually follow, trust, and emulate.
+              </p>
+            </div>
+            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8 mb-4">
+              <article className="border border-white/10 bg-white/[0.02] backdrop-blur-md p-6 flex flex-col justify-between">
+                <div className="flex items-center justify-between pb-4 border-b border-white/10 font-mono text-[11px] tracking-widest uppercase text-zinc-500">
+                  <span>THE OLD WAY // LEGACY AGENCIES</span>
+                  <span className="text-zinc-600">[DEPRECATING]</span>
+                </div>
+                <ul className="space-y-4 pt-6 m-0 list-none p-0 font-mono text-xs text-zinc-400">
+                  <li>Nine-month legal cycles for a single jersey patch.</li>
+                  <li>Passive broadcast airtime that viewers scroll past.</li>
+                  <li>Store managers watch central marketing budgets vanish.</li>
+                  <li>First-graders work shifts and buy their own boots.</li>
+                </ul>
+              </article>
+              <article className="border border-[#D2FF00]/40 bg-[#D2FF00]/[0.02] backdrop-blur-md p-6 flex flex-col justify-between shadow-[0_0_40px_rgba(210,255,0,0.03)]">
+                <div className="flex items-center justify-between pb-4 border-b border-white/10 font-mono text-[11px] tracking-widest uppercase text-[#D2FF00]">
+                  <span className="font-bold">THE TMRW/. STANDARD</span>
+                  <span className="text-[10px] text-black bg-[#D2FF00] px-2 py-0.5 font-bold font-mono">
+                    ACTIVE DEPLOYMENT
+                  </span>
+                </div>
+                <ul className="space-y-4 pt-6 m-0 list-none p-0 font-mono text-xs text-zinc-200">
+                  <li>Deploy fifty verified hometown athletes before kickoff.</li>
+                  <li>Unfiltered community loyalty within fifteen kilometres of your doors.</li>
+                  <li>Measurable customer foot traffic on Saturday morning.</li>
+                  <li>Direct contractual backing and verified commercial status.</li>
+                </ul>
+              </article>
+            </div>
           </div>
         </section>
       </LandingStackSlot>
@@ -107,7 +109,7 @@ export function LandingNarrative({
         <div ref={horizontalTrackRef} id="horizontal-slider" className="landing-h-track flex w-[200vw] h-full">
           <div
             id="for-brands"
-            className="landing-h-panel relative w-screen h-screen flex-shrink-0 overflow-hidden flex flex-col justify-between p-10 md:p-20 pt-[88px] bg-transparent"
+            className="landing-h-panel relative w-screen h-screen flex-shrink-0 overflow-hidden flex flex-col justify-between px-8 md:px-16 pt-32 md:pt-36 pb-16 bg-transparent"
           >
             <section className="landing-chapter landing-chapter-carbon landing-h-copy bg-transparent" aria-labelledby="brands-heading">
               <p className="landing-kicker landing-kicker-volt font-mono text-xs tracking-widest uppercase text-[#D2FF00]">
@@ -162,7 +164,7 @@ export function LandingNarrative({
 
           <div
             id="campaign-architecture"
-            className="landing-h-panel relative w-screen h-screen flex-shrink-0 overflow-hidden flex flex-col justify-between p-10 md:p-20 pt-[88px] bg-transparent"
+            className="landing-h-panel relative w-screen h-screen flex-shrink-0 overflow-hidden flex flex-col justify-between px-8 md:px-16 pt-32 md:pt-36 pb-16 bg-transparent"
           >
             <section
               className="landing-chapter landing-chapter-carbon landing-h-copy bg-transparent"

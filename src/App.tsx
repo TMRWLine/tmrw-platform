@@ -481,7 +481,7 @@ export function MarketplaceApp() {
 
   return (
     <div className={`app-shell bg-brand-black text-brand-white font-sans bg-grain${view === 'landing' ? '' : ' app-shell-padded'}`}>
-      <header className="topnav glass-header bg-transparent">
+      <header className="topnav fixed top-0 left-0 w-full z-50 px-8 py-5 flex items-center justify-between backdrop-blur-md bg-[#08080A]/85 border-b border-white/5 transition-colors">
         <BrandLockup onClick={() => setView('landing')} />
         <Navbar
           activeView={navView}
@@ -522,12 +522,15 @@ export function MarketplaceApp() {
           />
         </div>
       ) : (
-      <main className="page">
-        <div className="page-head editorial-copy" id="athlete-roster">
-          <h1>
+      <main className="page bg-transparent">
+        <div className="page-head editorial-copy border-b border-white/10" id="athlete-roster">
+          <p className="font-mono text-xs tracking-widest uppercase text-[#D2FF00] mb-3">
+            {view === 'sponsor' ? '// ENTERPRISE WORKSPACE' : '// ATHLETE LEDGER'}
+          </p>
+          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white mt-0">
             {view === 'sponsor' ? 'Sponsor Discovery Workspace' : 'Athlete Commercial Dashboard'}
           </h1>
-          <p>
+          <p className="font-mono text-[11px] tracking-widest text-zinc-400 mt-3">
             {view === 'sponsor'
               ? 'PostGIS radius filters · postcode 3000 catchment · live partner map'
               : 'Hunter Bligh overview · pending payouts · collab merch rail'}

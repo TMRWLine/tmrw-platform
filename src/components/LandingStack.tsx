@@ -16,7 +16,7 @@ export function LandingStackSlot({
   sticky?: boolean;
   padded?: boolean;
 }) {
-  const padClass = padded ? 'p-10 md:p-20 pt-[88px]' : '';
+  const padClass = padded ? 'px-8 md:px-16 pt-32 md:pt-36 pb-16' : '';
   const card = (
     <div
       id={id}

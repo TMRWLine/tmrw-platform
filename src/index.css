@@ -132,23 +132,26 @@ button {
 .editorial-copy { letter-spacing: 0; }
 
 .app-shell { min-height: 100%; display: flex; flex-direction: column; }
-.app-shell-padded { padding-top: 72px; }
+.app-shell-padded { padding-top: 0; }
 
 /* ===== Top Navigation — Swiss Header ===== */
 
 .topnav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 50;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 32px;
-  height: 72px;
-  background: transparent;
-  border-bottom: var(--hairline);
-  transition: none;
+  padding: 1.25rem 2rem;
+  height: auto;
+  min-height: 0;
+  background: rgba(8, 8, 10, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background-color .2s ease, border-color .2s ease;
 }
 .topnav.glass-header {
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  background: rgba(8, 8, 10, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* tmrw/. brand lockup */
@@ -250,13 +253,16 @@ button {
 }
 
 /* Layout */
-.page { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; padding: 48px 32px 80px; width: 100%; }
-.page-head { margin-bottom: 32px; padding-bottom: 24px; border-bottom: var(--hairline); }
-.page-head h1 {
-  margin: 0 0 8px; font-size: clamp(28px, 4vw, 40px);
-  font-weight: 800; letter-spacing: -0.03em; line-height: 1.1;
+.page { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; padding: 8rem 2rem 5rem; width: 100%; box-sizing: border-box; }
+@media (min-width: 768px) {
+  .page { padding: 9rem 2rem 5rem; }
 }
-.page-head p { margin: 0; color: var(--text-muted); font-size: 14px; }
+.page-head { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.page-head h1 {
+  margin: 0;
+  font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: #FFFFFF;
+}
+.page-head p { color: #a1a1aa; }
 
 /* Cards grid */
 .grid {
@@ -559,8 +565,8 @@ button {
 .icon-btn:hover { background: var(--text); color: var(--bg); }
 
 @media (max-width: 640px) {
-  .topnav { padding: 0 16px; }
-  .page { padding: 24px 16px 60px; }
+  .topnav { padding: 1.25rem 1.5rem; }
+  .page { padding: 8rem 1.5rem 4rem; }
 }
 
 /* Admin toggle button */
@@ -846,7 +852,7 @@ button {
 }
 @media (min-width: 768px) {
   .hero-pane-copy {
-    padding: 10rem 4rem 4rem;
+    padding: 9rem 4rem 4rem;
   }
 }
 
@@ -1065,15 +1071,16 @@ button {
   transform-box: fill-box;
   transform-origin: center;
   stroke: rgba(255, 255, 255, 0.055);
+  will-change: transform;
 }
 .living-contour-path {
   stroke-dasharray: 520 180;
   animation: contourDash 36s linear infinite;
 }
 @keyframes contourDrift {
-  0% { transform: scale(1) rotate(0deg); }
-  50% { transform: scale(1.03) rotate(1.5deg); }
-  100% { transform: scale(1) rotate(0deg); }
+  0% { transform: translate3d(-1.6%, -1.1%, 0) scale(1) rotate(0deg); }
+  50% { transform: translate3d(1.8%, 1.4%, 0) scale(1.045) rotate(2.2deg); }
+  100% { transform: translate3d(-1.6%, -1.1%, 0) scale(1) rotate(0deg); }
 }
 @keyframes contourDash {
   to { stroke-dashoffset: -1400; }
@@ -1104,7 +1111,7 @@ button {
   overflow: hidden;
   background: transparent;
   margin: 0;
-  padding: 0;
+  box-sizing: border-box;
 }
 @media (max-width: 767px) {
   .landing-hslide {
@@ -1400,13 +1407,13 @@ button {
   animation: statusPulse 1.8s ease-out infinite;
 }
 
-.athlete-portal { display: flex; flex-direction: column; gap: 22px; }
+.athlete-portal { display: flex; flex-direction: column; gap: 22px; background: transparent; }
 .athlete-portal-head {
   display: flex; align-items: center; gap: 16px;
-  padding: 20px; background: #0A0A0C;
+  padding: 20px; background: rgba(255, 255, 255, 0.02);
 }
 .athlete-portal-head h1 {
-  margin: 4px 0 0; font-size: 32px; font-weight: 700; letter-spacing: -0.03em;
+  margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.03em; color: #FFFFFF;
 }
 .athlete-portal-meta { margin: 6px 0 0; font-size: 11px; color: rgba(255,255,255,0.55); }
 .athlete-portal-hud { align-self: stretch; }
@@ -1423,16 +1430,16 @@ button {
 }
 .nil-status-card {
   padding: 18px;
-  background: #08080A;
+  background: rgba(255, 255, 255, 0.02);
 }
 .nil-status-card span {
-  display: block; font-size: 10px; letter-spacing: 0.16em; color: #0052FF; margin-bottom: 8px;
+  display: block; font-size: 10px; letter-spacing: 0.16em; color: #a1a1aa; margin-bottom: 8px;
 }
 .nil-status-card strong {
   display: block; font-size: 18px; letter-spacing: -0.03em; color: #FFFFFF; margin-bottom: 8px;
 }
 .nil-status-card p {
-  margin: 0; font-size: 13px; line-height: 1.45; color: rgba(255,255,255,0.62);
+  margin: 0; font-size: 13px; line-height: 1.45; color: #a1a1aa;
 }
 
 /* ===== "Buy reach by radius" — Spatial Catchment Selector ===== */
@@ -1526,18 +1533,22 @@ button {
 
 /* ===== Sponsor checkout drawer ===== */
 .sponsor-drawer-overlay {
-  position: fixed; inset: 0; z-index: 85;
+  position: fixed; inset: 0; z-index: 35;
   background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(4px);
   animation: fade .2s ease;
 }
 .sponsor-drawer {
-  position: fixed; top: 0; right: 0; bottom: 0; z-index: 90;
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 40;
   width: min(520px, 96vw);
-  background: #0A0A0C; color: #FFFFFF;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  background: #08080A; color: #FFFFFF;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
   display: flex; flex-direction: column;
   min-height: 0;
+  padding-top: 8rem;
   animation: slidein .28s cubic-bezier(.2,.8,.2,1);
+}
+@media (min-width: 768px) {
+  .sponsor-drawer { padding-top: 9rem; }
 }
 .sponsor-drawer-head {
   display: flex; align-items: center; gap: 12px;
@@ -2273,7 +2284,7 @@ button {
 /* ===== Commercial Ledger & Settlement ===== */
 .ledger { display: flex; flex-direction: column; gap: 16px; }
 .ledger-section {
-  padding: 18px; border: var(--hairline); background: var(--bg-card);
+  padding: 18px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.02);
 }
 .ledger-head {
   display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
@@ -2290,20 +2301,20 @@ button {
 .ledger-breakdown { display: flex; flex-direction: column; gap: 0; }
 .ledger-row {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 0; border-bottom: var(--hairline);
+  padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 .ledger-row:last-child { border-bottom: none; }
 .ledger-row-label {
   display: inline-flex; align-items: center; gap: 8px;
-  font-size: 13px; font-weight: 600; color: var(--text-muted);
+  font-size: 13px; font-weight: 600; color: #a1a1aa;
 }
 .ledger-row-value {
-  font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums;
+  font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; color: #FFFFFF;
 }
-.ledger-row-value.gross { color: var(--text); }
-.ledger-row-value.commission { color: var(--text-muted); }
-.ledger-row-value.net { color: var(--text); font-weight: 800; }
-.ledger-divider { height: 1px; background: var(--border); margin: 2px 0; }
+.ledger-row-value.gross { color: #FFFFFF; }
+.ledger-row-value.commission { color: #a1a1aa; }
+.ledger-row-value.net { color: #FFFFFF; font-weight: 800; }
+.ledger-divider { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 2px 0; }
 
 .ledger-toggle-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .ledger-confirmed-tag {
@@ -2434,16 +2445,16 @@ button {
   display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; align-items: center;
 }
 .stmt-month-chip {
-  padding: 5px 12px; font-size: 11px; border: var(--hairline);
-  background: var(--bg); color: var(--text-muted); cursor: pointer; transition: all .15s;
+  padding: 5px 12px; font-size: 11px; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02); color: #a1a1aa; cursor: pointer; transition: all .15s;
   text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
 }
 .stmt-month-chip.active {
-  background: var(--text); color: var(--bg); border-color: var(--text);
+  background: #D2FF00; color: #08080A; border-color: #D2FF00;
 }
 .stmt-detail {
   margin-top: 12px; padding: 16px;
-  background: var(--bg); border: var(--hairline);
+  background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .stmt-detail-head {
   display: flex; align-items: center; gap: 8px;

@@ -59,6 +59,7 @@ uniform sampler2D uImage;
 uniform sampler2D uTrail;
 uniform vec2 uPlaneSize;
 uniform vec2 uImageSize;
+uniform float uTime;
 varying vec2 vUv;
 
 vec2 getCoverUv(vec2 uv, vec2 screenRes, vec2 imageRes) {
@@ -69,11 +70,12 @@ vec2 getCoverUv(vec2 uv, vec2 screenRes, vec2 imageRes) {
 }
 
 void main() {
-  vec2 coverUv = getCoverUv(vUv, uPlaneSize, uImageSize);
+  vec2 dynamicOffset = vec2(sin(uTime * 0.4), cos(uTime * 0.3)) * 0.008;
+  vec2 coverUv = getCoverUv(vUv + dynamicOffset, uPlaneSize, uImageSize);
   vec3 tex = texture2D(uImage, coverUv).rgb;
   float luma = dot(tex, vec3(0.299, 0.587, 0.114));
   vec3 mono = vec3(luma);
-  float mask = texture2D(uTrail, vUv).r;
+  float mask = texture2D(uTrail, clamp(vUv + dynamicOffset, 0.0, 1.0)).r;
   float mixAmt = smoothstep(0.04, 0.78, mask);
   vec3 color = mix(mono, tex, mixAmt);
   gl_FragColor = vec4(color, 1.0);
@@ -172,6 +174,7 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
       uTrail: { value: placeholder as THREE.Texture },
       uPlaneSize: { value: new THREE.Vector2(1, 1) },
       uImageSize: { value: new THREE.Vector2(1, 1) },
+      uTime: { value: 0 },
     };
 
     const simMaterial = new THREE.ShaderMaterial({
@@ -203,6 +206,7 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
     let raf = 0;
     let disposed = false;
     let lastTick = performance.now();
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const disposeOwned = () => {
       if (imageOwned && imageTex !== placeholder) imageTex.dispose();
@@ -308,6 +312,7 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
       const dt = Math.min((now - lastTick) / 1000, 0.05);
       lastTick = now;
       simUniforms.uDecay.value = Math.pow(TRAIL_DECAY, dt * 60);
+      if (!reduced) displayUniforms.uTime.value = now * 0.001;
       simUniforms.uPrev.value = read.texture;
       simUniforms.uMouse.value.copy(mouse);
       simUniforms.uPrevMouse.value.copy(prevMouse);
@@ -337,7 +342,6 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
     load(srcRef.current);
     apiRef.current = { load };
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const onWindowMove = (e: PointerEvent) => {
       if (!reduced) applyParallax(e);
     };

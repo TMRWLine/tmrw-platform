@@ -16,7 +16,7 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
         <FluidCanvas imageSrc={HERO_TENNIS} />
         <div className="hero-legibility pointer-events-none absolute inset-0 z-[2]" aria-hidden="true" />
       </div>
-      <div className="hero-pane hero-pane-copy relative z-10 pt-32 md:pt-40 pb-16 px-8 md:px-16">
+      <div className="hero-pane hero-pane-copy relative z-10 pt-32 md:pt-36 pb-16 px-8 md:px-16">
         <div className="font-mono text-xs tracking-widest uppercase mb-4 flex items-center gap-2">
           <span className="text-white font-bold">
             tmrw<span className="text-[#D2FF00]">/.</span>
