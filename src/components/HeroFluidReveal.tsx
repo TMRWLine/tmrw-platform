@@ -378,6 +378,9 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
     wrap.addEventListener('touchstart', onTouchMove, { passive: true });
     wrap.addEventListener('touchmove', onTouchMove, { passive: true });
     wrap.addEventListener('pointerleave', onLeave);
+    canvas.addEventListener('pointermove', onPointerMove, { passive: true });
+    canvas.addEventListener('mousemove', onMouseMove, { passive: true });
+    canvas.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointermove', onPointerMove, { passive: true, capture: true });
     window.addEventListener('mousemove', onMouseMove, { passive: true, capture: true });
     window.addEventListener('touchmove', onTouchMove, { passive: true, capture: true });
@@ -394,6 +397,9 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
       wrap.removeEventListener('touchstart', onTouchMove);
       wrap.removeEventListener('touchmove', onTouchMove);
       wrap.removeEventListener('pointerleave', onLeave);
+      canvas.removeEventListener('pointermove', onPointerMove);
+      canvas.removeEventListener('mousemove', onMouseMove);
+      canvas.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove, true);
       window.removeEventListener('mousemove', onMouseMove, true);
       window.removeEventListener('touchmove', onTouchMove, true);
@@ -418,6 +424,7 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
     <div
       ref={wrapRef}
       className="hero-fluid-reveal absolute inset-0 w-full h-full pointer-events-auto z-0"
+      style={{ pointerEvents: 'auto' }}
     />
   );
 }

@@ -481,7 +481,7 @@ export function MarketplaceApp() {
 
   return (
     <div className={`app-shell bg-brand-black text-brand-white font-sans bg-grain${view === 'landing' ? '' : ' app-shell-padded'}`}>
-      <header className="topnav fixed top-0 left-0 w-full z-50 px-8 py-5 flex items-center justify-between backdrop-blur-md bg-[#08080A]/85 border-b border-white/5 transition-colors">
+      <header className="topnav fixed top-0 left-0 w-full z-50 px-8 py-5 flex items-center justify-between backdrop-blur-md bg-[#08080A]/85 border-b border-white/5 transition-colors pointer-events-auto">
         <BrandLockup onClick={() => setView('landing')} />
         <Navbar
           activeView={navView}

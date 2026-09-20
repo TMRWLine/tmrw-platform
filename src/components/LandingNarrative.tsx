@@ -35,7 +35,7 @@ export function LandingNarrative({
               figures chasing the top one per cent. We decentralise that capital into the hometown champions your
               customers actually follow, trust, and emulate.
             </p>
-            <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div className="border border-white/10 bg-white/[0.02] backdrop-blur-md p-6 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between pb-3 border-b border-white/10 font-mono text-[10px] tracking-widest uppercase text-zinc-500">

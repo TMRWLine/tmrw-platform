@@ -37,6 +37,7 @@ export function Navbar({ activeView, onSection, onJoinRoster, onEnterprise }: Na
           <button
             key={item.id}
             type="button"
+            className="pointer-events-auto"
             onClick={() => {
               onSection(item.id);
               setMobileOpen(false);
@@ -49,7 +50,7 @@ export function Navbar({ activeView, onSection, onJoinRoster, onEnterprise }: Na
       <div className="nav-actions">
         <button
           type="button"
-          className={`nav-cta-primary px-5 py-2.5${rosterActive ? ' is-active' : ''}`}
+          className={`nav-cta-primary px-5 py-2.5 pointer-events-auto${rosterActive ? ' is-active' : ''}`}
           onClick={() => {
             onJoinRoster();
             setMobileOpen(false);
@@ -59,7 +60,7 @@ export function Navbar({ activeView, onSection, onJoinRoster, onEnterprise }: Na
         </button>
         <button
           type="button"
-          className={`nav-cta-ghost border-white/20 text-white px-5 py-2.5${enterpriseActive ? ' is-active' : ''}`}
+          className={`nav-cta-ghost border-white/20 text-white px-5 py-2.5 pointer-events-auto${enterpriseActive ? ' is-active' : ''}`}
           onClick={() => {
             onEnterprise();
             setMobileOpen(false);

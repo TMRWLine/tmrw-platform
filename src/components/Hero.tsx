@@ -12,7 +12,7 @@ const HERO_TENNIS =
 export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluidReveal }: HeroProps) {
   return (
     <section className="hero-section relative h-screen min-h-screen max-h-screen overflow-hidden bg-transparent pointer-events-none" aria-label="TMRW editorial landing">
-      <div className="hero-pane hero-pane-media absolute inset-0 z-0 overflow-hidden pointer-events-auto">
+      <div className="hero-pane-media absolute inset-0 w-full h-full pointer-events-auto z-0">
         <FluidCanvas imageSrc={HERO_TENNIS} />
         <div className="hero-legibility pointer-events-none absolute inset-0 z-[2]" aria-hidden="true" />
       </div>
@@ -33,10 +33,10 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
             Automated compliance. Direct deployment. Real backing before the opening whistle.
           </p>
           <div className="hero-cta-row flex-nowrap pointer-events-auto">
-            <button type="button" className="hero-cta-primary" onClick={onAthletePortal}>
+            <button type="button" className="hero-cta-primary pointer-events-auto" onClick={onAthletePortal}>
               Get Backed as an Athlete →
             </button>
-            <button type="button" className="hero-cta-secondary border-grid" onClick={onSponsorAccess}>
+            <button type="button" className="hero-cta-secondary border-grid pointer-events-auto" onClick={onSponsorAccess}>
               Sponsor Your Suburbs →
             </button>
           </div>
