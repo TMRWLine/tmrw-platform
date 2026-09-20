@@ -1,5 +1,8 @@
 import { type ReactNode } from 'react';
 
+export const VIEWPORT_SHELL =
+  'relative w-full h-screen min-h-screen max-h-screen overflow-hidden flex flex-col justify-between pt-28 pb-10 px-8 md:px-16 bg-transparent z-10';
+
 const CARD_CLASS =
   'landing-stack-card relative w-full h-screen min-h-screen max-h-screen overflow-hidden flex flex-col justify-between sticky top-0 bg-transparent';
 
@@ -16,7 +19,7 @@ export function LandingStackSlot({
   sticky?: boolean;
   padded?: boolean;
 }) {
-  const padClass = padded ? 'px-8 md:px-16 pt-32 md:pt-36 pb-16' : '';
+  const padClass = padded ? VIEWPORT_SHELL : '';
   const card = (
     <div
       id={id}

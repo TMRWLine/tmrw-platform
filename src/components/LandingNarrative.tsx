@@ -1,5 +1,5 @@
 import type { Ref } from 'react';
-import { BrandLockup, LandingStackSlot } from './LandingStack';
+import { BrandLockup, LandingStackSlot, VIEWPORT_SHELL } from './LandingStack';
 
 export function LandingNarrative({
   onSponsor,
@@ -14,12 +14,11 @@ export function LandingNarrative({
 }) {
   return (
     <>
-      <LandingStackSlot z={20} id="the-breakdown">
+      <LandingStackSlot z={20} id="the-breakdown" padded>
         <section
           className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent"
           aria-labelledby="breakdown-heading"
         >
-            <div className="relative w-full h-screen min-h-screen max-h-screen overflow-hidden flex flex-col justify-between pt-28 pb-10 px-8 md:px-16 bg-transparent box-border">
             <div className="max-w-4xl">
               <div className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
                 // THE ARBITRAGE
@@ -37,27 +36,27 @@ export function LandingNarrative({
                 champions your customers actually follow, trust, and emulate.
               </p>
             </div>
-            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 flex-1 min-h-0">
-              <div className="border border-white/10 bg-white/[0.015] backdrop-blur-md p-5 flex flex-col justify-between h-full">
+            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 flex-1 min-h-0">
+              <div className="border border-white/10 bg-white/[0.015] backdrop-blur-md p-6 flex flex-col justify-between h-full min-h-0">
                 <div className="pb-3 border-b border-white/10 font-mono text-[10px] tracking-widest uppercase text-zinc-500 flex justify-between">
                   <span>THE OLD WAY // LEGACY AGENCIES</span>
                   <span className="text-zinc-600">[DEPRECATING]</span>
                 </div>
-                <ul className="space-y-2 pt-3 m-0 list-none p-0 font-mono text-xs text-zinc-400">
+                <ul className="space-y-3 pt-4 m-0 list-none p-0 font-mono text-xs text-zinc-400">
                   <li>• Nine-month legal cycles for a single jersey patch.</li>
                   <li>• Passive broadcast airtime that viewers scroll past.</li>
                   <li>• Store managers watch central marketing budgets vanish.</li>
                   <li>• First-graders work shifts and buy their own boots.</li>
                 </ul>
               </div>
-              <div className="border border-[#D2FF00]/40 bg-[#D2FF00]/[0.02] backdrop-blur-md p-5 shadow-[0_0_30px_rgba(210,255,0,0.03)] flex flex-col justify-between h-full">
+              <div className="border border-[#D2FF00]/40 bg-[#D2FF00]/[0.02] backdrop-blur-md p-6 shadow-[0_0_40px_rgba(210,255,0,0.03)] flex flex-col justify-between h-full min-h-0">
                 <div className="pb-3 border-b border-white/10 font-mono text-[10px] tracking-widest uppercase text-[#D2FF00] flex justify-between items-center">
                   <span className="font-bold">THE TMRW/. STANDARD</span>
                   <span className="text-[10px] text-black bg-[#D2FF00] px-2 py-0.5 font-bold font-mono">
                     ACTIVE DEPLOYMENT
                   </span>
                 </div>
-                <ul className="space-y-2 pt-3 m-0 list-none p-0 font-mono text-xs text-white">
+                <ul className="space-y-3 pt-4 m-0 list-none p-0 font-mono text-xs text-zinc-100">
                   <li>• Deploy fifty verified hometown athletes before kickoff.</li>
                   <li>• Unfiltered community loyalty within fifteen kilometres of your doors.</li>
                   <li>• Measurable customer foot traffic on Saturday morning.</li>
@@ -65,25 +64,25 @@ export function LandingNarrative({
                 </ul>
               </div>
             </div>
-          </div>
         </section>
       </LandingStackSlot>
 
-      <LandingStackSlot z={30} id="for-players">
+      <LandingStackSlot z={30} id="for-players" padded>
         <section className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent" aria-labelledby="players-heading">
-          <div className="h-screen min-h-screen max-h-screen overflow-hidden flex flex-col justify-between pt-24 pb-8 px-8 md:px-16 bg-transparent box-border">
-            <div className="landing-player-layout">
+            <div className="max-w-4xl">
+              <div className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
+                // SOVEREIGN TALENT
+              </div>
+              <h2
+                id="players-heading"
+                className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-white mt-0"
+              >
+                STOP CHASING <span className="font-serif italic font-normal text-[#D2FF00]">HANDOUTS</span>. OWN YOUR{' '}
+                <span className="font-serif italic font-normal text-[#D2FF00]">TURF</span>.
+              </h2>
+            </div>
+            <div className="landing-player-layout w-full">
               <div>
-                <div className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00] font-semibold">
-                  // SOVEREIGN TALENT
-                </div>
-                <h2
-                  id="players-heading"
-                  className="landing-display-monumental text-4xl md:text-6xl lg:text-7xl font-extrabold uppercase tracking-tight leading-[0.9] text-white mt-0"
-                >
-                  STOP CHASING <span className="font-serif italic font-normal text-[#D2FF00]">HANDOUTS</span>. OWN YOUR{' '}
-                  <span className="font-serif italic font-normal text-[#D2FF00]">TURF</span>.
-                </h2>
                 <p className="landing-lede landing-lede-light">
                   You pull the early shifts. You strap your own ankles. You win the collisions when nobody is watching.
                   You run your neighbourhood. It is time your bank account reflected your cultural leverage.
@@ -98,7 +97,6 @@ export function LandingNarrative({
               </div>
               <AthleteTelemetryPanel />
             </div>
-          </div>
         </section>
       </LandingStackSlot>
 
@@ -111,15 +109,15 @@ export function LandingNarrative({
         <div ref={horizontalTrackRef} id="horizontal-slider" className="landing-h-track flex w-[200vw] h-full">
           <div
             id="for-brands"
-            className="landing-h-panel relative w-screen h-screen flex-shrink-0 overflow-hidden flex flex-col justify-between px-8 md:px-16 pt-32 md:pt-36 pb-16 bg-transparent"
+            className={`landing-h-panel w-screen flex-shrink-0 ${VIEWPORT_SHELL}`}
           >
             <section className="landing-chapter landing-chapter-carbon landing-h-copy bg-transparent" aria-labelledby="brands-heading">
-              <p className="landing-kicker landing-kicker-volt font-mono text-xs tracking-widest uppercase text-[#D2FF00]">
-                LOCAL DOMINANCE
+              <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
+                // LOCAL DOMINANCE
               </p>
               <h2
                 id="brands-heading"
-                className="landing-display-monumental text-4xl md:text-6xl lg:text-7xl font-extrabold uppercase tracking-tight leading-[0.88]"
+                className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-white mt-0"
               >
                 OWN THE <span className="font-serif italic font-normal text-[#D2FF00]">POSTCODE</span>. RUN THE{' '}
                 <span className="font-serif italic font-normal text-[#D2FF00]">FLEET</span>.
@@ -128,6 +126,8 @@ export function LandingNarrative({
                 Stop setting marketing capital on fire across digital ad networks that customers tune out. Turn suburban
                 sports gravity into an unfair retail distribution advantage.
               </p>
+            </section>
+            <div>
               <div className="landing-feature-grid landing-feature-grid-hairline">
                 <article>
                   <h3>Hyper-Local Catchment Gravity</h3>
@@ -161,96 +161,95 @@ export function LandingNarrative({
               <button type="button" className="landing-cta-dark landing-cta-on-carbon" onClick={onSponsor}>
                 Request Enterprise Access →
               </button>
-            </section>
+            </div>
           </div>
 
           <div
             id="campaign-architecture"
-            className="landing-h-panel relative w-screen h-screen flex-shrink-0 overflow-hidden flex flex-col justify-between px-8 md:px-16 pt-32 md:pt-36 pb-16 bg-transparent"
+            className={`landing-h-panel w-screen flex-shrink-0 ${VIEWPORT_SHELL}`}
           >
-            <section
-              className="landing-chapter landing-chapter-carbon landing-h-copy bg-transparent"
-              aria-labelledby="pathways-heading"
-            >
-              <p className="landing-kicker landing-kicker-volt font-mono text-xs tracking-widest uppercase text-[#D2FF00]">
-                ROSTER SPECIFICATIONS
+            <section className="landing-chapter landing-chapter-carbon landing-h-copy bg-transparent" aria-labelledby="pathways-heading">
+              <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
+                // ROSTER SPECIFICATIONS
               </p>
               <h2
                 id="pathways-heading"
-                className="landing-display-monumental text-4xl md:text-6xl lg:text-7xl font-extrabold uppercase tracking-tight leading-[0.88]"
+                className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-white mt-0"
               >
                 DEPLOY ROSTER FLEETS WITH{' '}
                 <span className="font-serif italic font-normal text-[#D2FF00]">SOFTWARE SPEED</span>.
               </h2>
-              <div className="catchment-grid landing-tier-grid">
-                <article className="catchment-card">
-                  <div className="catchment-card-head">
-                    <span className="catchment-card-index text-zinc-400 font-mono">
-                      ≤ 5 KM RADIUS | In-Kind Drops
-                    </span>
-                  </div>
-                  <h3 className="catchment-card-title" style={{ color: '#FFFFFF' }}>
-                    Storefront Radius
-                  </h3>
-                  <p className="landing-tier-copy">
-                    Zero platform fee. Put boots, training apparel, or hardware straight into the kitbags of rising
-                    players to lock authentic, ground-level adoption across key sporting hubs.
-                  </p>
-                </article>
-                <article className="catchment-card">
-                  <div className="catchment-card-head">
-                    <span className="catchment-card-index text-zinc-400 font-mono">
-                      5 – 25 KM CLUSTER | A$2,000 – A$8,000 per Cluster
-                    </span>
-                  </div>
-                  <h3 className="catchment-card-title" style={{ color: '#FFFFFF' }}>
-                    Metro Reach
-                  </h3>
-                  <p className="landing-tier-copy">
-                    Concentrated player fleet activation driving verified foot traffic and community loyalty within a
-                    fifteen-kilometre store radius.
-                  </p>
-                </article>
-                <article className="catchment-card">
-                  <div className="catchment-card-head">
-                    <span className="catchment-card-index text-zinc-400 font-mono">
-                      &gt; 25 KM NETWORK | Enterprise Commitment
-                    </span>
-                  </div>
-                  <h3 className="catchment-card-title" style={{ color: '#FFFFFF' }}>
-                    Regional IP
-                  </h3>
-                  <p className="landing-tier-copy">
-                    Scaled multi-league, multi-city player rosters backed by automated compliance and live attribution
-                    reporting.
-                  </p>
-                </article>
-              </div>
             </section>
+            <div className="catchment-grid landing-tier-grid">
+              <article className="catchment-card">
+                <div className="catchment-card-head">
+                  <span className="catchment-card-index text-zinc-400 font-mono">
+                    ≤ 5 KM RADIUS | In-Kind Drops
+                  </span>
+                </div>
+                <h3 className="catchment-card-title" style={{ color: '#FFFFFF' }}>
+                  Storefront Radius
+                </h3>
+                <p className="landing-tier-copy">
+                  Zero platform fee. Put boots, training apparel, or hardware straight into the kitbags of rising
+                  players to lock authentic, ground-level adoption across key sporting hubs.
+                </p>
+              </article>
+              <article className="catchment-card">
+                <div className="catchment-card-head">
+                  <span className="catchment-card-index text-zinc-400 font-mono">
+                    5 – 25 KM CLUSTER | A$2,000 – A$8,000 per Cluster
+                  </span>
+                </div>
+                <h3 className="catchment-card-title" style={{ color: '#FFFFFF' }}>
+                  Metro Reach
+                </h3>
+                <p className="landing-tier-copy">
+                  Concentrated player fleet activation driving verified foot traffic and community loyalty within a
+                  fifteen-kilometre store radius.
+                </p>
+              </article>
+              <article className="catchment-card">
+                <div className="catchment-card-head">
+                  <span className="catchment-card-index text-zinc-400 font-mono">
+                    &gt; 25 KM NETWORK | Enterprise Commitment
+                  </span>
+                </div>
+                <h3 className="catchment-card-title" style={{ color: '#FFFFFF' }}>
+                  Regional IP
+                </h3>
+                <p className="landing-tier-copy">
+                  Scaled multi-league, multi-city player rosters backed by automated compliance and live attribution
+                  reporting.
+                </p>
+              </article>
+            </div>
           </div>
         </div>
       </div>
 
       <LandingStackSlot z={40} id="closing-conversion" padded>
         <section className="landing-chapter landing-chapter-carbon landing-chapter-flush landing-close bg-transparent" aria-labelledby="close-heading">
-          <p className="landing-kicker landing-kicker-volt font-mono text-xs tracking-widest uppercase text-[#D2FF00]">
-            THE 2026 RUNWAY
-          </p>
-          <h2 id="close-heading" className="landing-display landing-display-light">
-            Own Your Postcodes Before the Opening Whistle.
-          </h2>
-          <p className="landing-lede landing-lede-light">
-            The season is lining up, and the runway to Brisbane 2032 is live. Founding enterprise partners lock complete
-            category exclusivity across their designated regional clusters. Elite talent secures backing today.
-          </p>
-          <div className="hero-cta-row">
-            <button type="button" className="hero-cta-primary" onClick={onAthlete}>
-              Join as an Athlete (Free) →
-            </button>
-            <button type="button" className="hero-cta-secondary border-grid" onClick={onSponsor}>
-              Lock Category Exclusivity →
-            </button>
-          </div>
+            <div className="max-w-4xl">
+              <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
+                // THE 2026 RUNWAY
+              </p>
+              <h2 id="close-heading" className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-white mt-0">
+                Own Your Postcodes Before the Opening Whistle.
+              </h2>
+              <p className="mt-3 text-zinc-400 text-xs md:text-sm max-w-2xl leading-relaxed">
+                The season is lining up, and the runway to Brisbane 2032 is live. Founding enterprise partners lock complete
+                category exclusivity across their designated regional clusters. Elite talent secures backing today.
+              </p>
+            </div>
+            <div className="hero-cta-row">
+              <button type="button" className="hero-cta-primary" onClick={onAthlete}>
+                Join as an Athlete (Free) →
+              </button>
+              <button type="button" className="hero-cta-secondary border-grid" onClick={onSponsor}>
+                Lock Category Exclusivity →
+              </button>
+            </div>
         </section>
       </LandingStackSlot>
 
