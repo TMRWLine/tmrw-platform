@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { HeroFluidReveal } from './HeroFluidReveal';
+import { TopoOverlay } from './LandingStack';
 
 interface HeroProps {
   onSponsorAccess: () => void;
@@ -43,40 +44,37 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
   const active = HERO_ATHLETE_SLIDES[cycle];
 
   return (
-    <section
-      className="hero-section"
-      aria-label="TMRW editorial landing"
-      style={{ ['--rake-offset' as string]: 'calc(100vh * 0.424475)' }}
-    >
+    <section className="hero-section" aria-label="TMRW editorial landing">
       <div className="hero-pane hero-pane-copy">
         <div className="font-mono text-xs tracking-widest uppercase mb-4 flex items-center gap-2">
           <span className="text-white font-bold">tmrw/.</span>
-          <span className="text-[#D2FF00] font-semibold">// THE NEW STANDARD</span>
+          <span className="text-[#D2FF00] font-semibold">// THE SOVEREIGN TALENT NETWORK</span>
         </div>
-        <h1 className="hero-headline tracking-tight">The Stadiums Are Loud. The Suburbs Carry the Soul.</h1>
+        <h1 className="hero-headline text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tight leading-[0.88]">
+          THE <span className="font-serif italic font-normal text-[#D2FF00]">STADIUMS</span> ARE LOUD. THE{' '}
+          <span className="font-serif italic font-normal text-[#D2FF00]">SUBURBS</span> CARRY THE SOUL.
+        </h1>
         <p className="hero-subhead">
-          The operating system connecting national brands directly to the players, fighters, and ballers who run
-          our neighbourhoods.
+          We connect enterprise capital directly to the athletes, fighters, and ballers who command local culture. Zero
+          agency tax. Automated compliance. Real backing before the opening whistle.
         </p>
         <div className="hero-cta-row">
           <button type="button" className="hero-cta-primary" onClick={onAthletePortal}>
-            Get Backed as a Player →
+            Get Backed as an Athlete →
           </button>
           <button type="button" className="hero-cta-secondary border-grid" onClick={onSponsorAccess}>
             Sponsor Your Suburbs →
           </button>
         </div>
-        <p className="hero-trust text-zinc-400 text-xs font-mono">
-          Free forever for players. Zero agency drag for brands. Three thousand verified athletes ready across
-          Australia and New Zealand.
+        <p className="hero-trust font-mono text-xs text-zinc-400">
+          3,000 VERIFIED ATHLETES // BRISBANE 2032 RUNWAY // ZERO LEGAL FRICTION
         </p>
       </div>
       <div
         className="hero-pane hero-pane-media relative overflow-hidden"
-        style={{
-          clipPath: 'polygon(calc(15% + var(--rake-offset, 42.4vh)) 0, 100% 0, 100% 100%, 15% 100%)',
-        }}
+        style={{ clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0% 100%)' }}
       >
+        <TopoOverlay />
         <FluidCanvas topImageSrc={active.url} bottomImageSrc={active.url} caption={active.caption} />
       </div>
     </section>

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Lenis from '@studio-freight/lenis';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   MapPin,
   X,
@@ -77,6 +79,8 @@ import { athleteInitials, athleteDisplayName } from './lib/formatName';
 
 type AppView = 'landing' | 'sponsor' | 'athlete';
 
+gsap.registerPlugin(ScrollTrigger);
+
 export type RadiusFilter = '25km' | '50km' | 'all';
 
 type OutreachState = {
@@ -120,6 +124,8 @@ export function MarketplaceApp() {
   const [landingSection, setLandingSection] = useState<LandingSectionId | null>(null);
   const [navOnCotton, setNavOnCotton] = useState(false);
   const lenisRef = useRef<Lenis | null>(null);
+  const horizontalSectionRef = useRef<HTMLDivElement>(null);
+  const horizontalTrackRef = useRef<HTMLDivElement>(null);
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>('all');
   const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
   const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
@@ -132,20 +138,65 @@ export function MarketplaceApp() {
     if (view !== 'landing') return;
 
     const lenis = new Lenis({
-      duration: 1.2,
+      duration: 0.85,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     });
     lenisRef.current = lenis;
+    const onLenisScroll = () => ScrollTrigger.update();
+    lenis.on('scroll', onLenisScroll);
 
-    let frame = 0;
-    function raf(time: number) {
-      lenis.raf(time);
-      frame = requestAnimationFrame(raf);
-    }
-    frame = requestAnimationFrame(raf);
+    const ticker = (time: number) => {
+      lenis.raf(time * 1000);
+    };
+    gsap.ticker.add(ticker);
+    gsap.ticker.lagSmoothing(0);
+
+    const mm = gsap.matchMedia();
+    mm.add('(min-width: 768px)', () => {
+      const section = horizontalSectionRef.current;
+      const track = horizontalTrackRef.current;
+      if (!section || !track) return;
+
+      const tween = gsap.to(track, {
+        xPercent: -50,
+        ease: 'none',
+        scrollTrigger: {
+          id: 'horizontal-pin',
+          trigger: section,
+          pin: true,
+          scrub: 1,
+          start: 'top top',
+          end: '+=1600',
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      return () => {
+        tween.scrollTrigger?.kill();
+        tween.kill();
+        gsap.set(track, { clearProps: 'transform' });
+      };
+    });
+
+    const refreshAll = () => ScrollTrigger.refresh();
+    const refreshTimer = window.setTimeout(refreshAll, 120);
+    window.addEventListener('load', refreshAll);
+    window.addEventListener('tmrw-hero-ready', refreshAll);
+    let fontsAlive = true;
+    void document.fonts?.ready.then(() => {
+      if (fontsAlive) refreshAll();
+    });
 
     return () => {
-      cancelAnimationFrame(frame);
+      fontsAlive = false;
+      window.clearTimeout(refreshTimer);
+      window.removeEventListener('load', refreshAll);
+      window.removeEventListener('tmrw-hero-ready', refreshAll);
+      gsap.ticker.remove(ticker);
+      mm.revert();
+      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+      lenis.off('scroll', onLenisScroll);
       lenisRef.current = null;
       lenis.destroy();
     };
@@ -155,12 +206,22 @@ export function MarketplaceApp() {
     if (view !== 'landing' || !landingSection) return;
     const id = landingSection;
     const t = window.setTimeout(() => {
-      const el = document.getElementById(id);
-      if (el) {
+      let target: number | HTMLElement | null = document.getElementById(id);
+      const pin = document.getElementById('sponsor-slide-pin');
+      const spacer = pin?.parentElement;
+      if (pin && spacer && (id === 'for-brands' || id === 'campaign-architecture')) {
+        const spacerRect = spacer.getBoundingClientRect();
+        const start = window.scrollY + spacerRect.top;
+        const end = start + spacerRect.height - window.innerHeight;
+        target = id === 'campaign-architecture' ? end : start;
+      }
+      if (target != null) {
         if (lenisRef.current) {
-          lenisRef.current.scrollTo(el, { offset: 0, duration: 1.15 });
+          lenisRef.current.scrollTo(target, { offset: 0, duration: 1.15 });
+        } else if (typeof target === 'number') {
+          window.scrollTo({ top: target, behavior: 'smooth' });
         } else {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }
       setLandingSection(null);
@@ -425,7 +486,7 @@ export function MarketplaceApp() {
   const panelOpen = activeAthlete !== null;
 
   return (
-    <div className="app-shell bg-brand-black text-brand-white font-sans bg-grain">
+    <div className={`app-shell bg-brand-black text-brand-white font-sans bg-grain${view === 'landing' ? '' : ' app-shell-padded'}`}>
       <header className={`topnav glass-header bg-transparent${navOnCotton ? ' topnav-on-cotton' : ''}`}>
         <button
           type="button"
@@ -464,15 +525,20 @@ export function MarketplaceApp() {
       )}
 
       {view === 'landing' ? (
-        <div className="landing-scroll landing-stack">
-          <LandingStackSlot z={10} initiallyActive>
+        <div className="landing-scroll landing-stack relative w-full">
+          <LandingStackSlot z={10}>
             <Hero
               FluidCanvas={HeroFluidReveal}
               onSponsorAccess={enterSponsorWorkspace}
               onAthletePortal={enterAthletePortal}
             />
           </LandingStackSlot>
-          <LandingNarrative onSponsor={enterSponsorWorkspace} onAthlete={enterAthletePortal} />
+          <LandingNarrative
+            onSponsor={enterSponsorWorkspace}
+            onAthlete={enterAthletePortal}
+            horizontalSectionRef={horizontalSectionRef}
+            horizontalTrackRef={horizontalTrackRef}
+          />
         </div>
       ) : (
       <main className="page">

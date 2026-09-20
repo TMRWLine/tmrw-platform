@@ -12,10 +12,10 @@ interface NavbarProps {
 }
 
 const SECTION_LINKS: { id: LandingSectionId; label: string }[] = [
-  { id: 'for-players', label: 'For Players' },
-  { id: 'for-brands', label: 'For Brands' },
-  { id: 'campaign-architecture', label: 'Network' },
-  { id: 'the-breakdown', label: 'About' },
+  { id: 'for-players', label: 'Roster' },
+  { id: 'for-brands', label: 'Enterprise' },
+  { id: 'campaign-architecture', label: 'Infrastructure' },
+  { id: 'the-breakdown', label: 'Manifesto' },
 ];
 
 export function Navbar({ activeView, onSection, onJoinRoster, onEnterprise }: NavbarProps) {
@@ -55,7 +55,7 @@ export function Navbar({ activeView, onSection, onJoinRoster, onEnterprise }: Na
             setMobileOpen(false);
           }}
         >
-          Join Roster
+          Claim Backing
         </button>
         <button
           type="button"
@@ -65,7 +65,7 @@ export function Navbar({ activeView, onSection, onJoinRoster, onEnterprise }: Na
             setMobileOpen(false);
           }}
         >
-          Enterprise Access
+          Deploy Capital
         </button>
       </div>
     </nav>

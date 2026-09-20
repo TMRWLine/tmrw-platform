@@ -60,6 +60,7 @@ uniform sampler2D uTrail;
 uniform vec2 uPlaneSize;
 uniform vec2 uTopSize;
 uniform vec2 uBottomSize;
+uniform vec2 uMouseOffset;
 varying vec2 vUv;
 
 vec2 coverUv(vec2 uv, vec2 plane, vec2 img) {
@@ -75,8 +76,9 @@ vec2 coverUv(vec2 uv, vec2 plane, vec2 img) {
 }
 
 void main() {
-  vec2 topUv = coverUv(vUv, uPlaneSize, uTopSize);
-  vec2 botUv = coverUv(vUv, uPlaneSize, uBottomSize);
+  vec2 parallaxUv = vUv + uMouseOffset * 0.02;
+  vec2 topUv = coverUv(parallaxUv, uPlaneSize, uTopSize);
+  vec2 botUv = coverUv(parallaxUv, uPlaneSize, uBottomSize);
 
   vec3 top = texture2D(uTop, topUv).rgb;
   float luma = dot(top, vec3(0.299, 0.587, 0.114));
@@ -147,11 +149,15 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
     const canvas = renderer.domElement;
     canvas.style.display = 'block';
     canvas.style.position = 'absolute';
-    canvas.style.inset = '0px';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.right = 'auto';
+    canvas.style.bottom = 'auto';
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     canvas.style.pointerEvents = 'auto';
     canvas.style.touchAction = 'none';
+    canvas.style.objectFit = 'cover';
     wrap.appendChild(canvas);
 
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -183,6 +189,7 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
       uPlaneSize: { value: new THREE.Vector2(1, 1) },
       uTopSize: { value: new THREE.Vector2(1, 1) },
       uBottomSize: { value: new THREE.Vector2(1, 1) },
+      uMouseOffset: { value: new THREE.Vector2(0, 0) },
     };
 
     const simMaterial = new THREE.ShaderMaterial({
@@ -210,6 +217,8 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
 
     const mouse = new THREE.Vector2(-10, -10);
     const prevMouse = new THREE.Vector2(-10, -10);
+    const mouseOffset = new THREE.Vector2(0, 0);
+    const mouseOffsetTarget = new THREE.Vector2(0, 0);
     let splat = 0;
     let raf = 0;
     let disposed = false;
@@ -267,6 +276,7 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
           }
           assignTop(tex);
           if (bottomUrl === topUrl) assignBottom(tex, false);
+          window.dispatchEvent(new Event('tmrw-hero-ready'));
         },
         undefined,
         () => undefined,
@@ -294,6 +304,8 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       renderer.setPixelRatio(dpr);
       renderer.setSize(w, h, false);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
       displayUniforms.uPlaneSize.value.set(w, h);
 
       const simW = Math.max(1, Math.floor(w * dpr));
@@ -329,14 +341,17 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
       if (!uv) return;
       if (uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1) {
         splat = 0;
+        mouseOffsetTarget.set(0, 0);
         return;
       }
       mouse.set(uv.x, uv.y);
+      mouseOffsetTarget.set((uv.x - 0.5) * 2, (uv.y - 0.5) * 2);
       splat = 1;
     };
 
     const onLeave = () => {
       splat = 0;
+      mouseOffsetTarget.set(0, 0);
     };
 
     const tick = () => {
@@ -355,6 +370,8 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
       write = tmp;
 
       displayUniforms.uTrail.value = read.texture;
+      mouseOffset.lerp(mouseOffsetTarget, 0.08);
+      displayUniforms.uMouseOffset.value.copy(mouseOffset);
       quad.material = displayMaterial;
       renderer.setRenderTarget(null);
       renderer.clear();

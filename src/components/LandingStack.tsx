@@ -1,44 +1,38 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
+
+const CARD_CLASS =
+  'landing-stack-card h-screen w-full overflow-hidden flex flex-col justify-between rounded-t-3xl border-t border-white/15 shadow-[0_-20px_50px_rgba(0,0,0,0.9)]';
 
 export function LandingStackSlot({
   z,
   children,
-  initiallyActive = false,
   surface = 'carbon',
   id,
+  sticky = true,
 }: {
   z: number;
   children: ReactNode;
-  initiallyActive?: boolean;
   surface?: 'carbon' | 'cotton';
   id?: string;
+  sticky?: boolean;
 }) {
-  const slotRef = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(initiallyActive);
+  const surfaceClass = surface === 'cotton' ? 'landing-stack-card-cotton' : 'landing-stack-card-carbon';
+  const card = (
+    <div
+      id={id}
+      className={`${CARD_CLASS} ${sticky ? 'sticky top-0' : 'landing-hslide-panel'} ${surfaceClass}`}
+      style={{ zIndex: z }}
+    >
+      {surface === 'carbon' ? <TopoOverlay /> : null}
+      <div className="landing-stack-inner">{children}</div>
+    </div>
+  );
 
-  useEffect(() => {
-    const el = slotRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        setActive(entry.isIntersecting && entry.intersectionRatio >= 0.42);
-      },
-      { threshold: [0.2, 0.42, 0.65, 0.9] },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+  if (!sticky) return card;
 
   return (
-    <div ref={slotRef} className="landing-stack-slot" id={id} style={{ zIndex: z }}>
-      <div
-        className={`landing-stack-card sticky top-0 h-screen overflow-hidden rounded-t-3xl ${
-          surface === 'cotton' ? 'landing-stack-card-cotton' : 'landing-stack-card-carbon'
-        }${active ? ' is-active' : ''}`}
-      >
-        {surface === 'carbon' ? <TopoOverlay /> : null}
-        <div className="landing-stack-inner">{children}</div>
-      </div>
+    <div className="relative w-full landing-stack-slot" style={{ zIndex: z }}>
+      {card}
     </div>
   );
 }
@@ -51,7 +45,7 @@ export function TopoOverlay() {
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
     >
-      <g fill="none" stroke="#FFFFFF" strokeWidth="1.1">
+      <g className="landing-topo-drift" fill="none" stroke="#FFFFFF" strokeWidth="1.1">
         <ellipse cx="1080" cy="420" rx="120" ry="54" />
         <ellipse cx="1080" cy="420" rx="210" ry="96" />
         <ellipse cx="1080" cy="420" rx="310" ry="148" />
