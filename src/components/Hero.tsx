@@ -11,12 +11,12 @@ const HERO_TENNIS =
 
 export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluidReveal }: HeroProps) {
   return (
-    <section className="hero-section relative min-h-screen overflow-hidden bg-transparent" aria-label="TMRW editorial landing">
+    <section className="hero-section relative h-screen min-h-screen max-h-screen overflow-hidden bg-transparent" aria-label="TMRW editorial landing">
       <div className="hero-pane hero-pane-media absolute inset-0 z-0 overflow-hidden">
         <FluidCanvas imageSrc={HERO_TENNIS} />
         <div className="hero-legibility pointer-events-none absolute inset-0 z-[2]" aria-hidden="true" />
       </div>
-      <div className="hero-pane hero-pane-copy relative z-10 pt-32 md:pt-36 pb-16 px-8 md:px-16">
+      <div className="hero-pane hero-pane-copy relative z-10 pt-24 md:pt-28 pb-8 px-8 md:px-16">
         <div className="font-mono text-xs tracking-widest uppercase mb-4 flex items-center gap-2">
           <span className="text-white font-bold">
             tmrw<span className="text-[#D2FF00]">/.</span>
@@ -31,7 +31,7 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
           We connect enterprise capital directly to the athletes, fighters, and ballers who command local culture. Zero
           agency tax. Automated compliance. Real backing before the opening whistle.
         </p>
-        <div className="hero-cta-row">
+        <div className="hero-cta-row flex-nowrap">
           <button type="button" className="hero-cta-primary" onClick={onAthletePortal}>
             Get Backed as an Athlete →
           </button>
@@ -39,13 +39,19 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
             Sponsor Your Suburbs →
           </button>
         </div>
-        <div className="inline-flex items-center gap-4 px-4 py-2 border border-white/10 bg-white/[0.02] backdrop-blur-md mt-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#D2FF00] animate-pulse" />
-          <span className="font-mono text-[10px] tracking-widest text-zinc-300">3,000 VERIFIED ATHLETES</span>
-          <span className="text-white/20">//</span>
-          <span className="font-mono text-[10px] tracking-widest text-zinc-400">BRISBANE 2032 RUNWAY</span>
-          <span className="text-white/20">//</span>
-          <span className="font-mono text-[10px] tracking-widest text-[#D2FF00]">ZERO LEGAL FRICTION</span>
+        <div className="inline-flex items-center gap-3 px-3.5 py-1.5 border border-white/10 bg-white/[0.02] backdrop-blur-md mt-6 rounded-none flex-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#D2FF00] animate-pulse shrink-0" />
+          <span className="font-mono text-[10px] tracking-[0.2em] text-zinc-300 uppercase whitespace-nowrap">
+            3,000 Verified Athletes
+          </span>
+          <span className="text-white/20 text-[10px] font-mono">//</span>
+          <span className="font-mono text-[10px] tracking-[0.2em] text-zinc-400 uppercase whitespace-nowrap">
+            Brisbane 2032 Runway
+          </span>
+          <span className="text-white/20 text-[10px] font-mono">//</span>
+          <span className="font-mono text-[10px] tracking-[0.2em] text-[#D2FF00] uppercase whitespace-nowrap">
+            Zero Legal Friction
+          </span>
         </div>
       </div>
     </section>

@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 
 const CARD_CLASS =
-  'landing-stack-card relative w-full min-h-screen h-screen overflow-hidden flex flex-col justify-between sticky top-0 bg-transparent';
+  'landing-stack-card relative w-full h-screen min-h-screen max-h-screen overflow-hidden flex flex-col justify-between sticky top-0 bg-transparent';
 
 export function LandingStackSlot({
   z,

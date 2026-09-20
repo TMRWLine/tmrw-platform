@@ -19,45 +19,45 @@ export function LandingNarrative({
           className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent"
           aria-labelledby="breakdown-heading"
         >
-            <div className="relative w-full min-h-screen h-screen overflow-hidden flex flex-col justify-between pt-32 md:pt-36 pb-16 px-8 md:px-16 bg-transparent box-border">
+            <div className="h-screen min-h-screen max-h-screen overflow-hidden flex flex-col justify-between pt-24 pb-8 px-8 md:px-16 bg-transparent box-border">
             <div>
-              <div className="font-mono text-xs tracking-widest uppercase mb-3 text-[#D2FF00]">
+              <div className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
                 // THE ARBITRAGE
               </div>
               <h2
                 id="breakdown-heading"
-                className="text-5xl md:text-7xl font-black uppercase tracking-tight !leading-[0.88] text-white mt-0"
+                className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-white mt-0"
               >
                 THE MILLION-DOLLAR VANITY <span className="font-serif italic font-normal text-[#D2FF00]">TRAP.</span>
               </h2>
-              <p className="text-zinc-400 text-sm md:text-base max-w-2xl mt-4 leading-relaxed">
+              <p className="mt-3 mb-4 max-w-2xl text-zinc-400 text-xs md:text-sm leading-relaxed">
                 A broadcast logo on a national jersey buys boardroom ego. It does not put a single paying customer
                 through a suburban dealership, showroom, or retail register this Saturday. Traditional sports agencies
                 burn eight figures chasing the top one per cent. We decentralise that capital into the hometown
                 champions your customers actually follow, trust, and emulate.
               </p>
             </div>
-            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8 mb-4">
-              <article className="border border-white/10 bg-white/[0.02] backdrop-blur-md p-6 flex flex-col justify-between">
-                <div className="flex items-center justify-between pb-4 border-b border-white/10 font-mono text-[11px] tracking-widest uppercase text-zinc-500">
+            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-4">
+              <article className="border border-white/10 bg-white/[0.015] backdrop-blur-md p-4 flex flex-col justify-between">
+                <div className="pb-2 border-b border-white/10 font-mono text-[10px] tracking-widest uppercase text-zinc-500 flex justify-between">
                   <span>THE OLD WAY // LEGACY AGENCIES</span>
                   <span className="text-zinc-600">[DEPRECATING]</span>
                 </div>
-                <ul className="space-y-4 pt-6 m-0 list-none p-0 font-mono text-xs text-zinc-400">
+                <ul className="space-y-2 pt-3 m-0 list-none p-0 font-mono text-xs text-zinc-400">
                   <li>Nine-month legal cycles for a single jersey patch.</li>
                   <li>Passive broadcast airtime that viewers scroll past.</li>
                   <li>Store managers watch central marketing budgets vanish.</li>
                   <li>First-graders work shifts and buy their own boots.</li>
                 </ul>
               </article>
-              <article className="border border-[#D2FF00]/40 bg-[#D2FF00]/[0.02] backdrop-blur-md p-6 flex flex-col justify-between shadow-[0_0_40px_rgba(210,255,0,0.03)]">
-                <div className="flex items-center justify-between pb-4 border-b border-white/10 font-mono text-[11px] tracking-widest uppercase text-[#D2FF00]">
+              <article className="border border-[#D2FF00]/40 bg-[#D2FF00]/[0.02] backdrop-blur-md p-4 shadow-[0_0_30px_rgba(210,255,0,0.03)] flex flex-col justify-between">
+                <div className="pb-2 border-b border-white/10 font-mono text-[10px] tracking-widest uppercase text-[#D2FF00] flex justify-between items-center">
                   <span className="font-bold">THE TMRW/. STANDARD</span>
                   <span className="text-[10px] text-black bg-[#D2FF00] px-2 py-0.5 font-bold font-mono">
                     ACTIVE DEPLOYMENT
                   </span>
                 </div>
-                <ul className="space-y-4 pt-6 m-0 list-none p-0 font-mono text-xs text-zinc-200">
+                <ul className="space-y-2 pt-3 m-0 list-none p-0 font-mono text-xs text-white">
                   <li>Deploy fifty verified hometown athletes before kickoff.</li>
                   <li>Unfiltered community loyalty within fifteen kilometres of your doors.</li>
                   <li>Measurable customer foot traffic on Saturday morning.</li>
@@ -69,33 +69,35 @@ export function LandingNarrative({
         </section>
       </LandingStackSlot>
 
-      <LandingStackSlot z={30} id="for-players" padded>
+      <LandingStackSlot z={30} id="for-players">
         <section className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent" aria-labelledby="players-heading">
-          <div className="landing-player-layout">
-            <div>
-              <div className="font-mono text-xs tracking-widest uppercase mb-3 text-[#D2FF00] font-semibold">
-                // SOVEREIGN TALENT
+          <div className="h-screen min-h-screen max-h-screen overflow-hidden flex flex-col justify-between pt-24 pb-8 px-8 md:px-16 bg-transparent box-border">
+            <div className="landing-player-layout">
+              <div>
+                <div className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00] font-semibold">
+                  // SOVEREIGN TALENT
+                </div>
+                <h2
+                  id="players-heading"
+                  className="landing-display-monumental text-4xl md:text-6xl lg:text-7xl font-extrabold uppercase tracking-tight leading-[0.9] text-white mt-0"
+                >
+                  STOP CHASING <span className="font-serif italic font-normal text-[#D2FF00]">HANDOUTS</span>. OWN YOUR{' '}
+                  <span className="font-serif italic font-normal text-[#D2FF00]">TURF</span>.
+                </h2>
+                <p className="landing-lede landing-lede-light">
+                  You pull the early shifts. You strap your own ankles. You win the collisions when nobody is watching.
+                  You run your neighbourhood. It is time your bank account reflected your cultural leverage.
+                </p>
+                <button
+                  type="button"
+                  onClick={onAthlete}
+                  className="bg-[#D2FF00] text-black font-mono font-bold text-xs uppercase tracking-widest px-8 py-4 transition-transform hover:scale-[1.02] border-0 cursor-pointer"
+                >
+                  CLAIM YOUR ATHLETE PROFILE →
+                </button>
               </div>
-              <h2
-                id="players-heading"
-                className="landing-display-monumental text-4xl md:text-6xl lg:text-7xl font-extrabold uppercase tracking-tight !leading-[0.88] text-white"
-              >
-                STOP CHASING <span className="font-serif italic font-normal text-[#D2FF00]">HANDOUTS</span>. OWN YOUR{' '}
-                <span className="font-serif italic font-normal text-[#D2FF00]">TURF</span>.
-              </h2>
-              <p className="landing-lede landing-lede-light">
-                You pull the early shifts. You strap your own ankles. You win the collisions when nobody is watching.
-                You run your neighbourhood. It is time your bank account reflected your cultural leverage.
-              </p>
-              <button
-                type="button"
-                onClick={onAthlete}
-                className="bg-[#D2FF00] text-black font-mono font-bold text-xs uppercase tracking-widest px-8 py-4 transition-transform hover:scale-[1.02] border-0 cursor-pointer"
-              >
-                CLAIM YOUR ATHLETE PROFILE →
-              </button>
+              <AthleteTelemetryPanel />
             </div>
-            <AthleteTelemetryPanel />
           </div>
         </section>
       </LandingStackSlot>
