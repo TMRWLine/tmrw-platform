@@ -370,7 +370,7 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
       write = tmp;
 
       displayUniforms.uTrail.value = read.texture;
-      mouseOffset.lerp(mouseOffsetTarget, 0.08);
+      mouseOffset.lerp(mouseOffsetTarget, 0.06);
       displayUniforms.uMouseOffset.value.copy(mouseOffset);
       quad.material = displayMaterial;
       renderer.setRenderTarget(null);

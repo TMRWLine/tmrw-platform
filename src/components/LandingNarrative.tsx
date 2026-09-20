@@ -16,20 +16,24 @@ export function LandingNarrative({
     <>
       <LandingStackSlot z={20} surface="cotton" id="the-breakdown">
         <section className="landing-chapter landing-chapter-cotton landing-chapter-flush" aria-labelledby="breakdown-heading">
-          <p className="landing-kicker landing-kicker-volt font-mono text-xs tracking-widest uppercase text-[#D2FF00] bg-black px-2.5 py-1 inline-block">
+          <p className="landing-kicker font-mono text-xs tracking-widest uppercase font-semibold text-[#08080A] bg-[#D2FF00] px-2.5 py-1 inline-block">
             THE ARBITRAGE
           </p>
-          <h2 id="breakdown-heading" className="landing-display">
-            The Million-Dollar Vanity Trap.
+          <h2
+            id="breakdown-heading"
+            className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-[#08080A] max-w-5xl"
+          >
+            THE MILLION-DOLLAR <span className="font-serif italic font-normal text-zinc-400">VANITY</span>{' '}
+            <span className="font-serif italic font-normal text-[#0052FF]">TRAP</span>.
           </h2>
-          <p className="landing-lede">
+          <p className="text-lg md:text-xl font-normal text-zinc-700 max-w-3xl leading-relaxed mt-6 mb-12">
             A broadcast logo on a national jersey buys boardroom ego. It does not put a single paying customer through
             a suburban dealership, showroom, or retail register this Saturday. Traditional sports agencies burn eight
             figures chasing the top one per cent. We decentralise that capital into the hometown champions your
             customers actually follow, trust, and emulate.
           </p>
-          <div className="landing-compare border border-zinc-300">
-            <article>
+          <div className="landing-compare border border-zinc-200">
+            <article className="landing-compare-legacy">
               <h3>Legacy Agencies</h3>
               <ul>
                 <li>Nine-month legal cycles for a single jersey patch.</li>
@@ -38,7 +42,7 @@ export function LandingNarrative({
                 <li>First-graders work shifts and buy their own boots.</li>
               </ul>
             </article>
-            <article>
+            <article className="landing-compare-standard">
               <h3>The tmrw/. Standard</h3>
               <ul>
                 <li>Deploy fifty verified hometown athletes before kickoff.</li>

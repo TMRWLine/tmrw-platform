@@ -138,7 +138,7 @@ export function MarketplaceApp() {
     if (view !== 'landing') return;
 
     const lenis = new Lenis({
-      duration: 0.85,
+      duration: 1.05,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     });
     lenisRef.current = lenis;
@@ -164,11 +164,13 @@ export function MarketplaceApp() {
           id: 'horizontal-pin',
           trigger: section,
           pin: true,
-          scrub: 0.8,
+          scrub: 1.2,
           start: 'top top',
           end: '+=1800',
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          fastScrollEnd: true,
+          preventOverlaps: true,
         },
       });
 
@@ -179,7 +181,11 @@ export function MarketplaceApp() {
       };
     });
 
-    const refreshAll = () => ScrollTrigger.refresh();
+    let refreshDebounce = 0;
+    const refreshAll = () => {
+      window.clearTimeout(refreshDebounce);
+      refreshDebounce = window.setTimeout(() => ScrollTrigger.refresh(), 90);
+    };
     const refreshTimer = window.setTimeout(refreshAll, 120);
     const layoutTimer = window.setTimeout(refreshAll, 480);
     window.addEventListener('load', refreshAll);
@@ -193,6 +199,7 @@ export function MarketplaceApp() {
       fontsAlive = false;
       window.clearTimeout(refreshTimer);
       window.clearTimeout(layoutTimer);
+      window.clearTimeout(refreshDebounce);
       window.removeEventListener('load', refreshAll);
       window.removeEventListener('tmrw-hero-ready', refreshAll);
       gsap.ticker.remove(ticker);
