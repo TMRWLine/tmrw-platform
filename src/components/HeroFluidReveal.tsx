@@ -5,6 +5,9 @@ interface HeroFluidRevealProps {
   imageSrc: string;
 }
 
+/** Per-frame trail fade at 60fps — reaches ~0.04 mask in 1.2–1.8s after input stops. */
+const TRAIL_DECAY = 0.965;
+
 const VERT = /* glsl */ `
 varying vec2 vUv;
 void main() {
@@ -159,7 +162,7 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
       uMouse: { value: new THREE.Vector2(-10, -10) },
       uPrevMouse: { value: new THREE.Vector2(-10, -10) },
       uResolution: { value: new THREE.Vector2(1, 1) },
-      uDecay: { value: 0.965 },
+      uDecay: { value: TRAIL_DECAY },
       uRadius: { value: 42 },
       uSplat: { value: 0 },
     };
@@ -199,6 +202,7 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
     let splat = 0;
     let raf = 0;
     let disposed = false;
+    let lastTick = performance.now();
 
     const disposeOwned = () => {
       if (imageOwned && imageTex !== placeholder) imageTex.dispose();
@@ -300,6 +304,10 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
     };
 
     const tick = () => {
+      const now = performance.now();
+      const dt = Math.min((now - lastTick) / 1000, 0.05);
+      lastTick = now;
+      simUniforms.uDecay.value = Math.pow(TRAIL_DECAY, dt * 60);
       simUniforms.uPrev.value = read.texture;
       simUniforms.uMouse.value.copy(mouse);
       simUniforms.uPrevMouse.value.copy(prevMouse);

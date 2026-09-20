@@ -14,83 +14,69 @@ export function LandingNarrative({
 }) {
   return (
     <>
-      <LandingStackSlot z={20} id="the-breakdown" padded>
-        <section className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent" aria-labelledby="breakdown-heading">
-          <div className="font-mono text-xs tracking-widest uppercase mb-4 text-[#D2FF00]">
-            // THE ARBITRAGE
+      <LandingStackSlot z={20} id="the-breakdown">
+        <section
+          className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent"
+          aria-labelledby="breakdown-heading"
+        >
+          <div className="pt-24 pb-16 px-8 md:px-16 h-full box-border">
+          <div className="font-mono text-xs tracking-widest uppercase mb-3 flex items-center gap-2">
+            <span className="text-[#D2FF00] font-semibold">// THE ARBITRAGE</span>
           </div>
           <h2
             id="breakdown-heading"
-            className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tight leading-[0.88] text-white max-w-6xl"
+            className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tight !leading-[0.88] text-white mt-0"
           >
             THE MILLION-DOLLAR VANITY <span className="font-serif italic font-normal text-[#D2FF00]">TRAP.</span>
           </h2>
-          <p className="text-base md:text-lg text-zinc-400 max-w-3xl leading-relaxed mt-6">
+          <p className="text-zinc-400 text-sm md:text-base max-w-2xl mt-5 mb-8 leading-relaxed">
             A broadcast logo on a national jersey buys boardroom ego. It does not put a single paying customer through
             a suburban dealership, showroom, or retail register this Saturday. Traditional sports agencies burn eight
             figures chasing the top one per cent. We decentralise that capital into the hometown champions your
             customers actually follow, trust, and emulate.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-6xl mt-8">
-            <article className="border border-white/10 bg-white/[0.015] backdrop-blur-md p-8 relative overflow-hidden">
-              <div className="font-mono text-[11px] tracking-widest text-zinc-500 uppercase pb-4 border-b border-white/10 flex justify-between">
+          <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            <article className="border border-white/10 bg-white/[0.02] backdrop-blur-md p-6 md:p-8 flex flex-col justify-between">
+              <div className="flex items-center justify-between pb-4 border-b border-white/10 font-mono text-[11px] tracking-widest uppercase text-zinc-500">
                 <span>THE OLD WAY // LEGACY AGENCIES</span>
                 <span className="text-zinc-600">[DEPRECATING]</span>
               </div>
-              <ul className="space-y-4 pt-6 m-0 list-none p-0">
-                {[
-                  'Nine-month legal cycles for a single jersey patch.',
-                  'Passive broadcast airtime that viewers scroll past.',
-                  'Store managers watch central marketing budgets vanish.',
-                  'First-graders work shifts and buy their own boots.',
-                ].map((item) => (
-                  <li key={item} className="text-zinc-400 font-mono text-xs leading-relaxed flex items-start gap-3">
-                    <span className="text-zinc-600 shrink-0" aria-hidden="true">
-                      —
-                    </span>
-                    <span>{item}</span>
-                  </li>
-                ))}
+              <ul className="space-y-4 pt-6 m-0 list-none p-0 font-mono text-xs text-zinc-400">
+                <li>Nine-month legal cycles for a single jersey patch.</li>
+                <li>Passive broadcast airtime that viewers scroll past.</li>
+                <li>Store managers watch central marketing budgets vanish.</li>
+                <li>First-graders work shifts and buy their own boots.</li>
               </ul>
             </article>
-            <article className="border border-[#D2FF00]/30 bg-[#D2FF00]/[0.02] backdrop-blur-md p-8 relative overflow-hidden shadow-[0_0_50px_rgba(210,255,0,0.03)]">
-              <div className="font-mono text-[11px] tracking-widest text-[#D2FF00] uppercase pb-4 border-b border-white/10 flex justify-between items-center">
+            <article className="border border-[#D2FF00]/40 bg-[#D2FF00]/[0.02] backdrop-blur-md p-6 md:p-8 flex flex-col justify-between shadow-[0_0_40px_rgba(210,255,0,0.03)]">
+              <div className="flex items-center justify-between pb-4 border-b border-white/10 font-mono text-[11px] tracking-widest uppercase text-[#D2FF00]">
                 <span className="font-bold">THE TMRW/. STANDARD</span>
-                <span className="text-[10px] text-black bg-[#D2FF00] px-2 py-0.5 font-mono font-bold tracking-wider">
+                <span className="text-[10px] text-black bg-[#D2FF00] px-2 py-0.5 font-bold font-mono">
                   ACTIVE DEPLOYMENT
                 </span>
               </div>
-              <ul className="space-y-4 pt-6 m-0 list-none p-0">
-                {[
-                  'Deploy fifty verified hometown athletes before kickoff.',
-                  'Unfiltered community loyalty within fifteen kilometres of your doors.',
-                  'Measurable customer foot traffic on Saturday morning.',
-                  'Direct contractual backing and verified commercial status.',
-                ].map((item) => (
-                  <li key={item} className="text-white font-mono text-xs leading-relaxed flex items-start gap-3">
-                    <span
-                      className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#D2FF00] shrink-0"
-                      aria-hidden="true"
-                    />
-                    <span>{item}</span>
-                  </li>
-                ))}
+              <ul className="space-y-4 pt-6 m-0 list-none p-0 font-mono text-xs text-zinc-200">
+                <li>Deploy fifty verified hometown athletes before kickoff.</li>
+                <li>Unfiltered community loyalty within fifteen kilometres of your doors.</li>
+                <li>Measurable customer foot traffic on Saturday morning.</li>
+                <li>Direct contractual backing and verified commercial status.</li>
               </ul>
             </article>
+          </div>
           </div>
         </section>
       </LandingStackSlot>
 
       <LandingStackSlot z={30} id="for-players" padded>
         <section className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent" aria-labelledby="players-heading">
-          <p className="landing-kicker landing-kicker-volt font-mono text-xs tracking-widest uppercase text-[#D2FF00]">
-            SOVEREIGN TALENT
-          </p>
           <div className="landing-player-layout">
             <div>
+              <div className="font-mono text-xs tracking-widest uppercase mb-3 text-[#D2FF00] font-semibold">
+                // SOVEREIGN TALENT
+              </div>
               <h2
                 id="players-heading"
-                className="landing-display-monumental text-4xl md:text-6xl lg:text-7xl font-extrabold uppercase tracking-tight leading-[0.88]"
+                className="landing-display-monumental text-4xl md:text-6xl lg:text-7xl font-extrabold uppercase tracking-tight !leading-[0.88] text-white"
               >
                 STOP CHASING <span className="font-serif italic font-normal text-[#D2FF00]">HANDOUTS</span>. OWN YOUR{' '}
                 <span className="font-serif italic font-normal text-[#D2FF00]">TURF</span>.
