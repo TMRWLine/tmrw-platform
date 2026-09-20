@@ -1,5 +1,4 @@
 import { HeroFluidReveal } from './HeroFluidReveal';
-import { VIEWPORT_SHELL } from './LandingStack';
 
 interface HeroProps {
   onSponsorAccess: () => void;
@@ -17,7 +16,7 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
         <FluidCanvas imageSrc={HERO_TENNIS} />
         <div className="hero-legibility pointer-events-none absolute inset-0 z-[2]" aria-hidden="true" />
       </div>
-      <div className={`hero-pane hero-pane-copy ${VIEWPORT_SHELL}`}>
+      <div className="hero-pane hero-pane-copy relative z-10 w-full h-screen min-h-screen max-h-screen overflow-hidden flex flex-col justify-start pt-32 md:pt-40 pb-12 px-8 md:px-16 bg-transparent pointer-events-none">
         <div>
           <div className="font-mono text-xs tracking-widest uppercase mb-4 flex items-center gap-2">
             <span className="text-white font-bold">
@@ -33,7 +32,7 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
             We connect enterprise capital directly to the athletes, fighters, and ballers who command local culture.
             Automated compliance. Direct deployment. Real backing before the opening whistle.
           </p>
-          <div className="hero-cta-row flex-nowrap">
+          <div className="hero-cta-row flex-nowrap pointer-events-auto">
             <button type="button" className="hero-cta-primary" onClick={onAthletePortal}>
               Get Backed as an Athlete →
             </button>
@@ -41,7 +40,7 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
               Sponsor Your Suburbs →
             </button>
           </div>
-          <div className="flex items-center gap-3.5 mt-8 font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-400">
+          <div className="flex items-center gap-3.5 mt-8 font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-400 pointer-events-auto">
             <span className="w-1.5 h-1.5 rounded-full bg-[#D2FF00] animate-pulse shrink-0" />
             <span className="text-zinc-300">3,000 Verified Athletes</span>
             <span className="text-white/20">//</span>

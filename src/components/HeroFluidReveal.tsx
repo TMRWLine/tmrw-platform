@@ -276,24 +276,29 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
       renderer.setClearColor(0x08080a, 1);
     };
 
-    const pointerUv = (e: PointerEvent | MouseEvent) => {
+    const pointerUv = (clientX: number, clientY: number) => {
       const rect = wrap.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return null;
       return {
-        x: (e.clientX - rect.left) / rect.width,
-        y: 1 - (e.clientY - rect.top) / rect.height,
+        x: (clientX - rect.left) / rect.width,
+        y: 1 - (clientY - rect.top) / rect.height,
       };
     };
 
-    const applyParallax = (e: PointerEvent | MouseEvent) => {
-      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
-      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+    const applyParallax = (clientX: number, clientY: number) => {
+      const nx = (clientX / window.innerWidth - 0.5) * 2;
+      const ny = (clientY / window.innerHeight - 0.5) * 2;
       wrap.style.transform = `translate3d(${-nx * 10}px, ${-ny * 10}px, 0)`;
     };
 
-    const onMove = (e: PointerEvent | MouseEvent) => {
-      applyParallax(e);
-      const uv = pointerUv(e);
+    const paint = (clientX: number, clientY: number) => {
+      const hit = document.elementFromPoint(clientX, clientY);
+      if (hit && !hit.closest('.hero-section')) {
+        splat = 0;
+        return;
+      }
+      if (!reduced) applyParallax(clientX, clientY);
+      const uv = pointerUv(clientX, clientY);
       if (!uv) return;
       if (uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1) {
         splat = 0;
@@ -301,6 +306,18 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
       }
       mouse.set(uv.x, uv.y);
       splat = 1;
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      paint(e.clientX, e.clientY);
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      paint(e.clientX, e.clientY);
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const t = e.touches[0];
+      if (!t) return;
+      paint(t.clientX, t.clientY);
     };
 
     const onLeave = () => {
@@ -342,16 +359,17 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
     load(srcRef.current);
     apiRef.current = { load };
 
-    const onWindowMove = (e: PointerEvent) => {
-      if (!reduced) applyParallax(e);
-    };
-
     const ro = new ResizeObserver(resize);
     ro.observe(wrap);
-    wrap.addEventListener('pointermove', onMove, { passive: true });
-    wrap.addEventListener('pointerdown', onMove, { passive: true });
+    wrap.addEventListener('pointermove', onPointerMove, { passive: true });
+    wrap.addEventListener('pointerdown', onPointerMove, { passive: true });
+    wrap.addEventListener('mousemove', onMouseMove, { passive: true });
+    wrap.addEventListener('touchstart', onTouchMove, { passive: true });
+    wrap.addEventListener('touchmove', onTouchMove, { passive: true });
     wrap.addEventListener('pointerleave', onLeave);
-    window.addEventListener('pointermove', onWindowMove, { passive: true });
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
     raf = requestAnimationFrame(tick);
 
     return () => {
@@ -359,10 +377,15 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
       apiRef.current = null;
       cancelAnimationFrame(raf);
       ro.disconnect();
-      wrap.removeEventListener('pointermove', onMove);
-      wrap.removeEventListener('pointerdown', onMove);
+      wrap.removeEventListener('pointermove', onPointerMove);
+      wrap.removeEventListener('pointerdown', onPointerMove);
+      wrap.removeEventListener('mousemove', onMouseMove);
+      wrap.removeEventListener('touchstart', onTouchMove);
+      wrap.removeEventListener('touchmove', onTouchMove);
       wrap.removeEventListener('pointerleave', onLeave);
-      window.removeEventListener('pointermove', onWindowMove);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('touchmove', onTouchMove);
       geometry.dispose();
       simMaterial.dispose();
       displayMaterial.dispose();
@@ -380,5 +403,10 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
     apiRef.current?.load(imageSrc);
   }, [imageSrc]);
 
-  return <div ref={wrapRef} className="hero-fluid-reveal" />;
+  return (
+    <div
+      ref={wrapRef}
+      className="hero-fluid-reveal absolute inset-0 w-full h-full pointer-events-auto z-0"
+    />
+  );
 }

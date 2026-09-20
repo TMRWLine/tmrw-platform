@@ -1,5 +1,5 @@
 import type { Ref } from 'react';
-import { BrandLockup, LandingStackSlot, VIEWPORT_SHELL } from './LandingStack';
+import { BrandLockup, LandingStackSlot, CHAPTER_SHELL } from './LandingStack';
 
 export function LandingNarrative({
   onSponsor,
@@ -14,61 +14,66 @@ export function LandingNarrative({
 }) {
   return (
     <>
-      <LandingStackSlot z={20} id="the-breakdown" padded>
+      <LandingStackSlot z={20} id="the-breakdown">
         <section
           className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent"
           aria-labelledby="breakdown-heading"
         >
-            <div className="max-w-4xl">
-              <div className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
-                // THE ARBITRAGE
-              </div>
-              <h2
-                id="breakdown-heading"
-                className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-white mt-0"
-              >
-                THE MILLION-DOLLAR VANITY <span className="font-serif italic font-normal text-[#D2FF00]">TRAP.</span>
-              </h2>
-              <p className="mt-3 text-zinc-400 text-xs md:text-sm max-w-2xl leading-relaxed">
-                A broadcast logo on a national jersey buys boardroom ego. It does not put a single paying customer
-                through a suburban dealership, showroom, or retail register this Saturday. Traditional sports agencies
-                burn eight figures chasing the top one per cent. We decentralise that capital into the hometown
-                champions your customers actually follow, trust, and emulate.
-              </p>
+          <div className="relative w-full min-h-screen flex flex-col justify-center py-20 px-8 md:px-16 bg-transparent z-10">
+            <div className="font-mono text-xs tracking-widest uppercase mb-3 text-[#D2FF00]">
+              // THE ARBITRAGE
             </div>
-            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 flex-1 min-h-0">
-              <div className="border border-white/10 bg-white/[0.015] backdrop-blur-md p-6 flex flex-col justify-between h-full min-h-0">
-                <div className="pb-3 border-b border-white/10 font-mono text-[10px] tracking-widest uppercase text-zinc-500 flex justify-between">
-                  <span>THE OLD WAY // LEGACY AGENCIES</span>
-                  <span className="text-zinc-600">[DEPRECATING]</span>
+            <h2
+              id="breakdown-heading"
+              className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-white mt-0"
+            >
+              THE MILLION-DOLLAR VANITY <span className="font-serif italic font-normal text-[#D2FF00]">TRAP.</span>
+            </h2>
+            <p className="mt-4 mb-8 text-zinc-400 text-sm md:text-base max-w-2xl leading-relaxed">
+              A broadcast logo on a national jersey buys boardroom ego. It does not put a single paying customer through a
+              suburban dealership, showroom, or retail register this Saturday. Traditional sports agencies burn eight
+              figures chasing the top one per cent. We decentralise that capital into the hometown champions your
+              customers actually follow, trust, and emulate.
+            </p>
+            <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="border border-white/10 bg-white/[0.02] backdrop-blur-md p-6 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-3 border-b border-white/10 font-mono text-[10px] tracking-widest uppercase text-zinc-500">
+                    <span>THE OLD WAY // LEGACY AGENCIES</span>
+                    <span className="text-zinc-600">[DEPRECATING]</span>
+                  </div>
+                  <ul className="space-y-3 pt-4 m-0 list-none p-0 font-mono text-xs text-zinc-400">
+                    <li>• Nine-month legal cycles for a single jersey patch.</li>
+                    <li>• Passive broadcast airtime that viewers scroll past.</li>
+                    <li>• Store managers watch central marketing budgets vanish.</li>
+                    <li>• First-graders work shifts and buy their own boots.</li>
+                  </ul>
                 </div>
-                <ul className="space-y-3 pt-4 m-0 list-none p-0 font-mono text-xs text-zinc-400">
-                  <li>• Nine-month legal cycles for a single jersey patch.</li>
-                  <li>• Passive broadcast airtime that viewers scroll past.</li>
-                  <li>• Store managers watch central marketing budgets vanish.</li>
-                  <li>• First-graders work shifts and buy their own boots.</li>
-                </ul>
               </div>
-              <div className="border border-[#D2FF00]/40 bg-[#D2FF00]/[0.02] backdrop-blur-md p-6 shadow-[0_0_40px_rgba(210,255,0,0.03)] flex flex-col justify-between h-full min-h-0">
-                <div className="pb-3 border-b border-white/10 font-mono text-[10px] tracking-widest uppercase text-[#D2FF00] flex justify-between items-center">
-                  <span className="font-bold">THE TMRW/. STANDARD</span>
-                  <span className="text-[10px] text-black bg-[#D2FF00] px-2 py-0.5 font-bold font-mono">
-                    ACTIVE DEPLOYMENT
-                  </span>
+              <div className="border border-[#D2FF00]/40 bg-[#D2FF00]/[0.02] backdrop-blur-md p-6 flex flex-col justify-between shadow-[0_0_30px_rgba(210,255,0,0.03)]">
+                <div>
+                  <div className="flex items-center justify-between pb-3 border-b border-white/10 font-mono text-[10px] tracking-widest uppercase text-[#D2FF00]">
+                    <span className="font-bold">THE TMRW/. STANDARD</span>
+                    <span className="text-[10px] text-black bg-[#D2FF00] px-2 py-0.5 font-bold font-mono">
+                      ACTIVE DEPLOYMENT
+                    </span>
+                  </div>
+                  <ul className="space-y-3 pt-4 m-0 list-none p-0 font-mono text-xs text-zinc-100">
+                    <li>• Deploy fifty verified hometown athletes before kickoff.</li>
+                    <li>• Unfiltered community loyalty within fifteen kilometres of your doors.</li>
+                    <li>• Measurable customer foot traffic on Saturday morning.</li>
+                    <li>• Direct contractual backing and verified commercial status.</li>
+                  </ul>
                 </div>
-                <ul className="space-y-3 pt-4 m-0 list-none p-0 font-mono text-xs text-zinc-100">
-                  <li>• Deploy fifty verified hometown athletes before kickoff.</li>
-                  <li>• Unfiltered community loyalty within fifteen kilometres of your doors.</li>
-                  <li>• Measurable customer foot traffic on Saturday morning.</li>
-                  <li>• Direct contractual backing and verified commercial status.</li>
-                </ul>
               </div>
             </div>
+          </div>
         </section>
       </LandingStackSlot>
 
-      <LandingStackSlot z={30} id="for-players" padded>
+      <LandingStackSlot z={30} id="for-players">
         <section className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent" aria-labelledby="players-heading">
+          <div className={CHAPTER_SHELL}>
             <div className="max-w-4xl">
               <div className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
                 // SOVEREIGN TALENT
@@ -81,7 +86,7 @@ export function LandingNarrative({
                 <span className="font-serif italic font-normal text-[#D2FF00]">TURF</span>.
               </h2>
             </div>
-            <div className="landing-player-layout w-full">
+            <div className="landing-player-layout w-full flex-none mt-8">
               <div>
                 <p className="landing-lede landing-lede-light">
                   You pull the early shifts. You strap your own ankles. You win the collisions when nobody is watching.
@@ -97,6 +102,7 @@ export function LandingNarrative({
               </div>
               <AthleteTelemetryPanel />
             </div>
+          </div>
         </section>
       </LandingStackSlot>
 
@@ -109,7 +115,7 @@ export function LandingNarrative({
         <div ref={horizontalTrackRef} id="horizontal-slider" className="landing-h-track flex w-[200vw] h-full">
           <div
             id="for-brands"
-            className={`landing-h-panel w-screen flex-shrink-0 ${VIEWPORT_SHELL}`}
+            className={`landing-h-panel w-screen flex-shrink-0 ${CHAPTER_SHELL}`}
           >
             <section className="landing-chapter landing-chapter-carbon landing-h-copy bg-transparent" aria-labelledby="brands-heading">
               <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
@@ -166,7 +172,7 @@ export function LandingNarrative({
 
           <div
             id="campaign-architecture"
-            className={`landing-h-panel w-screen flex-shrink-0 ${VIEWPORT_SHELL}`}
+            className={`landing-h-panel w-screen flex-shrink-0 ${CHAPTER_SHELL}`}
           >
             <section className="landing-chapter landing-chapter-carbon landing-h-copy bg-transparent" aria-labelledby="pathways-heading">
               <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
@@ -228,8 +234,9 @@ export function LandingNarrative({
         </div>
       </div>
 
-      <LandingStackSlot z={40} id="closing-conversion" padded>
+      <LandingStackSlot z={40} id="closing-conversion">
         <section className="landing-chapter landing-chapter-carbon landing-chapter-flush landing-close bg-transparent" aria-labelledby="close-heading">
+          <div className={CHAPTER_SHELL}>
             <div className="max-w-4xl">
               <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
                 // THE 2026 RUNWAY
@@ -242,7 +249,7 @@ export function LandingNarrative({
                 category exclusivity across their designated regional clusters. Elite talent secures backing today.
               </p>
             </div>
-            <div className="hero-cta-row">
+            <div className="hero-cta-row mt-8">
               <button type="button" className="hero-cta-primary" onClick={onAthlete}>
                 Join as an Athlete (Free) →
               </button>
@@ -250,6 +257,7 @@ export function LandingNarrative({
                 Lock Category Exclusivity →
               </button>
             </div>
+          </div>
         </section>
       </LandingStackSlot>
 

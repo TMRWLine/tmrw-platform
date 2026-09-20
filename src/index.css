@@ -849,6 +849,7 @@ button {
   background: transparent;
   box-sizing: border-box;
   max-width: none;
+  pointer-events: none;
 }
 
 .hero-eyebrow {
@@ -903,6 +904,7 @@ button {
   margin-top: 4px;
   margin-bottom: 0;
   align-items: flex-start;
+  pointer-events: auto;
 }
 .hero-cta-primary {
   display: inline-flex; align-items: center; gap: 8px;
@@ -943,12 +945,13 @@ button {
 .hero-pane-media .landing-topo { opacity: 1; }
 .hero-fluid-reveal {
   position: absolute;
-  inset: -14px;
-  z-index: 1;
-  width: calc(100% + 28px);
-  height: calc(100% + 28px);
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   touch-action: none;
+  pointer-events: auto;
   will-change: transform;
 }
 .hero-img-color {
@@ -1182,7 +1185,7 @@ button {
   gap: clamp(20px, 4vw, 48px);
   align-items: center;
   min-height: 0;
-  flex: 1;
+  flex: none;
 }
 .athlete-telemetry {
   min-width: 0;
