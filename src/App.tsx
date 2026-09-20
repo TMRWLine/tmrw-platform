@@ -11,9 +11,7 @@ import {
   RefreshCw,
   Copy,
   Check,
-  User,
   Shield,
-  ShieldCheck,
   PenLine,
   Film,
   BadgeCheck,
@@ -34,7 +32,6 @@ import {
   Lock,
   Maximize2,
   Globe,
-  Crosshair,
 } from 'lucide-react';
 import type {
   Athlete,
@@ -53,7 +50,6 @@ import { MessageThread } from './components/MessageThread';
 import { StatementsPanel } from './components/StatementsPanel';
 import { Navbar, type LandingSectionId, type NavView } from './components/Navbar';
 import { AdminDrawer } from './components/AdminDrawer';
-import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { Hero } from './components/Hero';
 import { HeroFluidReveal } from './components/HeroFluidReveal';
 import { LandingNarrative } from './components/LandingNarrative';
@@ -62,6 +58,14 @@ import { LivingContours } from './components/LivingContours';
 import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDrawer } from './components/SponsorDrawer';
 import { AthletePortal } from './components/AthletePortal';
+import { AuthModal } from './components/AuthModal';
+import { RosterSection } from './components/RosterSection';
+import { AthleteDrawer } from './components/AthleteDrawer';
+import { FilmModal } from './components/FilmModal';
+import { AthleteOnboardingDrawer } from './components/AthleteOnboardingDrawer';
+import { EnterpriseBarrier } from './components/EnterpriseBarrier';
+import { supabase } from './lib/supabaseClient';
+import { isAthleteOnboardingComplete } from './lib/specimenPrivacy';
 
 import {
   fetchAthletes,
@@ -118,8 +122,6 @@ export function MarketplaceApp() {
   const [showADMModal, setShowADMModal] = useState(false);
   const [manualOverride, setManualOverride] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [mediaStudioOpen, setMediaStudioOpen] = useState(false);
-  const [mediaStudioAthlete, setMediaStudioAthlete] = useState<Athlete | null>(null);
   const [navView, setNavView] = useState<NavView | null>(null);
   const [athleteFocus, setAthleteFocus] = useState<'overview' | 'drops'>('overview');
   const [landingSection, setLandingSection] = useState<LandingSectionId | null>(null);
@@ -130,6 +132,16 @@ export function MarketplaceApp() {
   const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
   const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
   const [drawerAthlete, setDrawerAthlete] = useState<Athlete | null>(null);
+  const [authModalState, setAuthModalState] = useState<{ open: boolean; role: 'athlete' | 'sponsor' }>({
+    open: false,
+    role: 'athlete',
+  });
+  const [sessionRole, setSessionRole] = useState<'athlete' | 'sponsor' | null>(null);
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [barrierOpen, setBarrierOpen] = useState(false);
+  const [specimenAthlete, setSpecimenAthlete] = useState<Athlete | null>(null);
+  const [filmAthlete, setFilmAthlete] = useState<Athlete | null>(null);
   const [booking, setBooking] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
@@ -383,12 +395,6 @@ export function MarketplaceApp() {
     );
   }
 
-  function openProfile(athlete: Athlete) {
-    setProfileAthlete(athlete);
-    setProfileTab('overview');
-    setSignError(null);
-  }
-
   function openSponsorDrawer(athlete: Athlete) {
     setDrawerAthlete(athlete);
     setBookingError(null);
@@ -406,6 +412,88 @@ export function MarketplaceApp() {
     setNavView(focus === 'drops' ? 'drops' : 'athlete');
   }
 
+  function openAuthModal(role: 'athlete' | 'sponsor') {
+    setAuthModalState({ open: true, role });
+  }
+
+  function closeAuthModal() {
+    setAuthModalState((prev) => ({ ...prev, open: false }));
+  }
+
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      void (async () => {
+        if (!session?.user) {
+          setSessionRole(null);
+          setSessionUserId(null);
+          if (_event === 'SIGNED_OUT') {
+            setView('landing');
+            setNavView(null);
+            setOnboardingOpen(false);
+            setSpecimenAthlete(null);
+            setFilmAthlete(null);
+          }
+          return;
+        }
+
+        setSessionUserId(session.user.id);
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, postcode, sport, stripe_connect_id, onboarding_complete')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        const metaRole =
+          typeof session.user.user_metadata?.role === 'string'
+            ? session.user.user_metadata.role
+            : null;
+        const storedRole = window.localStorage.getItem('tmrw-pending-role');
+        const role =
+          (profile as { role?: string } | null)?.role ?? metaRole ?? storedRole;
+
+        if (role === 'athlete') {
+          setSessionRole('athlete');
+          setAuthModalState((prev) => ({ ...prev, open: false }));
+          const complete = isAthleteOnboardingComplete(
+            profile as {
+              onboarding_complete?: boolean | null;
+              postcode?: string | null;
+              sport?: string | null;
+              stripe_connect_id?: string | null;
+            } | null,
+            session.user.id
+          );
+          setAthleteFocus('overview');
+          setView('athlete');
+          setNavView('athlete');
+          setOnboardingOpen(!complete);
+          return;
+        }
+        if (role === 'sponsor') {
+          setSessionRole('sponsor');
+          setView('sponsor');
+          setNavView('sponsor');
+          setAuthModalState((prev) => ({ ...prev, open: false }));
+          setBarrierOpen(false);
+          setOnboardingOpen(false);
+        }
+      })();
+    });
+
+    return () => {
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (authModalState.open) {
+      lenisRef.current?.stop();
+    } else {
+      lenisRef.current?.start();
+    }
+  }, [authModalState.open]);
+
   function goLandingSection(id: LandingSectionId) {
     setView('landing');
     setNavView(null);
@@ -415,27 +503,34 @@ export function MarketplaceApp() {
   const hunterAthlete =
     athletes.find((a) => `${a.name ?? ''} ${a.full_name ?? ''}`.toLowerCase().includes('bligh')) ?? null;
 
-  const catchment3000: AthleteLocation = {
-    id: 'postcode-3000',
-    name: 'Postcode 3000',
-    lat: -37.8136,
-    lng: 144.9631,
-    postcode: '3000',
-    follower_count: null,
-    master_licence_signed: true,
-    nrl_tpa_registered: false,
-    shute_shield_compliant: true,
-  };
+  const catchment3000: AthleteLocation = useMemo(
+    () => ({
+      id: 'postcode-3000',
+      name: 'Postcode 3000',
+      lat: -37.8136,
+      lng: 144.9631,
+      postcode: '3000',
+      follower_count: null,
+      master_licence_signed: true,
+      nrl_tpa_registered: false,
+      shute_shield_compliant: true,
+    }),
+    []
+  );
 
-  const workspaceSponsors: MatchedSponsor[] = (sponsors ?? [])
-    .filter((s) => s.latitude != null && s.longitude != null)
-    .map((s) => ({
-      ...s,
-      lat: s.latitude,
-      lng: s.longitude,
-      distance_meters: 0,
-      distance_km: 0,
-    }));
+  const workspaceSponsors: MatchedSponsor[] = useMemo(
+    () =>
+      (sponsors ?? [])
+        .filter((s) => s.latitude != null && s.longitude != null)
+        .map((s) => ({
+          ...s,
+          lat: s.latitude,
+          lng: s.longitude,
+          distance_meters: 0,
+          distance_km: 0,
+        })),
+    [sponsors]
+  );
 
   async function handleConfirmSponsorship(tier: SponsorshipTierKey, postcode: string) {
     if (!drawerAthlete || booking || !tier || !postcode.trim()) return;
@@ -486,8 +581,8 @@ export function MarketplaceApp() {
         <Navbar
           activeView={navView}
           onSection={goLandingSection}
-          onJoinRoster={() => enterAthletePortal('overview')}
-          onEnterprise={enterSponsorWorkspace}
+          onJoinRoster={() => openAuthModal('athlete')}
+          onEnterprise={() => openAuthModal('sponsor')}
         />
       </header>
 
@@ -497,21 +592,13 @@ export function MarketplaceApp() {
 
       <AdminDrawer open={adminOpen} onClose={() => setAdminOpen(false)} />
 
-      {mediaStudioOpen && (
-        <TwelveLabsModal
-          athletes={athletes}
-          preselectedAthlete={mediaStudioAthlete}
-          onClose={() => setMediaStudioOpen(false)}
-        />
-      )}
-
       {view === 'landing' ? (
         <div className="landing-scroll landing-stack relative z-10 w-full bg-transparent">
           <LandingStackSlot z={10} className="pointer-events-none">
             <Hero
               FluidCanvas={HeroFluidReveal}
-              onSponsorAccess={enterSponsorWorkspace}
-              onAthletePortal={enterAthletePortal}
+              onSponsorAccess={() => openAuthModal('sponsor')}
+              onAthletePortal={() => openAuthModal('athlete')}
             />
           </LandingStackSlot>
           <LandingNarrative
@@ -588,17 +675,23 @@ export function MarketplaceApp() {
                 Loading athletes…
               </div>
             ) : (
-              <div className="grid">
-                {athletes.filter(Boolean).map((a, i) => (
-                  <AthleteCard
-                    key={a.id ?? `athlete-${i}`}
-                    athlete={a}
-                    onFindNearby={() => openSponsorDrawer(a)}
-                    onProfile={() => openProfile(a)}
-                    onMediaStudio={() => { setMediaStudioAthlete(a); setMediaStudioOpen(true); }}
-                  />
-                ))}
-              </div>
+              <RosterSection
+                athletes={athletes}
+                loading={false}
+                veiled={sessionRole !== 'sponsor'}
+                onPrimary={(a) => {
+                  if (sessionRole !== 'sponsor') setBarrierOpen(true);
+                  else openSponsorDrawer(a);
+                }}
+                onPerson={(a) => {
+                  if (sessionRole !== 'sponsor') setBarrierOpen(true);
+                  else setSpecimenAthlete(a);
+                }}
+                onFilm={(a) => {
+                  if (sessionRole !== 'sponsor') setBarrierOpen(true);
+                  else setFilmAthlete(a);
+                }}
+              />
             )}
           </>
         )}
@@ -829,6 +922,50 @@ export function MarketplaceApp() {
           }}
         />
       )}
+
+      <AuthModal
+        key={`${authModalState.open}-${authModalState.role}`}
+        isOpen={authModalState.open}
+        initialRole={authModalState.role}
+        onClose={closeAuthModal}
+      />
+
+      {barrierOpen && (
+        <EnterpriseBarrier
+          onAuthenticate={() => {
+            setBarrierOpen(false);
+            openAuthModal('sponsor');
+          }}
+          onClose={() => setBarrierOpen(false)}
+        />
+      )}
+
+      {specimenAthlete && (
+        <AthleteDrawer
+          athlete={specimenAthlete}
+          onSponsor={() => {
+            const next = specimenAthlete;
+            setSpecimenAthlete(null);
+            openSponsorDrawer(next);
+          }}
+          onClose={() => setSpecimenAthlete(null)}
+        />
+      )}
+
+      {filmAthlete && (
+        <FilmModal athlete={filmAthlete} onClose={() => setFilmAthlete(null)} />
+      )}
+
+      {onboardingOpen && sessionUserId && (
+        <AthleteOnboardingDrawer
+          userId={sessionUserId}
+          onComplete={() => {
+            setOnboardingOpen(false);
+            enterAthletePortal('overview');
+          }}
+          onClose={() => setOnboardingOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -858,88 +995,8 @@ function statusBadge(status?: string | null): { label: string; cls: string } {
   }
 }
 
-function AthleteCard({
-  athlete,
-  onFindNearby,
-  onProfile,
-  onMediaStudio,
-}: {
-  athlete: Athlete;
-  onFindNearby: () => void;
-  onProfile: () => void;
-  onMediaStudio: () => void;
-}) {
-  const st = statusBadge(athlete?.licence_status ?? athlete?.agreement_status);
-  const leagueTag = (athlete?.tier_tag || getLeagueTag(athlete?.sport))?.toLowerCase();
-  const ipLocked = athlete?.ip_lock === true || athlete?.master_licence_signed === true;
-  const name = athleteDisplayName(athlete);
-  return (
-    <div className="athlete-card border-grid">
-      <div className="athlete-card-top">
-        <div className="athlete-avatar">{athlete?.initials || initials(name)}</div>
-        <div className="athlete-card-info">
-          <h3 className="athlete-card-name">{name}</h3>
-          <span className="athlete-card-sport">{athlete?.sport ?? '—'}</span>
-        </div>
-        <span className={`athlete-status ${st.cls}`}>
-          {st.cls === 'active' && <span className="status-dot" />}
-          {st.label}
-        </span>
-      </div>
-      <div className="athlete-card-tags">
-        {athlete?.postcode && (
-          <span className="athlete-tag font-mono">
-            <Crosshair size={11} /> {athlete.postcode}
-          </span>
-        )}
-        {leagueTag && <span className="athlete-league-badge">{leagueTag}</span>}
-        {ipLocked && (
-          <span className="athlete-tag ip-lock">
-            <ShieldCheck size={11} /> IP Lock
-          </span>
-        )}
-        {athlete?.nrl_tpa_registered && (
-          <span className="athlete-tag">
-            <BadgeCheck size={11} /> NRL TPA
-          </span>
-        )}
-        {athlete?.shute_shield_compliant && (
-          <span className="athlete-tag">
-            <BadgeCheck size={11} /> Shute Shield
-          </span>
-        )}
-      </div>
-      <div className="athlete-card-actions">
-        <button className="athlete-sponsor-btn bg-brand-white text-brand-black rounded-none" onClick={onFindNearby}>
-          Sponsor Athlete
-        </button>
-        <button className="athlete-icon-btn" onClick={onProfile} aria-label="View profile">
-          <User size={16} />
-        </button>
-        <button className="athlete-icon-btn" onClick={onMediaStudio} aria-label="AI Media Studio">
-          <Film size={16} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
   return <MarketplaceApp />;
-}
-
-function getLeagueTag(sport: string | null): string | null {
-  if (!sport) return null;
-  const s = sport.toLowerCase();
-  if (s.includes('basketball')) return '@nbl1';
-  if (s.includes('soccer') || s.includes('football')) return '@nplnsw';
-  if (s.includes('rugby') && s.includes('union')) return '@shuteshield';
-  if (s.includes('rugby') && s.includes('league')) return '@nrl';
-  if (s.includes('afl')) return '@vfl';
-  if (s.includes('netball')) return '@ssn';
-  if (s.includes('cricket')) return '@nswpremier';
-  if (s.includes('combat')) return '@csa';
-  return null;
 }
 
 function MatchCard({

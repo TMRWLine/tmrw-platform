@@ -4,7 +4,7 @@ export const VIEWPORT_SHELL =
   'relative w-full h-screen min-h-screen max-h-screen overflow-hidden flex flex-col justify-between pt-28 pb-10 px-8 md:px-16 bg-transparent z-10';
 
 export const CHAPTER_SHELL =
-  'relative w-full min-h-screen flex flex-col justify-center pt-28 md:pt-32 pb-16 px-8 md:px-16 bg-transparent z-10';
+  'relative w-full min-h-screen flex flex-col justify-start pt-20 md:pt-24 pb-16 px-8 md:px-16 bg-transparent z-10';
 
 const CARD_CLASS =
   'landing-stack-card relative w-full h-screen min-h-screen max-h-screen overflow-hidden flex flex-col justify-between sticky top-0 bg-transparent';

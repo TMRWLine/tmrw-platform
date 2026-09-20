@@ -19,23 +19,23 @@ export function LandingNarrative({
           className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent"
           aria-labelledby="breakdown-heading"
         >
-          <div className="relative w-full min-h-screen flex flex-col justify-center py-20 px-8 md:px-16 bg-transparent z-10">
-            <div className="font-mono text-xs tracking-widest uppercase mb-3 text-[#D2FF00]">
+          <div className="relative w-full min-h-screen flex flex-col justify-start pt-24 md:pt-28 pb-16 px-8 md:px-16 bg-transparent z-10">
+            <div className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
               // THE ARBITRAGE
             </div>
             <h2
               id="breakdown-heading"
-              className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-white mt-0"
+              className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.88] text-white mt-0"
             >
               THE MILLION-DOLLAR VANITY <span className="font-serif italic font-normal text-[#D2FF00]">TRAP.</span>
             </h2>
-            <p className="mt-4 mb-8 text-zinc-400 text-sm md:text-base max-w-2xl leading-relaxed">
+            <p className="text-zinc-400 text-sm md:text-base max-w-2xl mt-4 mb-6 leading-relaxed">
               A broadcast logo on a national jersey buys boardroom ego. It does not put a single paying customer through a
               suburban dealership, showroom, or retail register this Saturday. Traditional sports agencies burn eight
               figures chasing the top one per cent. We decentralise that capital into the hometown champions your
               customers actually follow, trust, and emulate.
             </p>
-            <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
               <div className="border border-white/10 bg-white/[0.02] backdrop-blur-md p-6 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between pb-3 border-b border-white/10 font-mono text-[10px] tracking-widest uppercase text-zinc-500">

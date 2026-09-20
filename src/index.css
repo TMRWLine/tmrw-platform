@@ -2732,3 +2732,25 @@ button {
 
 /* ===== Spin animation (used by spinner) ===== */
 .spin { animation: spin .8s linear infinite; }
+
+.specimen-avatar {
+  position: relative;
+  overflow: hidden;
+  background: #09090b !important;
+  color: #3f3f46 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+}
+.specimen-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(210, 255, 0, 0.85);
+  animation: specimen-scan 2.2s linear infinite;
+  pointer-events: none;
+}
+@keyframes specimen-scan {
+  0% { top: -4px; }
+  100% { top: 100%; }
+}
