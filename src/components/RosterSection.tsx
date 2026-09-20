@@ -3,6 +3,9 @@ import type { Athlete } from '../types';
 import { athleteDisplayName, athleteInitials } from '../lib/formatName';
 import { PROTECTED_CLUB, redactedCatchment, specimenTag } from '../lib/specimenPrivacy';
 
+/** Flip to `false` before production to restore the specimen privacy veil. */
+export const DEV_BYPASS_AUTH = true;
+
 export function RosterSection({
   athletes,
   loading,
@@ -18,6 +21,8 @@ export function RosterSection({
   onPerson: (athlete: Athlete) => void;
   onFilm: (athlete: Athlete) => void;
 }) {
+  const mask = veiled && !DEV_BYPASS_AUTH;
+
   if (loading) {
     return (
       <div className="state">
@@ -34,7 +39,7 @@ export function RosterSection({
           key={athlete.id ?? `athlete-${index}`}
           athlete={athlete}
           index={index}
-          veiled={veiled}
+          veiled={mask}
           onPrimary={() => onPrimary(athlete)}
           onPerson={() => onPerson(athlete)}
           onFilm={() => onFilm(athlete)}
@@ -63,6 +68,7 @@ function AthleteRosterCard({
   const leagueTag = (athlete?.tier_tag || getLeagueTag(athlete?.sport))?.toLowerCase();
   const ipLocked = athlete?.ip_lock === true || athlete?.master_licence_signed === true;
   const name = athleteDisplayName(athlete);
+  const club = athlete.current_club ?? athlete.club ?? 'Independent';
   const display = veiled ? specimenTag(index, athlete.sport) : name;
 
   return (
@@ -79,7 +85,7 @@ function AthleteRosterCard({
         <div className="athlete-card-info">
           <h3 className="athlete-card-name font-mono">{display}</h3>
           <span className="athlete-card-sport">
-            {veiled ? PROTECTED_CLUB : athlete?.sport ?? '—'}
+            {veiled ? PROTECTED_CLUB : club}
           </span>
         </div>
         <span className={`athlete-status ${st.cls}`}>
@@ -98,6 +104,9 @@ function AthleteRosterCard({
               <span className="athlete-tag font-mono">
                 <Crosshair size={11} /> {athlete.postcode}
               </span>
+            )}
+            {athlete?.sport && (
+              <span className="athlete-tag font-mono uppercase">{athlete.sport}</span>
             )}
             {leagueTag && <span className="athlete-league-badge">{leagueTag}</span>}
             {ipLocked && (

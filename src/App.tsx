@@ -59,7 +59,7 @@ import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDrawer } from './components/SponsorDrawer';
 import { AthletePortal } from './components/AthletePortal';
 import { AuthModal } from './components/AuthModal';
-import { RosterSection } from './components/RosterSection';
+import { DEV_BYPASS_AUTH, RosterSection } from './components/RosterSection';
 import { AthleteDrawer } from './components/AthleteDrawer';
 import { FilmModal } from './components/FilmModal';
 import { AthleteOnboardingDrawer } from './components/AthleteOnboardingDrawer';
@@ -678,17 +678,17 @@ export function MarketplaceApp() {
               <RosterSection
                 athletes={athletes}
                 loading={false}
-                veiled={sessionRole !== 'sponsor'}
+                veiled={!DEV_BYPASS_AUTH && sessionRole !== 'sponsor'}
                 onPrimary={(a) => {
-                  if (sessionRole !== 'sponsor') setBarrierOpen(true);
+                  if (!DEV_BYPASS_AUTH && sessionRole !== 'sponsor') setBarrierOpen(true);
                   else openSponsorDrawer(a);
                 }}
                 onPerson={(a) => {
-                  if (sessionRole !== 'sponsor') setBarrierOpen(true);
+                  if (!DEV_BYPASS_AUTH && sessionRole !== 'sponsor') setBarrierOpen(true);
                   else setSpecimenAthlete(a);
                 }}
                 onFilm={(a) => {
-                  if (sessionRole !== 'sponsor') setBarrierOpen(true);
+                  if (!DEV_BYPASS_AUTH && sessionRole !== 'sponsor') setBarrierOpen(true);
                   else setFilmAthlete(a);
                 }}
               />
