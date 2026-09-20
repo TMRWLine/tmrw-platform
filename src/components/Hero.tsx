@@ -39,19 +39,13 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
             Sponsor Your Suburbs →
           </button>
         </div>
-        <div className="inline-flex items-center gap-3 px-3.5 py-1.5 border border-white/10 bg-white/[0.02] backdrop-blur-md mt-6 rounded-none flex-nowrap">
+        <div className="flex items-center gap-3.5 mt-8 font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-400 flex-nowrap">
           <span className="w-1.5 h-1.5 rounded-full bg-[#D2FF00] animate-pulse shrink-0" />
-          <span className="font-mono text-[10px] tracking-[0.2em] text-zinc-300 uppercase whitespace-nowrap">
-            3,000 Verified Athletes
-          </span>
-          <span className="text-white/20 text-[10px] font-mono">//</span>
-          <span className="font-mono text-[10px] tracking-[0.2em] text-zinc-400 uppercase whitespace-nowrap">
-            Brisbane 2032 Runway
-          </span>
-          <span className="text-white/20 text-[10px] font-mono">//</span>
-          <span className="font-mono text-[10px] tracking-[0.2em] text-[#D2FF00] uppercase whitespace-nowrap">
-            Zero Legal Friction
-          </span>
+          <span className="text-zinc-300 whitespace-nowrap">3,000 Verified Athletes</span>
+          <span className="text-white/20">//</span>
+          <span className="text-zinc-400 whitespace-nowrap">Brisbane 2032 Runway</span>
+          <span className="text-white/20">//</span>
+          <span className="text-[#D2FF00] whitespace-nowrap">Zero Legal Friction</span>
         </div>
       </div>
     </section>
