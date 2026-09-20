@@ -144,7 +144,9 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
     canvas.style.height = '100%';
     canvas.style.pointerEvents = 'auto';
     canvas.style.touchAction = 'none';
-    canvas.style.objectFit = 'cover';
+    canvas.className = 'pointer-events-auto z-0';
+    wrap.style.pointerEvents = 'auto';
+    wrap.style.zIndex = '0';
     wrap.style.transition = 'transform 0.2s cubic-bezier(0.25, 1, 0.5, 1)';
     wrap.style.willChange = 'transform';
     wrap.appendChild(canvas);
@@ -292,18 +294,17 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
     };
 
     const paint = (clientX: number, clientY: number) => {
-      const hit = document.elementFromPoint(clientX, clientY);
-      if (hit && !hit.closest('.hero-section')) {
+      if (window.scrollY > window.innerHeight * 0.4) {
         splat = 0;
         return;
       }
-      if (!reduced) applyParallax(clientX, clientY);
       const uv = pointerUv(clientX, clientY);
       if (!uv) return;
       if (uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1) {
         splat = 0;
         return;
       }
+      if (!reduced) applyParallax(clientX, clientY);
       mouse.set(uv.x, uv.y);
       splat = 1;
     };
@@ -318,6 +319,16 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
       const t = e.touches[0];
       if (!t) return;
       paint(t.clientX, t.clientY);
+    };
+    const onPointerDown = (e: PointerEvent) => {
+      paint(e.clientX, e.clientY);
+      if (e.currentTarget instanceof HTMLElement) {
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          /* capture is optional */
+        }
+      }
     };
 
     const onLeave = () => {
@@ -362,14 +373,14 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
     const ro = new ResizeObserver(resize);
     ro.observe(wrap);
     wrap.addEventListener('pointermove', onPointerMove, { passive: true });
-    wrap.addEventListener('pointerdown', onPointerMove, { passive: true });
+    wrap.addEventListener('pointerdown', onPointerDown);
     wrap.addEventListener('mousemove', onMouseMove, { passive: true });
     wrap.addEventListener('touchstart', onTouchMove, { passive: true });
     wrap.addEventListener('touchmove', onTouchMove, { passive: true });
     wrap.addEventListener('pointerleave', onLeave);
-    window.addEventListener('pointermove', onPointerMove, { passive: true });
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('pointermove', onPointerMove, { passive: true, capture: true });
+    window.addEventListener('mousemove', onMouseMove, { passive: true, capture: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true, capture: true });
     raf = requestAnimationFrame(tick);
 
     return () => {
@@ -378,14 +389,14 @@ export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
       cancelAnimationFrame(raf);
       ro.disconnect();
       wrap.removeEventListener('pointermove', onPointerMove);
-      wrap.removeEventListener('pointerdown', onPointerMove);
+      wrap.removeEventListener('pointerdown', onPointerDown);
       wrap.removeEventListener('mousemove', onMouseMove);
       wrap.removeEventListener('touchstart', onTouchMove);
       wrap.removeEventListener('touchmove', onTouchMove);
       wrap.removeEventListener('pointerleave', onLeave);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('pointermove', onPointerMove, true);
+      window.removeEventListener('mousemove', onMouseMove, true);
+      window.removeEventListener('touchmove', onTouchMove, true);
       geometry.dispose();
       simMaterial.dispose();
       displayMaterial.dispose();

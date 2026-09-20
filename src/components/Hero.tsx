@@ -11,8 +11,8 @@ const HERO_TENNIS =
 
 export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluidReveal }: HeroProps) {
   return (
-    <section className="hero-section relative h-screen min-h-screen max-h-screen overflow-hidden bg-transparent" aria-label="TMRW editorial landing">
-      <div className="hero-pane hero-pane-media absolute inset-0 z-0 overflow-hidden">
+    <section className="hero-section relative h-screen min-h-screen max-h-screen overflow-hidden bg-transparent pointer-events-none" aria-label="TMRW editorial landing">
+      <div className="hero-pane hero-pane-media absolute inset-0 z-0 overflow-hidden pointer-events-auto">
         <FluidCanvas imageSrc={HERO_TENNIS} />
         <div className="hero-legibility pointer-events-none absolute inset-0 z-[2]" aria-hidden="true" />
       </div>
@@ -40,7 +40,7 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
               Sponsor Your Suburbs →
             </button>
           </div>
-          <div className="flex items-center gap-3.5 mt-8 font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-400 pointer-events-auto">
+          <div className="flex items-center gap-3.5 mt-8 font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-400">
             <span className="w-1.5 h-1.5 rounded-full bg-[#D2FF00] animate-pulse shrink-0" />
             <span className="text-zinc-300">3,000 Verified Athletes</span>
             <span className="text-white/20">//</span>

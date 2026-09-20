@@ -507,7 +507,7 @@ export function MarketplaceApp() {
 
       {view === 'landing' ? (
         <div className="landing-scroll landing-stack relative z-10 w-full bg-transparent">
-          <LandingStackSlot z={10}>
+          <LandingStackSlot z={10} className="pointer-events-none">
             <Hero
               FluidCanvas={HeroFluidReveal}
               onSponsorAccess={enterSponsorWorkspace}

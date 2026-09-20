@@ -842,6 +842,7 @@ button {
   background: transparent;
   margin: 0;
   overflow: hidden;
+  pointer-events: none;
 }
 
 .hero-pane-copy {
@@ -912,6 +913,7 @@ button {
   padding: 14px 22px;
   background: #FFFFFF; color: #000000; border: none; border-radius: 0;
   cursor: pointer; letter-spacing: 0;
+  pointer-events: auto;
 }
 .hero-cta-primary:hover { background: #D2FF00; color: #000000; }
 .hero-cta-secondary {
@@ -921,6 +923,7 @@ button {
   background: transparent; color: #FFFFFF;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0; cursor: pointer; letter-spacing: 0;
+  pointer-events: auto;
 }
 .hero-cta-secondary:hover { border-color: #FFFFFF; }
 
@@ -931,6 +934,7 @@ button {
   clip-path: none;
   background: transparent;
   cursor: crosshair;
+  pointer-events: auto;
 }
 .hero-legibility {
   background: linear-gradient(
@@ -952,7 +956,12 @@ button {
   overflow: hidden;
   touch-action: none;
   pointer-events: auto;
+  cursor: crosshair;
   will-change: transform;
+}
+.hero-fluid-reveal canvas {
+  pointer-events: auto;
+  z-index: 0;
 }
 .hero-img-color {
   z-index: 0;
