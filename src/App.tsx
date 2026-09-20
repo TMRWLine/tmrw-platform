@@ -58,6 +58,7 @@ import { Hero } from './components/Hero';
 import { HeroFluidReveal } from './components/HeroFluidReveal';
 import { LandingNarrative } from './components/LandingNarrative';
 import { BrandLockup, LandingStackSlot } from './components/LandingStack';
+import { LivingContours } from './components/LivingContours';
 import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDrawer } from './components/SponsorDrawer';
 import { AthletePortal } from './components/AthletePortal';
@@ -122,7 +123,6 @@ export function MarketplaceApp() {
   const [navView, setNavView] = useState<NavView | null>(null);
   const [athleteFocus, setAthleteFocus] = useState<'overview' | 'drops'>('overview');
   const [landingSection, setLandingSection] = useState<LandingSectionId | null>(null);
-  const [navOnCotton, setNavOnCotton] = useState(false);
   const lenisRef = useRef<Lenis | null>(null);
   const horizontalSectionRef = useRef<HTMLDivElement>(null);
   const horizontalTrackRef = useRef<HTMLDivElement>(null);
@@ -164,9 +164,10 @@ export function MarketplaceApp() {
           id: 'horizontal-pin',
           trigger: section,
           pin: true,
-          scrub: 1.2,
+          scrub: 1,
           start: 'top top',
           end: '+=1800',
+          pinSpacing: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
           fastScrollEnd: true,
@@ -217,11 +218,13 @@ export function MarketplaceApp() {
     const t = window.setTimeout(() => {
       let target: number | HTMLElement | null = document.getElementById(id);
       const pin = document.getElementById('horizontal-wrapper');
-      const spacer = pin?.parentElement;
-      if (pin && spacer && (id === 'for-brands' || id === 'campaign-architecture')) {
-        const spacerRect = spacer.getBoundingClientRect();
-        const start = window.scrollY + spacerRect.top;
-        const end = start + spacerRect.height - window.innerHeight;
+      if (pin && (id === 'for-brands' || id === 'campaign-architecture')) {
+        const pinRect = pin.getBoundingClientRect();
+        const spacer = pin.parentElement;
+        const spacerRect = spacer?.getBoundingClientRect();
+        const start = window.scrollY + pinRect.top;
+        const span = (spacerRect?.height ?? pinRect.height) - window.innerHeight;
+        const end = window.scrollY + (spacerRect?.top ?? pinRect.top) + Math.max(span, 0);
         target = id === 'campaign-architecture' ? end : start;
       }
       if (target != null) {
@@ -240,24 +243,6 @@ export function MarketplaceApp() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [view]);
-
-  useEffect(() => {
-    if (view !== 'landing') {
-      setNavOnCotton(false);
-      return;
-    }
-    const syncNav = () => {
-      const cotton = document.getElementById('the-breakdown');
-      const next = document.getElementById('for-players');
-      if (!cotton) return;
-      const cottonTop = cotton.getBoundingClientRect().top;
-      const nextTop = next?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
-      setNavOnCotton(cottonTop <= 80 && nextTop > 140);
-    };
-    syncNav();
-    window.addEventListener('scroll', syncNav, { passive: true });
-    return () => window.removeEventListener('scroll', syncNav);
   }, [view]);
 
   useEffect(() => {
@@ -496,7 +481,7 @@ export function MarketplaceApp() {
 
   return (
     <div className={`app-shell bg-brand-black text-brand-white font-sans bg-grain${view === 'landing' ? '' : ' app-shell-padded'}`}>
-      <header className={`topnav glass-header bg-transparent${navOnCotton ? ' topnav-on-cotton' : ''}`}>
+      <header className="topnav glass-header bg-transparent">
         <BrandLockup onClick={() => setView('landing')} />
         <Navbar
           activeView={navView}
@@ -505,6 +490,10 @@ export function MarketplaceApp() {
           onEnterprise={enterSponsorWorkspace}
         />
       </header>
+
+      <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden bg-[#08080A]">
+        <LivingContours />
+      </div>
 
       <AdminDrawer open={adminOpen} onClose={() => setAdminOpen(false)} />
 
@@ -517,7 +506,7 @@ export function MarketplaceApp() {
       )}
 
       {view === 'landing' ? (
-        <div className="landing-scroll landing-stack relative w-full">
+        <div className="landing-scroll landing-stack relative z-10 w-full bg-transparent">
           <LandingStackSlot z={10}>
             <Hero
               FluidCanvas={HeroFluidReveal}

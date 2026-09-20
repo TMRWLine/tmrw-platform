@@ -63,22 +63,17 @@ uniform vec2 uBottomSize;
 uniform vec2 uMouseOffset;
 varying vec2 vUv;
 
-vec2 coverUv(vec2 uv, vec2 plane, vec2 img) {
-  float planeAspect = plane.x / max(plane.y, 1.0);
-  float imgAspect = img.x / max(img.y, 1.0);
-  vec2 scale = vec2(1.0);
-  if (planeAspect > imgAspect) {
-    scale.y = imgAspect / planeAspect;
-  } else {
-    scale.x = planeAspect / imgAspect;
-  }
+vec2 getCoverUv(vec2 uv, vec2 screenRes, vec2 imageRes) {
+  float sAspect = screenRes.x / max(screenRes.y, 1.0);
+  float iAspect = imageRes.x / max(imageRes.y, 1.0);
+  vec2 scale = (sAspect > iAspect) ? vec2(1.0, sAspect / iAspect) : vec2(iAspect / sAspect, 1.0);
   return clamp((uv - 0.5) / scale + 0.5, 0.0, 1.0);
 }
 
 void main() {
-  vec2 parallaxUv = clamp(vUv + uMouseOffset * 0.018, 0.0, 1.0);
-  vec2 topUv = coverUv(parallaxUv, uPlaneSize, uTopSize);
-  vec2 botUv = coverUv(parallaxUv, uPlaneSize, uBottomSize);
+  vec2 parallaxUv = clamp(vUv + uMouseOffset * 0.012, 0.0, 1.0);
+  vec2 topUv = getCoverUv(parallaxUv, uPlaneSize, uTopSize);
+  vec2 botUv = getCoverUv(parallaxUv, uPlaneSize, uBottomSize);
 
   vec3 top = texture2D(uTop, topUv).rgb;
   float luma = dot(top, vec3(0.299, 0.587, 0.114));
@@ -117,6 +112,8 @@ function makeTarget(w: number, h: number) {
 function makePlaceholder() {
   const data = new Uint8Array([8, 8, 10, 255]);
   const tex = new THREE.DataTexture(data, 1, 1);
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
   tex.needsUpdate = true;
   return tex;
 }

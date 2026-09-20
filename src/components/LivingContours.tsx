@@ -7,11 +7,13 @@ const LOOPS = [
   'M340 680 C 560 540, 860 500, 1160 580 S 1540 780, 1280 900 S 620 980, 260 840 S 120 740, 340 680',
   'M540 80 C 760 -40, 1080 80, 1280 260 S 1420 520, 1080 640 S 520 620, 380 360 S 320 180, 540 80',
   'M40 720 C 220 580, 480 620, 700 760 S 980 980, 620 1040 S 80 980, -40 820 S -60 760, 40 720',
+  'M700 40 C 980 160, 1240 80, 1380 320 S 1200 700, 780 820 S 180 700, 80 380 S 360 -40, 700 40',
+  'M-40 300 C 180 140, 460 360, 740 280 S 1280 180, 1420 480 S 980 860, 420 900 S -80 620, -40 300',
 ];
 
-export function LivingContours({ invert = false }: { invert?: boolean }) {
+export function LivingContours() {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const stroke = invert ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)';
+  const stroke = 'rgba(255, 255, 255, 0.055)';
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -28,8 +30,8 @@ export function LivingContours({ invert = false }: { invert?: boolean }) {
     const onMove = (e: PointerEvent) => {
       const nx = (e.clientX / window.innerWidth - 0.5) * 2;
       const ny = (e.clientY / window.innerHeight - 0.5) * 2;
-      targetX = nx * 15;
-      targetY = ny * 15;
+      targetX = -nx * 12;
+      targetY = -ny * 12;
     };
 
     const tick = () => {
@@ -58,12 +60,12 @@ export function LivingContours({ invert = false }: { invert?: boolean }) {
           className="living-contours-drift"
           fill="none"
           stroke={stroke}
-          strokeWidth="1"
+          strokeWidth="1.2"
           strokeLinecap="round"
           strokeLinejoin="round"
         >
           {LOOPS.map((d, i) => (
-            <path key={d} className="living-contour-path" d={d} style={{ animationDelay: `${i * -4.2}s` }} />
+            <path key={d} className="living-contour-path" d={d} style={{ animationDelay: `${i * -3.6}s` }} />
           ))}
         </g>
       </svg>

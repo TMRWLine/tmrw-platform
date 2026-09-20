@@ -1,30 +1,28 @@
 import { type ReactNode } from 'react';
-import { LivingContours } from './LivingContours';
 
 const CARD_CLASS =
-  'landing-stack-card h-screen w-full overflow-hidden flex flex-col justify-between rounded-t-3xl border-t border-white/15 shadow-[0_-20px_50px_rgba(0,0,0,0.9)]';
+  'landing-stack-card relative w-full min-h-screen h-screen overflow-hidden flex flex-col justify-between sticky top-0 bg-transparent';
 
 export function LandingStackSlot({
   z,
   children,
-  surface = 'carbon',
   id,
   sticky = true,
+  padded = false,
 }: {
   z: number;
   children: ReactNode;
-  surface?: 'carbon' | 'cotton';
   id?: string;
   sticky?: boolean;
+  padded?: boolean;
 }) {
-  const surfaceClass = surface === 'cotton' ? 'landing-stack-card-cotton' : 'landing-stack-card-carbon';
+  const padClass = padded ? 'p-10 md:p-20 pt-[88px]' : '';
   const card = (
     <div
       id={id}
-      className={`${CARD_CLASS} ${sticky ? 'sticky top-0' : 'landing-hslide-panel'} ${surfaceClass}`}
+      className={`${CARD_CLASS} ${padClass} ${sticky ? 'sticky top-0' : 'landing-hslide-panel'}`}
       style={{ zIndex: z }}
     >
-      <LivingContours invert={surface === 'cotton'} />
       <div className="landing-stack-inner">{children}</div>
     </div>
   );

@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react';
 import { HeroFluidReveal } from './HeroFluidReveal';
-import { TopoOverlay } from './LandingStack';
 
 interface HeroProps {
   onSponsorAccess: () => void;
@@ -8,44 +6,26 @@ interface HeroProps {
   FluidCanvas?: typeof HeroFluidReveal;
 }
 
-const HERO_ATHLETE_SLIDES = [
-  {
-    url: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=1600&q=85',
-    caption: 'ALI // COMBAT PRECISION',
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=1600&q=85',
-    caption: 'JORDAN & KOBE // COURT DYNASTY',
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1600&q=85',
-    caption: 'FEDERER // SERVICE VECTOR',
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1632245889029-e406faaa34cd?auto=format&fit=crop&w=1600&q=85',
-    caption: 'HAMILTON // APEX VELOCITY',
-  },
-  {
-    url: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1600&q=85',
-    caption: 'JORDAN // VERTICAL ELEVATION',
-  },
-];
+const HERO_TENNIS =
+  'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=2400&q=90';
+const HERO_HOOP =
+  'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=2400&q=90';
 
 export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluidReveal }: HeroProps) {
-  const [cycle, setCycle] = useState(0);
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setCycle((i) => (i + 1) % HERO_ATHLETE_SLIDES.length);
-    }, 5000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  const active = HERO_ATHLETE_SLIDES[cycle];
-
   return (
-    <section className="hero-section" aria-label="TMRW editorial landing">
-      <div className="hero-pane hero-pane-copy">
+    <section className="hero-section relative min-h-screen overflow-hidden bg-transparent" aria-label="TMRW editorial landing">
+      <div className="hero-pane hero-pane-media absolute inset-0 z-0 overflow-hidden">
+        <FluidCanvas
+          topImageSrc={HERO_TENNIS}
+          bottomImageSrc={HERO_HOOP}
+          caption="COURT VECTOR // RIM ELEVATION"
+        />
+        <div
+          className="hero-legibility pointer-events-none absolute inset-0 z-[2]"
+          aria-hidden="true"
+        />
+      </div>
+      <div className="hero-pane hero-pane-copy relative z-10">
         <div className="font-mono text-xs tracking-widest uppercase mb-4 flex items-center gap-2">
           <span className="text-white font-bold">
             tmrw<span className="text-[#D2FF00]">/.</span>
@@ -68,16 +48,20 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
             Sponsor Your Suburbs →
           </button>
         </div>
-        <p className="hero-trust font-mono text-xs text-zinc-400 mt-4">
-          3,000 VERIFIED ATHLETES // BRISBANE 2032 RUNWAY // ZERO LEGAL FRICTION
-        </p>
-      </div>
-      <div
-        className="hero-pane hero-pane-media relative overflow-hidden"
-        style={{ clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0% 100%)' }}
-      >
-        <TopoOverlay />
-        <FluidCanvas topImageSrc={active.url} bottomImageSrc={active.url} caption={active.caption} />
+        <div className="inline-flex items-center flex-wrap gap-4 px-4 py-2 border border-white/10 bg-white/[0.02] backdrop-blur-md mt-6">
+          <span className="inline-flex items-center gap-2 font-mono text-[10px] tracking-widest text-zinc-300 uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#D2FF00] animate-pulse" aria-hidden="true" />
+            3,000 VERIFIED ATHLETES
+          </span>
+          <span className="text-white/20" aria-hidden="true">
+            |
+          </span>
+          <span className="font-mono text-[10px] tracking-widest text-zinc-400 uppercase">BRISBANE 2032 RUNWAY</span>
+          <span className="text-white/20" aria-hidden="true">
+            |
+          </span>
+          <span className="font-mono text-[10px] tracking-widest text-[#D2FF00] uppercase">ZERO LEGAL FRICTION</span>
+        </div>
       </div>
     </section>
   );
