@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Lenis from '@studio-freight/lenis';
 import {
   MapPin,
@@ -55,6 +55,7 @@ import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { Hero } from './components/Hero';
 import { HeroFluidReveal } from './components/HeroFluidReveal';
 import { LandingNarrative } from './components/LandingNarrative';
+import { LandingStackSlot } from './components/LandingStack';
 import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDrawer } from './components/SponsorDrawer';
 import { AthletePortal } from './components/AthletePortal';
@@ -117,6 +118,8 @@ export function MarketplaceApp() {
   const [navView, setNavView] = useState<NavView | null>(null);
   const [athleteFocus, setAthleteFocus] = useState<'overview' | 'drops'>('overview');
   const [landingSection, setLandingSection] = useState<LandingSectionId | null>(null);
+  const [navOnCotton, setNavOnCotton] = useState(false);
+  const lenisRef = useRef<Lenis | null>(null);
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>('all');
   const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
   const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
@@ -132,6 +135,7 @@ export function MarketplaceApp() {
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     });
+    lenisRef.current = lenis;
 
     let frame = 0;
     function raf(time: number) {
@@ -142,6 +146,7 @@ export function MarketplaceApp() {
 
     return () => {
       cancelAnimationFrame(frame);
+      lenisRef.current = null;
       lenis.destroy();
     };
   }, [view]);
@@ -150,11 +155,40 @@ export function MarketplaceApp() {
     if (view !== 'landing' || !landingSection) return;
     const id = landingSection;
     const t = window.setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const el = document.getElementById(id);
+      if (el) {
+        if (lenisRef.current) {
+          lenisRef.current.scrollTo(el, { offset: 0, duration: 1.15 });
+        } else {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
       setLandingSection(null);
     }, 80);
     return () => window.clearTimeout(t);
   }, [view, landingSection]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [view]);
+
+  useEffect(() => {
+    if (view !== 'landing') {
+      setNavOnCotton(false);
+      return;
+    }
+    const syncNav = () => {
+      const cotton = document.getElementById('the-breakdown');
+      const next = document.getElementById('for-players');
+      if (!cotton) return;
+      const cottonTop = cotton.getBoundingClientRect().top;
+      const nextTop = next?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
+      setNavOnCotton(cottonTop <= 80 && nextTop > 140);
+    };
+    syncNav();
+    window.addEventListener('scroll', syncNav, { passive: true });
+    return () => window.removeEventListener('scroll', syncNav);
+  }, [view]);
 
   useEffect(() => {
     let cancelled = false;
@@ -392,7 +426,7 @@ export function MarketplaceApp() {
 
   return (
     <div className="app-shell bg-brand-black text-brand-white font-sans bg-grain">
-      <header className="topnav glass-header bg-transparent">
+      <header className={`topnav glass-header bg-transparent${navOnCotton ? ' topnav-on-cotton' : ''}`}>
         <button
           type="button"
           onClick={() => setView('landing')}
@@ -430,12 +464,14 @@ export function MarketplaceApp() {
       )}
 
       {view === 'landing' ? (
-        <div className="landing-scroll">
-          <Hero
-            FluidCanvas={HeroFluidReveal}
-            onSponsorAccess={enterSponsorWorkspace}
-            onAthletePortal={enterAthletePortal}
-          />
+        <div className="landing-scroll landing-stack">
+          <LandingStackSlot z={10} initiallyActive>
+            <Hero
+              FluidCanvas={HeroFluidReveal}
+              onSponsorAccess={enterSponsorWorkspace}
+              onAthletePortal={enterAthletePortal}
+            />
+          </LandingStackSlot>
           <LandingNarrative onSponsor={enterSponsorWorkspace} onAthlete={enterAthletePortal} />
         </div>
       ) : (
