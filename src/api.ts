@@ -62,6 +62,21 @@ export function normalizeAthlete(row: Record<string, unknown> | Athlete | null |
     shute_shield_compliant: Boolean(r.shute_shield_compliant),
     created_at: String(r.created_at ?? ''),
     updated_at: r.updated_at != null ? String(r.updated_at) : undefined,
+    portrait_url: (r.portrait_url as string | null) ?? null,
+    geofence_km: typeof r.geofence_km === 'number' ? r.geofence_km : 15,
+    match_reel_url: (r.match_reel_url as string | null) ?? null,
+    training_clip_url: (r.training_clip_url as string | null) ?? null,
+    performance_logs: Array.isArray(r.performance_logs)
+      ? (r.performance_logs as Athlete['performance_logs'])
+      : null,
+    suburban_views: typeof r.suburban_views === 'number' ? r.suburban_views : null,
+    engagement_rate: typeof r.engagement_rate === 'number' ? r.engagement_rate : null,
+    community_reach: typeof r.community_reach === 'number' ? r.community_reach : null,
+    match_date: (r.match_date as string | null) ?? null,
+    nil_clearance: r.nil_clearance == null ? null : Boolean(r.nil_clearance),
+    exclusivity_terms: (r.exclusivity_terms as string | null) ?? null,
+    payout_athlete_pct: typeof r.payout_athlete_pct === 'number' ? r.payout_athlete_pct : null,
+    payout_partner_pct: typeof r.payout_partner_pct === 'number' ? r.payout_partner_pct : null,
   };
 }
 

@@ -1,28 +1,22 @@
 import { BadgeCheck, Crosshair, Film, ShieldCheck, User } from 'lucide-react';
+import { useState } from 'react';
 import type { Athlete } from '../types';
 import { athleteDisplayName, athleteInitials } from '../lib/formatName';
-import { PROTECTED_CLUB, redactedCatchment, specimenTag } from '../lib/specimenPrivacy';
-
-/** Flip to `false` before production to restore the specimen privacy veil. */
-export const DEV_BYPASS_AUTH = true;
+import { athleteDossier } from '../lib/athleteDossier';
 
 export function RosterSection({
   athletes,
   loading,
-  veiled,
   onPrimary,
   onPerson,
   onFilm,
 }: {
   athletes: Athlete[];
   loading: boolean;
-  veiled: boolean;
   onPrimary: (athlete: Athlete) => void;
   onPerson: (athlete: Athlete) => void;
   onFilm: (athlete: Athlete) => void;
 }) {
-  const mask = veiled && !DEV_BYPASS_AUTH;
-
   if (loading) {
     return (
       <div className="state">
@@ -38,8 +32,6 @@ export function RosterSection({
         <AthleteRosterCard
           key={athlete.id ?? `athlete-${index}`}
           athlete={athlete}
-          index={index}
-          veiled={mask}
           onPrimary={() => onPrimary(athlete)}
           onPerson={() => onPerson(athlete)}
           onFilm={() => onFilm(athlete)}
@@ -51,15 +43,11 @@ export function RosterSection({
 
 function AthleteRosterCard({
   athlete,
-  index,
-  veiled,
   onPrimary,
   onPerson,
   onFilm,
 }: {
   athlete: Athlete;
-  index: number;
-  veiled: boolean;
   onPrimary: () => void;
   onPerson: () => void;
   onFilm: () => void;
@@ -69,62 +57,57 @@ function AthleteRosterCard({
   const ipLocked = athlete?.ip_lock === true || athlete?.master_licence_signed === true;
   const name = athleteDisplayName(athlete);
   const club = athlete.current_club ?? athlete.club ?? 'Independent';
-  const display = veiled ? specimenTag(index, athlete.sport) : name;
+  const dossier = athleteDossier(athlete);
+  const [portraitFailed, setPortraitFailed] = useState(false);
 
   return (
-    <div className={`athlete-card border-grid${veiled ? ' specimen-card' : ''}`}>
+    <div className="athlete-card border-grid">
       <div className="athlete-card-top">
-        {veiled ? (
-          <div className="athlete-avatar specimen-avatar" aria-hidden="true">
-            <SpecimenSilhouette />
-            <span className="specimen-scan" />
-          </div>
-        ) : (
-          <div className="athlete-avatar">{athlete?.initials || athleteInitials(name)}</div>
-        )}
+        <div className="athlete-avatar overflow-hidden p-0">
+          {!portraitFailed ? (
+            <img
+              src={dossier.portraitUrl}
+              alt=""
+              className="w-full h-full object-cover"
+              onError={() => setPortraitFailed(true)}
+            />
+          ) : (
+            athlete?.initials || athleteInitials(name)
+          )}
+        </div>
         <div className="athlete-card-info">
-          <h3 className="athlete-card-name font-mono">{display}</h3>
-          <span className="athlete-card-sport">
-            {veiled ? PROTECTED_CLUB : club}
-          </span>
+          <h3 className="athlete-card-name">{name}</h3>
+          <span className="athlete-card-sport">{club}</span>
         </div>
         <span className={`athlete-status ${st.cls}`}>
           {st.cls === 'active' && <span className="status-dot" />}
-          {veiled ? 'SEALED' : st.label}
+          {st.label}
         </span>
       </div>
       <div className="athlete-card-tags">
-        {veiled ? (
+        {athlete?.postcode && (
           <span className="athlete-tag font-mono">
-            <Crosshair size={11} /> {redactedCatchment(athlete.postcode)}
+            <Crosshair size={11} /> {athlete.postcode}
           </span>
-        ) : (
-          <>
-            {athlete?.postcode && (
-              <span className="athlete-tag font-mono">
-                <Crosshair size={11} /> {athlete.postcode}
-              </span>
-            )}
-            {athlete?.sport && (
-              <span className="athlete-tag font-mono uppercase">{athlete.sport}</span>
-            )}
-            {leagueTag && <span className="athlete-league-badge">{leagueTag}</span>}
-            {ipLocked && (
-              <span className="athlete-tag ip-lock">
-                <ShieldCheck size={11} /> IP Lock
-              </span>
-            )}
-            {athlete?.nrl_tpa_registered && (
-              <span className="athlete-tag">
-                <BadgeCheck size={11} /> NRL TPA
-              </span>
-            )}
-            {athlete?.shute_shield_compliant && (
-              <span className="athlete-tag">
-                <BadgeCheck size={11} /> Shute Shield
-              </span>
-            )}
-          </>
+        )}
+        {athlete?.sport && (
+          <span className="athlete-tag font-mono uppercase">{athlete.sport}</span>
+        )}
+        {leagueTag && <span className="athlete-league-badge">{leagueTag}</span>}
+        {ipLocked && (
+          <span className="athlete-tag ip-lock">
+            <ShieldCheck size={11} /> IP Lock
+          </span>
+        )}
+        {athlete?.nrl_tpa_registered && (
+          <span className="athlete-tag">
+            <BadgeCheck size={11} /> NRL TPA
+          </span>
+        )}
+        {athlete?.shute_shield_compliant && (
+          <span className="athlete-tag">
+            <BadgeCheck size={11} /> Shute Shield
+          </span>
         )}
       </div>
       <div className="athlete-card-actions">
@@ -133,7 +116,7 @@ function AthleteRosterCard({
           className="athlete-sponsor-btn bg-brand-white text-brand-black rounded-none"
           onClick={onPrimary}
         >
-          {veiled ? 'Unlock Specimen →' : 'Sponsor Athlete'}
+          Sponsor Athlete
         </button>
         <button type="button" className="athlete-icon-btn" onClick={onPerson} aria-label="View profile">
           <User size={16} />
@@ -143,15 +126,6 @@ function AthleteRosterCard({
         </button>
       </div>
     </div>
-  );
-}
-
-function SpecimenSilhouette() {
-  return (
-    <svg viewBox="0 0 44 44" width="28" height="28" aria-hidden="true">
-      <circle cx="22" cy="14" r="7" fill="#3F3F46" />
-      <path d="M8 38c1.5-9 7-14 14-14s12.5 5 14 14" fill="#3F3F46" />
-    </svg>
   );
 }
 

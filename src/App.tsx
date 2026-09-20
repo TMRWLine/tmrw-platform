@@ -59,11 +59,10 @@ import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDrawer } from './components/SponsorDrawer';
 import { AthletePortal } from './components/AthletePortal';
 import { AuthModal } from './components/AuthModal';
-import { DEV_BYPASS_AUTH, RosterSection } from './components/RosterSection';
+import { RosterSection } from './components/RosterSection';
 import { AthleteDrawer } from './components/AthleteDrawer';
 import { FilmModal } from './components/FilmModal';
 import { AthleteOnboardingDrawer } from './components/AthleteOnboardingDrawer';
-import { EnterpriseBarrier } from './components/EnterpriseBarrier';
 import { supabase } from './lib/supabaseClient';
 import { isAthleteOnboardingComplete } from './lib/specimenPrivacy';
 
@@ -136,12 +135,10 @@ export function MarketplaceApp() {
     open: false,
     role: 'athlete',
   });
-  const [sessionRole, setSessionRole] = useState<'athlete' | 'sponsor' | null>(null);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
-  const [barrierOpen, setBarrierOpen] = useState(false);
-  const [specimenAthlete, setSpecimenAthlete] = useState<Athlete | null>(null);
-  const [filmAthlete, setFilmAthlete] = useState<Athlete | null>(null);
+  const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
+  const [filmOpen, setFilmOpen] = useState(false);
   const [booking, setBooking] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
@@ -424,14 +421,13 @@ export function MarketplaceApp() {
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       void (async () => {
         if (!session?.user) {
-          setSessionRole(null);
           setSessionUserId(null);
           if (_event === 'SIGNED_OUT') {
             setView('landing');
             setNavView(null);
             setOnboardingOpen(false);
-            setSpecimenAthlete(null);
-            setFilmAthlete(null);
+            setSelectedAthlete(null);
+            setFilmOpen(false);
           }
           return;
         }
@@ -453,7 +449,6 @@ export function MarketplaceApp() {
           (profile as { role?: string } | null)?.role ?? metaRole ?? storedRole;
 
         if (role === 'athlete') {
-          setSessionRole('athlete');
           setAuthModalState((prev) => ({ ...prev, open: false }));
           const complete = isAthleteOnboardingComplete(
             profile as {
@@ -471,11 +466,9 @@ export function MarketplaceApp() {
           return;
         }
         if (role === 'sponsor') {
-          setSessionRole('sponsor');
           setView('sponsor');
           setNavView('sponsor');
           setAuthModalState((prev) => ({ ...prev, open: false }));
-          setBarrierOpen(false);
           setOnboardingOpen(false);
         }
       })();
@@ -678,18 +671,14 @@ export function MarketplaceApp() {
               <RosterSection
                 athletes={athletes}
                 loading={false}
-                veiled={!DEV_BYPASS_AUTH && sessionRole !== 'sponsor'}
-                onPrimary={(a) => {
-                  if (!DEV_BYPASS_AUTH && sessionRole !== 'sponsor') setBarrierOpen(true);
-                  else openSponsorDrawer(a);
-                }}
+                onPrimary={(a) => openSponsorDrawer(a)}
                 onPerson={(a) => {
-                  if (!DEV_BYPASS_AUTH && sessionRole !== 'sponsor') setBarrierOpen(true);
-                  else setSpecimenAthlete(a);
+                  setSelectedAthlete(a);
+                  setFilmOpen(false);
                 }}
                 onFilm={(a) => {
-                  if (!DEV_BYPASS_AUTH && sessionRole !== 'sponsor') setBarrierOpen(true);
-                  else setFilmAthlete(a);
+                  setSelectedAthlete(a);
+                  setFilmOpen(true);
                 }}
               />
             )}
@@ -930,30 +919,26 @@ export function MarketplaceApp() {
         onClose={closeAuthModal}
       />
 
-      {barrierOpen && (
-        <EnterpriseBarrier
-          onAuthenticate={() => {
-            setBarrierOpen(false);
-            openAuthModal('sponsor');
-          }}
-          onClose={() => setBarrierOpen(false)}
-        />
-      )}
-
-      {specimenAthlete && (
+      {selectedAthlete && !filmOpen && (
         <AthleteDrawer
-          athlete={specimenAthlete}
+          athlete={selectedAthlete}
           onSponsor={() => {
-            const next = specimenAthlete;
-            setSpecimenAthlete(null);
+            const next = selectedAthlete;
+            setSelectedAthlete(null);
             openSponsorDrawer(next);
           }}
-          onClose={() => setSpecimenAthlete(null)}
+          onClose={() => setSelectedAthlete(null)}
         />
       )}
 
-      {filmAthlete && (
-        <FilmModal athlete={filmAthlete} onClose={() => setFilmAthlete(null)} />
+      {selectedAthlete && filmOpen && (
+        <FilmModal
+          athlete={selectedAthlete}
+          onClose={() => {
+            setFilmOpen(false);
+            setSelectedAthlete(null);
+          }}
+        />
       )}
 
       {onboardingOpen && sessionUserId && (

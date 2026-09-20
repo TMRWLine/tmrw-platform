@@ -178,6 +178,12 @@ export function getUniversalComplianceBadges(created_at: string): ComplianceBadg
   ];
 }
 
+export interface PerformanceLog {
+  label: string;
+  stamp: string;
+  note: string;
+}
+
 export interface Athlete {
   id: string;
   name: string;
@@ -211,6 +217,19 @@ export interface Athlete {
   shute_shield_compliant: boolean;
   created_at: string;
   updated_at?: string;
+  portrait_url?: string | null;
+  geofence_km?: number | null;
+  match_reel_url?: string | null;
+  training_clip_url?: string | null;
+  performance_logs?: PerformanceLog[] | null;
+  suburban_views?: number | null;
+  engagement_rate?: number | null;
+  community_reach?: number | null;
+  match_date?: string | null;
+  nil_clearance?: boolean | null;
+  exclusivity_terms?: string | null;
+  payout_athlete_pct?: number | null;
+  payout_partner_pct?: number | null;
 }
 
 export type SponsorCategory =

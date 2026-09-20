@@ -1,24 +1,18 @@
-import { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Pause, Play, X } from 'lucide-react';
 import type { Athlete } from '../types';
-import { athleteDisplayName } from '../lib/formatName';
-
-const TRAINING_REEL =
-  'https://videos.pexels.com/video-files/4753989/4753989-hd_1920_1080_30fps.mp4';
+import { athleteDossier } from '../lib/athleteDossier';
 
 export function FilmModal({ athlete, onClose }: { athlete: Athlete; onClose: () => void }) {
-  const name = athleteDisplayName(athlete);
-  const matchDate = new Date(athlete.created_at || Date.now()).toLocaleDateString('en-AU', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-  const seed = hashSeed(athlete.id);
+  const d = athleteDossier(athlete);
   const clips = [
-    { label: 'Verified match reel', stamp: '12:04' },
-    { label: 'Vertical training clip', stamp: '03:18' },
-    { label: 'Community engagement cut', stamp: '00:42' },
+    { id: 'match', label: 'Match-day reel', src: d.matchReelUrl, stamp: d.logs[0]?.stamp ?? '12:04' },
+    { id: 'training', label: 'Vertical training clip', src: d.trainingClipUrl, stamp: d.logs[1]?.stamp ?? '03:18' },
   ];
+  const [activeId, setActiveId] = useState(clips[0].id);
+  const [playing, setPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const active = clips.find((c) => c.id === activeId) ?? clips[0];
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -27,6 +21,17 @@ export function FilmModal({ athlete, onClose }: { athlete: Athlete; onClose: () 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (playing) void el.play();
+    else el.pause();
+  }, [playing, active.src]);
+
+  function togglePlay() {
+    setPlaying((prev) => !prev);
+  }
 
   return (
     <div
@@ -52,39 +57,83 @@ export function FilmModal({ athlete, onClose }: { athlete: Athlete; onClose: () 
           // MEDIA VAULT
         </p>
         <h2 className="text-xl font-black uppercase tracking-tight text-white mt-0 mb-4">
-          {name} · verified footage
+          {d.name} · match footage
         </h2>
-        <video
-          className="w-full aspect-video bg-black mb-4"
-          src={TRAINING_REEL}
-          controls
-          muted
-          playsInline
-        />
-        <div className="flex flex-wrap gap-3 font-mono text-[10px] tracking-widest uppercase text-zinc-400 border border-white/10 p-3 mb-4">
-          <span>Match {matchDate}</span>
-          <span>Venue {athlete.postcode ?? '———'}</span>
-          <span>Perf {clips[0].stamp} / {clips[1].stamp}</span>
+
+        <div className="relative bg-black mb-4">
+          <video
+            ref={videoRef}
+            key={active.src}
+            className="w-full aspect-video"
+            src={active.src}
+            playsInline
+            muted
+            onEnded={() => setPlaying(false)}
+          />
+          <button
+            type="button"
+            className={`absolute inset-0 grid place-items-center cursor-pointer border-0 ${
+              playing ? 'bg-transparent text-transparent hover:bg-black/25 hover:text-white' : 'bg-black/30 text-white'
+            }`}
+            onClick={togglePlay}
+            aria-label={playing ? 'Pause reel' : 'Play reel'}
+          >
+            {playing ? <Pause size={36} fill="currentColor" /> : <Play size={36} fill="currentColor" />}
+          </button>
         </div>
-        <ul className="m-0 p-0 list-none grid gap-2">
+
+        <div className="flex flex-wrap gap-3 font-mono text-[10px] tracking-widest uppercase text-zinc-400 border border-white/10 p-3 mb-4">
+          <span>Match {d.matchDate}</span>
+          <span>Venue {d.postcode}</span>
+          <span>Clip {active.stamp}</span>
+        </div>
+
+        <ul className="m-0 p-0 list-none grid gap-2 mb-4">
           {clips.map((clip) => (
+            <li key={clip.id}>
+              <button
+                type="button"
+                className={`w-full flex items-center justify-between border px-3 py-2 font-mono text-xs cursor-pointer ${
+                  clip.id === activeId
+                    ? 'border-[#D2FF00] text-[#D2FF00] bg-[#D2FF00]/5'
+                    : 'border-white/10 text-zinc-300 bg-transparent'
+                }`}
+                onClick={() => {
+                  setActiveId(clip.id);
+                  setPlaying(false);
+                }}
+              >
+                <span>{clip.label}</span>
+                <span>{clip.stamp}</span>
+              </button>
+            </li>
+          ))}
+          {d.logs.map((log) => (
             <li
-              key={clip.label}
-              className="flex items-center justify-between border border-white/10 px-3 py-2 font-mono text-xs text-zinc-300"
+              key={`${log.stamp}-${log.label}`}
+              className="flex items-start justify-between gap-3 border border-white/10 px-3 py-2 font-mono text-xs text-zinc-400"
             >
-              <span>{clip.label}</span>
-              <span className="text-[#D2FF00]">{clip.stamp}</span>
+              <span>{log.note}</span>
+              <span className="text-[#D2FF00] flex-shrink-0">{log.stamp}</span>
             </li>
           ))}
         </ul>
-        <p className="font-mono text-[10px] tracking-widest uppercase text-zinc-500 mt-4 mb-0">
-          Local social reach {((seed % 40) + 12).toFixed(0)}k · engagement {(3 + (seed % 5) + 0.2).toFixed(1)}%
-        </p>
+
+        <div className="grid grid-cols-3 gap-2 font-mono text-[10px] tracking-widest uppercase text-zinc-400">
+          <div className="border border-white/10 p-3">
+            <div className="text-zinc-600 mb-1">Suburban views</div>
+            <div className="text-white text-xs">{d.suburbanViews.toLocaleString('en-AU')}</div>
+          </div>
+          <div className="border border-white/10 p-3">
+            <div className="text-zinc-600 mb-1">Engagement</div>
+            <div className="text-white text-xs">{d.engagementRate.toFixed(1)}%</div>
+          </div>
+          <div className="border border-white/10 p-3">
+            <div className="text-zinc-600 mb-1">Community reach</div>
+            <div className="text-white text-xs">{d.communityReach.toLocaleString('en-AU')}</div>
+          </div>
+        </div>
       </div>
     </div>
   );
-}
-
-function hashSeed(id: string): number {
-  return Array.from(id).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
 }
