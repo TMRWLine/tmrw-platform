@@ -16,13 +16,14 @@ export function LandingNarrative({
     <>
       <LandingStackSlot z={20} id="the-breakdown" padded>
         <section className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent" aria-labelledby="breakdown-heading">
-          <div className="font-mono text-xs tracking-widest uppercase mb-3 text-[#D2FF00]">// THE ARBITRAGE</div>
+          <div className="font-mono text-xs tracking-widest uppercase mb-4 text-[#D2FF00]">
+            // THE ARBITRAGE
+          </div>
           <h2
             id="breakdown-heading"
-            className="text-5xl md:text-7xl font-black uppercase tracking-tight leading-[0.88] text-white max-w-5xl"
+            className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tight leading-[0.88] text-white max-w-6xl"
           >
-            THE MILLION-DOLLAR <span className="font-serif italic font-normal text-zinc-500">VANITY</span>{' '}
-            <span className="font-serif italic font-normal text-[#D2FF00]">TRAP</span>.
+            THE MILLION-DOLLAR VANITY <span className="font-serif italic font-normal text-[#D2FF00]">TRAP.</span>
           </h2>
           <p className="text-base md:text-lg text-zinc-400 max-w-3xl leading-relaxed mt-6">
             A broadcast logo on a national jersey buys boardroom ego. It does not put a single paying customer through
@@ -33,7 +34,7 @@ export function LandingNarrative({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-6xl mt-8">
             <article className="border border-white/10 bg-white/[0.015] backdrop-blur-md p-8 relative overflow-hidden">
               <div className="font-mono text-[11px] tracking-widest text-zinc-500 uppercase pb-4 border-b border-white/10 flex justify-between">
-                <span>CENTRALIZED BROADCAST MODEL</span>
+                <span>THE OLD WAY // LEGACY AGENCIES</span>
                 <span className="text-zinc-600">[DEPRECATING]</span>
               </div>
               <ul className="space-y-4 pt-6 m-0 list-none p-0">

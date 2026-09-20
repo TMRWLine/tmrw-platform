@@ -2,9 +2,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 interface HeroFluidRevealProps {
-  topImageSrc: string;
-  bottomImageSrc: string;
-  caption?: string;
+  imageSrc: string;
 }
 
 const VERT = /* glsl */ `
@@ -54,13 +52,10 @@ void main() {
 `;
 
 const DISPLAY_FRAG = /* glsl */ `
-uniform sampler2D uTop;
-uniform sampler2D uBottom;
+uniform sampler2D uImage;
 uniform sampler2D uTrail;
 uniform vec2 uPlaneSize;
-uniform vec2 uTopSize;
-uniform vec2 uBottomSize;
-uniform vec2 uMouseOffset;
+uniform vec2 uImageSize;
 varying vec2 vUv;
 
 vec2 getCoverUv(vec2 uv, vec2 screenRes, vec2 imageRes) {
@@ -71,29 +66,19 @@ vec2 getCoverUv(vec2 uv, vec2 screenRes, vec2 imageRes) {
 }
 
 void main() {
-  vec2 parallaxUv = clamp(vUv + uMouseOffset * 0.012, 0.0, 1.0);
-  vec2 topUv = getCoverUv(parallaxUv, uPlaneSize, uTopSize);
-  vec2 botUv = getCoverUv(parallaxUv, uPlaneSize, uBottomSize);
-
-  vec3 top = texture2D(uTop, topUv).rgb;
-  float luma = dot(top, vec3(0.299, 0.587, 0.114));
-  vec3 mono = vec3((luma - 0.5) * 1.38 + 0.48);
-
-  vec3 bot = texture2D(uBottom, botUv).rgb;
-  float bl = dot(bot, vec3(0.299, 0.587, 0.114));
-  vec3 kinetic = mix(vec3(bl), bot, 1.62);
-  kinetic = mix(kinetic, vec3(0.0, 0.322, 1.0), 0.16);
-  kinetic = mix(kinetic, vec3(0.824, 1.0, 0.0), 0.10);
-
+  vec2 coverUv = getCoverUv(vUv, uPlaneSize, uImageSize);
+  vec3 tex = texture2D(uImage, coverUv).rgb;
+  float luma = dot(tex, vec3(0.299, 0.587, 0.114));
+  vec3 mono = vec3(luma);
   float mask = texture2D(uTrail, vUv).r;
   float mixAmt = smoothstep(0.04, 0.78, mask);
-  vec3 color = mix(mono, kinetic, mixAmt);
+  vec3 color = mix(mono, tex, mixAmt);
   gl_FragColor = vec4(color, 1.0);
 }
 `;
 
 type FluidApi = {
-  load: (topUrl: string, bottomUrl: string) => void;
+  load: (url: string) => void;
 };
 
 function makeTarget(w: number, h: number) {
@@ -123,11 +108,11 @@ function sizeOf(tex: THREE.Texture) {
   return { w: img?.width ?? 1, h: img?.height ?? 1 };
 }
 
-export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFluidRevealProps) {
+export function HeroFluidReveal({ imageSrc }: HeroFluidRevealProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<FluidApi | null>(null);
-  const srcRef = useRef({ topImageSrc, bottomImageSrc });
-  srcRef.current = { topImageSrc, bottomImageSrc };
+  const srcRef = useRef(imageSrc);
+  srcRef.current = imageSrc;
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -155,6 +140,8 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
     canvas.style.pointerEvents = 'auto';
     canvas.style.touchAction = 'none';
     canvas.style.objectFit = 'cover';
+    wrap.style.transition = 'transform 0.2s cubic-bezier(0.25, 1, 0.5, 1)';
+    wrap.style.willChange = 'transform';
     wrap.appendChild(canvas);
 
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -164,10 +151,8 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
     const loader = new THREE.TextureLoader();
     loader.setCrossOrigin('anonymous');
 
-    let topTex: THREE.Texture = placeholder;
-    let bottomTex: THREE.Texture = placeholder;
-    let topOwned = false;
-    let bottomOwned = false;
+    let imageTex: THREE.Texture = placeholder;
+    let imageOwned = false;
 
     const simUniforms = {
       uPrev: { value: placeholder as THREE.Texture },
@@ -180,13 +165,10 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
     };
 
     const displayUniforms = {
-      uTop: { value: placeholder as THREE.Texture },
-      uBottom: { value: placeholder as THREE.Texture },
+      uImage: { value: placeholder as THREE.Texture },
       uTrail: { value: placeholder as THREE.Texture },
       uPlaneSize: { value: new THREE.Vector2(1, 1) },
-      uTopSize: { value: new THREE.Vector2(1, 1) },
-      uBottomSize: { value: new THREE.Vector2(1, 1) },
-      uMouseOffset: { value: new THREE.Vector2(0, 0) },
+      uImageSize: { value: new THREE.Vector2(1, 1) },
     };
 
     const simMaterial = new THREE.ShaderMaterial({
@@ -214,22 +196,17 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
 
     const mouse = new THREE.Vector2(-10, -10);
     const prevMouse = new THREE.Vector2(-10, -10);
-    const mouseOffset = new THREE.Vector2(0, 0);
-    const mouseOffsetTarget = new THREE.Vector2(0, 0);
     let splat = 0;
     let raf = 0;
     let disposed = false;
 
     const disposeOwned = () => {
-      if (topOwned && topTex !== placeholder) topTex.dispose();
-      if (bottomOwned && bottomTex !== placeholder && bottomTex !== topTex) bottomTex.dispose();
-      topOwned = false;
-      bottomOwned = false;
-      topTex = placeholder;
-      bottomTex = placeholder;
+      if (imageOwned && imageTex !== placeholder) imageTex.dispose();
+      imageOwned = false;
+      imageTex = placeholder;
     };
 
-    const assignTop = (tex: THREE.Texture) => {
+    const assignImage = (tex: THREE.Texture) => {
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.minFilter = THREE.LinearFilter;
       tex.magFilter = THREE.LinearFilter;
@@ -237,61 +214,28 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
       tex.wrapT = THREE.ClampToEdgeWrapping;
       tex.generateMipmaps = false;
       tex.needsUpdate = true;
-      if (topOwned && topTex !== placeholder && topTex !== tex) topTex.dispose();
-      topTex = tex;
-      topOwned = true;
+      if (imageOwned && imageTex !== placeholder && imageTex !== tex) imageTex.dispose();
+      imageTex = tex;
+      imageOwned = true;
       const { w, h } = sizeOf(tex);
-      displayUniforms.uTop.value = tex;
-      displayUniforms.uTopSize.value.set(w, h);
+      displayUniforms.uImage.value = tex;
+      displayUniforms.uImageSize.value.set(w, h);
     };
 
-    const assignBottom = (tex: THREE.Texture, owned: boolean) => {
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.minFilter = THREE.LinearFilter;
-      tex.magFilter = THREE.LinearFilter;
-      tex.wrapS = THREE.ClampToEdgeWrapping;
-      tex.wrapT = THREE.ClampToEdgeWrapping;
-      tex.generateMipmaps = false;
-      tex.needsUpdate = true;
-      if (bottomOwned && bottomTex !== placeholder && bottomTex !== topTex && bottomTex !== tex) {
-        bottomTex.dispose();
-      }
-      bottomTex = tex;
-      bottomOwned = owned;
-      const { w, h } = sizeOf(tex);
-      displayUniforms.uBottom.value = tex;
-      displayUniforms.uBottomSize.value.set(w, h);
-    };
-
-    const load = (topUrl: string, bottomUrl: string) => {
+    const load = (url: string) => {
       loader.load(
-        topUrl,
+        url,
         (tex) => {
           if (disposed) {
             tex.dispose();
             return;
           }
-          assignTop(tex);
-          if (bottomUrl === topUrl) assignBottom(tex, false);
+          assignImage(tex);
           window.dispatchEvent(new Event('tmrw-hero-ready'));
         },
         undefined,
         () => undefined,
       );
-      if (bottomUrl !== topUrl) {
-        loader.load(
-          bottomUrl,
-          (tex) => {
-            if (disposed) {
-              tex.dispose();
-              return;
-            }
-            assignBottom(tex, true);
-          },
-          undefined,
-          () => undefined,
-        );
-      }
     };
 
     const resize = () => {
@@ -333,22 +277,26 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
       };
     };
 
+    const applyParallax = (e: PointerEvent | MouseEvent) => {
+      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
+      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+      wrap.style.transform = `translate3d(${-nx * 10}px, ${-ny * 10}px, 0)`;
+    };
+
     const onMove = (e: PointerEvent | MouseEvent) => {
+      applyParallax(e);
       const uv = pointerUv(e);
       if (!uv) return;
       if (uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1) {
         splat = 0;
-        mouseOffsetTarget.set(0, 0);
         return;
       }
       mouse.set(uv.x, uv.y);
-      mouseOffsetTarget.set((uv.x - 0.5) * 2, (uv.y - 0.5) * 2);
       splat = 1;
     };
 
     const onLeave = () => {
       splat = 0;
-      mouseOffsetTarget.set(0, 0);
     };
 
     const tick = () => {
@@ -367,8 +315,6 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
       write = tmp;
 
       displayUniforms.uTrail.value = read.texture;
-      mouseOffset.lerp(mouseOffsetTarget, 0.06);
-      displayUniforms.uMouseOffset.value.copy(mouseOffset);
       quad.material = displayMaterial;
       renderer.setRenderTarget(null);
       renderer.clear();
@@ -380,14 +326,20 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
     };
 
     resize();
-    load(srcRef.current.topImageSrc, srcRef.current.bottomImageSrc);
+    load(srcRef.current);
     apiRef.current = { load };
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const onWindowMove = (e: PointerEvent) => {
+      if (!reduced) applyParallax(e);
+    };
 
     const ro = new ResizeObserver(resize);
     ro.observe(wrap);
     wrap.addEventListener('pointermove', onMove, { passive: true });
     wrap.addEventListener('pointerdown', onMove, { passive: true });
     wrap.addEventListener('pointerleave', onLeave);
+    window.addEventListener('pointermove', onWindowMove, { passive: true });
     raf = requestAnimationFrame(tick);
 
     return () => {
@@ -398,6 +350,7 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
       wrap.removeEventListener('pointermove', onMove);
       wrap.removeEventListener('pointerdown', onMove);
       wrap.removeEventListener('pointerleave', onLeave);
+      window.removeEventListener('pointermove', onWindowMove);
       geometry.dispose();
       simMaterial.dispose();
       displayMaterial.dispose();
@@ -412,12 +365,8 @@ export function HeroFluidReveal({ topImageSrc, bottomImageSrc, caption }: HeroFl
   }, []);
 
   useEffect(() => {
-    apiRef.current?.load(topImageSrc, bottomImageSrc);
-  }, [topImageSrc, bottomImageSrc]);
+    apiRef.current?.load(imageSrc);
+  }, [imageSrc]);
 
-  return (
-    <div ref={wrapRef} className="hero-fluid-reveal">
-      {caption ? <span className="hero-caption font-mono">{caption}</span> : null}
-    </div>
-  );
+  return <div ref={wrapRef} className="hero-fluid-reveal" />;
 }

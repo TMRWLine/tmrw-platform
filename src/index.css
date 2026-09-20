@@ -839,9 +839,15 @@ button {
 .hero-pane-copy {
   position: relative; z-index: 10;
   background: transparent;
-  display: flex; flex-direction: column; justify-content: center; gap: 22px;
-  padding: clamp(80px, 12vh, 120px) clamp(24px, 5vw, 64px) clamp(32px, 6vw, 72px);
-  max-width: min(40rem, 92vw); min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: flex-start; gap: 22px;
+  padding: 8rem 2rem 4rem;
+  max-width: min(42rem, 92vw); min-height: 100vh;
+  box-sizing: border-box;
+}
+@media (min-width: 768px) {
+  .hero-pane-copy {
+    padding: 10rem 4rem 4rem;
+  }
 }
 
 .hero-eyebrow {
@@ -935,12 +941,13 @@ button {
 .hero-pane-media .landing-topo { opacity: 1; }
 .hero-fluid-reveal {
   position: absolute;
-  inset: 0;
+  inset: -14px;
   z-index: 1;
-  width: 100%;
-  height: 100%;
+  width: calc(100% + 28px);
+  height: calc(100% + 28px);
   overflow: hidden;
   touch-action: none;
+  will-change: transform;
 }
 .hero-img-color {
   z-index: 0;
