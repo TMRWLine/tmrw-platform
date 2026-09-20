@@ -57,7 +57,7 @@ import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { Hero } from './components/Hero';
 import { HeroFluidReveal } from './components/HeroFluidReveal';
 import { LandingNarrative } from './components/LandingNarrative';
-import { LandingStackSlot } from './components/LandingStack';
+import { BrandLockup, LandingStackSlot } from './components/LandingStack';
 import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDrawer } from './components/SponsorDrawer';
 import { AthletePortal } from './components/AthletePortal';
@@ -164,9 +164,9 @@ export function MarketplaceApp() {
           id: 'horizontal-pin',
           trigger: section,
           pin: true,
-          scrub: 1,
+          scrub: 0.8,
           start: 'top top',
-          end: '+=1600',
+          end: '+=1800',
           anticipatePin: 1,
           invalidateOnRefresh: true,
         },
@@ -181,6 +181,7 @@ export function MarketplaceApp() {
 
     const refreshAll = () => ScrollTrigger.refresh();
     const refreshTimer = window.setTimeout(refreshAll, 120);
+    const layoutTimer = window.setTimeout(refreshAll, 480);
     window.addEventListener('load', refreshAll);
     window.addEventListener('tmrw-hero-ready', refreshAll);
     let fontsAlive = true;
@@ -191,6 +192,7 @@ export function MarketplaceApp() {
     return () => {
       fontsAlive = false;
       window.clearTimeout(refreshTimer);
+      window.clearTimeout(layoutTimer);
       window.removeEventListener('load', refreshAll);
       window.removeEventListener('tmrw-hero-ready', refreshAll);
       gsap.ticker.remove(ticker);
@@ -207,7 +209,7 @@ export function MarketplaceApp() {
     const id = landingSection;
     const t = window.setTimeout(() => {
       let target: number | HTMLElement | null = document.getElementById(id);
-      const pin = document.getElementById('sponsor-slide-pin');
+      const pin = document.getElementById('horizontal-wrapper');
       const spacer = pin?.parentElement;
       if (pin && spacer && (id === 'for-brands' || id === 'campaign-architecture')) {
         const spacerRect = spacer.getBoundingClientRect();
@@ -488,24 +490,7 @@ export function MarketplaceApp() {
   return (
     <div className={`app-shell bg-brand-black text-brand-white font-sans bg-grain${view === 'landing' ? '' : ' app-shell-padded'}`}>
       <header className={`topnav glass-header bg-transparent${navOnCotton ? ' topnav-on-cotton' : ''}`}>
-        <button
-          type="button"
-          onClick={() => setView('landing')}
-          style={{ background: 'transparent', backgroundColor: 'transparent', border: 'none', padding: 0, margin: 0, boxShadow: 'none' }}
-          className="text-left cursor-pointer group focus:outline-none !bg-transparent !border-0 !shadow-none"
-          aria-label="Return to home"
-        >
-          <div className="flex items-baseline tracking-tight font-sans font-extrabold text-2xl leading-none !bg-transparent">
-            <span className="text-[#FFFFFF]">tmrw</span>
-            <span className="text-[#FFFFFF] animate-pulse drop-shadow-[0_0_8px_rgba(255,255,255,0.85)] mx-[1px]">
-              /
-            </span>
-            <span className="text-[#FFFFFF]">.</span>
-          </div>
-          <span className="block text-[10px] font-mono tracking-[0.3em] text-zinc-400 mt-1 uppercase leading-none !bg-transparent">
-            LINE UP YOUR FUTURE
-          </span>
-        </button>
+        <BrandLockup onClick={() => setView('landing')} />
         <Navbar
           activeView={navView}
           onSection={goLandingSection}

@@ -1,5 +1,5 @@
 import type { Ref } from 'react';
-import { LandingStackSlot, TopoOverlay } from './LandingStack';
+import { BrandLockup, LandingStackSlot, TopoOverlay } from './LandingStack';
 
 export function LandingNarrative({
   onSponsor,
@@ -16,7 +16,7 @@ export function LandingNarrative({
     <>
       <LandingStackSlot z={20} surface="cotton" id="the-breakdown">
         <section className="landing-chapter landing-chapter-cotton landing-chapter-flush" aria-labelledby="breakdown-heading">
-          <p className="landing-kicker landing-kicker-volt font-mono text-xs tracking-widest uppercase text-[#D2FF00] bg-black/90 px-2 py-1 inline-block">
+          <p className="landing-kicker landing-kicker-volt font-mono text-xs tracking-widest uppercase text-[#D2FF00] bg-black px-2.5 py-1 inline-block">
             THE ARBITRAGE
           </p>
           <h2 id="breakdown-heading" className="landing-display">
@@ -28,23 +28,23 @@ export function LandingNarrative({
             figures chasing the top one per cent. We decentralise that capital into the hometown champions your
             customers actually follow, trust, and emulate.
           </p>
-          <div className="landing-compare">
+          <div className="landing-compare border border-zinc-300">
             <article>
               <h3>Legacy Agencies</h3>
               <ul>
-                <li>Nine-month legal cycles for one marquee athlete.</li>
-                <li>Passive broadcast exposure that customers tune out.</li>
-                <li>Local franchisees see zero benefit from national ad spend.</li>
-                <li>Rising players work second jobs and buy their own boots.</li>
+                <li>Nine-month legal cycles for a single jersey patch.</li>
+                <li>Passive broadcast airtime that viewers scroll past.</li>
+                <li>Store managers watch central marketing budgets vanish.</li>
+                <li>First-graders work shifts and buy their own boots.</li>
               </ul>
             </article>
             <article>
               <h3>The tmrw/. Standard</h3>
               <ul>
-                <li>Mobilise an entire regional fleet of players in seconds.</li>
-                <li>Unfiltered community clout within 15km of store doors.</li>
-                <li>Direct, measurable customer foot traffic through suburban doors.</li>
-                <li>Players get real financial backing and professional status.</li>
+                <li>Deploy fifty verified hometown athletes before kickoff.</li>
+                <li>Unfiltered community loyalty within fifteen kilometres of your doors.</li>
+                <li>Measurable customer foot traffic on Saturday morning.</li>
+                <li>Direct contractual backing and verified commercial status.</li>
               </ul>
             </article>
           </div>
@@ -62,8 +62,8 @@ export function LandingNarrative({
                 id="players-heading"
                 className="landing-display-monumental text-4xl md:text-6xl lg:text-7xl font-extrabold uppercase tracking-tight leading-[0.88]"
               >
-                STOP PLAYING FOR <span className="font-serif italic font-normal text-[#D2FF00]">EXPOSURE</span>. GET{' '}
-                <span className="font-serif italic font-normal text-[#D2FF00]">BACKED</span>.
+                STOP CHASING <span className="font-serif italic font-normal text-[#D2FF00]">HANDOUTS</span>. OWN YOUR{' '}
+                <span className="font-serif italic font-normal text-[#D2FF00]">TURF</span>.
               </h2>
               <p className="landing-lede landing-lede-light">
                 You pull the early shifts. You strap your own ankles. You win the collisions when nobody is watching.
@@ -84,17 +84,17 @@ export function LandingNarrative({
 
       <div
         ref={horizontalSectionRef}
-        id="sponsor-slide-pin"
+        id="horizontal-wrapper"
         className="landing-hslide relative w-full h-screen overflow-hidden bg-[#08080A]"
         style={{ zIndex: 40 }}
       >
-        <div ref={horizontalTrackRef} className="landing-h-track flex w-[200vw] h-full">
-          <div id="for-brands" className="landing-h-panel relative w-screen h-screen flex-shrink-0 overflow-hidden">
+        <div ref={horizontalTrackRef} id="horizontal-slider" className="landing-h-track flex w-[200vw] h-full">
+          <div
+            id="for-brands"
+            className="landing-h-panel relative w-screen h-screen flex-shrink-0 overflow-hidden flex flex-col justify-between p-12 md:p-20 pt-[88px]"
+          >
             <TopoOverlay />
-            <section
-              className="landing-chapter landing-chapter-carbon landing-chapter-flush"
-              aria-labelledby="brands-heading"
-            >
+            <section className="landing-chapter landing-chapter-carbon landing-h-copy" aria-labelledby="brands-heading">
               <p className="landing-kicker landing-kicker-volt font-mono text-xs tracking-widest uppercase text-[#D2FF00]">
                 LOCAL DOMINANCE
               </p>
@@ -147,11 +147,11 @@ export function LandingNarrative({
 
           <div
             id="campaign-architecture"
-            className="landing-h-panel relative w-screen h-screen flex-shrink-0 overflow-hidden"
+            className="landing-h-panel relative w-screen h-screen flex-shrink-0 overflow-hidden flex flex-col justify-between p-12 md:p-20 pt-[88px]"
           >
             <TopoOverlay />
             <section
-              className="landing-chapter landing-chapter-carbon landing-chapter-flush"
+              className="landing-chapter landing-chapter-carbon landing-h-copy"
               aria-labelledby="pathways-heading"
             >
               <p className="landing-kicker landing-kicker-volt font-mono text-xs tracking-widest uppercase text-[#D2FF00]">
@@ -244,7 +244,7 @@ export function LandingNarrative({
 function AthleteTelemetryPanel() {
   return (
     <aside
-      className="athlete-telemetry border border-white/10 bg-white/[0.02] backdrop-blur-md p-6 relative overflow-hidden"
+      className="athlete-telemetry border border-white/10 bg-white/[0.02] backdrop-blur-md p-8 relative overflow-hidden"
       aria-label="Athlete telemetry"
     >
       <div className="athlete-telemetry-head font-mono">
@@ -279,21 +279,10 @@ function AthleteTelemetryPanel() {
 function LandingFooter({ onHome }: { onHome: () => void }) {
   return (
     <footer className="landing-footer landing-footer-brand landing-footer-stack">
-      <button type="button" className="landing-footer-mark" onClick={onHome} aria-label="Return to home">
-        <div className="flex items-baseline tracking-tight font-sans font-extrabold text-2xl leading-none">
-          <span className="text-[#FFFFFF]">tmrw</span>
-          <span className="text-[#FFFFFF] animate-pulse drop-shadow-[0_0_8px_rgba(255,255,255,0.85)] mx-[1px]">
-            /
-          </span>
-          <span className="text-[#FFFFFF]">.</span>
-        </div>
-        <span className="block text-[10px] font-mono tracking-[0.3em] text-zinc-400 mt-1 uppercase leading-none">
-          LINE UP YOUR FUTURE
-        </span>
-      </button>
+      <BrandLockup onClick={onHome} size="footer" />
       <p className="landing-footer-legal">
-        © 2026 tmrw/. All rights reserved. Monolithic Carbon Black (#000000) and Knocked-out White (#FFFFFF) brand
-        governance strictly enforced. Australian and New Zealand sports infrastructure.
+        © 2026 tmrw/. All rights reserved. Sovereign sports commercialisation infrastructure for Australia and New
+        Zealand.
       </p>
     </footer>
   );

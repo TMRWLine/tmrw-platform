@@ -76,7 +76,7 @@ vec2 coverUv(vec2 uv, vec2 plane, vec2 img) {
 }
 
 void main() {
-  vec2 parallaxUv = vUv + uMouseOffset * 0.02;
+  vec2 parallaxUv = clamp(vUv + uMouseOffset * 0.018, 0.0, 1.0);
   vec2 topUv = coverUv(parallaxUv, uPlaneSize, uTopSize);
   vec2 botUv = coverUv(parallaxUv, uPlaneSize, uBottomSize);
 

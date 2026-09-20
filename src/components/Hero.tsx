@@ -47,7 +47,9 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
     <section className="hero-section" aria-label="TMRW editorial landing">
       <div className="hero-pane hero-pane-copy">
         <div className="font-mono text-xs tracking-widest uppercase mb-4 flex items-center gap-2">
-          <span className="text-white font-bold">tmrw/.</span>
+          <span className="text-white font-bold">
+            tmrw<span className="text-[#D2FF00]">/.</span>
+          </span>
           <span className="text-[#D2FF00] font-semibold">// THE SOVEREIGN TALENT NETWORK</span>
         </div>
         <h1 className="hero-headline text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tight leading-[0.88]">
@@ -66,7 +68,7 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
             Sponsor Your Suburbs →
           </button>
         </div>
-        <p className="hero-trust font-mono text-xs text-zinc-400">
+        <p className="hero-trust font-mono text-xs text-zinc-400 mt-4">
           3,000 VERIFIED ATHLETES // BRISBANE 2032 RUNWAY // ZERO LEGAL FRICTION
         </p>
       </div>

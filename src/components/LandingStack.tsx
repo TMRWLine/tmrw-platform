@@ -23,7 +23,7 @@ export function LandingStackSlot({
       className={`${CARD_CLASS} ${sticky ? 'sticky top-0' : 'landing-hslide-panel'} ${surfaceClass}`}
       style={{ zIndex: z }}
     >
-      {surface === 'carbon' ? <TopoOverlay /> : null}
+      <TopoOverlay invert={surface === 'cotton'} />
       <div className="landing-stack-inner">{children}</div>
     </div>
   );
@@ -37,7 +37,49 @@ export function LandingStackSlot({
   );
 }
 
-export function TopoOverlay() {
+export function BrandLockup({
+  onClick,
+  size = 'header',
+}: {
+  onClick?: () => void;
+  size?: 'header' | 'footer';
+}) {
+  const wordClass =
+    size === 'header'
+      ? 'font-black text-3xl md:text-4xl tracking-tight leading-none'
+      : 'font-black text-2xl tracking-tight leading-none';
+  const voltClass = `${wordClass} text-[#D2FF00] drop-shadow-[0_0_12px_rgba(210,255,0,0.7)]`;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        background: 'transparent',
+        backgroundColor: 'transparent',
+        border: 'none',
+        padding: 0,
+        margin: 0,
+        boxShadow: 'none',
+      }}
+      className="text-left cursor-pointer group focus:outline-none !bg-transparent !border-0 !shadow-none"
+      aria-label="Return to home"
+    >
+      <div className={`flex items-baseline font-sans !bg-transparent ${wordClass}`}>
+        <span className={`brand-wordmark text-white ${wordClass}`}>tmrw</span>
+        <span className={`brand-volt-mark animate-pulse mx-[1px] ${voltClass}`}>/</span>
+        <span className={`brand-volt-mark ${voltClass}`}>.</span>
+      </div>
+      <span className="block text-[10px] font-mono tracking-[0.35em] text-zinc-400 mt-1 uppercase leading-none !bg-transparent">
+        LINE UP YOUR FUTURE
+      </span>
+    </button>
+  );
+}
+
+export function TopoOverlay({ invert = false }: { invert?: boolean }) {
+  const stroke = invert ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.06)';
+
   return (
     <svg
       className="landing-topo pointer-events-none"
@@ -45,7 +87,7 @@ export function TopoOverlay() {
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
     >
-      <g className="landing-topo-drift" fill="none" stroke="#FFFFFF" strokeWidth="1.1">
+      <g className="landing-topo-drift" fill="none" stroke={stroke} strokeWidth="1.15" strokeLinecap="round">
         <ellipse cx="1080" cy="420" rx="120" ry="54" />
         <ellipse cx="1080" cy="420" rx="210" ry="96" />
         <ellipse cx="1080" cy="420" rx="310" ry="148" />
@@ -61,11 +103,22 @@ export function TopoOverlay() {
         <ellipse cx="640" cy="160" rx="80" ry="36" />
         <ellipse cx="640" cy="160" rx="160" ry="72" />
         <ellipse cx="640" cy="160" rx="260" ry="118" />
-        <path d="M-40 180 C 180 80, 420 260, 640 150 S 1040 40, 1500 220" />
-        <path d="M-40 250 C 200 150, 460 330, 700 210 S 1100 90, 1500 290" />
-        <path d="M-40 320 C 220 220, 500 400, 760 270 S 1160 140, 1500 360" />
-        <path d="M-40 390 C 240 290, 540 470, 820 340 S 1220 190, 1500 430" />
-        <path d="M-40 540 C 160 470, 420 610, 680 520 S 1100 430, 1500 560" />
+        <ellipse cx="980" cy="780" rx="110" ry="48" />
+        <ellipse cx="980" cy="780" rx="200" ry="92" />
+        <ellipse cx="980" cy="780" rx="310" ry="146" />
+        <path d="M-80 120 C 160 40, 380 210, 620 110 S 1020 20, 1540 180" />
+        <path d="M-80 190 C 180 90, 420 280, 680 170 S 1100 70, 1540 250" />
+        <path d="M-80 260 C 200 160, 460 350, 740 230 S 1160 120, 1540 320" />
+        <path d="M-80 330 C 220 230, 500 420, 800 300 S 1220 170, 1540 390" />
+        <path d="M-80 400 C 240 300, 540 490, 860 370 S 1280 220, 1540 460" />
+        <path d="M-80 470 C 180 400, 440 560, 720 470 S 1180 360, 1540 530" />
+        <path d="M-80 540 C 160 470, 420 610, 680 520 S 1100 430, 1540 600" />
+        <path d="M-80 610 C 200 540, 480 690, 760 600 S 1200 500, 1540 670" />
+        <path d="M-80 680 C 220 610, 520 760, 820 670 S 1260 560, 1540 740" />
+        <path d="M-80 750 C 180 700, 460 820, 780 740 S 1180 640, 1540 810" />
+        <path d="M220 -40 C 280 140, 180 320, 340 480 S 160 720, 300 960" />
+        <path d="M720 -40 C 800 160, 640 340, 780 520 S 620 740, 760 960" />
+        <path d="M1180 -40 C 1260 180, 1100 360, 1240 540 S 1080 760, 1220 960" />
       </g>
     </svg>
   );
