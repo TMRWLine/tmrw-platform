@@ -430,6 +430,23 @@ export function SponsorDrawer({
               <strong>{pkg.priceLabel}</strong>
             </div>
 
+            <div className="stripe-rail border border-white/10 p-4 mb-4">
+              <p className="font-mono text-[10px] tracking-widest uppercase text-[#D2FF00] m-0 mb-2">
+                Stripe Connect · instant payout
+              </p>
+              <p className="font-mono text-xs text-white m-0 mb-3">
+                {COLLAB_SPLIT.athletePayoutPct}% direct to athlete via Stripe Connect ·{' '}
+                {COLLAB_SPLIT.platformFeePct + COLLAB_SPLIT.communityFundPct}% platform infrastructure fee
+              </p>
+              <div className="stripe-elements">
+                <input className="sponsor-drawer-input" placeholder="ACCT-000015" inputMode="numeric" autoComplete="cc-number" />
+                <div className="stripe-elements-row">
+                  <input className="sponsor-drawer-input" placeholder="MM / YY" autoComplete="cc-exp" />
+                  <input className="sponsor-drawer-input" placeholder="CVC" inputMode="numeric" autoComplete="cc-csc" />
+                </div>
+              </div>
+            </div>
+
             {error && (
               <div className="msg-error">
                 <AlertCircle size={13} /> {error}
@@ -443,7 +460,7 @@ export function SponsorDrawer({
                 disabled={submitting}
               >
                 {submitting ? <Loader2 size={14} className="spin" /> : <ShieldCheck size={14} />}
-                {submitting ? 'Booking…' : `Confirm ${pkg.label}`}
+                {submitting ? 'Booking…' : 'Sponsor Athlete · Stripe payout'}
               </button>
               <button
                 className="sponsor-btn-nearby rounded-none bg-brand-cobalt text-brand-white"

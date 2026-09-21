@@ -65,6 +65,7 @@ import { FilmModal } from './components/FilmModal';
 import { AthleteOnboardingDrawer } from './components/AthleteOnboardingDrawer';
 import { supabase } from './lib/supabaseClient';
 import { isAthleteOnboardingComplete } from './lib/specimenPrivacy';
+import { filterRoster, type LeagueFilterId } from './lib/rosterDiscovery';
 
 import {
   fetchAthletes,
@@ -139,6 +140,8 @@ export function MarketplaceApp() {
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [filmOpen, setFilmOpen] = useState(false);
+  const [rosterQuery, setRosterQuery] = useState('');
+  const [leagueFilter, setLeagueFilter] = useState<LeagueFilterId>('all');
   const [booking, setBooking] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
@@ -525,6 +528,31 @@ export function MarketplaceApp() {
     [sponsors]
   );
 
+  const visibleAthletes = useMemo(
+    () => filterRoster(athletes, rosterQuery, leagueFilter),
+    [athletes, rosterQuery, leagueFilter]
+  );
+
+  const discoveryActive = leagueFilter !== 'all' || rosterQuery.trim() !== '';
+
+  const rosterPins: AthleteLocation[] = useMemo(
+    () =>
+      visibleAthletes
+        .filter((a) => a.latitude != null && a.longitude != null)
+        .map((a) => ({
+          id: a.id,
+          name: athleteDisplayName(a),
+          lat: a.latitude,
+          lng: a.longitude,
+          postcode: a.postcode,
+          follower_count: a.follower_count,
+          master_licence_signed: a.master_licence_signed,
+          nrl_tpa_registered: a.nrl_tpa_registered,
+          shute_shield_compliant: a.shute_shield_compliant,
+        })),
+    [visibleAthletes]
+  );
+
   async function handleConfirmSponsorship(tier: SponsorshipTierKey, postcode: string) {
     if (!drawerAthlete || booking || !tier || !postcode.trim()) return;
     setBooking(true);
@@ -656,8 +684,9 @@ export function MarketplaceApp() {
             </div>
             <div className="relative isolate h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc">
               <MapView
-                athlete={catchment3000}
-                sponsors={workspaceSponsors}
+                athlete={discoveryActive ? null : catchment3000}
+                sponsors={discoveryActive ? [] : workspaceSponsors}
+                roster={discoveryActive ? rosterPins : undefined}
                 catchmentMeters={5000}
                 className="relative h-full w-full overflow-hidden"
               />
@@ -669,8 +698,12 @@ export function MarketplaceApp() {
               </div>
             ) : (
               <RosterSection
-                athletes={athletes}
+                athletes={visibleAthletes}
                 loading={false}
+                query={rosterQuery}
+                league={leagueFilter}
+                onQueryChange={setRosterQuery}
+                onLeagueChange={setLeagueFilter}
                 onPrimary={(a) => openSponsorDrawer(a)}
                 onPerson={(a) => {
                   setSelectedAthlete(a);

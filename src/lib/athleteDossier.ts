@@ -2,6 +2,12 @@ import type { Athlete, PerformanceLog } from '../types';
 import { COLLAB_SPLIT } from '../types';
 import { athleteDisplayName, athleteInitials } from './formatName';
 import { formatSeconds, generateMockEvents } from './twelvelabs';
+import {
+  deriveInstagramHandle,
+  instagramUrl,
+  leagueHandleForAthlete,
+  suburbForPostcode,
+} from './rosterDiscovery';
 
 /** Training / outdoor clips only — no club kits or league marks in frame. */
 const REELS = {
@@ -43,6 +49,13 @@ export interface AthleteDossier {
   partnerPct: number;
   verified: boolean;
   position: string | null;
+  instagramHandle: string;
+  instagramUrl: string;
+  leagueHandle: string;
+  suburb: string;
+  following: number;
+  stripeConnectId: string;
+  exclusivityClear: boolean;
 }
 
 export function athleteDossier(athlete: Athlete): AthleteDossier {
@@ -53,6 +66,13 @@ export function athleteDossier(athlete: Athlete): AthleteDossier {
   const geofenceKm = athlete.geofence_km ?? 15;
   const athletePct = athlete.payout_athlete_pct ?? COLLAB_SPLIT.athletePayoutPct;
   const partnerPct = athlete.payout_partner_pct ?? COLLAB_SPLIT.platformFeePct + COLLAB_SPLIT.communityFundPct;
+  const instagramHandle = deriveInstagramHandle(athlete, name, sport, club);
+  const nilClearance =
+    athlete.nil_clearance ??
+    (athlete.master_licence_signed || athlete.nrl_tpa_registered || athlete.shute_shield_compliant);
+  const exclusivityTerms =
+    athlete.exclusivity_terms ??
+    (athlete.licence_status ?? athlete.agreement_status ?? 'no_agreement').replace(/_/g, ' ');
 
   return {
     name,
@@ -75,16 +95,19 @@ export function athleteDossier(athlete: Athlete): AthleteDossier {
     suburbanViews: athlete.suburban_views ?? 12000 + (seed % 28000),
     engagementRate: athlete.engagement_rate ?? Number((3.1 + (seed % 42) / 10).toFixed(1)),
     communityReach: athlete.community_reach ?? athlete.follower_count ?? 8000 + (seed % 18000),
-    nilClearance:
-      athlete.nil_clearance ??
-      (athlete.master_licence_signed || athlete.nrl_tpa_registered || athlete.shute_shield_compliant),
-    exclusivityTerms:
-      athlete.exclusivity_terms ??
-      (athlete.licence_status ?? athlete.agreement_status ?? 'no_agreement').replace(/_/g, ' '),
+    nilClearance,
+    exclusivityTerms,
     athletePct,
     partnerPct,
     verified: Boolean(athlete.master_licence_signed || athlete.ip_lock),
     position: athlete.profile_data?.position ?? null,
+    instagramHandle,
+    instagramUrl: instagramUrl(instagramHandle),
+    leagueHandle: leagueHandleForAthlete(athlete),
+    suburb: athlete.suburb || suburbForPostcode(athlete.postcode),
+    following: athlete.follower_count ?? 2400 + (seed % 18000),
+    stripeConnectId: athlete.stripe_connect_id || `acct_${(athlete.id || 'tmrw').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12) || 'connect'}`,
+    exclusivityClear: nilClearance && !exclusivityTerms.toLowerCase().includes('pending'),
   };
 }
 

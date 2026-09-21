@@ -28,6 +28,11 @@ export function getSportComplianceBadges(
 
   if (s.includes('rugby') && s.includes('union')) {
     badges.push({
+      label: 'Rugby Australia NIL clearance',
+      detail: 'RA commercial rights cleared',
+      active: athlete.shute_shield_compliant,
+    });
+    badges.push({
       label: 'Shute Shield $500 Cap',
       detail: "Arm's-length dealing",
       active: athlete.shute_shield_compliant,
@@ -38,6 +43,11 @@ export function getSportComplianceBadges(
       active: athlete.shute_shield_compliant,
     });
   } else if (s.includes('rugby') && s.includes('league')) {
+    badges.push({
+      label: 'NSWRL / QRL TPA clearance',
+      detail: 'State league third-party registered',
+      active: athlete.nrl_tpa_registered,
+    });
     badges.push({
       label: 'NRL State Cup TPA',
       detail: 'Third-party registered',
@@ -50,13 +60,13 @@ export function getSportComplianceBadges(
     });
   } else if (s.includes('basketball')) {
     badges.push({
-      label: 'NBL1 Commercial Exclusivity',
-      detail: 'Category-exclusive deals',
+      label: 'Basketball Australia / NBL1 NIL clearance',
+      detail: 'State basketball commercial rights cleared',
       active: true,
     });
     badges.push({
-      label: 'NCAA NIL Eligibility',
-      detail: 'Amateur status preserved',
+      label: 'NBL1 Commercial Exclusivity',
+      detail: 'Category-exclusive deals',
       active: true,
     });
   } else if (s.includes('soccer')) {
@@ -104,6 +114,11 @@ export function getSportComplianceBadges(
       active: true,
     });
   } else if (s.includes('netball')) {
+    badges.push({
+      label: 'Netball NSW commercial exclusivity',
+      detail: 'State league commercial registered',
+      active: true,
+    });
     badges.push({
       label: 'Netball Australia Commercial Exclusivity',
       detail: 'SSN category exclusivity',
@@ -230,6 +245,9 @@ export interface Athlete {
   exclusivity_terms?: string | null;
   payout_athlete_pct?: number | null;
   payout_partner_pct?: number | null;
+  instagram_handle?: string | null;
+  suburb?: string | null;
+  stripe_connect_id?: string | null;
 }
 
 export type SponsorCategory =

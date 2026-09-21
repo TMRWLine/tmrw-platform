@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pause, Play, X } from 'lucide-react';
+import { Instagram, Pause, Play, X } from 'lucide-react';
 import type { Athlete } from '../types';
 import { athleteDossier } from '../lib/athleteDossier';
 
 export function FilmModal({ athlete, onClose }: { athlete: Athlete; onClose: () => void }) {
   const d = athleteDossier(athlete);
   const clips = [
-    { id: 'match', label: 'Match-day reel', src: d.matchReelUrl, stamp: d.logs[0]?.stamp ?? '12:04' },
+    { id: 'match', label: 'Instagram match reel', src: d.matchReelUrl, stamp: d.logs[0]?.stamp ?? '12:04' },
     { id: 'training', label: 'Vertical training clip', src: d.trainingClipUrl, stamp: d.logs[1]?.stamp ?? '03:18' },
   ];
   const [activeId, setActiveId] = useState(clips[0].id);
@@ -56,9 +56,17 @@ export function FilmModal({ athlete, onClose }: { athlete: Athlete; onClose: () 
         <p className="font-mono text-[10px] tracking-widest uppercase text-[#D2FF00] mb-2">
           // MEDIA VAULT
         </p>
-        <h2 className="text-xl font-black uppercase tracking-tight text-white mt-0 mb-4">
+        <h2 className="text-xl font-black uppercase tracking-tight text-white mt-0 mb-2">
           {d.name} · match footage
         </h2>
+        <a
+          className="athlete-ig inline-flex mb-4"
+          href={d.instagramUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Instagram size={12} /> {d.instagramHandle}
+        </a>
 
         <div className="relative bg-black mb-4">
           <video
@@ -86,6 +94,7 @@ export function FilmModal({ athlete, onClose }: { athlete: Athlete; onClose: () 
           <span>Match {d.matchDate}</span>
           <span>Venue {d.postcode}</span>
           <span>Clip {active.stamp}</span>
+          <span>Community {d.communityReach.toLocaleString('en-AU')}</span>
         </div>
 
         <ul className="m-0 p-0 list-none grid gap-2 mb-4">

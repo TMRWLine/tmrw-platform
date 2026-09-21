@@ -77,6 +77,9 @@ export function normalizeAthlete(row: Record<string, unknown> | Athlete | null |
     exclusivity_terms: (r.exclusivity_terms as string | null) ?? null,
     payout_athlete_pct: typeof r.payout_athlete_pct === 'number' ? r.payout_athlete_pct : null,
     payout_partner_pct: typeof r.payout_partner_pct === 'number' ? r.payout_partner_pct : null,
+    instagram_handle: (r.instagram_handle as string | null) ?? null,
+    suburb: (r.suburb as string | null) ?? null,
+    stripe_connect_id: (r.stripe_connect_id as string | null) ?? null,
   };
 }
 

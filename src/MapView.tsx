@@ -10,6 +10,7 @@ interface MapViewProps {
   className?: string;
   selectedSponsorId?: string | null;
   onSelectSponsor?: (id: string) => void;
+  roster?: AthleteLocation[];
 }
 
 function makeAthleteIcon() {
@@ -37,6 +38,7 @@ export default function MapView({
   className,
   selectedSponsorId = null,
   onSelectSponsor,
+  roster,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -92,12 +94,6 @@ export default function MapView({
 
     if (athlete && athlete.lat != null && athlete.lng != null) {
       const pos: L.LatLngExpression = [athlete.lat, athlete.lng];
-      const compliance: string[] = [];
-      if (athlete.master_licence_signed) compliance.push('Master Licence');
-      if (athlete.nrl_tpa_registered) compliance.push('NRL TPA');
-      if (athlete.shute_shield_compliant) compliance.push('Shute Shield');
-      const complianceLine =
-        compliance.length > 0 ? `<br/><span class="popup-sub">${compliance.join(' &middot; ')}</span>` : '';
       if (catchmentMeters > 0) {
         L.circle(pos, {
           radius: catchmentMeters,
@@ -109,11 +105,19 @@ export default function MapView({
       }
       L.marker(pos, { icon: makeAthleteIcon() })
         .addTo(layer)
-        .bindPopup(
-          `<div class="map-popup"><strong>${escapeHtml(displayName(athlete?.name))}</strong><br/><span class="popup-sub">Athlete${athlete.postcode ? ' &middot; ' + escapeHtml(athlete.postcode) : ''}${athlete.follower_count != null ? ' &middot; ' + athlete.follower_count.toLocaleString() + ' followers' : ''}</span>${complianceLine}</div>`
-        );
+        .bindPopup(athletePopupHtml(athlete));
       points.push(pos);
     }
+
+    (roster ?? []).forEach((pin) => {
+      if (pin.lat == null || pin.lng == null) return;
+      if (athlete && pin.id === athlete.id) return;
+      const pos: L.LatLngExpression = [pin.lat, pin.lng];
+      L.marker(pos, { icon: makeAthleteIcon() })
+        .addTo(layer)
+        .bindPopup(athletePopupHtml(pin));
+      points.push(pos);
+    });
 
     sponsors.forEach((s) => {
       if (s.lat == null || s.lng == null) return;
@@ -152,7 +156,7 @@ export default function MapView({
       const selectedMarker = markerByIdRef.current.get(selectedId);
       selectedMarker?.setIcon(makeSponsorIcon(true));
     }
-  }, [athlete, sponsors, catchmentMeters]);
+  }, [athlete, sponsors, catchmentMeters, roster]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -171,6 +175,16 @@ export default function MapView({
       <div ref={containerRef} className="map-container relative h-full w-full overflow-hidden" />
     </div>
   );
+}
+
+function athletePopupHtml(pin: AthleteLocation): string {
+  const compliance: string[] = [];
+  if (pin.master_licence_signed) compliance.push('Master Licence');
+  if (pin.nrl_tpa_registered) compliance.push('NRL TPA');
+  if (pin.shute_shield_compliant) compliance.push('Shute Shield');
+  const complianceLine =
+    compliance.length > 0 ? `<br/><span class="popup-sub">${compliance.join(' &middot; ')}</span>` : '';
+  return `<div class="map-popup"><strong>${escapeHtml(displayName(pin.name))}</strong><br/><span class="popup-sub">Athlete${pin.postcode ? ' &middot; ' + escapeHtml(pin.postcode) : ''}${pin.follower_count != null ? ' &middot; ' + pin.follower_count.toLocaleString() + ' followers' : ''}</span>${complianceLine}</div>`;
 }
 
 function sponsorPopupHtml(s: MatchedSponsor): string {

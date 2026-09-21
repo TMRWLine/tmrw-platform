@@ -451,6 +451,39 @@ button {
 }
 .athlete-icon-btn:hover { background: #000000; color: #FFFFFF; border-color: #FFFFFF; }
 
+.roster-discovery { display: grid; gap: 12px; margin: 18px 0 14px; }
+.roster-search {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid #27272A; background: #08080A; padding: 0 12px;
+}
+.roster-search svg { color: rgba(255,255,255,0.45); flex-shrink: 0; }
+.roster-search input {
+  flex: 1; height: 42px; border: 0; background: transparent;
+  color: #FBFBF9; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; letter-spacing: 0.04em; outline: none;
+}
+.league-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.league-pill {
+  border: 1px solid #27272A; background: transparent; color: rgba(255,255,255,0.62);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 7px 10px; cursor: pointer;
+}
+.league-pill.is-active { background: #D2FF00; color: #000; border-color: #D2FF00; }
+.athlete-ig {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px; color: #D2FF00; text-decoration: none; margin-top: 4px;
+}
+.athlete-ig:hover { text-decoration: underline; }
+.athlete-social-telemetry {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+.stripe-elements { display: grid; gap: 8px; }
+.stripe-elements-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
 .card-top { display: flex; align-items: flex-start; gap: 12px; }
 .avatar {
   width: 44px; height: 44px; flex-shrink: 0;
