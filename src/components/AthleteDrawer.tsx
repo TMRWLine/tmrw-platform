@@ -122,10 +122,13 @@ export function AthleteDrawer({
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-6 font-mono text-[10px] tracking-widest uppercase text-zinc-500">
-              <TelemetryCell label="Local engagement" value={`${d.engagementRate.toFixed(1)}%`} />
-              <TelemetryCell label="Audience velocity" value={`+${d.audienceVelocityPct}% / wk`} />
-              <TelemetryCell label="Match-day index" value={`${d.matchDayIndex} / 100`} />
-              <TelemetryCell label="Community reach" value={`${d.communityReach.toLocaleString('en-AU')} · ${d.reachPct}%`} />
+              <TelemetryCell label="Instagram followers" value={d.following.toLocaleString('en-AU')} />
+              <TelemetryCell label="Engagement rate" value={`${d.engagementRate.toFixed(1)}%`} />
+              <TelemetryCell label="Suburban reach velocity" value={`+${d.audienceVelocityPct}% / wk`} />
+              <TelemetryCell label="Match-day engagement index" value={`${d.matchDayIndex} / 100`} />
+              <div className="col-span-2">
+                <TelemetryCell label="Community reach" value={`${d.communityReach.toLocaleString('en-AU')} · ${d.reachPct}%`} />
+              </div>
             </div>
 
             <div className="grid gap-3 mb-8">
@@ -217,7 +220,7 @@ function governingBodies(athlete: Athlete): { label: string; active: boolean }[]
   if (s.includes('basket')) {
     rows.push(
       { label: 'Basketball Australia / NBL1 · Amateur status protection', active: cleared },
-      { label: 'Basketball Australia / NBL1 · NIL commercial clearance', active: cleared }
+      { label: 'Basketball Australia / NBL1 · Commercial NIL appearance ledger', active: cleared }
     );
   } else if (s.includes('rugby') && s.includes('union')) {
     const union = athlete.shute_shield_compliant || cleared;

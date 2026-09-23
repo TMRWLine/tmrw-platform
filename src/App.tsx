@@ -66,6 +66,7 @@ import { AthleteOnboardingDrawer } from './components/AthleteOnboardingDrawer';
 import { supabase } from './lib/supabaseClient';
 import { isAthleteOnboardingComplete } from './lib/specimenPrivacy';
 import { filterRoster, type LeagueFilterId } from './lib/rosterDiscovery';
+import type { UploadedClip } from './lib/mediaUploads';
 
 import {
   fetchAthletes,
@@ -141,6 +142,7 @@ export function MarketplaceApp() {
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFilmOpen, setIsFilmOpen] = useState(false);
+  const [athleteClips, setAthleteClips] = useState<Record<string, UploadedClip[]>>({});
   const [rosterQuery, setRosterQuery] = useState('');
   const [leagueFilter, setLeagueFilter] = useState<LeagueFilterId>('all');
   const [booking, setBooking] = useState(false);
@@ -973,6 +975,13 @@ export function MarketplaceApp() {
             athlete={selectedAthlete}
             isOpen={isFilmOpen}
             onClose={() => setIsFilmOpen(false)}
+            uploadedClips={athleteClips[selectedAthlete.id] ?? []}
+            onUpload={(added) =>
+              setAthleteClips((prev) => ({
+                ...prev,
+                [selectedAthlete.id]: [...added, ...(prev[selectedAthlete.id] ?? [])],
+              }))
+            }
           />
         </>
       )}

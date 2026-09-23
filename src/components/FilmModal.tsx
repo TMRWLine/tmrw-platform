@@ -1,24 +1,46 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Instagram, X } from 'lucide-react';
+import { Instagram, UploadCloud, X } from 'lucide-react';
 import type { Athlete } from '../types';
 import { athleteDossier } from '../lib/athleteDossier';
+import { clipKindLabel, type UploadedClip } from '../lib/mediaUploads';
+import { ProofOfPerformanceUploader } from './ProofOfPerformanceUploader';
+
+interface VaultClip {
+  id: string;
+  label: string;
+  src: string;
+  stamp: string;
+  upload?: UploadedClip;
+}
 
 export function FilmModal({
   athlete,
   isOpen,
   onClose,
+  uploadedClips = [],
+  onUpload,
 }: {
   athlete: Athlete;
   isOpen: boolean;
   onClose: () => void;
+  uploadedClips?: UploadedClip[];
+  onUpload?: (clips: UploadedClip[]) => void;
 }) {
   const d = athleteDossier(athlete);
-  const clips = [
+  const clips: VaultClip[] = [
+    ...uploadedClips.map((u) => ({
+      id: u.id,
+      label: `${clipKindLabel(u.kind)} · vs ${u.opponent}`,
+      src: u.src,
+      stamp: `${u.licenceDays}d licence`,
+      upload: u,
+    })),
     { id: 'match', label: 'Instagram match reel', src: d.matchReelUrl, stamp: d.logs[0]?.stamp ?? '12:04' },
     { id: 'training', label: 'Vertical training clip', src: d.trainingClipUrl, stamp: d.logs[1]?.stamp ?? '03:18' },
   ];
   const [activeId, setActiveId] = useState(clips[0].id);
+  const [uploaderOpen, setUploaderOpen] = useState(false);
   const active = clips.find((c) => c.id === activeId) ?? clips[0];
 
   useEffect(() => {
@@ -86,13 +108,25 @@ export function FilmModal({
             </div>
 
             <div className="flex flex-wrap gap-3 font-mono text-[10px] tracking-widest uppercase text-zinc-400 border border-white/10 p-3 mb-4">
-              <span>Match {d.matchDate}</span>
-              <span>Venue {d.postcode}</span>
-              <span>Match sheet {active.stamp}</span>
-              <span>Local views {d.suburbanViews.toLocaleString('en-AU')}</span>
+              {active.upload ? (
+                <>
+                  <span>Fixture {active.upload.fixtureDate}</span>
+                  <span>vs {active.upload.opponent}</span>
+                  <span>Venue {active.upload.venuePostcode}</span>
+                  <span>Licence {active.upload.licenceDays} days</span>
+                  <span>{active.upload.sizeMb} MB</span>
+                </>
+              ) : (
+                <>
+                  <span>Match {d.matchDate}</span>
+                  <span>Venue {d.postcode}</span>
+                  <span>Match sheet {active.stamp}</span>
+                  <span>Local views {d.suburbanViews.toLocaleString('en-AU')}</span>
+                </>
+              )}
             </div>
 
-            <ul className="m-0 p-0 list-none grid gap-2 mb-4">
+            <ul className="m-0 p-0 list-none flex flex-col gap-2 mb-4">
               {clips.map((clip) => (
                 <li key={clip.id}>
                   <button
@@ -134,6 +168,29 @@ export function FilmModal({
                 <div className="text-white text-xs">{d.communityReach.toLocaleString('en-AU')}</div>
               </div>
             </div>
+
+            {onUpload && (
+              <div className="mt-4 flex flex-col gap-3">
+                <button
+                  type="button"
+                  className="flex items-center justify-center gap-2 border border-white/10 hover:border-[#D2FF00]/50 hover:text-[#D2FF00] bg-transparent text-zinc-300 py-2.5 font-mono text-xs uppercase tracking-widest cursor-pointer transition-colors"
+                  onClick={() => setUploaderOpen((v) => !v)}
+                  aria-expanded={uploaderOpen}
+                >
+                  <UploadCloud size={14} /> {uploaderOpen ? 'Hide uploader' : 'Upload proof of performance'}
+                </button>
+                {uploaderOpen && (
+                  <ProofOfPerformanceUploader
+                    defaultPostcode={athlete.postcode ?? ''}
+                    onUpload={(added) => {
+                      onUpload(added);
+                      setActiveId(added[0].id);
+                      setUploaderOpen(false);
+                    }}
+                  />
+                )}
+              </div>
+            )}
           </motion.div>
         </div>
       )}

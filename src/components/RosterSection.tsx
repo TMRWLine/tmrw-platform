@@ -4,6 +4,7 @@ import type { Athlete } from '../types';
 import { athleteDisplayName, athleteInitials } from '../lib/formatName';
 import { athleteDossier } from '../lib/athleteDossier';
 import { LEAGUE_FILTERS, type LeagueFilterId } from '../lib/rosterDiscovery';
+import { CapitalAllocationSandbox } from './CapitalAllocationSandbox';
 
 export function RosterSection({
   athletes,
@@ -28,6 +29,7 @@ export function RosterSection({
 }) {
   return (
     <div>
+      <CapitalAllocationSandbox athletes={athletes} />
       <div className="roster-discovery">
         <label className="roster-search" htmlFor="roster-search">
           <Search size={14} />
@@ -169,10 +171,10 @@ function AthleteRosterCard({
         )}
       </div>
       <div className="athlete-social-telemetry font-mono">
-        <span>{dossier.engagementRate.toFixed(1)}% local eng</span>
+        <span>{dossier.following.toLocaleString('en-AU')} followers</span>
+        <span>{dossier.engagementRate.toFixed(1)}% eng</span>
+        <span>+{dossier.audienceVelocityPct}%/wk reach velocity</span>
         <span>{dossier.reachPct}% community reach</span>
-        <span>{(dossier.communityReach / 1000).toFixed(1)}k reach</span>
-        <span>{dossier.following.toLocaleString('en-AU')} following</span>
       </div>
       <div className="athlete-card-actions">
         <button
