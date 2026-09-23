@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Instagram, UploadCloud, X } from 'lucide-react';
+import { Instagram, Maximize2, Pause, Play, UploadCloud, Volume2, VolumeX, X } from 'lucide-react';
 import type { Athlete } from '../types';
 import { athleteDossier } from '../lib/athleteDossier';
 import { clipKindLabel, type UploadedClip } from '../lib/mediaUploads';
 import { ProofOfPerformanceUploader } from './ProofOfPerformanceUploader';
+
+const CONTROL_BTN =
+  'flex items-center justify-center w-8 h-8 rounded-full border border-[#D2FF00]/30 bg-[#D2FF00]/5 text-[#D2FF00] hover:bg-[#D2FF00] hover:text-black cursor-pointer transition-colors';
 
 interface VaultClip {
   id: string;
@@ -43,14 +46,41 @@ export function FilmModal({
   const [uploaderOpen, setUploaderOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const autoPlayRef = useRef(false);
   const active = clips.find((c) => c.id === activeId) ?? clips[0];
   const progressPct = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
   useEffect(() => {
     setCurrentTime(0);
     setDuration(0);
+    setPlaying(false);
+    setLoadFailed(false);
   }, [active.src]);
+
+  function togglePlay() {
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) el.play().catch(() => setPlaying(false));
+    else el.pause();
+  }
+
+  function selectClip(id: string) {
+    const next = clips.find((c) => c.id === id);
+    setActiveId(id);
+    if (next && next.src === active.src) {
+      const el = videoRef.current;
+      if (el) {
+        el.currentTime = 0;
+        el.play().catch(() => setPlaying(false));
+      }
+      return;
+    }
+    autoPlayRef.current = true;
+  }
 
   useEffect(() => {
     if (!isOpen) return;
@@ -104,26 +134,61 @@ export function FilmModal({
               <Instagram size={12} /> {d.instagramHandle}
             </a>
 
-            <div className="mx-auto w-full max-w-[280px] mb-4">
-              <div className="relative bg-black aspect-[9/16]">
+            <div className="mx-auto w-full max-w-[300px] mb-4 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-2 shadow-[0_0_40px_rgba(210,255,0,0.06)]">
+              <div className="relative overflow-hidden rounded-xl bg-black aspect-[9/16]">
                 <video
                   ref={videoRef}
                   key={active.src}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="absolute inset-0 h-full w-full object-cover cursor-pointer"
                   src={active.src}
-                  controls
                   playsInline
-                  muted
+                  muted={muted}
                   preload="metadata"
-                  onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                  onClick={togglePlay}
+                  onLoadedMetadata={(e) => {
+                    setDuration(e.currentTarget.duration);
+                    if (autoPlayRef.current) {
+                      autoPlayRef.current = false;
+                      e.currentTarget.play().catch(() => setPlaying(false));
+                    }
+                  }}
                   onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                  onPlay={() => setPlaying(true)}
+                  onPause={() => setPlaying(false)}
+                  onEnded={() => setPlaying(false)}
+                  onError={() => {
+                    autoPlayRef.current = false;
+                    setLoadFailed(true);
+                  }}
                 />
-                <span className="pointer-events-none absolute top-2 right-2 bg-black/70 border border-[#D2FF00]/40 px-2 py-0.5 font-mono text-[10px] text-[#D2FF00]">
+                {loadFailed && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#08080A] px-6 text-center">
+                    <span className="font-mono text-[10px] tracking-widest uppercase text-amber-300">Reel unavailable</span>
+                    <span className="font-mono text-[10px] text-zinc-500">
+                      The source for this clip could not be loaded. Upload proof of performance to replace it.
+                    </span>
+                  </div>
+                )}
+                <span className="pointer-events-none absolute top-2 left-2 rounded-full bg-black/70 border border-white/10 px-2 py-0.5 font-mono text-[9px] tracking-widest uppercase text-zinc-300">
+                  {active.label}
+                </span>
+                <span className="pointer-events-none absolute top-2 right-2 rounded-full bg-black/70 border border-[#D2FF00]/40 px-2 py-0.5 font-mono text-[10px] text-[#D2FF00]">
                   {formatClock(currentTime)} / {duration > 0 ? formatClock(duration) : '--:--'}
                 </span>
+                {!playing && !loadFailed && (
+                  <button
+                    type="button"
+                    className="absolute inset-0 m-auto w-14 h-14 rounded-full border-0 bg-[#D2FF00] text-black flex items-center justify-center cursor-pointer shadow-[0_0_24px_rgba(210,255,0,0.5)]"
+                    onClick={togglePlay}
+                    aria-label="Play reel"
+                  >
+                    <Play size={22} className="fill-current ml-0.5" />
+                  </button>
+                )}
               </div>
+
               <div
-                className="h-1 w-full bg-white/10 cursor-pointer"
+                className="mt-2 h-1.5 w-full rounded-full bg-white/10 cursor-pointer overflow-hidden"
                 role="progressbar"
                 aria-label="Reel progress"
                 aria-valuemin={0}
@@ -137,9 +202,34 @@ export function FilmModal({
                 }}
               >
                 <div
-                  className="h-full bg-[#D2FF00] shadow-[0_0_10px_#D2FF00] transition-[width] duration-150"
+                  className="h-full rounded-full bg-[#D2FF00] shadow-[0_0_10px_#D2FF00] transition-[width] duration-150"
                   style={{ width: `${progressPct}%` }}
                 />
+              </div>
+
+              <div className="mt-2 flex items-center gap-2 px-1">
+                <button type="button" className={CONTROL_BTN} onClick={togglePlay} aria-label={playing ? 'Pause' : 'Play'}>
+                  {playing ? <Pause size={14} /> : <Play size={14} />}
+                </button>
+                <button
+                  type="button"
+                  className={CONTROL_BTN}
+                  onClick={() => setMuted((m) => !m)}
+                  aria-label={muted ? 'Unmute' : 'Mute'}
+                >
+                  {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                </button>
+                <span className="flex-1 font-mono text-[10px] text-zinc-500 text-center">
+                  {formatClock(currentTime)} / {duration > 0 ? formatClock(duration) : '--:--'}
+                </span>
+                <button
+                  type="button"
+                  className={CONTROL_BTN}
+                  onClick={() => videoRef.current?.requestFullscreen?.().catch(() => undefined)}
+                  aria-label="Fullscreen"
+                >
+                  <Maximize2 size={14} />
+                </button>
               </div>
             </div>
 
@@ -168,15 +258,22 @@ export function FilmModal({
                 <li key={clip.id}>
                   <button
                     type="button"
-                    className={`w-full flex items-center justify-between border px-3 py-2 font-mono text-xs cursor-pointer ${
+                    className={`w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 font-mono text-xs cursor-pointer transition-colors ${
                       clip.id === activeId
                         ? 'border-[#D2FF00] text-[#D2FF00] bg-[#D2FF00]/5'
-                        : 'border-white/10 text-zinc-300 bg-transparent'
+                        : 'border-white/10 text-zinc-300 bg-white/[0.02] hover:border-[#D2FF00]/50'
                     }`}
-                    onClick={() => setActiveId(clip.id)}
+                    onClick={() => selectClip(clip.id)}
+                    aria-current={clip.id === activeId ? 'true' : undefined}
                   >
-                    <span>{clip.label}</span>
-                    <span>{clip.stamp}</span>
+                    <span className="flex items-center gap-2 min-w-0">
+                      <Play size={12} className={clip.id === activeId ? 'fill-current' : ''} />
+                      <span className="truncate">{clip.label}</span>
+                      {clip.id === activeId && (
+                        <span className="text-[9px] tracking-widest uppercase text-[#D2FF00]/70">Now playing</span>
+                      )}
+                    </span>
+                    <span className="flex-shrink-0">{clip.stamp}</span>
                   </button>
                 </li>
               ))}
@@ -191,16 +288,16 @@ export function FilmModal({
               ))}
             </ul>
 
-            <div className="grid grid-cols-3 gap-2 font-mono text-[10px] tracking-widest uppercase text-zinc-400">
-              <div className="border border-white/10 p-3">
+            <div className="flex gap-2 font-mono text-[10px] tracking-widest uppercase text-zinc-400">
+              <div className="flex-1 min-w-0 rounded-lg border border-white/10 bg-white/[0.02] p-3">
                 <div className="text-zinc-600 mb-1">Suburban views</div>
                 <div className="text-white text-xs">{d.suburbanViews.toLocaleString('en-AU')}</div>
               </div>
-              <div className="border border-white/10 p-3">
+              <div className="flex-1 min-w-0 rounded-lg border border-white/10 bg-white/[0.02] p-3">
                 <div className="text-zinc-600 mb-1">Engagement</div>
                 <div className="text-white text-xs">{d.engagementRate.toFixed(1)}%</div>
               </div>
-              <div className="border border-white/10 p-3">
+              <div className="flex-1 min-w-0 rounded-lg border border-white/10 bg-white/[0.02] p-3">
                 <div className="text-zinc-600 mb-1">Community reach</div>
                 <div className="text-white text-xs">{d.communityReach.toLocaleString('en-AU')}</div>
               </div>
@@ -230,7 +327,7 @@ export function FilmModal({
                         defaultPostcode={athlete.postcode ?? ''}
                         onUpload={(added) => {
                           onUpload(added);
-                          setActiveId(added[0].id);
+                          selectClip(added[0].id);
                           setUploaderOpen(false);
                         }}
                       />

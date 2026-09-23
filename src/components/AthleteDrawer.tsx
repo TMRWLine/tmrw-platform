@@ -5,13 +5,17 @@ import {
   BadgeCheck,
   Bike,
   CircleDot,
+  ExternalLink,
   Footprints,
+  Gauge,
   Goal,
   Instagram,
   Medal,
   ShieldCheck,
   Swords,
   Target,
+  TrendingUp,
+  Users,
   Waves,
   X,
   Zap,
@@ -21,7 +25,9 @@ import type { Athlete } from '../types';
 import { getSportComplianceBadges } from '../types';
 import { formatCurrency } from '../api';
 import { athleteDossier } from '../lib/athleteDossier';
+import { originForPostcode } from '../lib/catchmentLandmarks';
 import { athleteInitials } from '../lib/formatName';
+import { CatchmentRadar } from './CatchmentRadar';
 
 const REFERENCE_ACTIVATION = 2500;
 
@@ -38,7 +44,12 @@ export function AthleteDrawer({
 }) {
   const d = athleteDossier(athlete);
   const [portraitFailed, setPortraitFailed] = useState(false);
-  const governing = governingBodies(athlete);
+  const certificates = complianceCertificates(athlete);
+  const approximateOrigin = athlete.latitude == null || athlete.longitude == null;
+  const origin =
+    athlete.latitude != null && athlete.longitude != null
+      ? { lat: athlete.latitude, lng: athlete.longitude }
+      : originForPostcode(athlete.postcode);
 
   useEffect(() => {
     setPortraitFailed(false);
@@ -139,53 +150,85 @@ export function AthleteDrawer({
                   </span>
                 </div>
                 <a
-                  className="athlete-ig mt-2 inline-flex"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[#D2FF00]/30 bg-[#D2FF00]/5 px-2.5 py-1 font-mono text-[11px] text-[#D2FF00] no-underline hover:border-[#D2FF00] hover:bg-[#D2FF00]/10 transition-colors"
                   href={d.instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={`Open ${d.instagramHandle} on Instagram in a new tab`}
                 >
-                  <Instagram size={12} /> {d.instagramHandle}
+                  <Instagram size={12} /> {d.instagramHandle} <ExternalLink size={10} />
                 </a>
               </div>
               <ClubCrest initials={d.clubInitials} club={d.club} />
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mb-6 font-mono text-[10px] tracking-widest uppercase text-zinc-500">
-              <TelemetryCell label="Instagram followers" value={d.following.toLocaleString('en-AU')} />
-              <TelemetryCell label="Engagement rate" value={`${d.engagementRate.toFixed(1)}%`} />
-              <TelemetryCell label="Suburban reach velocity" value={`+${d.audienceVelocityPct}% / wk`} />
-              <TelemetryCell label="Match-day engagement index" value={`${d.matchDayIndex} / 100`} />
-              <div className="col-span-2">
-                <TelemetryCell label="Community reach" value={`${d.communityReach.toLocaleString('en-AU')} · ${d.reachPct}%`} />
-              </div>
+            <div className="flex flex-wrap gap-2 mb-6">
+              <TelemetryCard
+                icon={Instagram}
+                label="Instagram followers"
+                value={d.following.toLocaleString('en-AU')}
+                sub={d.instagramHandle}
+              />
+              <TelemetryCard
+                icon={TrendingUp}
+                label="Engagement velocity"
+                value={`${d.engagementRate.toFixed(1)}%`}
+                sub={`+${d.audienceVelocityPct}% reach / wk`}
+              />
+              <TelemetryCard
+                icon={Gauge}
+                label="Match-day index"
+                value={`${d.matchDayIndex}`}
+                sub="of 100"
+                meterPct={d.matchDayIndex}
+              />
+              <TelemetryCard
+                icon={Users}
+                label="Community reach"
+                value={d.communityReach.toLocaleString('en-AU')}
+                sub={`${d.reachPct}% of local views`}
+              />
             </div>
 
-            <div className="grid gap-3 mb-8">
-              <div className="border border-white/10 p-4">
-                <p className="font-mono text-[10px] tracking-widest uppercase text-zinc-500 m-0 mb-3">
-                  15km suburban catchment · {d.suburb} {d.postcode}
-                </p>
-                <div className="relative h-24 grid place-items-center">
-                  <span className="absolute w-20 h-20 rounded-full border border-white/10" />
-                  <span className="absolute w-14 h-14 rounded-full border border-[#D2FF00]/40" />
-                  <span className="absolute w-6 h-6 rounded-full bg-[#D2FF00]" />
-                </div>
-                <p className="font-mono text-xs text-[#D2FF00] m-0 text-center">
-                  {d.geofenceKm} km licence boundary · {(d.communityReach / 1000).toFixed(1)}k match-day reach
-                </p>
-              </div>
+            <div className="flex flex-col gap-3 mb-8">
+              <CatchmentRadar
+                origin={origin}
+                approximate={approximateOrigin}
+                geofenceKm={d.geofenceKm}
+                suburb={d.suburb}
+                postcode={d.postcode}
+                club={d.club}
+                communityReach={d.communityReach}
+              />
 
-              <div className="border border-[#D2FF00]/20 bg-[#D2FF00]/[0.02] p-4">
+              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
                 <p className="font-mono text-[10px] tracking-widest uppercase text-[#D2FF00] m-0 mb-3 flex items-center gap-2">
                   <ShieldCheck size={12} /> Governing body compliance certificates
                 </p>
-                <ul className="m-0 p-0 list-none grid gap-2">
-                  {governing.map((row) => (
-                    <li key={row.label} className="flex items-start justify-between gap-3 font-mono text-xs">
-                      <span className="text-zinc-300">{row.label}</span>
-                      <span className={row.active ? 'text-[#D2FF00]' : 'text-zinc-500'}>
-                        {row.active ? 'CLEARED' : 'PENDING'}
-                      </span>
+                <ul className="m-0 p-0 list-none flex flex-col gap-2">
+                  {certificates.map((cert) => (
+                    <li
+                      key={cert.label}
+                      className="flex items-start justify-between gap-3 rounded-lg border border-white/10 bg-black/30 px-3 py-2.5"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-mono text-[9px] tracking-widest uppercase text-zinc-500 m-0 mb-0.5">
+                          {cert.authority}
+                        </p>
+                        <p className="font-mono text-xs text-zinc-200 m-0">{cert.label}</p>
+                      </div>
+                      {cert.cleared ? (
+                        <span className="flex-shrink-0 inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2 py-0.5 font-mono text-[9px] tracking-widest text-emerald-300">
+                          <BadgeCheck size={10} /> CLEARED
+                        </span>
+                      ) : (
+                        <span
+                          className="flex-shrink-0 max-w-[45%] text-right rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 font-mono text-[9px] tracking-widest uppercase text-amber-300"
+                          title="Statutory step outstanding before activation"
+                        >
+                          {cert.requirement}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -206,7 +249,7 @@ export function AthleteDrawer({
                 live={d.exclusivityTerms.toLowerCase() === 'active'}
               />
 
-              <div className="border border-white/10 p-4">
+              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
                 <p className="font-mono text-[10px] tracking-widest uppercase text-zinc-500 m-0 mb-2">
                   Stripe Connect disbursement
                 </p>
@@ -246,54 +289,90 @@ export function AthleteDrawer({
   );
 }
 
-function governingBodies(athlete: Athlete): { label: string; active: boolean }[] {
+interface Certificate {
+  authority: string;
+  label: string;
+  cleared: boolean;
+  /** Explicit statutory step shown while the certificate is not yet cleared. */
+  requirement: string;
+}
+
+function complianceCertificates(athlete: Athlete): Certificate[] {
   const s = (athlete.sport ?? '').toLowerCase();
   const cleared = Boolean(
     athlete.nil_clearance ??
       (athlete.master_licence_signed || athlete.nrl_tpa_registered || athlete.shute_shield_compliant)
   );
-  const rows: { label: string; active: boolean }[] = [];
+
   if (s.includes('basket')) {
-    rows.push(
-      { label: 'Basketball Australia / NBL1 · Amateur status preservation ledger', active: cleared },
-      { label: 'Basketball Australia / NBL1 · Commercial NIL appearance ledger', active: cleared }
-    );
-  } else if (s.includes('rugby') && s.includes('union')) {
+    const authority = 'Basketball Australia / NBL1';
+    return [
+      { authority, label: 'Amateur status preservation ledger', cleared, requirement: 'Lodge amateur declaration' },
+      { authority, label: 'Commercial NIL participation', cleared, requirement: 'Sign NBL1 NIL appearance ledger' },
+      { authority, label: 'NBL1 commercial exclusivity', cleared, requirement: 'Register category with state association' },
+    ];
+  }
+  if (s.includes('rugby') && s.includes('union')) {
+    const authority = 'Rugby Australia · Shute Shield';
     const union = athlete.shute_shield_compliant || cleared;
-    rows.push(
-      { label: 'Rugby Australia (Shute Shield) · Non-exclusive digital display clearance', active: union },
-      { label: 'Rugby Australia (Shute Shield) · Club competition approval', active: union }
-    );
-  } else if (s.includes('rugby') && s.includes('league')) {
+    return [
+      { authority, label: "Amateur protection · $500 cap, arm's-length", cleared: union, requirement: "Confirm arm's-length payment" },
+      { authority, label: 'Commercial NIL participation', cleared: union, requirement: 'Submit RA commercial rights declaration' },
+      { authority, label: 'Non-exclusive digital display clearance', cleared: union, requirement: 'Lodge RA digital display notice' },
+    ];
+  }
+  if (s.includes('rugby') && s.includes('league')) {
+    const authority = 'NSWRL / QRL';
+    const league = athlete.nrl_tpa_registered || cleared;
+    return [
+      { authority, label: 'Amateur protection · no club-channel payment', cleared: league, requirement: 'Confirm direct athlete payment' },
+      { authority, label: 'Commercial NIL · third-party agreement (TPA)', cleared: league, requirement: 'Register TPA with NSWRL / QRL' },
+      { authority, label: 'Category exclusivity — zero team-sponsor breach', cleared: league, requirement: 'Run club sponsor exclusivity check' },
+      { authority, label: 'Club emblem scrubbing in content', cleared: league, requirement: 'Remove club marks from footage' },
+    ];
+  }
+
+  const rows: Certificate[] = [
+    { authority: 'Statutory', label: 'Amateur status protection', cleared, requirement: 'Lodge amateur declaration' },
+    { authority: 'Statutory', label: 'Commercial NIL participation', cleared, requirement: 'Sign master NIL licence' },
+  ];
+  for (const badge of getSportComplianceBadges(athlete.sport, athlete)) {
     rows.push({
-      label: 'NSWRL / QRL · Category exclusivity check — zero team-sponsor breach',
-      active: athlete.nrl_tpa_registered || cleared,
+      authority: badge.detail,
+      label: badge.label,
+      cleared: badge.active,
+      requirement: `Obtain ${badge.label}`,
     });
-  } else if (s.includes('netball')) {
-    rows.push({ label: 'Netball NSW commercial exclusivity', active: cleared });
-  }
-  const extra = getSportComplianceBadges(athlete.sport, athlete).map((b) => ({
-    label: b.label,
-    active: b.active,
-  }));
-  const seen = new Set(rows.map((r) => r.label));
-  const bodies = new Set(rows.map((r) => r.label.split(' ')[0]));
-  for (const row of extra) {
-    const duplicatesBody =
-      bodies.has(row.label.split(' ')[0]) && /NIL clearance|TPA clearance/.test(row.label);
-    if (!seen.has(row.label) && !duplicatesBody) rows.push(row);
-  }
-  if (rows.length === 0) {
-    rows.push({ label: 'Statutory NIL clearance', active: cleared });
   }
   return rows;
 }
 
-function TelemetryCell({ label, value }: { label: string; value: string }) {
+function TelemetryCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  meterPct,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  sub: string;
+  meterPct?: number;
+}) {
   return (
-    <div className="border border-white/10 p-3">
-      <div className="mb-1">{label}</div>
-      <div className="text-white text-xs">{value}</div>
+    <div className="relative overflow-hidden flex-1 basis-[calc(50%-0.25rem)] min-w-0 rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-3.5">
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <div className="flex items-center gap-1.5 font-mono text-[9px] tracking-widest uppercase text-zinc-500 mb-2">
+        <Icon size={11} className="text-[#D2FF00]" /> {label}
+      </div>
+      <div className="text-xl font-black tracking-tight text-white leading-none">{value}</div>
+      <div className="font-mono text-[10px] text-zinc-500 mt-1.5 truncate">{sub}</div>
+      {meterPct != null && (
+        <div className="mt-2 h-1 w-full rounded-full bg-white/10 overflow-hidden">
+          <div className="h-full bg-[#D2FF00]" style={{ width: `${Math.min(100, meterPct)}%` }} />
+        </div>
+      )}
     </div>
   );
 }
@@ -373,7 +452,7 @@ function CarbonBadge({
 
 function StatusRow({ label, value, live }: { label: string; value: string; live?: boolean }) {
   return (
-    <div className="border border-white/10 p-4">
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
       <p className="font-mono text-[10px] tracking-widest uppercase text-zinc-500 m-0 mb-1">{label}</p>
       <p className={`font-mono text-xs m-0 ${live ? 'text-[#D2FF00]' : 'text-white'}`}>{value}</p>
     </div>

@@ -139,7 +139,7 @@ export function ProofOfPerformanceUploader({
           </select>
         </label>
         <label className="flex flex-col gap-1 font-mono text-[10px] tracking-widest uppercase text-zinc-500">
-          Fixture date
+          Match date
           <input type="date" className={field} value={fixtureDate} onChange={(e) => setFixtureDate(e.target.value)} />
         </label>
         <label className="flex flex-col gap-1 font-mono text-[10px] tracking-widest uppercase text-zinc-500">
