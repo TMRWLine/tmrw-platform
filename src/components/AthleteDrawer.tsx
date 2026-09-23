@@ -104,8 +104,10 @@ export function AthleteDrawer({
                   )}
                 </div>
                 <p className="font-mono text-xs text-zinc-400 m-0">
-                  {d.sport}
-                  {d.position ? ` · ${d.position}` : ''}
+                  {d.sport} · {d.position ?? 'Registered squad member'}
+                </p>
+                <p className="font-mono text-[10px] tracking-widest uppercase text-zinc-500 m-0 mt-1">
+                  {d.club}
                 </p>
                 <a
                   className="athlete-ig mt-2 inline-flex"
@@ -119,10 +121,11 @@ export function AthleteDrawer({
               <ClubCrest initials={d.clubInitials} club={d.club} />
             </div>
 
-            <div className="grid grid-cols-3 gap-2 mb-6 font-mono text-[10px] tracking-widest uppercase text-zinc-500">
-              <TelemetryCell label="Engagement" value={`${d.engagementRate.toFixed(1)}%`} />
-              <TelemetryCell label="Total reach" value={d.communityReach.toLocaleString('en-AU')} />
-              <TelemetryCell label="Following" value={d.following.toLocaleString('en-AU')} />
+            <div className="grid grid-cols-2 gap-2 mb-6 font-mono text-[10px] tracking-widest uppercase text-zinc-500">
+              <TelemetryCell label="Local engagement" value={`${d.engagementRate.toFixed(1)}%`} />
+              <TelemetryCell label="Audience velocity" value={`+${d.audienceVelocityPct}% / wk`} />
+              <TelemetryCell label="Match-day index" value={`${d.matchDayIndex} / 100`} />
+              <TelemetryCell label="Community reach" value={`${d.communityReach.toLocaleString('en-AU')} · ${d.reachPct}%`} />
             </div>
 
             <div className="grid gap-3 mb-8">
@@ -212,11 +215,21 @@ function governingBodies(athlete: Athlete): { label: string; active: boolean }[]
   );
   const rows: { label: string; active: boolean }[] = [];
   if (s.includes('basket')) {
-    rows.push({ label: 'Basketball Australia / NBL1 NIL clearance', active: cleared });
+    rows.push(
+      { label: 'Basketball Australia / NBL1 · Amateur status protection', active: cleared },
+      { label: 'Basketball Australia / NBL1 · NIL commercial clearance', active: cleared }
+    );
   } else if (s.includes('rugby') && s.includes('union')) {
-    rows.push({ label: 'Rugby Australia NIL clearance', active: athlete.shute_shield_compliant || cleared });
+    const union = athlete.shute_shield_compliant || cleared;
+    rows.push(
+      { label: 'Rugby Australia (Shute Shield) · Non-exclusive digital display', active: union },
+      { label: 'Rugby Australia (Shute Shield) · Club competition approval', active: union }
+    );
   } else if (s.includes('rugby') && s.includes('league')) {
-    rows.push({ label: 'NSWRL / QRL TPA clearance', active: athlete.nrl_tpa_registered || cleared });
+    rows.push({
+      label: 'NSWRL / QRL · Category exclusivity — zero competition-sponsor breach',
+      active: athlete.nrl_tpa_registered || cleared,
+    });
   } else if (s.includes('netball')) {
     rows.push({ label: 'Netball NSW commercial exclusivity', active: cleared });
   }
@@ -225,8 +238,11 @@ function governingBodies(athlete: Athlete): { label: string; active: boolean }[]
     active: b.active,
   }));
   const seen = new Set(rows.map((r) => r.label));
+  const bodies = new Set(rows.map((r) => r.label.split(' ')[0]));
   for (const row of extra) {
-    if (!seen.has(row.label)) rows.push(row);
+    const duplicatesBody =
+      bodies.has(row.label.split(' ')[0]) && /NIL clearance|TPA clearance/.test(row.label);
+    if (!seen.has(row.label) && !duplicatesBody) rows.push(row);
   }
   if (rows.length === 0) {
     rows.push({ label: 'Statutory NIL clearance', active: cleared });

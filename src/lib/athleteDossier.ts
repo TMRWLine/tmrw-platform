@@ -43,6 +43,10 @@ export interface AthleteDossier {
   suburbanViews: number;
   engagementRate: number;
   communityReach: number;
+  /** Community reach as a share of local catchment views, capped at 99. */
+  reachPct: number;
+  audienceVelocityPct: number;
+  matchDayIndex: number;
   nilClearance: boolean;
   exclusivityTerms: string;
   athletePct: number;
@@ -73,6 +77,9 @@ export function athleteDossier(athlete: Athlete): AthleteDossier {
   const exclusivityTerms =
     athlete.exclusivity_terms ??
     (athlete.licence_status ?? athlete.agreement_status ?? 'no_agreement').replace(/_/g, ' ');
+  const suburbanViews = athlete.suburban_views ?? 12000 + (seed % 28000);
+  const engagementRate = athlete.engagement_rate ?? Number((3.1 + (seed % 42) / 10).toFixed(1));
+  const communityReach = athlete.community_reach ?? athlete.follower_count ?? 8000 + (seed % 18000);
 
   return {
     name,
@@ -92,9 +99,12 @@ export function athleteDossier(athlete: Athlete): AthleteDossier {
         month: 'short',
         year: 'numeric',
       }),
-    suburbanViews: athlete.suburban_views ?? 12000 + (seed % 28000),
-    engagementRate: athlete.engagement_rate ?? Number((3.1 + (seed % 42) / 10).toFixed(1)),
-    communityReach: athlete.community_reach ?? athlete.follower_count ?? 8000 + (seed % 18000),
+    suburbanViews,
+    engagementRate,
+    communityReach,
+    reachPct: Math.min(99, Math.round((communityReach / Math.max(suburbanViews, 1)) * 100)),
+    audienceVelocityPct: Number((2 + (seed % 90) / 10).toFixed(1)),
+    matchDayIndex: Math.min(100, Math.round(60 + engagementRate * 4 + (seed % 12))),
     nilClearance,
     exclusivityTerms,
     athletePct,

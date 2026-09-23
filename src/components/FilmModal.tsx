@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Instagram, Pause, Play, X } from 'lucide-react';
+import { Instagram, X } from 'lucide-react';
 import type { Athlete } from '../types';
 import { athleteDossier } from '../lib/athleteDossier';
 
@@ -19,28 +19,16 @@ export function FilmModal({
     { id: 'training', label: 'Vertical training clip', src: d.trainingClipUrl, stamp: d.logs[1]?.stamp ?? '03:18' },
   ];
   const [activeId, setActiveId] = useState(clips[0].id);
-  const [playing, setPlaying] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const active = clips.find((c) => c.id === activeId) ?? clips[0];
 
   useEffect(() => {
-    if (!isOpen) {
-      setPlaying(false);
-      return;
-    }
+    if (!isOpen) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
-
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
-    if (playing) void el.play();
-    else el.pause();
-  }, [playing, active.src]);
 
   return (
     <AnimatePresence>
@@ -58,7 +46,7 @@ export function FilmModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="relative w-full max-w-3xl bg-[#08080A] border border-white/10 p-6 z-10"
+            className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto bg-[#08080A]/95 backdrop-blur-2xl border border-white/10 p-6 z-10"
             onClick={(e) => e.stopPropagation()}
           >
             <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[#D2FF00] shadow-[0_0_16px_#D2FF00]" />
@@ -87,31 +75,21 @@ export function FilmModal({
 
             <div className="relative bg-black mb-4 mx-auto w-full max-w-[280px] aspect-[9/16]">
               <video
-                ref={videoRef}
                 key={active.src}
                 className="absolute inset-0 h-full w-full object-cover"
                 src={active.src}
+                controls
                 playsInline
                 muted
-                onEnded={() => setPlaying(false)}
+                preload="metadata"
               />
-              <button
-                type="button"
-                className={`absolute inset-0 grid place-items-center cursor-pointer border-0 ${
-                  playing ? 'bg-transparent text-transparent hover:bg-black/25 hover:text-white' : 'bg-black/30 text-white'
-                }`}
-                onClick={() => setPlaying((prev) => !prev)}
-                aria-label={playing ? 'Pause reel' : 'Play reel'}
-              >
-                {playing ? <Pause size={36} fill="currentColor" /> : <Play size={36} fill="currentColor" />}
-              </button>
             </div>
 
             <div className="flex flex-wrap gap-3 font-mono text-[10px] tracking-widest uppercase text-zinc-400 border border-white/10 p-3 mb-4">
               <span>Match {d.matchDate}</span>
               <span>Venue {d.postcode}</span>
-              <span>Clip {active.stamp}</span>
-              <span>Community {d.communityReach.toLocaleString('en-AU')}</span>
+              <span>Match sheet {active.stamp}</span>
+              <span>Local views {d.suburbanViews.toLocaleString('en-AU')}</span>
             </div>
 
             <ul className="m-0 p-0 list-none grid gap-2 mb-4">
@@ -124,10 +102,7 @@ export function FilmModal({
                         ? 'border-[#D2FF00] text-[#D2FF00] bg-[#D2FF00]/5'
                         : 'border-white/10 text-zinc-300 bg-transparent'
                     }`}
-                    onClick={() => {
-                      setActiveId(clip.id);
-                      setPlaying(false);
-                    }}
+                    onClick={() => setActiveId(clip.id)}
                   >
                     <span>{clip.label}</span>
                     <span>{clip.stamp}</span>

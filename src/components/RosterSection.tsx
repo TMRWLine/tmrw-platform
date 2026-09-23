@@ -80,6 +80,9 @@ export function RosterSection({
   );
 }
 
+const ICON_BTN =
+  'relative z-30 pointer-events-auto cursor-pointer p-2.5 rounded-lg border border-white/10 bg-white/[0.03] hover:border-[#D2FF00]/50 hover:text-[#D2FF00] text-zinc-300 transition-all';
+
 function AthleteRosterCard({
   athlete,
   onPrimary,
@@ -166,7 +169,8 @@ function AthleteRosterCard({
         )}
       </div>
       <div className="athlete-social-telemetry font-mono">
-        <span>{dossier.engagementRate.toFixed(1)}% eng</span>
+        <span>{dossier.engagementRate.toFixed(1)}% local eng</span>
+        <span>{dossier.reachPct}% community reach</span>
         <span>{(dossier.communityReach / 1000).toFixed(1)}k reach</span>
         <span>{dossier.following.toLocaleString('en-AU')} following</span>
       </div>
@@ -180,9 +184,10 @@ function AthleteRosterCard({
         </button>
         <button
           type="button"
-          className="athlete-icon-btn pointer-events-auto cursor-pointer p-2 hover:text-[#D2FF00] text-zinc-400 transition-colors"
+          className={ICON_BTN}
           onClick={(e) => {
             e.stopPropagation();
+            e.preventDefault();
             onOpenProfile(athlete);
           }}
           aria-label="View profile"
@@ -191,9 +196,10 @@ function AthleteRosterCard({
         </button>
         <button
           type="button"
-          className="athlete-icon-btn pointer-events-auto cursor-pointer p-2 hover:text-[#D2FF00] text-zinc-400 transition-colors"
+          className={ICON_BTN}
           onClick={(e) => {
             e.stopPropagation();
+            e.preventDefault();
             onOpenFilm(athlete);
           }}
           aria-label="Match footage"
