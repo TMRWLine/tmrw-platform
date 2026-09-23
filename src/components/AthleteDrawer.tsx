@@ -1,10 +1,29 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { BadgeCheck, Instagram, ShieldCheck, X, Zap } from 'lucide-react';
+import {
+  Activity,
+  BadgeCheck,
+  Bike,
+  CircleDot,
+  Footprints,
+  Goal,
+  Instagram,
+  Medal,
+  ShieldCheck,
+  Swords,
+  Target,
+  Waves,
+  X,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react';
 import type { Athlete } from '../types';
 import { getSportComplianceBadges } from '../types';
+import { formatCurrency } from '../api';
 import { athleteDossier } from '../lib/athleteDossier';
 import { athleteInitials } from '../lib/formatName';
+
+const REFERENCE_ACTIVATION = 2500;
 
 export function AthleteDrawer({
   athlete,
@@ -87,9 +106,13 @@ export function AthleteDrawer({
                   onError={() => setPortraitFailed(true)}
                 />
               ) : (
-                <div className="w-full h-full grid place-items-center text-white font-black text-6xl">
-                  {athlete.initials || athleteInitials(d.name)}
-                </div>
+                <CarbonBadge
+                  initials={d.clubInitials}
+                  club={d.club}
+                  sport={d.sport}
+                  verified={d.verified}
+                  athleteInitials={athlete.initials || athleteInitials(d.name)}
+                />
               )}
             </div>
 
@@ -106,9 +129,15 @@ export function AthleteDrawer({
                 <p className="font-mono text-xs text-zinc-400 m-0">
                   {d.sport} · {d.position ?? 'Registered squad member'}
                 </p>
-                <p className="font-mono text-[10px] tracking-widest uppercase text-zinc-500 m-0 mt-1">
-                  {d.club}
-                </p>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  <span className="inline-flex items-center gap-1 border border-white/10 px-2 py-1 font-mono text-[9px] tracking-widest uppercase text-zinc-300">
+                    {d.verified ? <BadgeCheck size={10} className="text-[#D2FF00]" /> : null}
+                    {d.club} · {d.verified ? 'registration verified' : 'registration pending'}
+                  </span>
+                  <span className="inline-flex items-center border border-[#D2FF00]/40 px-2 py-1 font-mono text-[9px] tracking-widest text-[#D2FF00]">
+                    {d.postcode}
+                  </span>
+                </div>
                 <a
                   className="athlete-ig mt-2 inline-flex"
                   href={d.instagramUrl}
@@ -148,7 +177,7 @@ export function AthleteDrawer({
 
               <div className="border border-[#D2FF00]/20 bg-[#D2FF00]/[0.02] p-4">
                 <p className="font-mono text-[10px] tracking-widest uppercase text-[#D2FF00] m-0 mb-3 flex items-center gap-2">
-                  <ShieldCheck size={12} /> Statutory NIL compliance
+                  <ShieldCheck size={12} /> Governing body compliance certificates
                 </p>
                 <ul className="m-0 p-0 list-none grid gap-2">
                   {governing.map((row) => (
@@ -189,6 +218,13 @@ export function AthleteDrawer({
                   {d.athletePct}% direct to athlete via Stripe Connect · {d.partnerPct}% platform infrastructure
                   fee
                 </p>
+                <p className="font-mono text-xs text-zinc-300 m-0 mt-2">
+                  Per {formatCurrency(REFERENCE_ACTIVATION, 'AUD')} activation:{' '}
+                  <span className="text-[#D2FF00]">
+                    {formatCurrency((REFERENCE_ACTIVATION * d.athletePct) / 100, 'AUD')} to athlete
+                  </span>{' '}
+                  · {formatCurrency((REFERENCE_ACTIVATION * d.partnerPct) / 100, 'AUD')} platform fee
+                </p>
                 <p className="font-mono text-[10px] tracking-widest uppercase text-zinc-500 m-0 mt-2">
                   Instant payout rail · {d.stripeConnectId}
                 </p>
@@ -219,18 +255,18 @@ function governingBodies(athlete: Athlete): { label: string; active: boolean }[]
   const rows: { label: string; active: boolean }[] = [];
   if (s.includes('basket')) {
     rows.push(
-      { label: 'Basketball Australia / NBL1 · Amateur status protection', active: cleared },
+      { label: 'Basketball Australia / NBL1 · Amateur status preservation ledger', active: cleared },
       { label: 'Basketball Australia / NBL1 · Commercial NIL appearance ledger', active: cleared }
     );
   } else if (s.includes('rugby') && s.includes('union')) {
     const union = athlete.shute_shield_compliant || cleared;
     rows.push(
-      { label: 'Rugby Australia (Shute Shield) · Non-exclusive digital display', active: union },
+      { label: 'Rugby Australia (Shute Shield) · Non-exclusive digital display clearance', active: union },
       { label: 'Rugby Australia (Shute Shield) · Club competition approval', active: union }
     );
   } else if (s.includes('rugby') && s.includes('league')) {
     rows.push({
-      label: 'NSWRL / QRL · Category exclusivity — zero competition-sponsor breach',
+      label: 'NSWRL / QRL · Category exclusivity check — zero team-sponsor breach',
       active: athlete.nrl_tpa_registered || cleared,
     });
   } else if (s.includes('netball')) {
@@ -262,10 +298,10 @@ function TelemetryCell({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ClubCrest({ initials, club }: { initials: string; club: string }) {
+function ClubCrest({ initials, club, large = false }: { initials: string; club: string; large?: boolean }) {
   return (
     <div className="flex flex-col items-center gap-1 flex-shrink-0" title={club}>
-      <svg viewBox="0 0 72 84" width="56" height="64" aria-hidden="true">
+      <svg viewBox="0 0 72 84" width={large ? 120 : 56} height={large ? 140 : 64} aria-hidden="true">
         <path
           d="M36 4 L66 16 L66 46 Q66 64 36 80 Q6 64 6 46 L6 16 Z"
           fill="#111"
@@ -286,6 +322,50 @@ function ClubCrest({ initials, club }: { initials: string; club: string }) {
       </svg>
       <span className="font-mono text-[8px] tracking-widest uppercase text-zinc-500 max-w-[72px] text-center leading-tight">
         {club}
+      </span>
+    </div>
+  );
+}
+
+function sportIcon(sport: string): LucideIcon {
+  const s = sport.toLowerCase();
+  if (s.includes('basket') || s.includes('netball')) return CircleDot;
+  if (s.includes('rugby') || s.includes('soccer') || s.includes('afl') || s.includes('football')) return Goal;
+  if (s.includes('cricket') || s.includes('golf')) return Target;
+  if (s.includes('surf') || s.includes('swim')) return Waves;
+  if (s.includes('combat') || s.includes('box')) return Swords;
+  if (s.includes('triathlon') || s.includes('cycl')) return Bike;
+  if (s.includes('athletic') || s.includes('run')) return Footprints;
+  if (s.includes('tennis')) return Activity;
+  return Medal;
+}
+
+function CarbonBadge({
+  initials,
+  club,
+  sport,
+  verified,
+  athleteInitials: fallbackInitials,
+}: {
+  initials: string;
+  club: string;
+  sport: string;
+  verified: boolean;
+  athleteInitials: string;
+}) {
+  const SportIcon = sportIcon(sport);
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-[radial-gradient(circle_at_50%_35%,#1a1a1f_0%,#08080A_70%)]">
+      <div className="relative">
+        <ClubCrest initials={initials || fallbackInitials} club={club} large />
+        {verified && (
+          <span className="absolute -right-2 -top-1 flex items-center justify-center w-7 h-7 rounded-full bg-[#D2FF00] text-black">
+            <BadgeCheck size={16} />
+          </span>
+        )}
+      </div>
+      <span className="inline-flex items-center gap-2 border border-white/10 px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase text-zinc-300">
+        <SportIcon size={14} className="text-[#D2FF00]" /> {sport}
       </span>
     </div>
   );

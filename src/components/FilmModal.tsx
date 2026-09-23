@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Instagram, UploadCloud, X } from 'lucide-react';
 import type { Athlete } from '../types';
@@ -41,7 +41,16 @@ export function FilmModal({
   ];
   const [activeId, setActiveId] = useState(clips[0].id);
   const [uploaderOpen, setUploaderOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const active = clips.find((c) => c.id === activeId) ?? clips[0];
+  const progressPct = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
+
+  useEffect(() => {
+    setCurrentTime(0);
+    setDuration(0);
+  }, [active.src]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -95,33 +104,61 @@ export function FilmModal({
               <Instagram size={12} /> {d.instagramHandle}
             </a>
 
-            <div className="relative bg-black mb-4 mx-auto w-full max-w-[280px] aspect-[9/16]">
-              <video
-                key={active.src}
-                className="absolute inset-0 h-full w-full object-cover"
-                src={active.src}
-                controls
-                playsInline
-                muted
-                preload="metadata"
-              />
+            <div className="mx-auto w-full max-w-[280px] mb-4">
+              <div className="relative bg-black aspect-[9/16]">
+                <video
+                  ref={videoRef}
+                  key={active.src}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  src={active.src}
+                  controls
+                  playsInline
+                  muted
+                  preload="metadata"
+                  onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                  onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                />
+                <span className="pointer-events-none absolute top-2 right-2 bg-black/70 border border-[#D2FF00]/40 px-2 py-0.5 font-mono text-[10px] text-[#D2FF00]">
+                  {formatClock(currentTime)} / {duration > 0 ? formatClock(duration) : '--:--'}
+                </span>
+              </div>
+              <div
+                className="h-1 w-full bg-white/10 cursor-pointer"
+                role="progressbar"
+                aria-label="Reel progress"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(progressPct)}
+                onClick={(e) => {
+                  const el = videoRef.current;
+                  if (!el || duration <= 0) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  el.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
+                }}
+              >
+                <div
+                  className="h-full bg-[#D2FF00] shadow-[0_0_10px_#D2FF00] transition-[width] duration-150"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 font-mono text-[10px] tracking-widest uppercase text-zinc-400 border border-white/10 p-3 mb-4">
+            <div className="flex flex-wrap gap-2 mb-4">
               {active.upload ? (
                 <>
-                  <span>Fixture {active.upload.fixtureDate}</span>
-                  <span>vs {active.upload.opponent}</span>
-                  <span>Venue {active.upload.venuePostcode}</span>
-                  <span>Licence {active.upload.licenceDays} days</span>
-                  <span>{active.upload.sizeMb} MB</span>
+                  <Tag label="Fixture" value={active.upload.fixtureDate} />
+                  <Tag label="Venue" value={active.upload.venuePostcode} />
+                  <Tag label="vs" value={active.upload.opponent} />
+                  <Tag label="Licence" value={`${active.upload.licenceDays} days`} />
+                  <Tag label="Size" value={`${active.upload.sizeMb} MB`} />
                 </>
               ) : (
                 <>
-                  <span>Match {d.matchDate}</span>
-                  <span>Venue {d.postcode}</span>
-                  <span>Match sheet {active.stamp}</span>
-                  <span>Local views {d.suburbanViews.toLocaleString('en-AU')}</span>
+                  <Tag label="Fixture" value={d.matchDate} />
+                  <Tag label="Venue" value={d.postcode} />
+                  <Tag label="vs" value="Match sheet pending" />
+                  <Tag label="Match sheet" value={active.stamp} />
+                  <Tag label="Local views" value={d.suburbanViews.toLocaleString('en-AU')} />
                 </>
               )}
             </div>
@@ -179,16 +216,27 @@ export function FilmModal({
                 >
                   <UploadCloud size={14} /> {uploaderOpen ? 'Hide uploader' : 'Upload proof of performance'}
                 </button>
-                {uploaderOpen && (
-                  <ProofOfPerformanceUploader
-                    defaultPostcode={athlete.postcode ?? ''}
-                    onUpload={(added) => {
-                      onUpload(added);
-                      setActiveId(added[0].id);
-                      setUploaderOpen(false);
-                    }}
-                  />
-                )}
+                <AnimatePresence initial={false}>
+                  {uploaderOpen && (
+                    <motion.div
+                      key="uploader"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                      className="overflow-hidden"
+                    >
+                      <ProofOfPerformanceUploader
+                        defaultPostcode={athlete.postcode ?? ''}
+                        onUpload={(added) => {
+                          onUpload(added);
+                          setActiveId(added[0].id);
+                          setUploaderOpen(false);
+                        }}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
           </motion.div>
@@ -196,4 +244,18 @@ export function FilmModal({
       )}
     </AnimatePresence>
   );
+}
+
+function Tag({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 border border-white/10 px-2 py-1 font-mono text-[10px] tracking-widest uppercase">
+      <span className="text-zinc-500">{label}</span>
+      <span className="text-white">{value}</span>
+    </span>
+  );
+}
+
+function formatClock(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
