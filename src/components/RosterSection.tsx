@@ -13,8 +13,8 @@ export function RosterSection({
   onQueryChange,
   onLeagueChange,
   onPrimary,
-  onPerson,
-  onFilm,
+  onOpenProfile,
+  onOpenFilm,
 }: {
   athletes: Athlete[];
   loading: boolean;
@@ -23,8 +23,8 @@ export function RosterSection({
   onQueryChange: (value: string) => void;
   onLeagueChange: (value: LeagueFilterId) => void;
   onPrimary: (athlete: Athlete) => void;
-  onPerson: (athlete: Athlete) => void;
-  onFilm: (athlete: Athlete) => void;
+  onOpenProfile: (athlete: Athlete) => void;
+  onOpenFilm: (athlete: Athlete) => void;
 }) {
   return (
     <div>
@@ -70,8 +70,8 @@ export function RosterSection({
               key={athlete.id ?? `athlete-${index}`}
               athlete={athlete}
               onPrimary={() => onPrimary(athlete)}
-              onPerson={() => onPerson(athlete)}
-              onFilm={() => onFilm(athlete)}
+              onOpenProfile={onOpenProfile}
+              onOpenFilm={onOpenFilm}
             />
           ))}
         </div>
@@ -83,13 +83,13 @@ export function RosterSection({
 function AthleteRosterCard({
   athlete,
   onPrimary,
-  onPerson,
-  onFilm,
+  onOpenProfile,
+  onOpenFilm,
 }: {
   athlete: Athlete;
   onPrimary: () => void;
-  onPerson: () => void;
-  onFilm: () => void;
+  onOpenProfile: (athlete: Athlete) => void;
+  onOpenFilm: (athlete: Athlete) => void;
 }) {
   const st = statusBadge(athlete?.licence_status ?? athlete?.agreement_status);
   const ipLocked = athlete?.ip_lock === true || athlete?.master_licence_signed === true;
@@ -180,16 +180,22 @@ function AthleteRosterCard({
         </button>
         <button
           type="button"
-          className="athlete-icon-btn pointer-events-auto"
-          onClick={onPerson}
+          className="athlete-icon-btn pointer-events-auto cursor-pointer p-2 hover:text-[#D2FF00] text-zinc-400 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenProfile(athlete);
+          }}
           aria-label="View profile"
         >
           <User size={16} />
         </button>
         <button
           type="button"
-          className="athlete-icon-btn pointer-events-auto"
-          onClick={onFilm}
+          className="athlete-icon-btn pointer-events-auto cursor-pointer p-2 hover:text-[#D2FF00] text-zinc-400 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenFilm(athlete);
+          }}
           aria-label="Match footage"
         >
           <Film size={16} />

@@ -402,6 +402,16 @@ export function MarketplaceApp() {
     setBookingConfirmed(false);
   }
 
+  const handleOpenProfile = (athlete: Athlete) => {
+    setSelectedAthlete(athlete);
+    setIsDrawerOpen(true);
+  };
+
+  const handleOpenFilm = (athlete: Athlete) => {
+    setSelectedAthlete(athlete);
+    setIsFilmOpen(true);
+  };
+
   function enterSponsorWorkspace() {
     setView('sponsor');
     setNavView('sponsor');
@@ -707,16 +717,8 @@ export function MarketplaceApp() {
                 onQueryChange={setRosterQuery}
                 onLeagueChange={setLeagueFilter}
                 onPrimary={(a) => openSponsorDrawer(a)}
-                onPerson={(a) => {
-                  setSelectedAthlete(a);
-                  setIsDrawerOpen(true);
-                  setIsFilmOpen(false);
-                }}
-                onFilm={(a) => {
-                  setSelectedAthlete(a);
-                  setIsFilmOpen(true);
-                  setIsDrawerOpen(false);
-                }}
+                onOpenProfile={handleOpenProfile}
+                onOpenFilm={handleOpenFilm}
               />
             )}
           </>
