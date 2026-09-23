@@ -139,7 +139,8 @@ export function MarketplaceApp() {
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
-  const [filmOpen, setFilmOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isFilmOpen, setIsFilmOpen] = useState(false);
   const [rosterQuery, setRosterQuery] = useState('');
   const [leagueFilter, setLeagueFilter] = useState<LeagueFilterId>('all');
   const [booking, setBooking] = useState(false);
@@ -430,7 +431,8 @@ export function MarketplaceApp() {
             setNavView(null);
             setOnboardingOpen(false);
             setSelectedAthlete(null);
-            setFilmOpen(false);
+            setIsDrawerOpen(false);
+            setIsFilmOpen(false);
           }
           return;
         }
@@ -707,11 +709,13 @@ export function MarketplaceApp() {
                 onPrimary={(a) => openSponsorDrawer(a)}
                 onPerson={(a) => {
                   setSelectedAthlete(a);
-                  setFilmOpen(false);
+                  setIsDrawerOpen(true);
+                  setIsFilmOpen(false);
                 }}
                 onFilm={(a) => {
                   setSelectedAthlete(a);
-                  setFilmOpen(true);
+                  setIsFilmOpen(true);
+                  setIsDrawerOpen(false);
                 }}
               />
             )}
@@ -952,26 +956,23 @@ export function MarketplaceApp() {
         onClose={closeAuthModal}
       />
 
-      {selectedAthlete && !filmOpen && (
-        <AthleteDrawer
-          athlete={selectedAthlete}
-          onSponsor={() => {
-            const next = selectedAthlete;
-            setSelectedAthlete(null);
-            openSponsorDrawer(next);
-          }}
-          onClose={() => setSelectedAthlete(null)}
-        />
-      )}
-
-      {selectedAthlete && filmOpen && (
-        <FilmModal
-          athlete={selectedAthlete}
-          onClose={() => {
-            setFilmOpen(false);
-            setSelectedAthlete(null);
-          }}
-        />
+      {selectedAthlete && (
+        <>
+          <AthleteDrawer
+            athlete={selectedAthlete}
+            isOpen={isDrawerOpen}
+            onClose={() => setIsDrawerOpen(false)}
+            onSponsor={() => {
+              setIsDrawerOpen(false);
+              openSponsorDrawer(selectedAthlete);
+            }}
+          />
+          <FilmModal
+            athlete={selectedAthlete}
+            isOpen={isFilmOpen}
+            onClose={() => setIsFilmOpen(false)}
+          />
+        </>
       )}
 
       {onboardingOpen && sessionUserId && (

@@ -116,6 +116,11 @@ function AthleteRosterCard({
         <div className="athlete-card-info">
           <h3 className="athlete-card-name">{name}</h3>
           <span className="athlete-card-sport">{club}</span>
+          {dossier.verified && (
+            <span className="athlete-tag ip-lock mt-1 inline-flex">
+              <BadgeCheck size={11} /> Verified
+            </span>
+          )}
           <a
             className="athlete-ig"
             href={dossier.instagramUrl}
@@ -140,6 +145,9 @@ function AthleteRosterCard({
         {athlete?.sport && (
           <span className="athlete-tag font-mono uppercase">{athlete.sport}</span>
         )}
+        <span className="athlete-league-badge" title={club}>
+          {dossier.clubInitials}
+        </span>
         {dossier.leagueHandle && <span className="athlete-league-badge">{dossier.leagueHandle}</span>}
         {ipLocked && (
           <span className="athlete-tag ip-lock">
@@ -170,10 +178,20 @@ function AthleteRosterCard({
         >
           Sponsor Athlete
         </button>
-        <button type="button" className="athlete-icon-btn" onClick={onPerson} aria-label="View profile">
+        <button
+          type="button"
+          className="athlete-icon-btn pointer-events-auto"
+          onClick={onPerson}
+          aria-label="View profile"
+        >
           <User size={16} />
         </button>
-        <button type="button" className="athlete-icon-btn" onClick={onFilm} aria-label="Match footage">
+        <button
+          type="button"
+          className="athlete-icon-btn pointer-events-auto"
+          onClick={onFilm}
+          aria-label="Match footage"
+        >
           <Film size={16} />
         </button>
       </div>
