@@ -4,7 +4,7 @@ import type { Athlete } from '../types';
 import { athleteDisplayName, athleteInitials } from '../lib/formatName';
 import { athleteDossier } from '../lib/athleteDossier';
 import { LEAGUE_FILTERS, type LeagueFilterId } from '../lib/rosterDiscovery';
-import { CapitalAllocationSandbox } from './CapitalAllocationSandbox';
+import { CapitalAllocationTerminal } from './CapitalAllocationTerminal';
 
 export function RosterSection({
   athletes,
@@ -29,7 +29,19 @@ export function RosterSection({
 }) {
   return (
     <div>
-      <CapitalAllocationSandbox athletes={athletes} />
+      <header className="flex flex-col gap-3 pt-8 pb-6">
+        <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-[#D2FF00] m-0">
+          The Postcode Roster // Back the town that backs your business
+        </p>
+        <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-white m-0">
+          The Stadiums Are Loud. The Suburbs Carry the Soul.
+        </h2>
+        <p className="text-sm text-zinc-400 m-0 max-w-2xl">
+          Backing the players, fighters, and ballers who run our neighbourhoods within fifteen kilometres of where they
+          live, train, and play.
+        </p>
+      </header>
+      <CapitalAllocationTerminal athletes={athletes} />
       <div className="roster-discovery">
         <label className="roster-search" htmlFor="roster-search">
           <Search size={14} />
