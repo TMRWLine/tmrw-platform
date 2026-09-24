@@ -1,4 +1,5 @@
 import { BadgeCheck, Crosshair, Film, Instagram, Search, ShieldCheck, User } from 'lucide-react';
+import { LayoutGroup, motion } from 'motion/react';
 import { useState } from 'react';
 import type { Athlete } from '../types';
 import { athleteDisplayName, athleteInitials } from '../lib/formatName';
@@ -54,20 +55,31 @@ export function RosterSection({
             autoComplete="off"
           />
         </label>
-        <div className="league-pills" role="tablist" aria-label="League filters">
-          {LEAGUE_FILTERS.map((pill) => (
-            <button
-              key={pill.id}
-              type="button"
-              role="tab"
-              aria-selected={league === pill.id}
-              className={`league-pill${league === pill.id ? ' is-active' : ''}`}
-              onClick={() => onLeagueChange(pill.id)}
-            >
-              {pill.label}
-            </button>
-          ))}
-        </div>
+        <LayoutGroup id="league-filter-pills">
+          <div className="league-pills" role="tablist" aria-label="League filters">
+            {LEAGUE_FILTERS.map((pill) => (
+              <button
+                key={pill.id}
+                type="button"
+                role="tab"
+                aria-selected={league === pill.id}
+                className={`league-pill relative overflow-hidden${league === pill.id ? ' is-active' : ''}`}
+                style={league === pill.id ? { background: 'transparent' } : undefined}
+                onClick={() => onLeagueChange(pill.id)}
+              >
+                {league === pill.id && (
+                  <motion.span
+                    layoutId="activeFilterPill"
+                    className="absolute inset-0 z-0 bg-[#D2FF00]"
+                    transition={{ type: 'spring', damping: 26, stiffness: 210 }}
+                    aria-hidden="true"
+                  />
+                )}
+                <span className="relative z-10">{pill.label}</span>
+              </button>
+            ))}
+          </div>
+        </LayoutGroup>
       </div>
 
       {loading ? (
@@ -78,17 +90,19 @@ export function RosterSection({
       ) : athletes.length === 0 ? (
         <div className="state">No athletes match that handle, suburb, or league filter.</div>
       ) : (
-        <div className="grid">
-          {athletes.map((athlete, index) => (
-            <AthleteRosterCard
-              key={athlete.id ?? `athlete-${index}`}
-              athlete={athlete}
-              onPrimary={() => onPrimary(athlete)}
-              onOpenProfile={onOpenProfile}
-              onOpenFilm={onOpenFilm}
-            />
-          ))}
-        </div>
+        <LayoutGroup>
+          <div className="grid">
+            {athletes.map((athlete, index) => (
+              <AthleteRosterCard
+                key={athlete.id ?? `athlete-${index}`}
+                athlete={athlete}
+                onPrimary={() => onPrimary(athlete)}
+                onOpenProfile={onOpenProfile}
+                onOpenFilm={onOpenFilm}
+              />
+            ))}
+          </div>
+        </LayoutGroup>
       )}
     </div>
   );
@@ -116,7 +130,11 @@ function AthleteRosterCard({
   const [portraitFailed, setPortraitFailed] = useState(false);
 
   return (
-    <div className="athlete-card border-grid">
+    <motion.div
+      layout
+      transition={{ type: 'spring', damping: 26, stiffness: 210 }}
+      className="athlete-card border-grid"
+    >
       <div className="athlete-card-top">
         <div className="athlete-avatar overflow-hidden p-0">
           {!portraitFailed ? (
@@ -155,7 +173,7 @@ function AthleteRosterCard({
       <div className="athlete-card-tags">
         {athlete?.postcode && (
           <span className="athlete-tag font-mono">
-            <Crosshair size={11} /> {athlete.postcode}
+            <Crosshair size={11} /> <span className="tabular-nums">{athlete.postcode}</span>
           </span>
         )}
         <span className="athlete-tag font-mono">{dossier.suburb}</span>
@@ -182,7 +200,7 @@ function AthleteRosterCard({
           </span>
         )}
       </div>
-      <div className="athlete-social-telemetry font-mono">
+      <div className="athlete-social-telemetry font-mono tabular-nums">
         <span>{dossier.following.toLocaleString('en-AU')} followers</span>
         <span>{dossier.engagementRate.toFixed(1)}% eng</span>
         <span>+{dossier.audienceVelocityPct}%/wk reach velocity</span>
@@ -221,7 +239,7 @@ function AthleteRosterCard({
           <Film size={16} />
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

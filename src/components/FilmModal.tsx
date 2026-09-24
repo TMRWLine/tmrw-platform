@@ -106,7 +106,7 @@ export function FilmModal({
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 260 }}
             className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto bg-[#08080A]/95 backdrop-blur-2xl border border-white/10 p-6 z-10"
             onClick={(e) => e.stopPropagation()}
           >
@@ -134,7 +134,21 @@ export function FilmModal({
               <Instagram size={12} /> {d.instagramHandle}
             </a>
 
-            <div className="mx-auto w-full max-w-[300px] mb-4 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-2 shadow-[0_0_40px_rgba(210,255,0,0.06)]">
+            <div className="relative mx-auto w-full max-w-[300px] mb-4">
+              <div
+                className="pointer-events-none absolute inset-0 -z-10 scale-105 overflow-hidden rounded-2xl opacity-25 blur-3xl backdrop-blur-3xl"
+                aria-hidden="true"
+              >
+                <video
+                  key={`glow-${active.src}`}
+                  src={active.src}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="relative rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-2 shadow-[0_0_40px_rgba(210,255,0,0.06)]">
               <div className="relative overflow-hidden rounded-xl bg-black aspect-[9/16]">
                 <video
                   ref={videoRef}
@@ -231,6 +245,7 @@ export function FilmModal({
                   <Maximize2 size={14} />
                 </button>
               </div>
+            </div>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-4">

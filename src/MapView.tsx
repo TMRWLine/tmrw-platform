@@ -22,6 +22,51 @@ function makeAthleteIcon() {
   });
 }
 
+const CLUB_GEOFENCE_METERS = 15000;
+const METERS_PER_DEGREE_LAT = 110574;
+const VOLT_GEOFENCE: L.CircleOptions = {
+  radius: CLUB_GEOFENCE_METERS,
+  color: 'rgba(210, 255, 0, 0.35)',
+  weight: 1,
+  fillColor: 'rgba(210, 255, 0, 0.08)',
+  fillOpacity: 1,
+  interactive: false,
+};
+
+function perimeterNorth(lat: number, lng: number, radiusMeters: number): L.LatLngExpression {
+  return [lat + radiusMeters / METERS_PER_DEGREE_LAT, lng];
+}
+
+function makeCatchmentLabel(postcode: string | null) {
+  const title = postcode ? escapeHtml(postcode) : 'CLUB';
+  return L.divIcon({
+    className: 'catchment-perimeter-label',
+    html:
+      `<div class="-translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-[#D2FF00]/40 bg-[#08080A]/85 px-2 py-0.5 font-mono text-[9px] tracking-widest uppercase text-[#D2FF00] tabular-nums">` +
+      `${title} · 15 KM store radius</div>`,
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
+  });
+}
+
+function addClubCatchment(
+  layer: L.LayerGroup,
+  lat: number,
+  lng: number,
+  postcode: string | null,
+  labelled: Set<string>
+) {
+  L.circle([lat, lng], VOLT_GEOFENCE).addTo(layer);
+  const labelKey = postcode ?? `${lat.toFixed(4)},${lng.toFixed(4)}`;
+  if (labelled.has(labelKey)) return;
+  labelled.add(labelKey);
+  L.marker(perimeterNorth(lat, lng, CLUB_GEOFENCE_METERS), {
+    icon: makeCatchmentLabel(postcode),
+    interactive: false,
+    keyboard: false,
+  }).addTo(layer);
+}
+
 function makeSponsorIcon(selected = false) {
   return L.divIcon({
     className: selected ? 'map-pin-sponsor is-selected' : 'map-pin-sponsor',
@@ -91,10 +136,12 @@ export default function MapView({
     markerByIdRef.current.clear();
 
     const points: L.LatLngExpression[] = [];
+    const labelledPostcodes = new Set<string>();
 
     if (athlete && athlete.lat != null && athlete.lng != null) {
       const pos: L.LatLngExpression = [athlete.lat, athlete.lng];
-      if (catchmentMeters > 0) {
+      addClubCatchment(layer, athlete.lat, athlete.lng, athlete.postcode, labelledPostcodes);
+      if (catchmentMeters > 0 && catchmentMeters !== CLUB_GEOFENCE_METERS) {
         L.circle(pos, {
           radius: catchmentMeters,
           color: '#10B981',
@@ -113,6 +160,7 @@ export default function MapView({
       if (pin.lat == null || pin.lng == null) return;
       if (athlete && pin.id === athlete.id) return;
       const pos: L.LatLngExpression = [pin.lat, pin.lng];
+      addClubCatchment(layer, pin.lat, pin.lng, pin.postcode, labelledPostcodes);
       L.marker(pos, { icon: makeAthleteIcon() })
         .addTo(layer)
         .bindPopup(athletePopupHtml(pin));

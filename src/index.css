@@ -345,6 +345,10 @@ button {
   background: var(--brand-emerald); border-color: var(--emerald-strong); width: 18px; height: 18px;
   box-shadow: 0 0 0 4px rgba(0,214,100,0.28);
 }
+.leaflet-div-icon.catchment-perimeter-label {
+  background: transparent;
+  border: none;
+}
 
 /* Map popups */
 .map-popup { font-size: 13px; line-height: 1.4; }
