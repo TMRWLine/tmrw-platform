@@ -60,6 +60,8 @@ import { SponsorDrawer } from './components/SponsorDrawer';
 import { AthletePortal } from './components/AthletePortal';
 import { AuthModal } from './components/AuthModal';
 import { RosterSection } from './components/RosterSection';
+import { InstitutionalStatusRibbon } from './components/InstitutionalStatusRibbon';
+import { StatutoryAssuranceFooter } from './components/StatutoryAssuranceFooter';
 import { AthleteDrawer } from './components/AthleteDrawer';
 import { FilmModal } from './components/FilmModal';
 import { AthleteOnboardingDrawer } from './components/AthleteOnboardingDrawer';
@@ -128,6 +130,7 @@ export function MarketplaceApp() {
   const [landingSection, setLandingSection] = useState<LandingSectionId | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
   const horizontalSectionRef = useRef<HTMLDivElement>(null);
+  const topNavRef = useRef<HTMLElement>(null);
   const horizontalTrackRef = useRef<HTMLDivElement>(null);
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>('all');
   const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
@@ -611,7 +614,7 @@ export function MarketplaceApp() {
 
   return (
     <div className={`app-shell bg-brand-black text-brand-white font-sans bg-grain${view === 'landing' ? '' : ' app-shell-padded'}`}>
-      <header className="topnav fixed top-0 left-0 w-full z-50 px-8 py-5 flex items-center justify-between backdrop-blur-md bg-[#08080A]/85 border-b border-white/5 transition-colors pointer-events-auto">
+      <header ref={topNavRef} className="topnav fixed top-0 left-0 w-full z-50 px-8 py-5 flex items-center justify-between backdrop-blur-md bg-[#08080A]/85 border-b border-white/5 transition-colors pointer-events-auto">
         <BrandLockup onClick={() => setView('landing')} />
         <Navbar
           activeView={navView}
@@ -620,6 +623,7 @@ export function MarketplaceApp() {
           onEnterprise={() => openAuthModal('sponsor')}
         />
       </header>
+      <InstitutionalStatusRibbon anchorRef={topNavRef} />
 
       <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden bg-[#08080A]">
         <LivingContours />
@@ -642,6 +646,7 @@ export function MarketplaceApp() {
             horizontalSectionRef={horizontalSectionRef}
             horizontalTrackRef={horizontalTrackRef}
           />
+          <StatutoryAssuranceFooter />
         </div>
       ) : (
       <main className="page bg-transparent">
