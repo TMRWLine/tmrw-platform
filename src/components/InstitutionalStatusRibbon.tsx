@@ -25,7 +25,7 @@ export function InstitutionalStatusRibbon({ anchorRef }: { anchorRef: RefObject<
 
   return (
     <div
-      className="fixed left-0 w-full z-40 bg-[#08080A]/95 border-b border-white/10 px-6 py-2 text-xs font-mono text-neutral-400 flex items-center justify-between gap-4 pointer-events-auto"
+      className="fixed left-0 w-full z-40 bg-[#08080A]/95 border-b border-white/10 px-6 py-2 text-xs font-mono text-neutral-400 flex items-center justify-between gap-4 whitespace-nowrap overflow-x-auto pointer-events-auto"
       style={{ top }}
       role="status"
       aria-label="Institutional network status"
@@ -40,7 +40,7 @@ export function InstitutionalStatusRibbon({ anchorRef }: { anchorRef: RefObject<
         </span>
         BRISBANE 2032 RUNWAY // REGULATORY BYLAWS CLEARED
       </span>
-      <span className="hidden md:inline-flex items-center gap-1 flex-shrink-0" role="radiogroup" aria-label="Market">
+      <span className="inline-flex items-center gap-1 flex-shrink-0 whitespace-nowrap" role="radiogroup" aria-label="Market">
         MARKET:
         {MARKETS.map((m, i) => (
           <span key={m.id} className="inline-flex items-center gap-1">

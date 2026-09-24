@@ -40,14 +40,9 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
               Sponsor Your Suburbs →
             </button>
           </div>
-          <div className="flex items-center gap-3.5 mt-8 font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#D2FF00] animate-pulse shrink-0" />
-            <span className="text-zinc-300">3,000 Verified Athletes</span>
-            <span className="text-white/20">//</span>
-            <span className="text-zinc-400">Brisbane 2032 Runway</span>
-            <span className="text-white/20">//</span>
-            <span className="text-[#D2FF00]">Zero Legal Friction</span>
-          </div>
+          <p className="mt-8 font-mono text-[10px] tracking-[0.18em] uppercase text-zinc-500 m-0">
+            Statutory compliance engine active // Automated amateur eligibility protection
+          </p>
         </div>
       </div>
     </section>

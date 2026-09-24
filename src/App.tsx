@@ -100,6 +100,31 @@ type OutreachState = {
 
 type ProfileTab = 'overview' | 'brandkit' | 'agreement';
 
+function EditorialManifestoBreaker() {
+  return (
+    <section
+      className="w-full min-h-[60vh] bg-[#000000] border-y border-white/10 flex items-center justify-center px-6 py-20 select-none"
+      aria-labelledby="manifesto-heading"
+    >
+      <div className="w-full max-w-5xl mx-auto">
+        <p className="font-mono text-xs tracking-widest text-neutral-500 uppercase mb-6 m-0">
+          Manifesto // Ground Truth 01
+        </p>
+        <h2
+          id="manifesto-heading"
+          className="font-bold tracking-tight text-white uppercase text-left max-w-5xl mx-auto text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.92] mt-0 mb-0"
+        >
+          SPORT IS A WEAPON
+          <br />
+          WHEN OWNED BY
+          <br />
+          THE SUBURBS<span className="text-[#D2FF00]">.</span>
+        </h2>
+      </div>
+    </section>
+  );
+}
+
 export function MarketplaceApp() {
   const [view, setView] = useState<AppView>('landing');
   const [athletes, setAthletes] = useState<Athlete[]>([]);
@@ -710,6 +735,7 @@ export function MarketplaceApp() {
                 className="relative h-full w-full overflow-hidden"
               />
             </div>
+            <EditorialManifestoBreaker />
             {loadingList ? (
               <div className="state">
                 <div className="spinner" />
