@@ -42,7 +42,7 @@ import type {
   SpatialTierCode,
   SponsorshipTierKey,
 } from './types';
-import { SPATIAL_TIERS } from './types';
+import { COLLAB_SPLIT, SPATIAL_TIERS } from './types';
 import { fetchAgreements } from './api';
 import { getSportComplianceBadges, getUniversalComplianceBadges } from './types';
 import { BrandKitTab } from './components/AthleteProfileModal';
@@ -50,10 +50,8 @@ import { MessageThread } from './components/MessageThread';
 import { StatementsPanel } from './components/StatementsPanel';
 import { Navbar, type LandingSectionId, type NavView } from './components/Navbar';
 import { AdminDrawer } from './components/AdminDrawer';
-import { Hero } from './components/Hero';
 import { HeroFluidReveal } from './components/HeroFluidReveal';
-import { LandingNarrative } from './components/LandingNarrative';
-import { BrandLockup, LandingStackSlot } from './components/LandingStack';
+import { BrandLockup } from './components/LandingStack';
 import { LivingContours } from './components/LivingContours';
 import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDrawer } from './components/SponsorDrawer';
@@ -61,7 +59,7 @@ import { AthletePortal } from './components/AthletePortal';
 import { AuthModal } from './components/AuthModal';
 import { RosterSection } from './components/RosterSection';
 import { InstitutionalStatusRibbon } from './components/InstitutionalStatusRibbon';
-import { StatutoryAssuranceFooter } from './components/StatutoryAssuranceFooter';
+import { LicensingPreviewTrigger } from './components/StatutoryAssuranceFooter';
 import { AthleteDrawer } from './components/AthleteDrawer';
 import { FilmModal } from './components/FilmModal';
 import { AthleteOnboardingDrawer } from './components/AthleteOnboardingDrawer';
@@ -84,6 +82,7 @@ import {
 } from './api';
 import MapView from './MapView';
 import { athleteInitials, athleteDisplayName } from './lib/formatName';
+import { athleteDossier } from './lib/athleteDossier';
 
 type AppView = 'landing' | 'sponsor' | 'athlete';
 
@@ -100,19 +99,185 @@ type OutreachState = {
 
 type ProfileTab = 'overview' | 'brandkit' | 'agreement';
 
+function AllocationIsland({
+  athletes,
+  onDeploy,
+}: {
+  athletes: Athlete[];
+  onDeploy: () => void;
+}) {
+  const names = athletes.map((a) => athleteDisplayName(a));
+  const nameReadout =
+    names.length <= 2 ? names.join(' · ') : `${names[0]} · ${names[1]} +${names.length - 2}`;
+  const catchments = Array.from(
+    new Set(
+      athletes.map((a) => {
+        const d = athleteDossier(a);
+        return `${d.suburb} ${d.postcode}`.trim();
+      })
+    )
+  );
+  const catchmentReadout = catchments.slice(0, 3).join(' · ');
+  const athletePct = COLLAB_SPLIT.athletePayoutPct;
+  const partnerPct = 100 - athletePct;
+
+  return (
+    <div
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-neutral-950/90 backdrop-blur-md border border-white/15 px-6 py-3 rounded-full flex items-center gap-6 shadow-2xl"
+      style={{ transform: 'translateX(-50%)' }}
+      role="status"
+      aria-label="Staged capital allocation"
+    >
+      <div className="font-mono text-[10px] tracking-widest uppercase text-zinc-300 flex flex-col gap-0.5 min-w-0">
+        <span className="text-white truncate max-w-[280px]">
+          {athletes.length} staged · {nameReadout}
+        </span>
+        <span className="text-zinc-400 truncate max-w-[280px]">{catchmentReadout}</span>
+        <span className="text-[#D2FF00]">
+          {athletePct}/{partnerPct} Stripe Connect
+        </span>
+      </div>
+      <button
+        type="button"
+        className="flex-shrink-0 bg-[#D2FF00] hover:bg-white text-black font-mono font-bold text-[10px] tracking-[0.16em] uppercase px-4 py-2 rounded-full border-0 cursor-pointer"
+        onClick={onDeploy}
+      >
+        DEPLOY CAPITAL -&gt;
+      </button>
+    </div>
+  );
+}
+
+const HERO_TENNIS =
+  'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=2400&q=90';
+
+function InstitutionalLanding({
+  onAthlete,
+  onSponsor,
+}: {
+  onAthlete: () => void;
+  onSponsor: () => void;
+}) {
+  const athletePct = COLLAB_SPLIT.athletePayoutPct;
+  const partnerPct = 100 - athletePct;
+
+  return (
+    <div className="relative z-10 min-h-screen w-full">
+      <div className="fixed inset-0 z-0 pointer-events-auto" aria-hidden="true">
+        <HeroFluidReveal imageSrc={HERO_TENNIS} />
+      </div>
+      <div className="min-h-screen flex flex-col justify-between px-6 sm:px-12 max-w-7xl mx-auto w-full relative z-10 pt-32 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center my-auto py-8">
+          <div className="lg:col-span-7">
+            <p className="text-xs font-mono tracking-widest text-[#D2FF00] uppercase mb-4 m-0">
+              // THE 2026 RUNWAY
+            </p>
+            <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-white uppercase leading-[0.95] mb-5 mt-0">
+              OWN YOUR POSTCODES BEFORE THE OPENING WHISTLE.
+            </h1>
+            <p className="text-sm sm:text-base text-neutral-400 max-w-xl leading-relaxed mb-6 m-0">
+              The season is lining up, and the runway to Brisbane 2032 is live. Founding enterprise partners lock complete
+              category exclusivity across their designated regional clusters. Elite talent secures backing today.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={onAthlete}
+                className="bg-white text-black font-semibold px-5 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider hover:bg-neutral-200 transition-colors border-0 cursor-pointer"
+              >
+                Join as an Athlete (Free) -&gt;
+              </button>
+              <button
+                type="button"
+                onClick={onSponsor}
+                className="border border-white/20 bg-neutral-900/60 text-white font-semibold px-5 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider hover:border-white/40 transition-colors cursor-pointer"
+              >
+                Lock Category Exclusivity -&gt;
+              </button>
+            </div>
+          </div>
+          <aside
+            className="lg:col-span-5 hidden lg:flex flex-col justify-center"
+            aria-label="Capital allocation telemetry"
+          >
+            <div className="bg-neutral-950/80 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-4">
+              <p className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase m-0">
+                CAPITAL ALLOCATION TELEMETRY // 2026
+              </p>
+              <div>
+                <p className="font-mono text-xs text-white m-0 mb-2">42% CATEGORY LOCKS ALLOCATED</p>
+                <div className="h-px w-full bg-white/10 overflow-hidden">
+                  <div className="h-px bg-[#D2FF00] shadow-[0_0_8px_#D2FF00]" style={{ width: '42%' }} />
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-mono text-xs text-white m-0">15KM SUBURBAN CATCHMENT RADII</p>
+                <span className="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-widest uppercase text-[#D2FF00]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#D2FF00] animate-pulse" />
+                  Operational
+                </span>
+              </div>
+              <div>
+                <p className="font-mono text-xs text-white m-0">
+                  {athletePct}/{partnerPct} DIRECT SETTLEMENT RAILS
+                </p>
+                <p className="font-mono text-[10px] tracking-widest uppercase text-neutral-500 m-0 mt-1">
+                  via Stripe Connect
+                </p>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <footer className="border-t border-white/10 pt-6 mt-auto w-full" aria-label="Enterprise statutory assurance">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5">
+            <div>
+              <p className="text-base font-bold text-white tracking-wider m-0">
+                tmrw<span className="text-[#D2FF00]">/.</span>
+              </p>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 m-0">
+                LINE UP YOUR FUTURE
+              </p>
+            </div>
+            <p className="text-xs text-neutral-500 font-mono m-0 max-w-xl md:text-right">
+              © 2026 tmrw/. All rights reserved. Sovereign sports commercialisation infrastructure for Australia and New
+              Zealand.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono text-neutral-400 border-t border-white/5 pt-4 mb-4">
+            <p className="m-0 leading-relaxed">
+              <span className="text-white">GOVERNANCE:</span> Basketball Australia Amateur Bylaws, Rugby Australia
+              Schedule 1 NIL Clearances, NSWRL / QRL Standard Contracts.
+            </p>
+            <p className="m-0 leading-relaxed">
+              <span className="text-white">FINANCIAL INFRASTRUCTURE:</span> Automated {athletePct}% direct-to-athlete
+              Stripe Connect settlement rails. Zero Net-90 commercial exposure.
+            </p>
+          </div>
+          <LicensingPreviewTrigger className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-neutral-900/80 border border-white/15 text-neutral-300 hover:text-white hover:border-white/30 text-xs font-mono tracking-wider transition-colors cursor-pointer" />
+        </footer>
+      </div>
+    </div>
+  );
+}
+
 function EditorialManifestoBreaker() {
   return (
     <section
-      className="relative isolate z-20 w-full left-0 right-0 min-h-[60vh] bg-[#000000] border-y border-white/10 flex items-center justify-center px-6 py-20 select-none"
+      className="relative isolate z-20 w-full mt-12 pt-40 pb-20 border-y border-white/10 overflow-hidden select-none bg-black"
       aria-labelledby="manifesto-heading"
     >
-      <div className="w-full max-w-5xl mx-auto">
-        <p className="font-mono text-xs tracking-widest text-neutral-500 uppercase mb-6 m-0">
-          Manifesto // Ground Truth 01
+      <div
+        className="pointer-events-none absolute inset-0 bg-black bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-neutral-900/40 via-black to-black"
+        aria-hidden="true"
+      />
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-6">
+        <p className="text-xs font-mono tracking-widest text-neutral-500 uppercase mb-4 m-0">
+          MANIFESTO // GROUND TRUTH 01
         </p>
         <h2
           id="manifesto-heading"
-          className="font-bold tracking-tight text-white uppercase text-left max-w-5xl mx-auto text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.92] mt-0 mb-0"
+          className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white uppercase max-w-5xl mx-auto leading-[0.95] mt-0 mb-0"
         >
           SPORT IS A WEAPON WHEN OWNED BY THE SUBURBS<span className="text-[#D2FF00]">.</span>
         </h2>
@@ -166,6 +331,8 @@ export function MarketplaceApp() {
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFilmOpen, setIsFilmOpen] = useState(false);
+  const [stagedAthletes, setStagedAthletes] = useState<Athlete[]>([]);
+  const [allocationTrayOpen, setAllocationTrayOpen] = useState(false);
   const [athleteClips, setAthleteClips] = useState<Record<string, UploadedClip[]>>({});
   const [rosterQuery, setRosterQuery] = useState('');
   const [leagueFilter, setLeagueFilter] = useState<LeagueFilterId>('all');
@@ -422,7 +589,13 @@ export function MarketplaceApp() {
     );
   }
 
+  function stageAthlete(athlete: Athlete) {
+    setStagedAthletes((prev) => (prev.some((a) => a.id === athlete.id) ? prev : [...prev, athlete]));
+    setAllocationTrayOpen(true);
+  }
+
   function openSponsorDrawer(athlete: Athlete) {
+    stageAthlete(athlete);
     setDrawerAthlete(athlete);
     setBookingError(null);
     setBookingConfirmed(false);
@@ -469,6 +642,8 @@ export function MarketplaceApp() {
             setSelectedAthlete(null);
             setIsDrawerOpen(false);
             setIsFilmOpen(false);
+            setStagedAthletes([]);
+            setAllocationTrayOpen(false);
           }
           return;
         }
@@ -653,25 +828,13 @@ export function MarketplaceApp() {
       <AdminDrawer open={adminOpen} onClose={() => setAdminOpen(false)} />
 
       {view === 'landing' ? (
-        <div className="landing-scroll landing-stack relative z-10 w-full bg-transparent">
-          <LandingStackSlot z={10} className="pointer-events-none">
-            <Hero
-              FluidCanvas={HeroFluidReveal}
-              onSponsorAccess={() => openAuthModal('sponsor')}
-              onAthletePortal={() => openAuthModal('athlete')}
-            />
-          </LandingStackSlot>
-          <LandingNarrative
-            onSponsor={enterSponsorWorkspace}
-            onAthlete={enterAthletePortal}
-            horizontalSectionRef={horizontalSectionRef}
-            horizontalTrackRef={horizontalTrackRef}
-          />
-          <StatutoryAssuranceFooter />
-        </div>
+        <InstitutionalLanding
+          onAthlete={() => openAuthModal('athlete')}
+          onSponsor={enterSponsorWorkspace}
+        />
       ) : (
       <>
-      <main className="page bg-transparent" style={view === 'sponsor' && !listError ? { paddingBottom: 0 } : undefined}>
+      <main className="page bg-transparent overflow-hidden" style={view === 'sponsor' && !listError ? { paddingBottom: 0 } : undefined}>
         <div className="page-head editorial-copy border-b border-white/10" id="athlete-roster">
           <p className="font-mono text-xs tracking-widest uppercase text-[#D2FF00] mb-3">
             {view === 'sponsor' ? '// ENTERPRISE WORKSPACE' : '// ATHLETE LEDGER'}
@@ -723,15 +886,6 @@ export function MarketplaceApp() {
                 >All Postcodes</button>
               </div>
             </div>
-            <div className="relative isolate z-10 h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc mb-0">
-              <MapView
-                athlete={discoveryActive ? null : catchment3000}
-                sponsors={discoveryActive ? [] : workspaceSponsors}
-                roster={discoveryActive ? rosterPins : undefined}
-                catchmentMeters={5000}
-                className="relative h-full w-full overflow-hidden"
-              />
-            </div>
           </>
         )}
 
@@ -746,7 +900,7 @@ export function MarketplaceApp() {
       {view === 'sponsor' && !listError && (
         <>
           <EditorialManifestoBreaker />
-          <div className="mx-auto w-full max-w-[1200px] box-border px-8 pb-20 pt-10">
+          <div className="mx-auto w-full max-w-[1200px] box-border px-8 pb-20 mt-12">
             {loadingList ? (
               <div className="state">
                 <div className="spinner" />
@@ -763,6 +917,17 @@ export function MarketplaceApp() {
                 onPrimary={(a) => openSponsorDrawer(a)}
                 onOpenProfile={handleOpenProfile}
                 onOpenFilm={handleOpenFilm}
+                map={
+                  <div className="relative isolate z-10 h-[380px] sm:h-[440px] max-h-[380px] sm:max-h-[440px] w-full rounded-xl overflow-hidden border border-white/10">
+                    <MapView
+                      athlete={discoveryActive ? null : catchment3000}
+                      sponsors={discoveryActive ? [] : workspaceSponsors}
+                      roster={discoveryActive ? rosterPins : undefined}
+                      catchmentMeters={5000}
+                      className="relative h-full w-full overflow-hidden"
+                    />
+                  </div>
+                }
               />
             )}
           </div>
@@ -994,6 +1159,21 @@ export function MarketplaceApp() {
         initialRole={authModalState.role}
         onClose={closeAuthModal}
       />
+
+      {view === 'sponsor' && allocationTrayOpen && stagedAthletes.length > 0 && (
+        <AllocationIsland
+          athletes={stagedAthletes}
+          onDeploy={() => {
+            const next = stagedAthletes[0];
+            setAllocationTrayOpen(false);
+            if (next) {
+              setDrawerAthlete(next);
+              setBookingError(null);
+              setBookingConfirmed(false);
+            }
+          }}
+        />
+      )}
 
       {selectedAthlete && (
         <>

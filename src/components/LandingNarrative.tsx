@@ -60,7 +60,7 @@ export function LandingNarrative({
                   </div>
                   <ul className="space-y-3 pt-4 m-0 list-none p-0 font-mono text-xs text-zinc-100">
                     <li>• Deploy fifty verified hometown athletes before kickoff.</li>
-                    <li>• Unfiltered community loyalty within fifteen kilometres of your doors.</li>
+                    <li>• Unfiltered community loyalty within fifteen kilometres of your physical storefronts.</li>
                     <li>• Measurable customer foot traffic on Saturday morning.</li>
                     <li>• Direct contractual backing and verified commercial status.</li>
                   </ul>
@@ -236,7 +236,7 @@ export function LandingNarrative({
 
       <LandingStackSlot z={40} id="closing-conversion">
         <section className="landing-chapter landing-chapter-carbon landing-chapter-flush landing-close bg-transparent" aria-labelledby="close-heading">
-          <div className={CHAPTER_SHELL}>
+          <div className="relative w-full min-h-[calc(100vh-100px)] flex flex-col justify-center pb-16 pt-8 px-8 md:px-16 bg-transparent z-10">
             <div className="max-w-4xl">
               <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
                 // THE 2026 RUNWAY

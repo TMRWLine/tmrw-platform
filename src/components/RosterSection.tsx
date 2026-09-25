@@ -1,6 +1,6 @@
 import { BadgeCheck, Crosshair, Film, Instagram, Search, ShieldCheck, User } from 'lucide-react';
 import { LayoutGroup, motion } from 'motion/react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { Athlete } from '../types';
 import { athleteDisplayName, athleteInitials } from '../lib/formatName';
 import { athleteDossier } from '../lib/athleteDossier';
@@ -17,6 +17,7 @@ export function RosterSection({
   onPrimary,
   onOpenProfile,
   onOpenFilm,
+  map,
 }: {
   athletes: Athlete[];
   loading: boolean;
@@ -27,10 +28,11 @@ export function RosterSection({
   onPrimary: (athlete: Athlete) => void;
   onOpenProfile: (athlete: Athlete) => void;
   onOpenFilm: (athlete: Athlete) => void;
+  map?: ReactNode;
 }) {
   return (
     <div>
-      <header className="flex flex-col gap-3 pt-8 pb-6">
+      <header className="flex flex-col gap-3 pt-0 pb-0">
         <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-[#D2FF00] m-0">
           The Postcode Roster // Back the town that backs your business
         </p>
@@ -42,68 +44,72 @@ export function RosterSection({
           live, train, and play.
         </p>
       </header>
-      <CapitalAllocationTerminal athletes={athletes} />
-      <div className="roster-discovery">
-        <label className="roster-search" htmlFor="roster-search">
-          <Search size={14} />
-          <input
-            id="roster-search"
-            type="search"
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Suburb, postcode, athlete name, or @handle"
-            autoComplete="off"
-          />
-        </label>
-        <LayoutGroup id="league-filter-pills">
-          <div className="league-pills" role="tablist" aria-label="League filters">
-            {LEAGUE_FILTERS.map((pill) => (
-              <button
-                key={pill.id}
-                type="button"
-                role="tab"
-                aria-selected={league === pill.id}
-                className={`league-pill relative overflow-hidden${league === pill.id ? ' is-active' : ''}`}
-                style={league === pill.id ? { background: 'transparent' } : undefined}
-                onClick={() => onLeagueChange(pill.id)}
-              >
-                {league === pill.id && (
-                  <motion.span
-                    layoutId="activeFilterPill"
-                    className="absolute inset-0 z-0 bg-[#D2FF00]"
-                    transition={{ type: 'spring', damping: 26, stiffness: 210 }}
-                    aria-hidden="true"
-                  />
-                )}
-                <span className="relative z-10">{pill.label}</span>
-              </button>
-            ))}
-          </div>
-        </LayoutGroup>
-      </div>
-
-      {loading ? (
-        <div className="state">
-          <div className="spinner" />
-          Loading athletes…
+      <div className="space-y-8 mt-8">
+        <div className="roster-discovery !m-0">
+          <label className="roster-search" htmlFor="roster-search">
+            <Search size={14} />
+            <input
+              id="roster-search"
+              type="search"
+              value={query}
+              onChange={(e) => onQueryChange(e.target.value)}
+              placeholder="Suburb, postcode, athlete name, or @handle"
+              autoComplete="off"
+            />
+          </label>
+          <LayoutGroup id="league-filter-pills">
+            <div className="league-pills" role="tablist" aria-label="League filters">
+              {LEAGUE_FILTERS.map((pill) => (
+                <button
+                  key={pill.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={league === pill.id}
+                  className={`league-pill relative overflow-hidden${league === pill.id ? ' is-active' : ''}`}
+                  style={league === pill.id ? { background: 'transparent' } : undefined}
+                  onClick={() => onLeagueChange(pill.id)}
+                >
+                  {league === pill.id && (
+                    <motion.span
+                      layoutId="activeFilterPill"
+                      className="absolute inset-0 z-0 bg-[#D2FF00]"
+                      transition={{ type: 'spring', damping: 26, stiffness: 210 }}
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span className="relative z-10">{pill.label}</span>
+                </button>
+              ))}
+            </div>
+          </LayoutGroup>
         </div>
-      ) : athletes.length === 0 ? (
-        <div className="state">No athletes match that handle, suburb, or league filter.</div>
-      ) : (
-        <LayoutGroup>
-          <div className="grid">
-            {athletes.map((athlete, index) => (
-              <AthleteRosterCard
-                key={athlete.id ?? `athlete-${index}`}
-                athlete={athlete}
-                onPrimary={() => onPrimary(athlete)}
-                onOpenProfile={onOpenProfile}
-                onOpenFilm={onOpenFilm}
-              />
-            ))}
+        {map}
+        {loading ? (
+          <div className="state">
+            <div className="spinner" />
+            Loading athletes…
           </div>
-        </LayoutGroup>
-      )}
+        ) : athletes.length === 0 ? (
+          <div className="state">No athletes match that handle, suburb, or league filter.</div>
+        ) : (
+          <LayoutGroup>
+            <div className="flex flex-wrap gap-3">
+              {athletes.map((athlete, index) => (
+                <AthleteRosterCard
+                  key={athlete.id ?? `athlete-${index}`}
+                  athlete={athlete}
+                  onPrimary={() => onPrimary(athlete)}
+                  onOpenProfile={onOpenProfile}
+                  onOpenFilm={onOpenFilm}
+                />
+              ))}
+            </div>
+          </LayoutGroup>
+        )}
+      </div>
+      <div className="mt-8">
+        <CapitalAllocationTerminal athletes={athletes} />
+      </div>
     </div>
   );
 }
@@ -132,11 +138,21 @@ function AthleteRosterCard({
   return (
     <motion.div
       layout
+      initial={false}
       transition={{ type: 'spring', damping: 26, stiffness: 210 }}
-      className="athlete-card border-grid"
+      className="athlete-card relative z-10 min-w-[300px] flex-1 basis-[320px] min-h-[280px] opacity-100 bg-[#0C0C0E] border border-white/10 rounded-xl p-5 text-white hover:border-white/20 transition-colors overflow-visible"
+      style={{
+        height: 'auto',
+        minHeight: 280,
+        background: '#0C0C0E',
+        opacity: 1,
+        borderRadius: 12,
+        border: '1px solid rgba(255,255,255,0.1)',
+        padding: 20,
+      }}
     >
-      <div className="athlete-card-top">
-        <div className="athlete-avatar overflow-hidden p-0">
+      <div className="athlete-card-top relative z-10">
+        <div className="athlete-avatar relative z-10 overflow-hidden p-0">
           {!portraitFailed ? (
             <img
               src={dossier.portraitUrl}
@@ -148,9 +164,9 @@ function AthleteRosterCard({
             athlete?.initials || athleteInitials(name)
           )}
         </div>
-        <div className="athlete-card-info">
-          <h3 className="athlete-card-name">{name}</h3>
-          <span className="athlete-card-sport">{club}</span>
+        <div className="athlete-card-info relative z-10">
+          <h3 className="athlete-card-name text-white">{name}</h3>
+          <span className="athlete-card-sport text-zinc-400">{club}</span>
           {dossier.verified && (
             <span className="athlete-tag ip-lock mt-1 inline-flex">
               <BadgeCheck size={11} /> Verified

@@ -80,17 +80,21 @@ export function AthleteDrawer({
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 32, stiffness: 280, mass: 0.85 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 260, mass: 0.8 }}
             drag="x"
             dragConstraints={{ left: 0, right: 300 }}
-            dragElastic={0.15}
+            dragElastic={0.12}
             onDragEnd={(_event, info) => {
               if (info.offset.x > 110 || info.velocity.x > 650) onClose();
             }}
-            className="relative w-full max-w-lg h-full bg-[#08080A]/95 backdrop-blur-2xl border-l border-white/10 p-8 z-10 overflow-y-auto text-white"
+            className="relative w-full max-w-lg h-full bg-[#08080A]/95 backdrop-blur-2xl border-l border-white/10 p-8 pt-5 z-10 overflow-y-auto text-white"
             role="dialog"
             aria-label="Athlete profile"
           >
+            <div
+              className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4 cursor-grab active:cursor-grabbing"
+              aria-hidden="true"
+            />
             <span className="pointer-events-none absolute inset-y-0 left-0 w-px bg-[#D2FF00] shadow-[0_0_18px_#D2FF00]" />
             <motion.span
               aria-hidden="true"

@@ -136,7 +136,7 @@ export function FilmModal({
 
             <div className="relative mx-auto w-full max-w-[300px] mb-4">
               <div
-                className="pointer-events-none absolute inset-0 -z-10 scale-105 overflow-hidden rounded-2xl opacity-25 blur-3xl backdrop-blur-3xl"
+                className="pointer-events-none absolute inset-0 -z-10 scale-105 overflow-hidden rounded-2xl opacity-20 backdrop-blur-3xl"
                 aria-hidden="true"
               >
                 <video
