@@ -103,7 +103,7 @@ type ProfileTab = 'overview' | 'brandkit' | 'agreement';
 function EditorialManifestoBreaker() {
   return (
     <section
-      className="w-full min-h-[60vh] bg-[#000000] border-y border-white/10 flex items-center justify-center px-6 py-20 select-none"
+      className="relative isolate z-20 w-full left-0 right-0 min-h-[60vh] bg-[#000000] border-y border-white/10 flex items-center justify-center px-6 py-20 select-none"
       aria-labelledby="manifesto-heading"
     >
       <div className="w-full max-w-5xl mx-auto">
@@ -114,11 +114,7 @@ function EditorialManifestoBreaker() {
           id="manifesto-heading"
           className="font-bold tracking-tight text-white uppercase text-left max-w-5xl mx-auto text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.92] mt-0 mb-0"
         >
-          SPORT IS A WEAPON
-          <br />
-          WHEN OWNED BY
-          <br />
-          THE SUBURBS<span className="text-[#D2FF00]">.</span>
+          SPORT IS A WEAPON WHEN OWNED BY THE SUBURBS<span className="text-[#D2FF00]">.</span>
         </h2>
       </div>
     </section>
@@ -674,7 +670,8 @@ export function MarketplaceApp() {
           <StatutoryAssuranceFooter />
         </div>
       ) : (
-      <main className="page bg-transparent">
+      <>
+      <main className="page bg-transparent" style={view === 'sponsor' && !listError ? { paddingBottom: 0 } : undefined}>
         <div className="page-head editorial-copy border-b border-white/10" id="athlete-roster">
           <p className="font-mono text-xs tracking-widest uppercase text-[#D2FF00] mb-3">
             {view === 'sponsor' ? '// ENTERPRISE WORKSPACE' : '// ATHLETE LEDGER'}
@@ -726,7 +723,7 @@ export function MarketplaceApp() {
                 >All Postcodes</button>
               </div>
             </div>
-            <div className="relative isolate h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc">
+            <div className="relative isolate z-10 h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc mb-0">
               <MapView
                 athlete={discoveryActive ? null : catchment3000}
                 sponsors={discoveryActive ? [] : workspaceSponsors}
@@ -735,7 +732,21 @@ export function MarketplaceApp() {
                 className="relative h-full w-full overflow-hidden"
               />
             </div>
-            <EditorialManifestoBreaker />
+          </>
+        )}
+
+        {view === 'athlete' && (
+          <AthletePortal
+            athlete={hunterAthlete}
+            focus={athleteFocus}
+            onOpenDrops={() => setAthleteFocus('drops')}
+          />
+        )}
+      </main>
+      {view === 'sponsor' && !listError && (
+        <>
+          <EditorialManifestoBreaker />
+          <div className="mx-auto w-full max-w-[1200px] box-border px-8 pb-20 pt-10">
             {loadingList ? (
               <div className="state">
                 <div className="spinner" />
@@ -754,17 +765,10 @@ export function MarketplaceApp() {
                 onOpenFilm={handleOpenFilm}
               />
             )}
-          </>
-        )}
-
-        {view === 'athlete' && (
-          <AthletePortal
-            athlete={hunterAthlete}
-            focus={athleteFocus}
-            onOpenDrops={() => setAthleteFocus('drops')}
-          />
-        )}
-      </main>
+          </div>
+        </>
+      )}
+      </>
       )}
 
       {drawerAthlete && (
