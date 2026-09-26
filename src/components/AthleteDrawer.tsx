@@ -88,7 +88,7 @@ export function AthleteDrawer({
             onDragEnd={(_event, info) => {
               if (info.offset.x > 110 || info.velocity.x > 650) onClose();
             }}
-            className="relative w-full max-w-lg h-full bg-[#08080A]/95 backdrop-blur-2xl border-l border-white/10 p-8 z-10 overflow-y-auto text-white"
+            className="relative w-full max-w-lg h-full bg-[#08080A]/95 backdrop-blur-2xl border-l border-white/10 p-8 pt-5 z-10 overflow-y-auto text-white"
             role="dialog"
             aria-label="Athlete profile"
           >

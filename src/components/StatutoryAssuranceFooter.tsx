@@ -33,9 +33,23 @@ const STANDARD_TERMS: { title: string; body: string }[] = [
   },
 ];
 
-export function StatutoryAssuranceFooter() {
+export function LicensingPreviewTrigger({
+  className,
+}: {
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className={className}>
+        <FileText size={12} /> Preview Standard Tripartite Licensing Agreement
+      </button>
+      <StandardAgreementModal open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
 
+export function StatutoryAssuranceFooter() {
   return (
     <section
       className="relative z-[70] border-t border-white/10 pt-8 pb-10 font-mono text-xs text-neutral-400 px-[clamp(24px,6vw,80px)]"
@@ -51,16 +65,9 @@ export function StatutoryAssuranceFooter() {
           direct-to-athlete Stripe Connect settlement rails. Zero Net-90 commercial exposure.
         </p>
         <div>
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="mt-2 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-[10px] tracking-widest uppercase text-zinc-200 hover:border-[#D2FF00]/50 hover:text-[#D2FF00] cursor-pointer transition-colors"
-          >
-            <FileText size={12} /> Preview Standard Tripartite Licensing Agreement
-          </button>
+          <LicensingPreviewTrigger className="mt-2 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-[10px] tracking-widest uppercase text-zinc-200 hover:border-[#D2FF00]/50 hover:text-[#D2FF00] cursor-pointer transition-colors" />
         </div>
       </div>
-      <StandardAgreementModal open={open} onClose={() => setOpen(false)} />
     </section>
   );
 }

@@ -227,6 +227,7 @@ function AthleteRosterCard({
   return (
     <motion.div
       layout
+      initial={false}
       transition={{ type: 'spring', damping: 26, stiffness: 210 }}
       className="athlete-card relative z-10 h-auto min-h-0 opacity-100 grow basis-[320px] max-w-full bg-[#0C0C0E] border border-white/10 rounded-xl p-5 hover:border-white/20 transition-colors text-white"
       style={{ height: 'auto', backgroundColor: '#0C0C0E' }}

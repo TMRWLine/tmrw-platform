@@ -43,7 +43,6 @@ import type {
   SponsorshipTierKey,
 } from './types';
 import { COLLAB_SPLIT, SPATIAL_TIERS } from './types';
-import { athleteDossier } from './lib/athleteDossier';
 import { fetchAgreements } from './api';
 import { getSportComplianceBadges, getUniversalComplianceBadges } from './types';
 import { BrandKitTab } from './components/AthleteProfileModal';
@@ -85,6 +84,7 @@ import {
 } from './api';
 import MapView from './MapView';
 import { athleteInitials, athleteDisplayName } from './lib/formatName';
+import { athleteDossier } from './lib/athleteDossier';
 
 type AppView = 'landing' | 'sponsor' | 'athlete';
 
@@ -142,16 +142,20 @@ function AllocationTray({
 function EditorialManifestoBreaker() {
   return (
     <section
-      className="relative isolate z-20 w-full left-0 right-0 bg-[#000000] border-y border-solid border-white/10 py-24 px-6 overflow-hidden select-none"
+      className="relative isolate z-20 w-full mt-12 pt-40 pb-20 border-y border-white/10 overflow-hidden select-none bg-black"
       aria-labelledby="manifesto-heading"
     >
-      <div className="w-full max-w-5xl mx-auto">
-        <p className="font-mono text-xs tracking-widest text-neutral-500 uppercase mb-6 m-0">
+      <div
+        className="pointer-events-none absolute inset-0 bg-black bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-neutral-900/40 via-black to-black"
+        aria-hidden="true"
+      />
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-6">
+        <p className="text-xs font-mono tracking-widest text-neutral-500 uppercase mb-4 m-0">
           MANIFESTO // GROUND TRUTH 01
         </p>
         <h2
           id="manifesto-heading"
-          className="font-bold tracking-tight text-white uppercase text-left max-w-5xl mx-auto text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.92] mt-0 mb-0"
+          className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white uppercase max-w-5xl mx-auto leading-[0.95] mt-0 mb-0"
         >
           SPORT IS A WEAPON WHEN OWNED BY THE SUBURBS<span className="text-[#D2FF00]">.</span>
         </h2>
@@ -205,13 +209,14 @@ export function MarketplaceApp() {
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFilmOpen, setIsFilmOpen] = useState(false);
+  const [stagedAthletes, setStagedAthletes] = useState<Athlete[]>([]);
+  const [allocationTrayOpen, setAllocationTrayOpen] = useState(false);
   const [athleteClips, setAthleteClips] = useState<Record<string, UploadedClip[]>>({});
   const [rosterQuery, setRosterQuery] = useState('');
   const [leagueFilter, setLeagueFilter] = useState<LeagueFilterId>('all');
   const [booking, setBooking] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
-  const [stagedAthletes, setStagedAthletes] = useState<Athlete[]>([]);
 
   useEffect(() => {
     if (view !== 'landing') return;
@@ -464,6 +469,7 @@ export function MarketplaceApp() {
 
   function stageAthlete(athlete: Athlete) {
     setStagedAthletes((prev) => (prev.some((a) => a.id === athlete.id) ? prev : [...prev, athlete]));
+    setAllocationTrayOpen(true);
   }
 
   function openSponsorDrawer(athlete: Athlete) {
@@ -514,6 +520,8 @@ export function MarketplaceApp() {
             setSelectedAthlete(null);
             setIsDrawerOpen(false);
             setIsFilmOpen(false);
+            setStagedAthletes([]);
+            setAllocationTrayOpen(false);
           }
           return;
         }
@@ -795,7 +803,7 @@ export function MarketplaceApp() {
       {view === 'sponsor' && !listError && (
         <>
           <EditorialManifestoBreaker />
-          <div className="mx-auto w-full max-w-[1200px] box-border px-8 pb-20">
+          <div className="mx-auto w-full max-w-[1200px] box-border px-8 pb-20 mt-12">
             <RosterSection
               athletes={visibleAthletes}
               loading={loadingList}
