@@ -11,6 +11,7 @@ interface MapViewProps {
   selectedSponsorId?: string | null;
   onSelectSponsor?: (id: string) => void;
   roster?: AthleteLocation[];
+  fillViewport?: boolean;
 }
 
 function makeAthleteIcon() {
@@ -24,13 +25,31 @@ function makeAthleteIcon() {
 
 const CLUB_GEOFENCE_METERS = 15000;
 const METERS_PER_DEGREE_LAT = 110574;
-const VOLT_GEOFENCE: L.CircleOptions = {
-  radius: CLUB_GEOFENCE_METERS,
-  color: 'rgba(210, 255, 0, 0.45)',
-  weight: 1,
-  fillColor: 'rgba(210, 255, 0, 0.14)',
-  fillOpacity: 1,
-  interactive: false,
+const SYDNEY: L.LatLngExpression = [-33.8688, 151.2093];
+const SYDNEY_ZOOM = 11;
+const CATCHMENT_RINGS_M = [5000, 10000, 15000] as const;
+const RING_STYLE: Record<number, L.CircleOptions> = {
+  5000: {
+    color: '#D2FF00',
+    weight: 1.25,
+    fillColor: 'rgba(210, 255, 0, 0.14)',
+    fillOpacity: 1,
+    interactive: false,
+  },
+  10000: {
+    color: '#D2FF00',
+    weight: 1,
+    fillColor: 'rgba(210, 255, 0, 0.06)',
+    fillOpacity: 1,
+    interactive: false,
+  },
+  15000: {
+    color: 'rgba(255, 255, 255, 0.28)',
+    weight: 1,
+    fillColor: 'transparent',
+    fillOpacity: 0,
+    interactive: false,
+  },
 };
 
 function perimeterNorth(lat: number, lng: number, radiusMeters: number): L.LatLngExpression {
@@ -57,11 +76,14 @@ function addClubCatchment(
   labelled: Set<string>,
   radiusMeters = CLUB_GEOFENCE_METERS
 ) {
-  L.circle([lat, lng], { ...VOLT_GEOFENCE, radius: radiusMeters }).addTo(layer);
+  CATCHMENT_RINGS_M.forEach((meters) => {
+    L.circle([lat, lng], { ...RING_STYLE[meters], radius: meters }).addTo(layer);
+  });
+  const labelRadius = Math.max(radiusMeters, CLUB_GEOFENCE_METERS);
   const labelKey = postcode ?? `${lat.toFixed(4)},${lng.toFixed(4)}`;
   if (labelled.has(labelKey)) return;
   labelled.add(labelKey);
-  L.marker(perimeterNorth(lat, lng, radiusMeters), {
+  L.marker(perimeterNorth(lat, lng, labelRadius), {
     icon: makeCatchmentLabel(postcode),
     interactive: false,
     keyboard: false,
@@ -85,6 +107,7 @@ export default function MapView({
   selectedSponsorId = null,
   onSelectSponsor,
   roster,
+  fillViewport = false,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -103,18 +126,25 @@ export default function MapView({
       attributionControl: true,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      subdomains: 'abc',
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      subdomains: 'abcd',
       maxZoom: 19,
     }).addTo(map);
 
+    map.setView(SYDNEY, SYDNEY_ZOOM);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
     const resize = () => {
-      if (containerRef.current && containerRef.current.offsetHeight > 0) map.invalidateSize();
+      if (containerRef.current && containerRef.current.offsetHeight > 0) map.invalidateSize({ animate: false });
     };
+    resize();
+    const raf = window.requestAnimationFrame(() => {
+      resize();
+      window.requestAnimationFrame(resize);
+    });
+    const t0 = window.setTimeout(resize, 0);
     const t1 = window.setTimeout(resize, 200);
     const t2 = window.setTimeout(resize, 400);
     window.addEventListener('resize', resize);
@@ -122,6 +152,8 @@ export default function MapView({
     ro.observe(containerRef.current);
 
     return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(t0);
       window.clearTimeout(t1);
       window.clearTimeout(t2);
       window.removeEventListener('resize', resize);
@@ -189,14 +221,18 @@ export default function MapView({
 
     if (points.length > 0) {
       if (points.length === 1) {
-        map.setView(points[0], 13);
+        map.setView(points[0], SYDNEY_ZOOM);
       } else {
         const bounds = L.latLngBounds(points);
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
       }
+    } else {
+      map.setView(SYDNEY, SYDNEY_ZOOM);
     }
-    window.setTimeout(() => map.invalidateSize(), 200);
-    window.setTimeout(() => map.invalidateSize(), 400);
+    map.invalidateSize({ animate: false });
+    window.setTimeout(() => map.invalidateSize({ animate: false }), 0);
+    window.setTimeout(() => map.invalidateSize({ animate: false }), 200);
+    window.setTimeout(() => map.invalidateSize({ animate: false }), 400);
     const selectedId = selectedSponsorId;
     if (selectedId) {
       const selectedMarker = markerByIdRef.current.get(selectedId);
@@ -216,9 +252,15 @@ export default function MapView({
     window.setTimeout(() => marker.openPopup(), 120);
   }, [selectedSponsorId]);
 
+  const sizeClass = fillViewport ? 'h-[70vh] min-h-[600px]' : 'h-full min-h-0';
   return (
-    <div className={['relative h-full w-full overflow-hidden', className].filter(Boolean).join(' ')}>
-      <div ref={containerRef} className="map-container relative h-full w-full overflow-hidden" />
+    <div className={['relative z-10 w-full overflow-hidden', sizeClass, className].filter(Boolean).join(' ')}>
+      <div
+        ref={containerRef}
+        className={['map-container relative z-10 w-full overflow-hidden', sizeClass, fillViewport ? 'map-fill' : '']
+          .filter(Boolean)
+          .join(' ')}
+      />
     </div>
   );
 }

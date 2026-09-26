@@ -119,34 +119,17 @@ export function RosterSection({
             autoComplete="off"
           />
         </label>
-        <LayoutGroup id="league-filter-pills">
-          <div className="league-pills" role="tablist" aria-label="League filters">
-            {LEAGUE_FILTERS.map((pill) => (
-              <button
-                key={pill.id}
-                type="button"
-                role="tab"
-                aria-selected={league === pill.id}
-                className={`league-pill relative overflow-hidden${league === pill.id ? ' is-active' : ''}`}
-                style={league === pill.id ? { background: 'transparent' } : undefined}
-                onClick={() => onLeagueChange(pill.id)}
-              >
-                {league === pill.id && (
-                  <motion.span
-                    layoutId="activeFilterPill"
-                    className="absolute inset-0 z-0 bg-[#D2FF00]"
-                    transition={{ type: 'spring', damping: 26, stiffness: 210 }}
-                    aria-hidden="true"
-                  />
-                )}
-                <span className="relative z-10">{pill.label}</span>
-              </button>
-            ))}
-          </div>
-        </LayoutGroup>
+        {view === 'grid' ? (
+          <LeagueFilterPills league={league} onLeagueChange={onLeagueChange} />
+        ) : null}
       </div>
       {view === 'catchment' && mapSlot ? (
-        <div className="relative isolate z-10 w-full overflow-hidden mt-4 mb-8 h-[min(70vh,640px)] min-h-[420px] [&>div]:!h-full [&>div]:!min-h-full">
+        <div className="relative isolate z-10 w-full overflow-hidden mt-4 mb-8 h-[70vh] min-h-[600px]">
+          <div className="absolute top-4 left-4 right-4 z-20 pointer-events-auto">
+            <div className="inline-flex max-w-full rounded-lg border border-white/15 bg-[#08080A]/80 backdrop-blur-md px-2 py-2">
+              <LeagueFilterPills league={league} onLeagueChange={onLeagueChange} />
+            </div>
+          </div>
           {mapSlot}
         </div>
       ) : null}
@@ -180,6 +163,42 @@ export function RosterSection({
           </LayoutGroup>
         ))}
     </div>
+  );
+}
+
+function LeagueFilterPills({
+  league,
+  onLeagueChange,
+}: {
+  league: LeagueFilterId;
+  onLeagueChange: (value: LeagueFilterId) => void;
+}) {
+  return (
+    <LayoutGroup id="league-filter-pills">
+      <div className="league-pills relative z-20" role="tablist" aria-label="League filters">
+        {LEAGUE_FILTERS.map((pill) => (
+          <button
+            key={pill.id}
+            type="button"
+            role="tab"
+            aria-selected={league === pill.id}
+            className={`league-pill relative overflow-hidden${league === pill.id ? ' is-active' : ''}`}
+            style={league === pill.id ? { background: 'transparent' } : undefined}
+            onClick={() => onLeagueChange(pill.id)}
+          >
+            {league === pill.id && (
+              <motion.span
+                layoutId="activeFilterPill"
+                className="absolute inset-0 z-0 bg-[#D2FF00]"
+                transition={{ type: 'spring', damping: 26, stiffness: 210 }}
+                aria-hidden="true"
+              />
+            )}
+            <span className="relative z-10">{pill.label}</span>
+          </button>
+        ))}
+      </div>
+    </LayoutGroup>
   );
 }
 

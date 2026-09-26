@@ -304,22 +304,12 @@
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
+        box-shadow: inset 0 0 0 100vmax #000000 !important;
       }
       *, *:before, *:after {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
-      }
-      .panel, .blueprint-frame, .lockup-box, .swatch-card {
-        background-color: #08080A !important;
-        border-color: rgba(255, 255, 255, 0.10) !important;
-      }
-      .panel-light, .lockup-box-light {
-        background-color: #FBFBF9 !important;
-        color: #000000 !important;
-      }
-      .panel-light *, .lockup-box-light * {
-        color: #000000 !important;
       }
       .top-action-bar {
         display: none !important;
@@ -329,8 +319,10 @@
         break-after: page !important;
       }
       .slide, .frame {
+        position: relative;
         background-color: #000000 !important;
         background: #000000 !important;
+        box-shadow: inset 0 0 0 100vmax #000000 !important;
         width: 297mm;
         height: 210mm;
         min-height: 210mm;
@@ -338,16 +330,46 @@
         overflow: hidden;
       }
       .frame { padding: 12mm 14mm 10mm; }
-      .index-grid, .index-grid a {
+      .panel, .blueprint-frame, .lockup-box, .swatch-card, .index-grid, .index-grid a {
         background-color: #08080A !important;
+        background: #08080A !important;
         border-color: rgba(255, 255, 255, 0.10) !important;
+        box-shadow: inset 0 0 0 100vmax #08080A !important;
+        overflow: hidden;
+      }
+      .panel-light, .lockup-box-light {
+        background-color: #FBFBF9 !important;
+        background: #FBFBF9 !important;
+        color: #000000 !important;
+        box-shadow: inset 0 0 0 100vmax #FBFBF9 !important;
+        overflow: hidden;
+      }
+      .panel-light *, .lockup-box-light * {
+        color: #000000 !important;
       }
       .eyebrow, .volt, .wordmark .v, .index-grid .idx {
         color: #D2FF00 !important;
       }
       .lockup-box-light .v { color: #D2FF00 !important; }
-      .deploy { background-color: #D2FF00 !important; color: #000000 !important; }
-      .print-btn { background-color: #FFFFFF !important; color: #000000 !important; }
+      .deploy {
+        background-color: #D2FF00 !important;
+        background: #D2FF00 !important;
+        color: #000000 !important;
+        box-shadow: inset 0 0 0 100vmax #D2FF00 !important;
+      }
+      .print-btn {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        box-shadow: inset 0 0 0 100vmax #FFFFFF !important;
+      }
+      .swatch-chip {
+        box-shadow: inset 0 0 0 100vmax #D2FF00;
+      }
+      .swatch-card:nth-child(1) .swatch-chip { box-shadow: inset 0 0 0 100vmax #D2FF00 !important; }
+      .swatch-card:nth-child(2) .swatch-chip { box-shadow: inset 0 0 0 100vmax #000000 !important; }
+      .swatch-card:nth-child(3) .swatch-chip { box-shadow: inset 0 0 0 100vmax #08080A !important; }
+      .swatch-card:nth-child(4) .swatch-chip { box-shadow: inset 0 0 0 100vmax #FFFFFF !important; }
+      .swatch-card:nth-child(5) .swatch-chip { box-shadow: inset 0 0 0 100vmax #08080A !important; }
     }
   </style>
 </head>

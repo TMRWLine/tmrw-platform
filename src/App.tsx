@@ -807,13 +807,14 @@ export function MarketplaceApp() {
               onOpenProfile={handleOpenProfile}
               onOpenFilm={handleOpenFilm}
               mapSlot={
-                <div className="relative isolate z-10 h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc">
+                <div className="relative isolate z-10 h-[70vh] min-h-[600px] w-full overflow-hidden rounded-none border border-white/10">
                   <MapView
                     athlete={discoveryActive ? null : catchment3000}
                     sponsors={discoveryActive ? [] : workspaceSponsors}
                     roster={discoveryActive ? rosterPins : undefined}
                     catchmentMeters={5000}
-                    className="relative h-full w-full overflow-hidden"
+                    fillViewport
+                    className="relative z-10 h-[70vh] min-h-[600px] w-full overflow-hidden"
                   />
                 </div>
               }
