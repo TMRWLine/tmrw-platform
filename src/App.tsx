@@ -42,7 +42,8 @@ import type {
   SpatialTierCode,
   SponsorshipTierKey,
 } from './types';
-import { SPATIAL_TIERS } from './types';
+import { COLLAB_SPLIT, SPATIAL_TIERS } from './types';
+import { athleteDossier } from './lib/athleteDossier';
 import { fetchAgreements } from './api';
 import { getSportComplianceBadges, getUniversalComplianceBadges } from './types';
 import { BrandKitTab } from './components/AthleteProfileModal';
@@ -99,6 +100,44 @@ type OutreachState = {
 };
 
 type ProfileTab = 'overview' | 'brandkit' | 'agreement';
+
+function AllocationTray({
+  athletes,
+  onDeploy,
+}: {
+  athletes: Athlete[];
+  onDeploy: () => void;
+}) {
+  const names = athletes.map((a) => athleteDisplayName(a));
+  const nameReadout = names.length <= 2 ? names.join(' · ') : `${names[0]} +${names.length - 1}`;
+  const postcodes = [...new Set(athletes.map((a) => a.postcode).filter(Boolean))].join(' / ');
+  const suburbanViews = athletes.reduce((sum, a) => sum + athleteDossier(a).suburbanViews, 0);
+  const athletePct = COLLAB_SPLIT.athletePayoutPct;
+  const partnerPct = 100 - athletePct;
+
+  return (
+    <div
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-neutral-950/90 backdrop-blur-md border border-white/15 px-6 py-3 rounded-full flex items-center gap-6 shadow-2xl"
+      role="status"
+      aria-label="Capital allocation tray"
+    >
+      <p className="font-mono text-[10px] tracking-widest uppercase text-zinc-300 m-0 whitespace-nowrap">
+        {nameReadout}
+        {` · ${athletes.length} STAGED`}
+        {postcodes ? ` · ${postcodes}` : ''}
+        {` · ${suburbanViews.toLocaleString('en-AU')} SUBURBAN VIEWS`}
+        {` · ${athletePct}/${partnerPct} CONNECT`}
+      </p>
+      <button
+        type="button"
+        className="shrink-0 border-0 cursor-pointer bg-[#D2FF00] text-black font-mono text-[10px] font-bold tracking-widest uppercase px-4 py-1.5 rounded-full"
+        onClick={onDeploy}
+      >
+        DEPLOY CAPITAL -&gt;
+      </button>
+    </div>
+  );
+}
 
 function EditorialManifestoBreaker() {
   return (
@@ -172,6 +211,7 @@ export function MarketplaceApp() {
   const [booking, setBooking] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [stagedAthletes, setStagedAthletes] = useState<Athlete[]>([]);
 
   useEffect(() => {
     if (view !== 'landing') return;
@@ -422,7 +462,12 @@ export function MarketplaceApp() {
     );
   }
 
+  function stageAthlete(athlete: Athlete) {
+    setStagedAthletes((prev) => (prev.some((a) => a.id === athlete.id) ? prev : [...prev, athlete]));
+  }
+
   function openSponsorDrawer(athlete: Athlete) {
+    stageAthlete(athlete);
     setDrawerAthlete(athlete);
     setBookingError(null);
     setBookingConfirmed(false);
@@ -684,7 +729,7 @@ export function MarketplaceApp() {
         </div>
       ) : (
       <>
-      <main className="page bg-transparent overflow-hidden" style={view === 'sponsor' && !listError ? { paddingBottom: 0 } : undefined}>
+      <main className="page bg-transparent" style={view === 'sponsor' && !listError ? { paddingBottom: 0 } : undefined}>
         <div className="page-head editorial-copy border-b border-white/10" id="athlete-roster">
           <p className="font-mono text-xs tracking-widest uppercase text-[#D2FF00] mb-3">
             {view === 'sponsor' ? '// ENTERPRISE WORKSPACE' : '// ATHLETE LEDGER'}
@@ -736,15 +781,6 @@ export function MarketplaceApp() {
                 >All Postcodes</button>
               </div>
             </div>
-            <div className="relative isolate z-10 h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc mb-0">
-              <MapView
-                athlete={discoveryActive ? null : catchment3000}
-                sponsors={discoveryActive ? [] : workspaceSponsors}
-                roster={discoveryActive ? rosterPins : undefined}
-                catchmentMeters={5000}
-                className="relative h-full w-full overflow-hidden"
-              />
-            </div>
           </>
         )}
 
@@ -760,24 +796,28 @@ export function MarketplaceApp() {
         <>
           <EditorialManifestoBreaker />
           <div className="mx-auto w-full max-w-[1200px] box-border px-8 pb-20">
-            {loadingList ? (
-              <div className="state">
-                <div className="spinner" />
-                Loading athletes…
-              </div>
-            ) : (
-              <RosterSection
-                athletes={visibleAthletes}
-                loading={false}
-                query={rosterQuery}
-                league={leagueFilter}
-                onQueryChange={setRosterQuery}
-                onLeagueChange={setLeagueFilter}
-                onPrimary={(a) => openSponsorDrawer(a)}
-                onOpenProfile={handleOpenProfile}
-                onOpenFilm={handleOpenFilm}
-              />
-            )}
+            <RosterSection
+              athletes={visibleAthletes}
+              loading={loadingList}
+              query={rosterQuery}
+              league={leagueFilter}
+              onQueryChange={setRosterQuery}
+              onLeagueChange={setLeagueFilter}
+              onPrimary={(a) => openSponsorDrawer(a)}
+              onOpenProfile={handleOpenProfile}
+              onOpenFilm={handleOpenFilm}
+              mapSlot={
+                <div className="relative isolate z-10 h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc">
+                  <MapView
+                    athlete={discoveryActive ? null : catchment3000}
+                    sponsors={discoveryActive ? [] : workspaceSponsors}
+                    roster={discoveryActive ? rosterPins : undefined}
+                    catchmentMeters={5000}
+                    className="relative h-full w-full overflow-hidden"
+                  />
+                </div>
+              }
+            />
           </div>
         </>
       )}
@@ -1007,6 +1047,13 @@ export function MarketplaceApp() {
         initialRole={authModalState.role}
         onClose={closeAuthModal}
       />
+
+      {stagedAthletes.length > 0 && (
+        <AllocationTray
+          athletes={stagedAthletes}
+          onDeploy={() => openSponsorDrawer(stagedAthletes[stagedAthletes.length - 1])}
+        />
+      )}
 
       {selectedAthlete && (
         <>

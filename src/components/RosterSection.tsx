@@ -1,11 +1,23 @@
 import { BadgeCheck, Crosshair, Film, Instagram, Search, ShieldCheck, User } from 'lucide-react';
 import { LayoutGroup, motion } from 'motion/react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Athlete } from '../types';
 import { athleteDisplayName, athleteInitials } from '../lib/formatName';
 import { athleteDossier } from '../lib/athleteDossier';
+import { originForPostcode, type GeoPoint } from '../lib/catchmentLandmarks';
 import { LEAGUE_FILTERS, type LeagueFilterId } from '../lib/rosterDiscovery';
 import { CapitalAllocationTerminal } from './CapitalAllocationTerminal';
+
+type RosterView = 'grid' | 'catchment';
+
+const VIEW_OPTIONS: { id: RosterView; label: string }[] = [
+  { id: 'grid', label: 'SPECIMEN GRID' },
+  { id: 'catchment', label: 'SPATIAL CATCHMENT' },
+];
+
+const EXCLUSIVITY_CATEGORIES = ['AUTOMOTIVE', 'QSR', 'APPAREL', 'BEVERAGE', 'FINANCIAL', 'TELCO'] as const;
+const PERIMETER_KM = 15;
+const ALLOCATED_SHARE = 42;
 
 export function RosterSection({
   athletes,
@@ -17,6 +29,7 @@ export function RosterSection({
   onPrimary,
   onOpenProfile,
   onOpenFilm,
+  mapSlot,
 }: {
   athletes: Athlete[];
   loading: boolean;
@@ -27,10 +40,25 @@ export function RosterSection({
   onPrimary: (athlete: Athlete) => void;
   onOpenProfile: (athlete: Athlete) => void;
   onOpenFilm: (athlete: Athlete) => void;
+  mapSlot?: ReactNode;
 }) {
+  const [view, setView] = useState<RosterView>('grid');
+  const [targetPostcode, setTargetPostcode] = useState('');
+
+  const visibleAthletes = useMemo(
+    () => athletes.filter((athlete) => athleteInPostcodePerimeter(athlete, targetPostcode)),
+    [athletes, targetPostcode]
+  );
+
+  useEffect(() => {
+    if (view !== 'catchment') return;
+    const pulse = window.setTimeout(() => window.dispatchEvent(new Event('resize')), 80);
+    return () => window.clearTimeout(pulse);
+  }, [view]);
+
   return (
-    <div>
-      <header className="flex flex-col gap-3 pt-8 pb-6">
+    <div className="pt-12 md:pt-16">
+      <header className="flex flex-col gap-3 pt-0 pb-6">
         <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-[#D2FF00] m-0">
           The Postcode Roster // Back the town that backs your business
         </p>
@@ -42,8 +70,44 @@ export function RosterSection({
           live, train, and play.
         </p>
       </header>
-      <CapitalAllocationTerminal athletes={athletes} />
       <div className="roster-discovery">
+        <div className="flex flex-wrap items-center gap-3">
+          <div
+            className="bg-neutral-900/80 p-1 rounded-lg border border-white/10 inline-flex items-center gap-1"
+            role="tablist"
+            aria-label="Roster view"
+          >
+            {VIEW_OPTIONS.map((option) => {
+              const active = view === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setView(option.id)}
+                  className={
+                    active
+                      ? 'bg-white/10 text-white shadow-sm rounded-md px-4 py-1.5 text-xs font-mono tracking-wider border-0 cursor-pointer'
+                      : 'text-neutral-400 hover:text-white px-4 py-1.5 text-xs font-mono tracking-wider transition-colors bg-transparent border-0 cursor-pointer'
+                  }
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          <input
+            type="search"
+            inputMode="numeric"
+            value={targetPostcode}
+            onChange={(e) => setTargetPostcode(e.target.value)}
+            placeholder="ENTER TARGET POSTCODE (E.G. 2026, 4000)..."
+            aria-label="Target postcode"
+            autoComplete="off"
+            className="min-w-[260px] flex-1 bg-neutral-900/60 border border-white/10 rounded-lg px-4 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-white/30"
+          />
+        </div>
         <label className="roster-search" htmlFor="roster-search">
           <Search size={14} />
           <input
@@ -81,29 +145,40 @@ export function RosterSection({
           </div>
         </LayoutGroup>
       </div>
-
-      {loading ? (
-        <div className="state">
-          <div className="spinner" />
-          Loading athletes…
+      {view === 'catchment' && mapSlot ? (
+        <div className="relative isolate z-10 w-full overflow-hidden mt-4 mb-8 h-[min(70vh,640px)] min-h-[420px] [&>div]:!h-full [&>div]:!min-h-full">
+          {mapSlot}
         </div>
-      ) : athletes.length === 0 ? (
-        <div className="state">No athletes match that handle, suburb, or league filter.</div>
-      ) : (
-        <LayoutGroup>
-          <div className="grid">
-            {athletes.map((athlete, index) => (
-              <AthleteRosterCard
-                key={athlete.id ?? `athlete-${index}`}
-                athlete={athlete}
-                onPrimary={() => onPrimary(athlete)}
-                onOpenProfile={onOpenProfile}
-                onOpenFilm={onOpenFilm}
-              />
-            ))}
+      ) : null}
+      {view === 'grid' && <CapitalAllocationTerminal athletes={visibleAthletes} />}
+
+      {view === 'grid' &&
+        (loading ? (
+          <div className="state">
+            <div className="spinner" />
+            Loading athletes…
           </div>
-        </LayoutGroup>
-      )}
+        ) : visibleAthletes.length === 0 ? (
+          <div className="state">
+            {targetPostcode.trim()
+              ? 'No athletes operate within that suburban perimeter.'
+              : 'No athletes match that handle, suburb, or league filter.'}
+          </div>
+        ) : (
+          <LayoutGroup>
+            <div className="flex flex-wrap gap-4 mt-2">
+              {visibleAthletes.map((athlete, index) => (
+                <AthleteRosterCard
+                  key={athlete.id ?? `athlete-${index}`}
+                  athlete={athlete}
+                  onPrimary={() => onPrimary(athlete)}
+                  onOpenProfile={onOpenProfile}
+                  onOpenFilm={onOpenFilm}
+                />
+              ))}
+            </div>
+          </LayoutGroup>
+        ))}
     </div>
   );
 }
@@ -127,16 +202,18 @@ function AthleteRosterCard({
   const name = athleteDisplayName(athlete);
   const club = athlete.current_club ?? athlete.club ?? 'Independent';
   const dossier = athleteDossier(athlete);
+  const exclusivity = categoryExclusivity(athlete);
   const [portraitFailed, setPortraitFailed] = useState(false);
 
   return (
     <motion.div
       layout
       transition={{ type: 'spring', damping: 26, stiffness: 210 }}
-      className="athlete-card border-grid"
+      className="athlete-card relative z-10 h-auto min-h-0 opacity-100 grow basis-[320px] max-w-full bg-[#0C0C0E] border border-white/10 rounded-xl p-5 hover:border-white/20 transition-colors text-white"
+      style={{ height: 'auto', backgroundColor: '#0C0C0E' }}
     >
       <div className="athlete-card-top">
-        <div className="athlete-avatar overflow-hidden p-0">
+        <div className="athlete-avatar relative z-[1] overflow-hidden p-0 opacity-100">
           {!portraitFailed ? (
             <img
               src={dossier.portraitUrl}
@@ -149,8 +226,15 @@ function AthleteRosterCard({
           )}
         </div>
         <div className="athlete-card-info">
-          <h3 className="athlete-card-name">{name}</h3>
-          <span className="athlete-card-sport">{club}</span>
+          <p
+            className={`font-mono text-[10px] tracking-[0.16em] uppercase m-0 mb-1 ${
+              exclusivity.allocated ? 'text-[#D2FF00]' : 'text-neutral-400'
+            }`}
+          >
+            {exclusivity.category}: {exclusivity.allocated ? 'ALLOCATED' : 'OPEN'}
+          </p>
+          <h3 className="athlete-card-name relative z-[1] text-white opacity-100">{name}</h3>
+          <span className="athlete-card-sport relative z-[1] text-zinc-400 opacity-100">{club}</span>
           {dossier.verified && (
             <span className="athlete-tag ip-lock mt-1 inline-flex">
               <BadgeCheck size={11} /> Verified
@@ -241,6 +325,46 @@ function AthleteRosterCard({
       </div>
     </motion.div>
   );
+}
+
+function categoryExclusivity(athlete: Athlete): { category: string; allocated: boolean } {
+  const seed = hashSeed(athlete.id || athleteDisplayName(athlete));
+  return {
+    category: EXCLUSIVITY_CATEGORIES[seed % EXCLUSIVITY_CATEGORIES.length],
+    allocated: seed % 100 < ALLOCATED_SHARE,
+  };
+}
+
+function athleteInPostcodePerimeter(athlete: Athlete, raw: string): boolean {
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return true;
+  const athleteDigits = (athlete.postcode ?? '').replace(/\D/g, '');
+  if (athleteDigits.startsWith(digits)) return true;
+  if (digits.length < 4) return false;
+  return haversineKm(originForPostcode(digits), athleteOrigin(athlete)) <= PERIMETER_KM;
+}
+
+function athleteOrigin(athlete: Athlete): GeoPoint {
+  if (athlete.latitude != null && athlete.longitude != null) {
+    return { lat: athlete.latitude, lng: athlete.longitude };
+  }
+  return originForPostcode(athlete.postcode);
+}
+
+function haversineKm(a: GeoPoint, b: GeoPoint): number {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+
+function hashSeed(value: string): number {
+  let h = 0;
+  for (let i = 0; i < value.length; i += 1) h = (h * 31 + value.charCodeAt(i)) >>> 0;
+  return h;
 }
 
 function statusBadge(status?: string | null): { label: string; cls: string } {

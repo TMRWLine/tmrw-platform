@@ -26,9 +26,9 @@ const CLUB_GEOFENCE_METERS = 15000;
 const METERS_PER_DEGREE_LAT = 110574;
 const VOLT_GEOFENCE: L.CircleOptions = {
   radius: CLUB_GEOFENCE_METERS,
-  color: 'rgba(210, 255, 0, 0.35)',
+  color: 'rgba(210, 255, 0, 0.45)',
   weight: 1,
-  fillColor: 'rgba(210, 255, 0, 0.08)',
+  fillColor: 'rgba(210, 255, 0, 0.14)',
   fillOpacity: 1,
   interactive: false,
 };
@@ -54,13 +54,14 @@ function addClubCatchment(
   lat: number,
   lng: number,
   postcode: string | null,
-  labelled: Set<string>
+  labelled: Set<string>,
+  radiusMeters = CLUB_GEOFENCE_METERS
 ) {
-  L.circle([lat, lng], VOLT_GEOFENCE).addTo(layer);
+  L.circle([lat, lng], { ...VOLT_GEOFENCE, radius: radiusMeters }).addTo(layer);
   const labelKey = postcode ?? `${lat.toFixed(4)},${lng.toFixed(4)}`;
   if (labelled.has(labelKey)) return;
   labelled.add(labelKey);
-  L.marker(perimeterNorth(lat, lng, CLUB_GEOFENCE_METERS), {
+  L.marker(perimeterNorth(lat, lng, radiusMeters), {
     icon: makeCatchmentLabel(postcode),
     interactive: false,
     keyboard: false,
@@ -111,15 +112,20 @@ export default function MapView({
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
-    const resize = () => map.invalidateSize();
+    const resize = () => {
+      if (containerRef.current && containerRef.current.offsetHeight > 0) map.invalidateSize();
+    };
     const t1 = window.setTimeout(resize, 200);
     const t2 = window.setTimeout(resize, 400);
     window.addEventListener('resize', resize);
+    const ro = new ResizeObserver(resize);
+    ro.observe(containerRef.current);
 
     return () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
       window.removeEventListener('resize', resize);
+      ro.disconnect();
       map.remove();
       mapRef.current = null;
       layerRef.current = null;
@@ -137,19 +143,11 @@ export default function MapView({
 
     const points: L.LatLngExpression[] = [];
     const labelledPostcodes = new Set<string>();
+    const geofenceMeters = Math.max(catchmentMeters || 0, CLUB_GEOFENCE_METERS);
 
     if (athlete && athlete.lat != null && athlete.lng != null) {
       const pos: L.LatLngExpression = [athlete.lat, athlete.lng];
-      addClubCatchment(layer, athlete.lat, athlete.lng, athlete.postcode, labelledPostcodes);
-      if (catchmentMeters > 0 && catchmentMeters !== CLUB_GEOFENCE_METERS) {
-        L.circle(pos, {
-          radius: catchmentMeters,
-          color: '#10B981',
-          fillColor: '#10B981',
-          fillOpacity: 0.12,
-          weight: 2,
-        }).addTo(layer);
-      }
+      addClubCatchment(layer, athlete.lat, athlete.lng, athlete.postcode, labelledPostcodes, geofenceMeters);
       L.marker(pos, { icon: makeAthleteIcon() })
         .addTo(layer)
         .bindPopup(athletePopupHtml(athlete));
@@ -160,7 +158,7 @@ export default function MapView({
       if (pin.lat == null || pin.lng == null) return;
       if (athlete && pin.id === athlete.id) return;
       const pos: L.LatLngExpression = [pin.lat, pin.lng];
-      addClubCatchment(layer, pin.lat, pin.lng, pin.postcode, labelledPostcodes);
+      addClubCatchment(layer, pin.lat, pin.lng, pin.postcode, labelledPostcodes, geofenceMeters);
       L.marker(pos, { icon: makeAthleteIcon() })
         .addTo(layer)
         .bindPopup(athletePopupHtml(pin));
