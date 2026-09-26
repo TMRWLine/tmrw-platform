@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en-NZ" style="background:#000000; color-scheme:dark;">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#000000" />
+  <title>tmrw/. Master Brand Guidelines 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --carbon: #000000;
+      --void: #08080A;
+      --white: #FFFFFF;
+      --volt: #D2FF00;
+      --hairline: rgba(255, 255, 255, 0.10);
+      --muted: rgba(255, 255, 255, 0.62);
+      --dim: rgba(255, 255, 255, 0.38);
+      --archival: #FBFBF9;
+      --sans: Inter, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #000000;
+      background: #000000;
+      color: #FFFFFF;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      color-adjust: exact;
+    }
+    body {
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
+    }
+    a { color: inherit; text-decoration: none; }
+    h1, h2, h3 { margin: 0; letter-spacing: -0.02em; line-height: 0.95; }
+    h1 { font-size: clamp(52px, 7vw, 84px); font-weight: 800; text-transform: uppercase; }
+    h2 { font-size: clamp(26px, 3.4vw, 42px); font-weight: 800; text-transform: uppercase; }
+    h3 { font-size: 16px; font-weight: 700; }
+    p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 78ch; }
+    ul.plain { margin: 10px 0 0; padding-left: 1.15em; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    ul.plain li { margin: 0 0 6px; }
+    svg { display: block; }
+
+    .top-action-bar {
+      position: sticky;
+      top: 0;
+      z-index: 80;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 28px;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--hairline);
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--volt);
+      box-shadow: 0 0 0 0 rgba(210, 255, 0, 0.55);
+      animation: pulse 1.8s ease-out infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(210, 255, 0, 0.55); }
+      70% { box-shadow: 0 0 0 8px rgba(210, 255, 0, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(210, 255, 0, 0); }
+    }
+    .print-btn {
+      border: 0;
+      cursor: pointer;
+      background: #FFFFFF;
+      color: #000000;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 9px 16px;
+      border-radius: 999px;
+    }
+
+    .slide {
+      min-height: 100vh;
+      background-color: #000000;
+      display: flex;
+      justify-content: center;
+      page-break-after: always;
+      break-after: page;
+    }
+    .frame {
+      width: 100%;
+      max-width: 1440px;
+      min-height: 100vh;
+      padding: 56px 56px 40px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .folio {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--volt);
+      margin: 18px 0 10px;
+    }
+    .volt { color: var(--volt); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .index-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--hairline);
+      border: 1px solid var(--hairline);
+    }
+    .index-grid a { background: var(--void); padding: 14px; min-height: 76px; }
+    .index-grid .idx {
+      display: block;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      color: var(--volt);
+      margin-bottom: 6px;
+    }
+    .index-grid span { font-size: 13px; font-weight: 600; letter-spacing: -0.02em; }
+
+    .panel {
+      background: var(--void);
+      border: 1px solid var(--hairline);
+      padding: 18px 20px;
+    }
+    .blueprint-frame {
+      width: 100%;
+      background: var(--void);
+      border: 1px solid var(--hairline);
+    }
+    .caption {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-top: 8px;
+    }
+    .mt { margin-top: 16px; }
+    .mt8 { margin-top: 8px; }
+    .cols { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 24px; align-items: start; }
+
+    .lockup-box {
+      min-height: 200px;
+      border: 1px solid var(--hairline);
+      background: #000000;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .lockup-box-light { background: var(--archival); color: #000000; }
+    .wordmark {
+      font-weight: 800;
+      letter-spacing: -0.06em;
+      line-height: 1;
+      display: flex;
+      align-items: baseline;
+    }
+    .wordmark .v { color: var(--volt); }
+    .tagline {
+      font-family: var(--mono);
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-top: 8px;
+      line-height: 1;
+    }
+    .lockup-box-light .tagline { color: rgba(0,0,0,0.42); }
+    .lockup-box-light .wordmark { color: #000000; }
+    .pt24 { font-size: 24pt; }
+    .pt18 { font-size: 18pt; }
+    .pt24 + .tagline { font-size: 8px; }
+    .pt18 + .tagline { font-size: 7px; }
+
+    table.spec { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; }
+    table.spec th, table.spec td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--hairline);
+      vertical-align: top;
+    }
+    table.spec th {
+      color: var(--dim);
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 9px;
+    }
+    table.spec td { color: #FFFFFF; font-variant-numeric: tabular-nums; }
+
+    .swatch-card { border: 1px solid var(--hairline); background: var(--void); overflow: hidden; }
+    .swatch-chip { height: 88px; }
+    .swatch-meta { padding: 10px 12px; }
+    .swatch-meta strong {
+      display: block;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .swatch-meta p { font-size: 11px; font-family: var(--mono); }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      width: max-content;
+      max-width: 100%;
+      background: rgba(8, 8, 10, 0.94);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 10px 22px;
+      border-radius: 999px;
+    }
+    .pill p {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #d4d4d8;
+      white-space: nowrap;
+      max-width: none;
+    }
+    .deploy {
+      background: var(--volt);
+      color: #000000;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 999px;
+    }
+    .type-row { border-top: 1px solid var(--hairline); padding: 10px 0; }
+    .type-meta {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 980px) {
+      .frame { padding: 72px 20px 32px; }
+      .grid-2, .grid-3, .grid-5, .cols, .index-grid { grid-template-columns: 1fr 1fr; }
+      .pill p { white-space: normal; }
+    }
+
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      html, body {
+        background-color: #000000 !important;
+        background: #000000 !important;
+        color: #FFFFFF !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      *, *:before, *:after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      .panel, .blueprint-frame, .lockup-box, .swatch-card {
+        background-color: #08080A !important;
+        border-color: rgba(255, 255, 255, 0.10) !important;
+      }
+      .panel-light, .lockup-box-light {
+        background-color: #FBFBF9 !important;
+        color: #000000 !important;
+      }
+      .panel-light *, .lockup-box-light * {
+        color: #000000 !important;
+      }
+      .top-action-bar {
+        display: none !important;
+      }
+      section, .slide {
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+      .slide, .frame {
+        background-color: #000000 !important;
+        background: #000000 !important;
+        width: 297mm;
+        height: 210mm;
+        min-height: 210mm;
+        max-height: 210mm;
+        overflow: hidden;
+      }
+      .frame { padding: 12mm 14mm 10mm; }
+      .index-grid, .index-grid a {
+        background-color: #08080A !important;
+        border-color: rgba(255, 255, 255, 0.10) !important;
+      }
+      .eyebrow, .volt, .wordmark .v, .index-grid .idx {
+        color: #D2FF00 !important;
+      }
+      .lockup-box-light .v { color: #D2FF00 !important; }
+      .deploy { background-color: #D2FF00 !important; color: #000000 !important; }
+      .print-btn { background-color: #FFFFFF !important; color: #000000 !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-action-bar">
+    <div class="status">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span>Specification status: Verified 2026 // Production governance locked</span>
+    </div>
+    <button type="button" class="print-btn" onclick="window.print()">Download PDF Specification</button>
+  </header>
+
+  <section class="slide" id="cover">
+    <div class="frame">
+      <div class="folio"><span>tmrw/. Master Brand Guidelines</span><span>v2026.1 // Landscape identity manual</span></div>
+      <p class="eyebrow">Sovereign sports commercialisation // Australia and New Zealand</p>
+      <h1>Line up<br />your future<span class="volt">.</span></h1>
+      <p class="mt" style="font-size:16px; color:rgba(255,255,255,0.72);">
+        Publication-grade visual, verbal, and production specification for the tmrw/. master brand.
+        This manual is the single authority for mark geometry, colour, typography, digital physics, collateral, and enterprise sign-off.
+      </p>
+      <p class="caption mt">Classification: internal and authorised enterprise partners // Effective 26 September 2026 // Review 26 March 2027</p>
+    </div>
+  </section>
+
+  <section class="slide" id="s002">
+    <div class="frame">
+      <div class="folio"><span>002 // Contents and system architecture</span><span>02 / 27</span></div>
+      <p class="eyebrow">002 // Index</p>
+      <h2>Specification map</h2>
+      <nav class="index-grid mt" aria-label="Contents 002 to 027">
+        <a href="#s002"><span class="idx">002</span><span>Contents and architecture</span></a>
+        <a href="#s003"><span class="idx">003</span><span>Primary master mark</span></a>
+        <a href="#s004"><span class="idx">004</span><span>Brand positioning</span></a>
+        <a href="#s005"><span class="idx">005</span><span>Responsive lockups</span></a>
+        <a href="#s006"><span class="idx">006</span><span>Positive and negative</span></a>
+        <a href="#s007"><span class="idx">007</span><span>Chromatic system</span></a>
+        <a href="#s008"><span class="idx">008</span><span>Prohibited anti-patterns</span></a>
+        <a href="#s009"><span class="idx">009</span><span>Clearspace and exclusion</span></a>
+        <a href="#s010"><span class="idx">010</span><span>Descriptor usage</span></a>
+        <a href="#s011"><span class="idx">011</span><span>Micro-mark and favicon</span></a>
+        <a href="#s012"><span class="idx">012</span><span>Minimum reproduction</span></a>
+        <a href="#s013"><span class="idx">013</span><span>Sub-brand architecture</span></a>
+        <a href="#s014"><span class="idx">014</span><span>Typographic palette</span></a>
+        <a href="#s015"><span class="idx">015</span><span>Editorial standards</span></a>
+        <a href="#s016"><span class="idx">016</span><span>Dynamic system A</span></a>
+        <a href="#s017"><span class="idx">017</span><span>Dynamic system B</span></a>
+        <a href="#s018"><span class="idx">018</span><span>Dynamic system C</span></a>
+        <a href="#s019"><span class="idx">019</span><span>Production colour matrix</span></a>
+        <a href="#s020"><span class="idx">020</span><span>Digital UI systems</span></a>
+        <a href="#s021"><span class="idx">021</span><span>SaaS telemetry</span></a>
+        <a href="#s022"><span class="idx">022</span><span>Corporate decks</span></a>
+        <a href="#s023"><span class="idx">023</span><span>Stationery suites</span></a>
+        <a href="#s024"><span class="idx">024</span><span>Packaging and kits</span></a>
+        <a href="#s025"><span class="idx">025</span><span>Hardware badges</span></a>
+        <a href="#s026"><span class="idx">026</span><span>Sustainable print</span></a>
+        <a href="#s027"><span class="idx">027</span><span>Enterprise sign-off</span></a>
+      </nav>
+    </div>
+  </section>
+
+  <section class="slide" id="s003">
+    <div class="frame">
+      <div class="folio"><span>003 // Primary master mark // Construction diagram</span><span>03 / 27</span></div>
+      <p class="eyebrow">003 // Primary master mark // Construction diagram</p>
+      <h2>Construction diagram</h2>
+      <p class="mt">The master mark is the lowercase neo-grotesque wordmark tmrw, an athletic forward slash raked at an exact 23.0 degrees, and a baseline coordinate dot. The slash and dot are Kinetic Volt. Never redraw the slash by eye.</p>
+      <div class="blueprint-frame mt" role="img" aria-label="CAD construction of the tmrw master mark with cap height, x-height, baseline, 23 degree rake, and 0.4em exclusion">
+        <svg viewBox="0 0 1180 430" xmlns="http://www.w3.org/2000/svg">
+          <rect width="1180" height="430" fill="#08080A" />
+          <g stroke="rgba(255,255,255,0.06)" stroke-width="1">
+            <path d="M0 40h1180M0 80h1180M0 120h1180M0 160h1180M0 200h1180M0 240h1180M0 280h1180M0 320h1180M0 360h1180M0 400h1180" />
+            <path d="M40 0v430M80 0v430M120 0v430M160 0v430M200 0v430M240 0v430M280 0v430M320 0v430M360 0v430M400 0v430M440 0v430M480 0v430M520 0v430M560 0v430M600 0v430M640 0v430M680 0v430M720 0v430M760 0v430M800 0v430M840 0v430M880 0v430M920 0v430M960 0v430M1000 0v430M1040 0v430M1080 0v430M1120 0v430M1160 0v430" />
+          </g>
+          <rect x="176" y="108" width="568" height="212" fill="none" stroke="#FF2D2D" stroke-width="1" />
+          <rect x="176" y="108" width="6" height="6" fill="#FF2D2D" />
+          <rect x="738" y="108" width="6" height="6" fill="#FF2D2D" />
+          <rect x="176" y="314" width="6" height="6" fill="#FF2D2D" />
+          <rect x="738" y="314" width="6" height="6" fill="#FF2D2D" />
+          <line x1="208" y1="276" x2="712" y2="276" stroke="rgba(255,255,255,0.32)" stroke-width="1" stroke-dasharray="4 4" />
+          <line x1="208" y1="222" x2="712" y2="222" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4 4" />
+          <line x1="208" y1="168" x2="712" y2="168" stroke="rgba(255,255,255,0.22)" stroke-width="1" stroke-dasharray="4 4" />
+          <text x="216" y="270" fill="#FFFFFF" font-family="Inter, Helvetica, Arial, sans-serif" font-weight="800" font-size="104" letter-spacing="-6">tmrw</text>
+          <line x1="558" y1="276" x2="604.7" y2="166" stroke="#D2FF00" stroke-width="9" />
+          <circle cx="636" cy="276" r="7.5" fill="#D2FF00" />
+          <line x1="558" y1="286" x2="558" y2="150" stroke="rgba(210,255,0,0.35)" stroke-width="1" stroke-dasharray="2 3" />
+          <path d="M558 188 A 86 86 0 0 1 592 164" fill="none" stroke="#FF2D2D" stroke-width="1.25" />
+          <text x="600" y="154" fill="#FF2D2D" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.2">RAKE 23.0°</text>
+          <text x="216" y="160" fill="rgba(255,255,255,0.42)" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.4">CAP HEIGHT</text>
+          <text x="216" y="214" fill="rgba(255,255,255,0.42)" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.4">X-HEIGHT</text>
+          <text x="216" y="296" fill="rgba(255,255,255,0.42)" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.4">BASELINE</text>
+          <line x1="744" y1="108" x2="868" y2="56" stroke="#FF2D2D" stroke-width="1" />
+          <text x="876" y="52" fill="#FF2D2D" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.2">0.4em EXCLUSION</text>
+          <text x="876" y="68" fill="#FF2D2D" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.2">BOUNDARY</text>
+          <line x1="636" y1="284" x2="636" y2="360" stroke="rgba(210,255,0,0.4)" stroke-width="1" />
+          <text x="548" y="380" fill="#D2FF00" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.2">BASELINE COORDINATE</text>
+          <text x="20" y="24" fill="rgba(255,255,255,0.32)" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.6">FIG 003.A  CAD GRID  //  INTER 800  //  TRACKING -0.06em</text>
+        </svg>
+      </div>
+      <p class="caption">Athletic slash rake is locked at 23.0 degrees from vertical. Exclusion is a uniform 0.4em box measured from the live mark, never from the artboard.</p>
+    </div>
+  </section>
+
+  <section class="slide" id="s004">
+    <div class="frame">
+      <div class="folio"><span>004 // Brand positioning and strategic mission</span><span>04 / 27</span></div>
+      <p class="eyebrow">004 // Positioning</p>
+      <h2>Sovereign sports commercialisation</h2>
+      <p class="mt">
+        tmrw/. is sovereign sports commercialisation infrastructure for Australia and New Zealand. Enterprise capital is
+        routed to hometown athletes who already command suburban culture, then settled on a direct Stripe Connect rail
+        disclosed as a 70/30 split. The unit of value is the postcode, not the national broadcast jersey.
+      </p>
+      <div class="grid-3 mt">
+        <article class="panel">
+          <h3>Fifteen-kilometre catchment</h3>
+          <p class="mt8">Allocator value is measured inside a 15 km suburban radius of a stated storefront or club ground. Rings at 5 km, 10 km, and 15 km are the only permitted spatial diagram.</p>
+        </article>
+        <article class="panel">
+          <h3>Automated statutory clearance</h3>
+          <p class="mt8">AusTriathlon commercial clearance and equivalent amateur eligibility gates must confirm before settlement can execute. Name, image, and likeness licences stay scoped to catchment.</p>
+        </article>
+        <article class="panel">
+          <h3>Direct Connect rails</h3>
+          <p class="mt8">Athletes receive 70 percent of the collaboration purse. Platform and partner overhead occupy the remaining 30 percent. The ratio is public telemetry, never a hidden retainer.</p>
+        </article>
+      </div>
+      <ul class="plain">
+        <li>Prioritising Saturday foot traffic over passive broadcast airtime.</li>
+        <li>Standardising fleet deployment so fifty verified athletes can be live before kickoff.</li>
+        <li>Refusing club emblems, team logos, and trademarked jerseys in generated media to protect NRL and Shute Shield compliance.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" id="s005">
+    <div class="frame">
+      <div class="folio"><span>005 // Responsive lockups // Approved reproduction sizes</span><span>05 / 27</span></div>
+      <p class="eyebrow">005 // Responsive lockups // Approved reproduction sizes</p>
+      <h2>Approved reproduction sizes</h2>
+      <p class="mt">Three lockups cover desktop chrome, compact headers, and native launchers. Do not invent a fourth crop.</p>
+      <div class="grid-3 mt">
+        <article class="lockup-box">
+          <p class="caption" style="margin:0 0 16px;">Desktop master lockup // 24pt</p>
+          <div class="wordmark pt24"><span>tmrw</span><span class="v">/</span><span class="v">.</span></div>
+          <div class="tagline">Line up your future</div>
+        </article>
+        <article class="lockup-box">
+          <p class="caption" style="margin:0 0 16px;">Mobile header lockup // 18pt</p>
+          <div class="wordmark pt18"><span>tmrw</span><span class="v">/</span><span class="v">.</span></div>
+          <div class="tagline">Line up your future</div>
+        </article>
+        <article class="lockup-box">
+          <p class="caption" style="margin:0 0 16px;">Native app icon // 16px grid</p>
+          <div style="width:132px; height:132px; border-radius:30px; overflow:hidden; border:1px solid rgba(255,255,255,0.10);">
+            <svg viewBox="0 0 160 160" width="132" height="132" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Native app icon showing only the volt slash and coordinate dot">
+              <rect width="160" height="160" rx="36" fill="#000000" />
+              <g stroke="rgba(255,255,255,0.08)" stroke-width="1">
+                <path d="M10 0v160M20 0v160M30 0v160M40 0v160M50 0v160M60 0v160M70 0v160M80 0v160M90 0v160M100 0v160M110 0v160M120 0v160M130 0v160M140 0v160M150 0v160" />
+                <path d="M0 10h160M0 20h160M0 30h160M0 40h160M0 50h160M0 60h160M0 70h160M0 80h160M0 90h160M0 100h160M0 110h160M0 120h160M0 130h160M0 140h160M0 150h160" />
+              </g>
+              <line x1="58" y1="118" x2="92" y2="42" stroke="#D2FF00" stroke-width="10" />
+              <circle cx="108" cy="116" r="8" fill="#D2FF00" />
+            </svg>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s006">
+    <div class="frame">
+      <div class="folio"><span>006 // Positive and negative executions</span><span>06 / 27</span></div>
+      <p class="eyebrow">006 // Reproduction grounds</p>
+      <h2>Screen negative and print positive</h2>
+      <p class="mt">Two executions only. Digital work sits on Monolithic Carbon Black. Print and archival stationery reverse to #000000 ink on #FBFBF9 archival cotton. Kinetic Volt remains the sole accent in both.</p>
+      <div class="grid-2 mt">
+        <article class="lockup-box">
+          <p class="caption" style="margin:0 0 16px;">Negative // Screen and product chrome</p>
+          <div class="wordmark pt24"><span>tmrw</span><span class="v">/</span><span class="v">.</span></div>
+          <div class="tagline">Line up your future</div>
+          <p class="caption">#000000 ground // #FFFFFF type // #D2FF00 rake</p>
+        </article>
+        <article class="lockup-box lockup-box-light">
+          <p class="caption" style="margin:0 0 16px;color:rgba(0,0,0,0.42);">Positive // Print on archival cotton</p>
+          <div class="wordmark pt24"><span>tmrw</span><span class="v">/</span><span class="v">.</span></div>
+          <div class="tagline">Line up your future</div>
+          <p class="caption" style="color:rgba(0,0,0,0.42);">#FBFBF9 ground // #000000 ink // #D2FF00 rake</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s007">
+    <div class="frame">
+      <div class="folio"><span>007 // Chromatic system</span><span>07 / 27</span></div>
+      <p class="eyebrow">007 // Pigment authority</p>
+      <h2>Production colour matrix</h2>
+      <p class="mt">Five tokens govern every surface. Blue and cobalt values are excluded from product, print, partner kits, and this specification.</p>
+      <div class="panel mt" style="padding:0; overflow:auto;">
+        <table class="spec">
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Hex</th>
+              <th>RGB</th>
+              <th>CMYK</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Kinetic Volt</td>
+              <td>#D2FF00</td>
+              <td>210 255 0</td>
+              <td>18 0 100 0</td>
+              <td>Slash, live status, allocation actions, radar beacons</td>
+            </tr>
+            <tr>
+              <td>Monolithic Carbon Black</td>
+              <td>#000000</td>
+              <td>0 0 0</td>
+              <td>0 0 0 100</td>
+              <td>Primary ground and print ink</td>
+            </tr>
+            <tr>
+              <td>Void Carbon Surface</td>
+              <td>#08080A</td>
+              <td>8 8 10</td>
+              <td>60 50 40 92</td>
+              <td>Raised panels, drawers, cards. The only lift off true black</td>
+            </tr>
+            <tr>
+              <td>Pure Signal White</td>
+              <td>#FFFFFF</td>
+              <td>255 255 255</td>
+              <td>0 0 0 0</td>
+              <td>Display typography and print inversion</td>
+            </tr>
+            <tr>
+              <td>Structural Hairlines</td>
+              <td>rgba(255,255,255,0.10)</td>
+              <td>255 255 255 at 10%</td>
+              <td>Screen only. Print as 8% black rule</td>
+              <td>1px frames, tables, and folio rules</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s008">
+    <div class="frame">
+      <div class="folio"><span>008 // Prohibited anti-patterns</span><span>08 / 27</span></div>
+      <p class="eyebrow">008 // Do not ship</p>
+      <h2>Treatments that void the mark</h2>
+      <div class="grid-2 mt">
+        <ul class="plain" style="margin-top:0;">
+          <li>Do not distort, stretch, outline, or extrude the wordmark paths.</li>
+          <li>Do not alter the 23.0 degree rake of the athletic slash.</li>
+          <li>Do not introduce blue, cobalt, cyan, or any cool substitute for Kinetic Volt.</li>
+          <li>Do not use em-dashes in headlines, body copy, legal clauses, or interface strings.</li>
+          <li>Do not place team logos, club emblems, or trademarked jerseys in generated film or stills.</li>
+        </ul>
+        <ul class="plain" style="margin-top:0;">
+          <li>Do not drop a shadow, gradient, or glow onto the master mark itself.</li>
+          <li>Do not set the wordmark in all caps, title case, or a second type family.</li>
+          <li>Do not insert the letter t into the micro-mark or favicon.</li>
+          <li>Do not recode Structural Hairlines as 2px rules or solid white strokes.</li>
+          <li>Do not replace the 5 / 10 / 15 km radar with a single gestural circle.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s009">
+    <div class="frame">
+      <div class="folio"><span>009 // Clearspace and exclusion boundaries</span><span>09 / 27</span></div>
+      <p class="eyebrow">009 // Clearspace</p>
+      <h2>Strict 0.4em exclusion</h2>
+      <div class="cols mt">
+        <div class="blueprint-frame">
+          <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="0.4em exclusion boundary measured from the live mark">
+            <rect width="640" height="300" fill="#08080A" />
+            <rect x="96" y="64" width="448" height="176" fill="none" stroke="#FF2D2D" stroke-width="1" />
+            <text x="148" y="178" fill="#FFFFFF" font-family="Inter, Helvetica, Arial, sans-serif" font-weight="800" font-size="72" letter-spacing="-4">tmrw</text>
+            <line x1="378" y1="184" x2="408" y2="114" stroke="#D2FF00" stroke-width="7" />
+            <circle cx="428" cy="180" r="6" fill="#D2FF00" />
+            <line x1="96" y1="64" x2="96" y2="32" stroke="#FF2D2D" stroke-width="1" />
+            <line x1="544" y1="64" x2="544" y2="32" stroke="#FF2D2D" stroke-width="1" />
+            <line x1="96" y1="32" x2="544" y2="32" stroke="#FF2D2D" stroke-width="1" />
+            <text x="248" y="24" fill="#FF2D2D" font-family="JetBrains Mono, monospace" font-size="12" letter-spacing="1.4">0.4em</text>
+          </svg>
+        </div>
+        <div>
+          <p>Clearspace is a uniform 0.4em box measured from the outermost live ink of the wordmark, slash, and coordinate dot. Em is taken from the rendered wordmark size, never from the artboard.</p>
+          <ul class="plain">
+            <li>Keep photography, rules, and partner marks outside the red boundary.</li>
+            <li>Do not inset the mark into a coloured tile that clips the 0.4em field.</li>
+            <li>When the mark sits in a crop, retain the full exclusion and letterbox the crop instead.</li>
+            <li>Sub-brand descriptors in section 013 sit outside this box, never inside it.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s010">
+    <div class="frame">
+      <div class="folio"><span>010 // Descriptor usage</span><span>10 / 27</span></div>
+      <p class="eyebrow">010 // Line up your future</p>
+      <h2>Descriptor construction</h2>
+      <p class="mt">The descriptor is always uppercase, always JetBrains Mono, always tracked to 0.35em. It sits below the mark, never beside it, and never in Inter.</p>
+      <div class="grid-2 mt">
+        <article class="panel">
+          <h3>Desktop</h3>
+          <p class="mt8">Wordmark at 24pt. Descriptor at 8px. Hold 8px between the coordinate-dot baseline and the descriptor cap height.</p>
+        </article>
+        <article class="panel">
+          <h3>Mobile</h3>
+          <p class="mt8">Wordmark at 18pt. Descriptor at 7px. Do not translate, localise, or sentence-case the line LINE UP YOUR FUTURE.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s011">
+    <div class="frame">
+      <div class="folio"><span>011 // Micro-mark and favicon system</span><span>11 / 27</span></div>
+      <p class="eyebrow">011 // Isolated slash and coordinate</p>
+      <h2>Sixteen-pixel squircle</h2>
+      <div class="cols mt">
+        <div style="width:200px; height:200px; border-radius:44px; overflow:hidden; border:1px solid rgba(255,255,255,0.10);">
+          <svg viewBox="0 0 160 160" width="200" height="200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Favicon showing only slash and coordinate">
+            <rect width="160" height="160" rx="36" fill="#000000" />
+            <g stroke="rgba(255,255,255,0.08)" stroke-width="1">
+              <path d="M10 0v160M20 0v160M30 0v160M40 0v160M50 0v160M60 0v160M70 0v160M80 0v160M90 0v160M100 0v160M110 0v160M120 0v160M130 0v160M140 0v160M150 0v160" />
+              <path d="M0 10h160M0 20h160M0 30h160M0 40h160M0 50h160M0 60h160M0 70h160M0 80h160M0 90h160M0 100h160M0 110h160M0 120h160M0 130h160M0 140h160M0 150h160" />
+            </g>
+            <line x1="58" y1="118" x2="92" y2="42" stroke="#D2FF00" stroke-width="10" />
+            <circle cx="108" cy="116" r="8" fill="#D2FF00" />
+          </svg>
+        </div>
+        <div class="panel">
+          <h3>Omission rule</h3>
+          <p class="mt8">The micro-mark is solely the athletic slash and the baseline coordinate dot. The letter t is strictly omitted at every favicon, app icon, and NFC face.</p>
+          <ul class="plain">
+            <li>Draw on a 16px grid inside a rounded squircle with a 22 percent corner radius.</li>
+            <li>Keep the slash at 23.0 degrees even when the canvas is 16px.</li>
+            <li>Seat the dot on the same baseline row as the slash foot.</li>
+            <li>Export master at 1024px, then downsample. Do not redraw at 16px by hand.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s012">
+    <div class="frame">
+      <div class="folio"><span>012 // Minimum reproduction scales</span><span>12 / 27</span></div>
+      <p class="eyebrow">012 // Thresholds</p>
+      <h2>Do not print or raster below these sizes</h2>
+      <div class="grid-3 mt">
+        <article class="panel">
+          <p class="caption">Descriptor lockup</p>
+          <h3 class="mt8">45 mm // 160 px</h3>
+          <p class="mt8">Full tmrw/. with LINE UP YOUR FUTURE. Below this width drop the descriptor and use the standalone mark.</p>
+        </article>
+        <article class="panel">
+          <p class="caption">Standalone master mark</p>
+          <h3 class="mt8">18 mm // 48 px</h3>
+          <p class="mt8">Wordmark, slash, and coordinate without the descriptor. Smallest size at which the 23.0 degree rake remains distinguishable.</p>
+        </article>
+        <article class="panel">
+          <p class="caption">Micro glyph</p>
+          <h3 class="mt8">4 mm // 16 px</h3>
+          <p class="mt8">Slash and coordinate only. Use for favicons, status chips, and NFC faces. Never introduce letterforms at this scale.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s013">
+    <div class="frame">
+      <div class="folio"><span>013 // Sub-brand architecture</span><span>13 / 27</span></div>
+      <p class="eyebrow">013 // Divisions</p>
+      <h2>Hairline separated lockups</h2>
+      <p class="mt">Divisions sit to the right of the master mark, separated by a 1px Signal White hairline at 10 percent. The division name is JetBrains Mono, uppercase, tracked 0.22em.</p>
+      <div class="grid-3 mt">
+        <article class="lockup-box">
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div class="wordmark" style="font-size:22px;"><span>tmrw</span><span class="v">/</span><span class="v">.</span></div>
+            <span style="width:1px; height:28px; background:rgba(255,255,255,0.10);"></span>
+            <span style="font-family:var(--mono); font-size:11px; letter-spacing:0.22em; text-transform:uppercase;">Capital</span>
+          </div>
+        </article>
+        <article class="lockup-box">
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div class="wordmark" style="font-size:22px;"><span>tmrw</span><span class="v">/</span><span class="v">.</span></div>
+            <span style="width:1px; height:28px; background:rgba(255,255,255,0.10);"></span>
+            <span style="font-family:var(--mono); font-size:11px; letter-spacing:0.22em; text-transform:uppercase;">Ventures</span>
+          </div>
+        </article>
+        <article class="lockup-box">
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div class="wordmark" style="font-size:22px;"><span>tmrw</span><span class="v">/</span><span class="v">.</span></div>
+            <span style="width:1px; height:28px; background:rgba(255,255,255,0.10);"></span>
+            <span style="font-family:var(--mono); font-size:11px; letter-spacing:0.22em; text-transform:uppercase;">Sydney</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s014">
+    <div class="frame">
+      <div class="folio"><span>014 // Typographic palette and hierarchy</span><span>14 / 27</span></div>
+      <p class="eyebrow">014 // Type</p>
+      <h2>Neo-grotesque display, Inter body, mono data</h2>
+      <div class="type-row mt">
+        <div class="type-meta">Display // Inter 800 // tracking -0.02em // uppercase</div>
+        <p style="font-size:36px; font-weight:800; letter-spacing:-0.02em; text-transform:uppercase; color:#fff; max-width:none; line-height:0.95;">The suburbs carry the soul.</p>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">Headline // Inter 800 // 28 to 42</div>
+        <p style="font-size:24px; font-weight:800; text-transform:uppercase; color:#fff; max-width:none;">Deploy roster fleets with software speed.</p>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">Body // Inter 400 // 14 to 16 / 1.5</div>
+        <p style="color:rgba(255,255,255,0.78);">We connect enterprise capital directly to the athletes who command local culture. Automated compliance. Direct deployment. Real backing before the opening whistle.</p>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">Data token // JetBrains Mono 500 // 10 to 12 // tracking 0.14em // tabular lining</div>
+        <p class="volt" style="font-family:var(--mono); font-size:12px; letter-spacing:0.14em; text-transform:uppercase; max-width:none;">70/30 Connect // 15km catchment // A$1,250.00</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s015">
+    <div class="frame">
+      <div class="folio"><span>015 // Typesetting governance and editorial standards</span><span>15 / 27</span></div>
+      <p class="eyebrow">015 // Voice</p>
+      <h2>New Zealand English. Zero em-dashes.</h2>
+      <div class="grid-2 mt">
+        <div>
+          <p>Copy is written in New Zealand English for both Australian and New Zealand markets. The voice is institutional, direct, and suburban. It does not perform agency swagger.</p>
+          <ul class="plain">
+            <li>Use commercialisation, standardising, prioritising, organisation, licence, colour, and centre.</li>
+            <li>Do not use em-dashes anywhere in product copy, legal text, captions, or this specification.</li>
+            <li>Separate clauses with periods, colons, or a double slash in taxonomy eyebrows.</li>
+            <li>Write bullet lists as complete sentences. Do not bold a lead-in term before the explanation.</li>
+          </ul>
+        </div>
+        <article class="panel">
+          <h3>Taxonomy eyebrows</h3>
+          <p class="mt8" style="font-family:var(--mono); letter-spacing:0.18em; text-transform:uppercase; color:#D2FF00; font-size:11px;">Manifesto // Ground truth 01</p>
+          <p class="mt8">Eyebrows are uppercase JetBrains Mono. The double slash is the only permitted section divider. Keep the wordmark lowercase as tmrw/. when it appears inside a sentence.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s016">
+    <div class="frame">
+      <div class="folio"><span>016 // Dynamic design system A</span><span>16 / 27</span></div>
+      <p class="eyebrow">016 // Framing beam</p>
+      <h2>The 23.0 degree structural rule</h2>
+      <div class="cols mt">
+        <div class="blueprint-frame">
+          <svg viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="23 degree structural framing beam">
+            <rect width="640" height="280" fill="#000000" />
+            <rect x="24" y="20" width="592" height="240" fill="none" stroke="rgba(255,255,255,0.10)" />
+            <line x1="80" y1="240" x2="560" y2="48" stroke="#D2FF00" stroke-width="1.25" />
+            <circle cx="80" cy="240" r="3" fill="#D2FF00" />
+            <circle cx="560" cy="48" r="3" fill="#D2FF00" />
+            <text x="96" y="260" fill="#D2FF00" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.4">ORIGIN  //  RAKE 23.0°</text>
+          </svg>
+        </div>
+        <div>
+          <p>System A is a single 1px Kinetic Volt beam locked at 23.0 degrees. It is a layout instrument, not decoration. Use it to crop photography, hold a folio, or split a 16:9 field.</p>
+          <ul class="plain">
+            <li>Never rotate the beam to a friendlier angle for a single composition.</li>
+            <li>Never thicken the beam beyond 1px on screen or 0.25pt in print.</li>
+            <li>The beam may clip imagery. It may not clip the master mark or its 0.4em exclusion.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s017">
+    <div class="frame">
+      <div class="folio"><span>017 // Dynamic design system B</span><span>17 / 27</span></div>
+      <p class="eyebrow">017 // Modular cadence</p>
+      <h2>Beam intersections become snap points</h2>
+      <div class="blueprint-frame mt">
+        <svg viewBox="0 0 1100 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Twelve column grid intersected by the 23 degree beam">
+          <rect width="1100" height="280" fill="#08080A" />
+          <g stroke="rgba(255,255,255,0.10)" stroke-width="1">
+            <path d="M80 16v248M160 16v248M240 16v248M320 16v248M400 16v248M480 16v248M560 16v248M640 16v248M720 16v248M800 16v248M880 16v248M960 16v248M1040 16v248" />
+            <path d="M40 36h1020M40 92h1020M40 148h1020M40 204h1020M40 260h1020" />
+          </g>
+          <line x1="80" y1="260" x2="980" y2="36" stroke="#D2FF00" stroke-width="1.25" />
+          <circle cx="240" cy="220" r="3.5" fill="#D2FF00" />
+          <circle cx="480" cy="160" r="3.5" fill="#D2FF00" />
+          <circle cx="720" cy="100" r="3.5" fill="#D2FF00" />
+        </svg>
+      </div>
+      <p class="caption">Cards, captions, and telemetry chips align to the nearest intersection of the 12-column institutional grid and the 23.0 degree beam.</p>
+    </div>
+  </section>
+
+  <section class="slide" id="s018">
+    <div class="frame">
+      <div class="folio"><span>018 // Dynamic design system C</span><span>18 / 27</span></div>
+      <p class="eyebrow">018 // WebGL line constraints</p>
+      <h2>Atmospheric contours only</h2>
+      <div class="cols mt">
+        <div class="blueprint-frame">
+          <svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Parallel faint contour lines at 23 degrees">
+            <rect width="640" height="260" fill="#000000" />
+            <g stroke="rgba(255,255,255,0.10)" stroke-width="1">
+              <line x1="-20" y1="240" x2="400" y2="-20" />
+              <line x1="30" y1="260" x2="490" y2="-10" />
+              <line x1="90" y1="280" x2="580" y2="0" />
+              <line x1="160" y1="290" x2="660" y2="20" />
+            </g>
+            <line x1="40" y1="230" x2="520" y2="36" stroke="#D2FF00" stroke-width="1" opacity="0.55" />
+          </svg>
+        </div>
+        <div>
+          <p>System C permits a family of faint lines running parallel to the 23.0 degree beam behind hero fields. These lines are atmospheric. They must not compete with the master mark.</p>
+          <ul class="plain">
+            <li>Hold companion lines at 8 to 12 percent Signal White. Never colour them Kinetic Volt except for the single primary beam.</li>
+            <li>Keep line weight at 1px. Do not animate thickness.</li>
+            <li>This section constrains graphic atmosphere only. It does not authorise edits to the production Three.js hero canvas or its shaders.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s019">
+    <div class="frame">
+      <div class="folio"><span>019 // Production colour matrix swatches</span><span>19 / 27</span></div>
+      <p class="eyebrow">019 // Swatch board</p>
+      <h2>Approved pigment set</h2>
+      <div class="grid-5 mt">
+        <article class="swatch-card">
+          <div class="swatch-chip" style="background:#D2FF00;"></div>
+          <div class="swatch-meta"><strong>Kinetic Volt</strong><p>#D2FF00</p><p>210 255 0</p><p>C18 M0 Y100 K0</p></div>
+        </article>
+        <article class="swatch-card">
+          <div class="swatch-chip" style="background:#000000; border-bottom:1px solid rgba(255,255,255,0.10);"></div>
+          <div class="swatch-meta"><strong>Monolithic Carbon</strong><p>#000000</p><p>0 0 0</p><p>C0 M0 Y0 K100</p></div>
+        </article>
+        <article class="swatch-card">
+          <div class="swatch-chip" style="background:#08080A; border-bottom:1px solid rgba(255,255,255,0.10);"></div>
+          <div class="swatch-meta"><strong>Void Surface</strong><p>#08080A</p><p>8 8 10</p><p>C60 M50 Y40 K92</p></div>
+        </article>
+        <article class="swatch-card">
+          <div class="swatch-chip" style="background:#FFFFFF;"></div>
+          <div class="swatch-meta"><strong>Signal White</strong><p>#FFFFFF</p><p>255 255 255</p><p>C0 M0 Y0 K0</p></div>
+        </article>
+        <article class="swatch-card">
+          <div class="swatch-chip" style="background:#08080A;">
+            <svg viewBox="0 0 180 88" width="100%" height="88" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect width="180" height="88" fill="#08080A" />
+              <line x1="16" y1="22" x2="164" y2="22" stroke="rgba(255,255,255,0.10)" />
+              <line x1="16" y1="44" x2="164" y2="44" stroke="rgba(255,255,255,0.10)" />
+              <line x1="16" y1="66" x2="164" y2="66" stroke="rgba(255,255,255,0.10)" />
+            </svg>
+          </div>
+          <div class="swatch-meta"><strong>Structural Hairlines</strong><p>rgba(255,255,255,0.10)</p><p>1px screen rule</p><p>8% K in print</p></div>
+        </article>
+      </div>
+      <p class="caption mt">Blue and cobalt tokens are not listed because they are not in the system.</p>
+    </div>
+  </section>
+
+  <section class="slide" id="s020">
+    <div class="frame">
+      <div class="folio"><span>020 // Digital UI systems and spatial telemetry</span><span>20 / 27</span></div>
+      <p class="eyebrow">020 // Spatial chrome</p>
+      <h2>Catchment radar and allocation island</h2>
+      <div class="grid-2 mt">
+        <article class="panel">
+          <h3>Concentric catchment radar</h3>
+          <p class="mt8">Spatial products always show three rings. Labels read 5 km, 10 km, and 15 km. The centre is a Kinetic Volt beacon.</p>
+          <svg viewBox="0 0 360 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Concentric catchment radar at 5 10 and 15 kilometres" style="width:100%;height:auto;margin-top:10px;">
+            <rect width="360" height="190" fill="#000000" />
+            <g fill="none" stroke="#D2FF00" transform="translate(150 104)">
+              <circle r="26" stroke-width="1.2" />
+              <circle r="50" stroke-width="1" opacity="0.55" />
+              <circle r="74" stroke-width="1" opacity="0.28" />
+              <circle r="3" fill="#D2FF00" stroke="none" />
+            </g>
+            <text x="186" y="94" fill="#D2FF00" font-family="JetBrains Mono, monospace" font-size="10">5 KM</text>
+            <text x="208" y="70" fill="rgba(210,255,0,0.7)" font-family="JetBrains Mono, monospace" font-size="10">10 KM</text>
+            <text x="226" y="44" fill="rgba(210,255,0,0.45)" font-family="JetBrains Mono, monospace" font-size="10">15 KM</text>
+          </svg>
+        </article>
+        <article class="panel">
+          <h3>Dynamic Island allocation tray</h3>
+          <p class="mt8">When an allocator stages athletes, dock a persistent floating pill at bottom-centre. Readout is JetBrains Mono. Action is Kinetic Volt on black text.</p>
+          <div style="display:flex; justify-content:center; padding:28px 0 8px;">
+            <div class="pill">
+              <p>Liam Toole · 1 staged · 2088 · 14,080 suburban views · 70/30 Connect</p>
+              <span class="deploy">Deploy capital -&gt;</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s021">
+    <div class="frame">
+      <div class="folio"><span>021 // SaaS telemetry and tactile physics</span><span>21 / 27</span></div>
+      <p class="eyebrow">021 // Drawer physics</p>
+      <h2>Spring-damped athlete sheet</h2>
+      <div class="grid-2 mt">
+        <article class="panel">
+          <h3>Grab handle</h3>
+          <div style="width:40px; height:4px; background:rgba(255,255,255,0.20); border-radius:999px; margin:16px auto;"></div>
+          <p>A 40 by 4 bar, Signal White at 20 percent, fully rounded, centred on the top edge. Cursor is grab at rest and grabbing while dragged.</p>
+        </article>
+        <article class="panel">
+          <h3>Motion constants</h3>
+          <table class="spec mt8">
+            <tr><th>Property</th><th>Value</th></tr>
+            <tr><td>transition.type</td><td>spring</td></tr>
+            <tr><td>damping / stiffness / mass</td><td>30 / 260 / 0.8</td></tr>
+            <tr><td>drag</td><td>x // left 0 / right 300 // elastic 0.12</td></tr>
+            <tr><td>dismiss</td><td>offset.x &gt; 110 or velocity.x &gt; 650</td></tr>
+          </table>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s022">
+    <div class="frame">
+      <div class="folio"><span>022 // Corporate collateral and decks</span><span>22 / 27</span></div>
+      <p class="eyebrow">022 // 16:9 masters</p>
+      <h2>Presentation architecture</h2>
+      <div class="blueprint-frame mt">
+        <svg viewBox="0 0 1100 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="16 by 9 presentation master">
+          <rect width="1100" height="260" fill="#000000" />
+          <rect x="70" y="20" width="960" height="220" fill="none" stroke="rgba(255,255,255,0.10)" />
+          <rect x="134" y="40" width="832" height="160" fill="#08080A" stroke="rgba(255,255,255,0.10)" />
+          <text x="154" y="70" fill="#D2FF00" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.6">004 // POSITIONING</text>
+          <text x="154" y="110" fill="#FFFFFF" font-family="Inter, Helvetica, Arial, sans-serif" font-weight="800" font-size="28">LINE UP YOUR FUTURE.</text>
+          <text x="154" y="180" fill="rgba(255,255,255,0.35)" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.4">64px MARGIN  //  16:9  //  FOLIO RIGHT</text>
+        </svg>
+      </div>
+      <ul class="plain">
+        <li>Build every external deck on a 16:9 master with 64px safe margins and a 1px hairline footer.</li>
+        <li>Place the section index as a double-slash eyebrow in Kinetic Volt, never as a coloured sidebar.</li>
+        <li>Title slides may use the 23.0 degree beam from system A. Body slides stay orthogonal.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" id="s023">
+    <div class="frame">
+      <div class="folio"><span>023 // Stationery suites</span><span>23 / 27</span></div>
+      <p class="eyebrow">023 // Print objects</p>
+      <h2>Debossed 350 gsm cotton</h2>
+      <div class="grid-3 mt">
+        <article class="panel">
+          <h3>Business card</h3>
+          <p class="mt8">85 × 55 mm, 350 gsm archival cotton, black ink deboss of the standalone mark on the face. Kinetic Volt slash foil optional on the reverse.</p>
+        </article>
+        <article class="panel">
+          <h3>Letterhead</h3>
+          <p class="mt8">A4, 120 gsm Knight Smooth Uncoated. Master lockup top left at 18 mm standalone minimum. Address block in JetBrains Mono 8pt.</p>
+        </article>
+        <article class="panel">
+          <h3>Compliments slip</h3>
+          <p class="mt8">210 × 99 mm. Positive execution on #FBFBF9. Descriptor omitted. Division lockup from section 013 may sit top right.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s024">
+    <div class="frame">
+      <div class="folio"><span>024 // Physical packaging and athlete kits</span><span>24 / 27</span></div>
+      <p class="eyebrow">024 // Kit tagging</p>
+      <h2>Monochrome field marks</h2>
+      <div class="grid-2 mt">
+        <article class="panel">
+          <h3>Athlete kit labels</h3>
+          <p class="mt8">Woven or heat-transfer labels reproduce the standalone mark in black on undyed cotton, or white on black tape. No Kinetic Volt on on-field kit. No club crests appear beside the mark.</p>
+        </article>
+        <article class="panel">
+          <h3>Packaging</h3>
+          <p class="mt8">Shipper cartons are unbleached kraft with a one-colour black stamp of the micro-mark. Inner tissue is #FBFBF9. Hangtags use the descriptor lockup at or above 45 mm.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s025">
+    <div class="frame">
+      <div class="folio"><span>025 // Hardware badges and NFC tokens</span><span>25 / 27</span></div>
+      <p class="eyebrow">025 // Tokens</p>
+      <h2>Eighteen-millimetre faces</h2>
+      <div class="cols mt">
+        <div style="display:flex; gap:16px;">
+          <svg viewBox="0 0 160 160" width="160" height="160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Round NFC badge">
+            <circle cx="80" cy="80" r="76" fill="#000000" stroke="rgba(255,255,255,0.10)" />
+            <line x1="56" y1="114" x2="88" y2="42" stroke="#D2FF00" stroke-width="8" />
+            <circle cx="104" cy="112" r="7" fill="#D2FF00" />
+          </svg>
+          <svg viewBox="0 0 160 160" width="160" height="160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Squircle NFC token">
+            <rect x="6" y="6" width="148" height="148" rx="32" fill="#000000" stroke="rgba(255,255,255,0.10)" />
+            <line x1="54" y1="114" x2="86" y2="44" stroke="#D2FF00" stroke-width="8" />
+            <circle cx="102" cy="112" r="7" fill="#D2FF00" />
+          </svg>
+        </div>
+        <div>
+          <p>Hardware tokens carry the micro-mark only. The letter t is omitted. Faces are 18 mm at the shortest edge, anodised black aluminium, Kinetic Volt fill in the machined slash and dot.</p>
+          <ul class="plain">
+            <li>NFC payloads resolve to a catchment-scoped athlete or allocator record. They never deep-link to a club property.</li>
+            <li>Laser-etch the folio 025 and a six-character batch code on the reverse in 5pt mono.</li>
+            <li>Do not print URLs on the face. Do not add enamel colour beyond Kinetic Volt.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s026">
+    <div class="frame">
+      <div class="folio"><span>026 // Sustainable print standards</span><span>26 / 27</span></div>
+      <p class="eyebrow">026 // Materials</p>
+      <h2>FSC stocks and cover weights</h2>
+      <div class="grid-2 mt">
+        <article class="panel">
+          <h3>Specified stocks</h3>
+          <table class="spec mt8">
+            <tr><th>Use</th><th>Stock</th><th>Weight</th></tr>
+            <tr><td>Covers and cards</td><td>FSC Knight Smooth Uncoated</td><td>350 gsm cards / 300 gsm min covers</td></tr>
+            <tr><td>Text pages</td><td>FSC Cyclus Offset</td><td>140 gsm</td></tr>
+            <tr><td>Letterhead</td><td>FSC Knight Smooth Uncoated</td><td>120 gsm</td></tr>
+            <tr><td>Shippers</td><td>Unbleached kraft, FSC mix</td><td>200 gsm single-wall</td></tr>
+          </table>
+        </article>
+        <article class="panel">
+          <h3>Press rules</h3>
+          <ul class="plain">
+            <li>Specify vegetable-oil inks. Do not specify UV varnish coats over Kinetic Volt. The pigment shifts under gloss.</li>
+            <li>Hold covers at a minimum of 300 gsm. 350 gsm is required for business cards.</li>
+            <li>Ask for FSC chain-of-custody numbers on every quote. Do not accept uncertified substitutes.</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s027">
+    <div class="frame">
+      <div class="folio"><span>027 // Enterprise governance and production sign-off</span><span>27 / 27</span></div>
+      <p class="eyebrow">027 // Lock</p>
+      <h2>Production sign-off</h2>
+      <p class="mt">This specification is production-locked for 2026. Changes to rake, pigment, or editorial punctuation require a recorded amendment and a fresh row below.</p>
+      <div class="panel mt" style="padding:0; overflow:auto;">
+        <table class="spec">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Accountability</th>
+              <th>Office</th>
+              <th>Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Brand Systems</td>
+              <td>Master mark geometry, lockups, exclusion</td>
+              <td>TMRW Brand Office</td>
+              <td>26 Sep 2026</td>
+              <td>Verified</td>
+            </tr>
+            <tr>
+              <td>Design Systems</td>
+              <td>Colour tokens, type stack, hairline rules</td>
+              <td>Design Systems</td>
+              <td>26 Sep 2026</td>
+              <td>Verified</td>
+            </tr>
+            <tr>
+              <td>Product Engineering</td>
+              <td>Drawer physics, allocation tray, catchment rings</td>
+              <td>Platform Engineering</td>
+              <td>26 Sep 2026</td>
+              <td>Verified</td>
+            </tr>
+            <tr>
+              <td>Statutory Compliance</td>
+              <td>AusTriathlon gates, NRL and Shute Shield media rules</td>
+              <td>Compliance Desk</td>
+              <td>26 Sep 2026</td>
+              <td>Verified</td>
+            </tr>
+            <tr>
+              <td>Governance Board</td>
+              <td>Final production lock</td>
+              <td>tmrw/. Board</td>
+              <td>26 Sep 2026</td>
+              <td>Locked</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="caption mt">© 2026 tmrw/. Sovereign sports commercialisation infrastructure for Australia and New Zealand.</p>
+    </div>
+  </section>
+</body>
+</html>
