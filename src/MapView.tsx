@@ -12,6 +12,7 @@ interface MapViewProps {
   onSelectSponsor?: (id: string) => void;
   roster?: AthleteLocation[];
   fillViewport?: boolean;
+  onSelectAthlete?: (id: string) => void;
 }
 
 function makeAthleteIcon() {
@@ -31,25 +32,37 @@ const CATCHMENT_RINGS_M = [5000, 10000, 15000] as const;
 const RING_STYLE: Record<number, L.CircleOptions> = {
   5000: {
     color: '#D2FF00',
-    weight: 1.25,
-    fillColor: 'rgba(210, 255, 0, 0.14)',
+    weight: 1,
+    fillColor: 'rgba(210, 255, 0, 0.12)',
     fillOpacity: 1,
     interactive: false,
+    className: 'catchment-ring',
   },
   10000: {
     color: '#D2FF00',
     weight: 1,
-    fillColor: 'rgba(210, 255, 0, 0.06)',
+    fillColor: 'rgba(210, 255, 0, 0.05)',
     fillOpacity: 1,
     interactive: false,
+    className: 'catchment-ring',
   },
   15000: {
-    color: 'rgba(255, 255, 255, 0.28)',
+    color: 'rgba(255, 255, 255, 0.35)',
     weight: 1,
     fillColor: 'transparent',
     fillOpacity: 0,
     interactive: false,
+    className: 'catchment-ring-hairline',
   },
+};
+
+const HERO_FRAME = {
+  width: '100%',
+  height: '100%',
+  minHeight: 0,
+  overflow: 'hidden',
+  position: 'relative' as const,
+  background: '#000000',
 };
 
 function perimeterNorth(lat: number, lng: number, radiusMeters: number): L.LatLngExpression {
@@ -108,6 +121,7 @@ export default function MapView({
   onSelectSponsor,
   roster,
   fillViewport = false,
+  onSelectAthlete,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -115,6 +129,8 @@ export default function MapView({
   const markerByIdRef = useRef<Map<string, L.Marker>>(new Map());
   const onSelectRef = useRef(onSelectSponsor);
   onSelectRef.current = onSelectSponsor;
+  const onSelectAthleteRef = useRef(onSelectAthlete);
+  onSelectAthleteRef.current = onSelectAthlete;
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -124,26 +140,49 @@ export default function MapView({
       zoom: 13,
       scrollWheelZoom: false,
       attributionControl: true,
+      zoomControl: false,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-      subdomains: 'abcd',
-      maxZoom: 19,
-    }).addTo(map);
+    const cartoKey =
+      typeof import.meta !== 'undefined' && typeof import.meta.env?.VITE_CARTO_API_KEY === 'string'
+        ? import.meta.env.VITE_CARTO_API_KEY.trim()
+        : '';
+    if (cartoKey) {
+      L.tileLayer(`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(cartoKey)}`, {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19,
+      }).addTo(map);
+    } else {
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abc',
+        maxZoom: 19,
+        className: 'map-tiles-dark',
+      }).addTo(map);
+    }
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     map.setView(SYDNEY, SYDNEY_ZOOM);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
     const resize = () => {
-      if (containerRef.current && containerRef.current.offsetHeight > 0) map.invalidateSize({ animate: false });
+      const invalidate = map.invalidateSize?.bind(map);
+      const scale = (map as L.Map & { resize?: () => void }).resize?.bind(map);
+      if (containerRef.current && containerRef.current.offsetHeight > 0) {
+        invalidate?.({ animate: false });
+        scale?.();
+      }
     };
     resize();
     const raf = window.requestAnimationFrame(() => {
       resize();
       window.requestAnimationFrame(resize);
     });
+    const t100 = window.setTimeout(() => {
+      map.invalidateSize?.({ animate: false });
+    }, 100);
     const t0 = window.setTimeout(resize, 0);
     const t1 = window.setTimeout(resize, 200);
     const t2 = window.setTimeout(resize, 400);
@@ -153,6 +192,7 @@ export default function MapView({
 
     return () => {
       window.cancelAnimationFrame(raf);
+      window.clearTimeout(t100);
       window.clearTimeout(t0);
       window.clearTimeout(t1);
       window.clearTimeout(t2);
@@ -182,7 +222,8 @@ export default function MapView({
       addClubCatchment(layer, athlete.lat, athlete.lng, athlete.postcode, labelledPostcodes, geofenceMeters);
       L.marker(pos, { icon: makeAthleteIcon() })
         .addTo(layer)
-        .bindPopup(athletePopupHtml(athlete));
+        .bindPopup(athletePopupHtml(athlete))
+        .on('click', () => onSelectAthleteRef.current?.(athlete.id));
       points.push(pos);
     }
 
@@ -193,7 +234,8 @@ export default function MapView({
       addClubCatchment(layer, pin.lat, pin.lng, pin.postcode, labelledPostcodes, geofenceMeters);
       L.marker(pos, { icon: makeAthleteIcon() })
         .addTo(layer)
-        .bindPopup(athletePopupHtml(pin));
+        .bindPopup(athletePopupHtml(pin))
+        .on('click', () => onSelectAthleteRef.current?.(pin.id));
       points.push(pos);
     });
 
@@ -219,7 +261,9 @@ export default function MapView({
       points.push(pos);
     });
 
-    if (points.length > 0) {
+    if (fillViewport) {
+      map.setView(SYDNEY, SYDNEY_ZOOM);
+    } else if (points.length > 0) {
       if (points.length === 1) {
         map.setView(points[0], SYDNEY_ZOOM);
       } else {
@@ -238,7 +282,7 @@ export default function MapView({
       const selectedMarker = markerByIdRef.current.get(selectedId);
       selectedMarker?.setIcon(makeSponsorIcon(true));
     }
-  }, [athlete, sponsors, catchmentMeters, roster]);
+  }, [athlete, sponsors, catchmentMeters, roster, fillViewport]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -252,14 +296,30 @@ export default function MapView({
     window.setTimeout(() => marker.openPopup(), 120);
   }, [selectedSponsorId]);
 
-  const sizeClass = fillViewport ? 'h-[70vh] min-h-[600px]' : 'h-full min-h-0';
+  const wrapStyle = fillViewport
+    ? HERO_FRAME
+    : { width: '100%', height: '100%', position: 'relative' as const };
+  const canvasStyle = {
+    width: '100%',
+    height: '100%',
+    position: 'absolute' as const,
+    inset: 0,
+    zIndex: 10,
+    background: '#000000',
+  };
+
   return (
-    <div className={['relative z-10 w-full overflow-hidden', sizeClass, className].filter(Boolean).join(' ')}>
+    <div
+      className={['relative z-10 w-full overflow-hidden', fillViewport ? '' : 'h-full min-h-0', className]
+        .filter(Boolean)
+        .join(' ')}
+      style={wrapStyle}
+    >
       <div
+        id={fillViewport ? 'map' : undefined}
         ref={containerRef}
-        className={['map-container relative z-10 w-full overflow-hidden', sizeClass, fillViewport ? 'map-fill' : '']
-          .filter(Boolean)
-          .join(' ')}
+        className={['map-container', fillViewport ? 'map-fill' : ''].filter(Boolean).join(' ')}
+        style={canvasStyle}
       />
     </div>
   );

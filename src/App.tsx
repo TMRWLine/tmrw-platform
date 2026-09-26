@@ -55,11 +55,10 @@ import { HeroFluidReveal } from './components/HeroFluidReveal';
 import { LandingNarrative } from './components/LandingNarrative';
 import { BrandLockup, LandingStackSlot } from './components/LandingStack';
 import { LivingContours } from './components/LivingContours';
-import { SpatialCatchment } from './components/SpatialCatchment';
+import { EnterpriseConsole, type CatchmentRadiusId } from './components/EnterpriseConsole';
 import { SponsorDrawer } from './components/SponsorDrawer';
 import { AthletePortal } from './components/AthletePortal';
 import { AuthModal } from './components/AuthModal';
-import { RosterSection } from './components/RosterSection';
 import { InstitutionalStatusRibbon } from './components/InstitutionalStatusRibbon';
 import { StatutoryAssuranceFooter } from './components/StatutoryAssuranceFooter';
 import { AthleteDrawer } from './components/AthleteDrawer';
@@ -68,6 +67,7 @@ import { AthleteOnboardingDrawer } from './components/AthleteOnboardingDrawer';
 import { supabase } from './lib/supabaseClient';
 import { isAthleteOnboardingComplete } from './lib/specimenPrivacy';
 import { filterRoster, type LeagueFilterId } from './lib/rosterDiscovery';
+import { originForPostcode } from './lib/catchmentLandmarks';
 import type { UploadedClip } from './lib/mediaUploads';
 
 import {
@@ -139,36 +139,27 @@ function AllocationTray({
   );
 }
 
-function EditorialManifestoBreaker() {
-  return (
-    <section
-      className="relative isolate z-20 w-full mt-12 pt-40 pb-20 border-y border-white/10 overflow-hidden select-none bg-black"
-      aria-labelledby="manifesto-heading"
-    >
-      <div
-        className="pointer-events-none absolute inset-0 bg-black bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-neutral-900/40 via-black to-black"
-        aria-hidden="true"
-      />
-      <div className="relative z-10 w-full max-w-5xl mx-auto px-6">
-        <p className="text-xs font-mono tracking-widest text-neutral-500 uppercase mb-4 m-0">
-          MANIFESTO // GROUND TRUTH 01
-        </p>
-        <h2
-          id="manifesto-heading"
-          className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white uppercase max-w-5xl mx-auto leading-[0.95] mt-0 mb-0"
-        >
-          SPORT IS A WEAPON WHEN OWNED BY THE SUBURBS<span className="text-[#D2FF00]">.</span>
-        </h2>
-      </div>
-    </section>
-  );
+const SYDNEY_ORIGIN = { lat: -33.8688, lng: 151.2093 };
+const ALLOCATED_PCT = 42;
+
+function haversineKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number }
+): number {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
 }
 
 export function MarketplaceApp() {
   const [view, setView] = useState<AppView>('landing');
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
-  const [loadingList, setLoadingList] = useState(true);
+  const [, setLoadingList] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
 
   const [activeAthlete, setActiveAthlete] = useState<Athlete | null>(null);
@@ -196,9 +187,9 @@ export function MarketplaceApp() {
   const horizontalSectionRef = useRef<HTMLDivElement>(null);
   const topNavRef = useRef<HTMLElement>(null);
   const horizontalTrackRef = useRef<HTMLDivElement>(null);
-  const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>('all');
-  const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
-  const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
+  const [radiusFilter] = useState<RadiusFilter>('all');
+  const [catchmentTier] = useState<SpatialTierCode | null>(null);
+  const [, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
   const [drawerAthlete, setDrawerAthlete] = useState<Athlete | null>(null);
   const [authModalState, setAuthModalState] = useState<{ open: boolean; role: 'athlete' | 'sponsor' }>({
     open: false,
@@ -210,10 +201,11 @@ export function MarketplaceApp() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFilmOpen, setIsFilmOpen] = useState(false);
   const [stagedAthletes, setStagedAthletes] = useState<Athlete[]>([]);
-  const [allocationTrayOpen, setAllocationTrayOpen] = useState(false);
+  const [, setAllocationTrayOpen] = useState(false);
   const [athleteClips, setAthleteClips] = useState<Record<string, UploadedClip[]>>({});
-  const [rosterQuery, setRosterQuery] = useState('');
+  const [rosterQuery] = useState('');
   const [leagueFilter, setLeagueFilter] = useState<LeagueFilterId>('all');
+  const [catchmentRadius, setCatchmentRadius] = useState<CatchmentRadiusId>('all');
   const [booking, setBooking] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
@@ -484,11 +476,6 @@ export function MarketplaceApp() {
     setIsDrawerOpen(true);
   };
 
-  const handleOpenFilm = (athlete: Athlete) => {
-    setSelectedAthlete(athlete);
-    setIsFilmOpen(true);
-  };
-
   function enterSponsorWorkspace() {
     setView('sponsor');
     setNavView('sponsor');
@@ -619,10 +606,17 @@ export function MarketplaceApp() {
     [sponsors]
   );
 
-  const visibleAthletes = useMemo(
-    () => filterRoster(athletes, rosterQuery, leagueFilter),
-    [athletes, rosterQuery, leagueFilter]
-  );
+  const visibleAthletes = useMemo(() => {
+    const roster = filterRoster(athletes, rosterQuery, leagueFilter);
+    if (catchmentRadius === 'all') return roster;
+    return roster.filter((athlete) => {
+      const point =
+        athlete.latitude != null && athlete.longitude != null
+          ? { lat: athlete.latitude, lng: athlete.longitude }
+          : originForPostcode(athlete.postcode);
+      return haversineKm(SYDNEY_ORIGIN, point) <= catchmentRadius;
+    });
+  }, [athletes, rosterQuery, leagueFilter, catchmentRadius]);
 
   const discoveryActive = leagueFilter !== 'all' || rosterQuery.trim() !== '';
 
@@ -687,7 +681,7 @@ export function MarketplaceApp() {
   const panelOpen = activeAthlete !== null;
 
   return (
-    <div className={`app-shell bg-brand-black text-brand-white font-sans bg-grain${view === 'landing' ? '' : ' app-shell-padded'}`}>
+    <div className={`app-shell bg-brand-black text-brand-white font-sans bg-grain${view === 'landing' ? '' : ' app-shell-padded'}${view === 'sponsor' ? ' h-[100dvh] overflow-hidden' : ''}`}>
       <header ref={topNavRef} className="topnav fixed top-0 left-0 w-full z-50 px-8 py-5 flex items-center justify-between backdrop-blur-md bg-[#08080A]/85 border-b border-white/5 transition-colors pointer-events-auto">
         <BrandLockup onClick={() => setView('landing')} />
         <Navbar
@@ -712,9 +706,14 @@ export function MarketplaceApp() {
       `}</style>
       <InstitutionalStatusRibbon anchorRef={topNavRef} />
 
-      <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden bg-[#08080A]">
+      {view !== 'sponsor' && (
+      <div
+        className="fixed inset-0 w-full h-full overflow-hidden bg-[#08080A]"
+        style={{ zIndex: 0, pointerEvents: 'none' }}
+      >
         <LivingContours />
       </div>
+      )}
 
       <AdminDrawer open={adminOpen} onClose={() => setAdminOpen(false)} />
 
@@ -737,18 +736,47 @@ export function MarketplaceApp() {
         </div>
       ) : (
       <>
-      <main className="page bg-transparent" style={view === 'sponsor' && !listError ? { paddingBottom: 0 } : undefined}>
+      {view === 'sponsor' && !listError && (
+        <EnterpriseConsole
+          league={leagueFilter}
+          onLeagueChange={setLeagueFilter}
+          radius={catchmentRadius}
+          onRadiusChange={setCatchmentRadius}
+          specimenCount={Math.max(athletes.length, 3000)}
+          allocatedPct={ALLOCATED_PCT}
+          onDeploy={() => {
+            const next = stagedAthletes[stagedAthletes.length - 1] ?? visibleAthletes[0];
+            if (next) openSponsorDrawer(next);
+          }}
+          mapSlot={
+            <div className="absolute inset-0 z-10 h-full w-full min-h-0 overflow-hidden bg-[#000000]">
+              <MapView
+                athlete={discoveryActive ? null : catchment3000}
+                sponsors={discoveryActive ? [] : workspaceSponsors}
+                roster={rosterPins}
+                catchmentMeters={catchmentRadius === 'all' ? 15000 : catchmentRadius * 1000}
+                fillViewport
+                className="overflow-hidden"
+                onSelectAthlete={(id) => {
+                  const next = visibleAthletes.find((a) => a.id === id) ?? athletes.find((a) => a.id === id);
+                  if (next) handleOpenProfile(next);
+                }}
+              />
+            </div>
+          }
+        />
+      )}
+      {view !== 'sponsor' && (
+      <main className="page bg-transparent">
         <div className="page-head editorial-copy border-b border-white/10" id="athlete-roster">
           <p className="font-mono text-xs tracking-widest uppercase text-[#D2FF00] mb-3">
-            {view === 'sponsor' ? '// ENTERPRISE WORKSPACE' : '// ATHLETE LEDGER'}
+            // ATHLETE LEDGER
           </p>
           <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white mt-0">
-            {view === 'sponsor' ? 'Sponsor Discovery Workspace' : 'Athlete Commercial Dashboard'}
+            Athlete Commercial Dashboard
           </h1>
           <p className="font-mono text-[11px] tracking-widest text-zinc-400 mt-3">
-            {view === 'sponsor'
-              ? 'PostGIS radius filters · postcode 3000 catchment · live partner map'
-              : 'Hunter Bligh overview · pending payouts · collab merch rail'}
+            Hunter Bligh overview · pending payouts · collab merch rail
           </p>
         </div>
 
@@ -761,37 +789,6 @@ export function MarketplaceApp() {
           </div>
         )}
 
-        {view === 'sponsor' && !listError && (
-          <>
-            <SpatialCatchment
-              selected={catchmentTier}
-              counts={catchmentCounts}
-              onSelect={(code) => {
-                setCatchmentTier(code);
-                setRadiusFilter('all');
-              }}
-              onClear={() => setCatchmentTier(null)}
-            />
-            <div className="radius-filter">
-              <span className="radius-filter-label">Radius:</span>
-              <div className="radius-toggle">
-                <button
-                  className={catchmentTier === null && radiusFilter === '25km' ? 'active' : ''}
-                  onClick={() => { setCatchmentTier(null); setRadiusFilter('25km'); }}
-                >25km</button>
-                <button
-                  className={catchmentTier === null && radiusFilter === '50km' ? 'active' : ''}
-                  onClick={() => { setCatchmentTier(null); setRadiusFilter('50km'); }}
-                >50km</button>
-                <button
-                  className={catchmentTier === null && radiusFilter === 'all' ? 'active' : ''}
-                  onClick={() => { setCatchmentTier(null); setRadiusFilter('all'); }}
-                >All Postcodes</button>
-              </div>
-            </div>
-          </>
-        )}
-
         {view === 'athlete' && (
           <AthletePortal
             athlete={hunterAthlete}
@@ -800,35 +797,16 @@ export function MarketplaceApp() {
           />
         )}
       </main>
-      {view === 'sponsor' && !listError && (
-        <>
-          <EditorialManifestoBreaker />
-          <div className="mx-auto w-full max-w-[1200px] box-border px-8 pb-20 mt-12">
-            <RosterSection
-              athletes={visibleAthletes}
-              loading={loadingList}
-              query={rosterQuery}
-              league={leagueFilter}
-              onQueryChange={setRosterQuery}
-              onLeagueChange={setLeagueFilter}
-              onPrimary={(a) => openSponsorDrawer(a)}
-              onOpenProfile={handleOpenProfile}
-              onOpenFilm={handleOpenFilm}
-              mapSlot={
-                <div className="relative isolate z-10 h-[70vh] min-h-[600px] w-full overflow-hidden rounded-none border border-white/10">
-                  <MapView
-                    athlete={discoveryActive ? null : catchment3000}
-                    sponsors={discoveryActive ? [] : workspaceSponsors}
-                    roster={discoveryActive ? rosterPins : undefined}
-                    catchmentMeters={5000}
-                    fillViewport
-                    className="relative z-10 h-[70vh] min-h-[600px] w-full overflow-hidden"
-                  />
-                </div>
-              }
-            />
+      )}
+      {view === 'sponsor' && listError && (
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black">
+          <div className="state">
+            <p style={{ color: 'var(--error)', marginBottom: 8 }}>{listError}</p>
+            <button className="btn" onClick={() => window.location.reload()}>
+              <RefreshCw size={14} /> Retry
+            </button>
           </div>
-        </>
+        </div>
       )}
       </>
       )}

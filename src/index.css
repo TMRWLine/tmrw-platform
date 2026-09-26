@@ -308,32 +308,60 @@ button {
 
 /* Leaflet map */
 .map-container {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 10;
   width: 100%;
   height: 100%;
   min-height: 0;
   overflow: hidden; margin-bottom: 0;
-  background: #0A0A0C;
+  background: #000000;
 }
 .map-container.map-fill {
-  height: 70vh;
-  min-height: 600px;
+  height: 100%;
+  min-height: 0;
+}
+.leaflet-bottom.leaflet-right {
+  bottom: 24px !important;
+  right: 24px !important;
 }
 .leaflet-container {
+  position: absolute !important;
+  inset: 0 !important;
   z-index: 10 !important;
   width: 100% !important;
   height: 100% !important;
+  background: #000000 !important;
+}
+.leaflet-tile-pane .map-tiles-dark,
+.leaflet-layer.map-tiles-dark {
+  filter: invert(1) grayscale(1) brightness(0.58) contrast(1.32) saturate(0);
 }
 .map-container .leaflet-control-attribution {
-  background: var(--bg); color: var(--text-dim); font-size: 10px;
+  background: #08080A; color: var(--text-dim); font-size: 10px;
 }
 .map-container .leaflet-control-attribution a { color: var(--text-muted); }
-.map-container .leaflet-bar a {
-  background: var(--bg-elev); color: var(--text);
-  border-color: var(--border);
+.map-container .leaflet-bar {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  overflow: hidden;
 }
-.map-container .leaflet-bar a:hover { background: var(--bg); }
+.map-container .leaflet-bar a {
+  background: #08080A;
+  color: #FFFFFF;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+}
+.map-container .leaflet-bar a:hover { background: #000000; color: #D2FF00; }
+.map-container .leaflet-bar a:last-child { border-bottom: 0; }
+.leaflet-overlay-pane .catchment-ring {
+  filter: drop-shadow(0 0 6px rgba(210, 255, 0, 0.45));
+}
+.leaflet-overlay-pane .catchment-ring-hairline {
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.25));
+}
 
 /* Map pins */
 .pin-dot {
@@ -342,7 +370,7 @@ button {
 }
 .pin-athlete {
   background: #D2FF00; border-color: #D2FF00; width: 18px; height: 18px;
-  box-shadow: 0 0 0 3px rgba(210,255,0,0.28);
+  box-shadow: 0 0 0 3px rgba(210,255,0,0.28), 0 0 10px rgba(210,255,0,0.55);
 }
 .pin-sponsor {
   background: var(--bg); width: 14px; height: 14px;
@@ -462,7 +490,7 @@ button {
 }
 .athlete-icon-btn:hover { background: #000000; color: #FFFFFF; border-color: #FFFFFF; }
 
-.roster-discovery { display: grid; gap: 12px; margin: 18px 0 14px; }
+.roster-discovery { display: grid; gap: 12px; margin: 8px 0 0; }
 .roster-search {
   display: flex; align-items: center; gap: 10px;
   border: 1px solid #27272A; background: #08080A; padding: 0 12px;
@@ -473,14 +501,14 @@ button {
   color: #FBFBF9; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px; letter-spacing: 0.04em; outline: none;
 }
-.league-pills { position: relative; z-index: 20; display: flex; flex-wrap: wrap; gap: 8px; }
+.league-pills { position: relative; z-index: 400; display: flex; flex-wrap: wrap; gap: 8px; }
 .league-pill {
-  border: 1px solid #27272A; background: transparent; color: rgba(255,255,255,0.62);
+  border: 1px solid rgba(255, 255, 255, 0.10); background: #08080A; color: #FFFFFF;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
   padding: 7px 10px; cursor: pointer;
 }
-.league-pill.is-active { background: #D2FF00; color: #000; border-color: #D2FF00; }
+.league-pill.is-active { background: #D2FF00; color: #000000; border-color: #D2FF00; }
 .athlete-ig {
   display: inline-flex; align-items: center; gap: 5px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

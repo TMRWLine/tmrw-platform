@@ -50,7 +50,12 @@ export function LivingContours() {
   }, []);
 
   return (
-    <div ref={wrapRef} className="living-contours pointer-events-none" aria-hidden="true">
+    <div
+      ref={wrapRef}
+      className="living-contours"
+      aria-hidden="true"
+      style={{ zIndex: 0, pointerEvents: 'none' }}
+    >
       <svg
         className="living-contours-svg"
         viewBox="0 0 1440 900"

@@ -1,19 +1,11 @@
 import { BadgeCheck, Crosshair, Film, Instagram, Search, ShieldCheck, User } from 'lucide-react';
 import { LayoutGroup, motion } from 'motion/react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import type { Athlete } from '../types';
 import { athleteDisplayName, athleteInitials } from '../lib/formatName';
 import { athleteDossier } from '../lib/athleteDossier';
 import { originForPostcode, type GeoPoint } from '../lib/catchmentLandmarks';
-import { LEAGUE_FILTERS, type LeagueFilterId } from '../lib/rosterDiscovery';
 import { CapitalAllocationTerminal } from './CapitalAllocationTerminal';
-
-type RosterView = 'grid' | 'catchment';
-
-const VIEW_OPTIONS: { id: RosterView; label: string }[] = [
-  { id: 'grid', label: 'SPECIMEN GRID' },
-  { id: 'catchment', label: 'SPATIAL CATCHMENT' },
-];
 
 const EXCLUSIVITY_CATEGORIES = ['AUTOMOTIVE', 'QSR', 'APPAREL', 'BEVERAGE', 'FINANCIAL', 'TELCO'] as const;
 const PERIMETER_KM = 15;
@@ -23,26 +15,19 @@ export function RosterSection({
   athletes,
   loading,
   query,
-  league,
   onQueryChange,
-  onLeagueChange,
   onPrimary,
   onOpenProfile,
   onOpenFilm,
-  mapSlot,
 }: {
   athletes: Athlete[];
   loading: boolean;
   query: string;
-  league: LeagueFilterId;
   onQueryChange: (value: string) => void;
-  onLeagueChange: (value: LeagueFilterId) => void;
   onPrimary: (athlete: Athlete) => void;
   onOpenProfile: (athlete: Athlete) => void;
   onOpenFilm: (athlete: Athlete) => void;
-  mapSlot?: ReactNode;
 }) {
-  const [view, setView] = useState<RosterView>('grid');
   const [targetPostcode, setTargetPostcode] = useState('');
 
   const visibleAthletes = useMemo(
@@ -50,15 +35,9 @@ export function RosterSection({
     [athletes, targetPostcode]
   );
 
-  useEffect(() => {
-    if (view !== 'catchment') return;
-    const pulse = window.setTimeout(() => window.dispatchEvent(new Event('resize')), 80);
-    return () => window.clearTimeout(pulse);
-  }, [view]);
-
   return (
-    <div className="pt-12 md:pt-16">
-      <header className="flex flex-col gap-3 pt-0 pb-6">
+    <div className="pt-0">
+      <header className="flex flex-col gap-3 pt-0 pb-4">
         <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-[#D2FF00] m-0">
           The Postcode Roster // Back the town that backs your business
         </p>
@@ -71,43 +50,16 @@ export function RosterSection({
         </p>
       </header>
       <div className="roster-discovery">
-        <div className="flex flex-wrap items-center gap-3">
-          <div
-            className="bg-neutral-900/80 p-1 rounded-lg border border-white/10 inline-flex items-center gap-1"
-            role="tablist"
-            aria-label="Roster view"
-          >
-            {VIEW_OPTIONS.map((option) => {
-              const active = view === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setView(option.id)}
-                  className={
-                    active
-                      ? 'bg-white/10 text-white shadow-sm rounded-md px-4 py-1.5 text-xs font-mono tracking-wider border-0 cursor-pointer'
-                      : 'text-neutral-400 hover:text-white px-4 py-1.5 text-xs font-mono tracking-wider transition-colors bg-transparent border-0 cursor-pointer'
-                  }
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-          <input
-            type="search"
-            inputMode="numeric"
-            value={targetPostcode}
-            onChange={(e) => setTargetPostcode(e.target.value)}
-            placeholder="ENTER TARGET POSTCODE (E.G. 2026, 4000)..."
-            aria-label="Target postcode"
-            autoComplete="off"
-            className="min-w-[260px] flex-1 bg-neutral-900/60 border border-white/10 rounded-lg px-4 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-white/30"
-          />
-        </div>
+        <input
+          type="search"
+          inputMode="numeric"
+          value={targetPostcode}
+          onChange={(e) => setTargetPostcode(e.target.value)}
+          placeholder="ENTER TARGET POSTCODE (E.G. 2026, 4000)..."
+          aria-label="Target postcode"
+          autoComplete="off"
+          className="min-w-[260px] w-full bg-neutral-900/60 border border-white/10 rounded-lg px-4 py-2 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-white/30"
+        />
         <label className="roster-search" htmlFor="roster-search">
           <Search size={14} />
           <input
@@ -119,86 +71,36 @@ export function RosterSection({
             autoComplete="off"
           />
         </label>
-        {view === 'grid' ? (
-          <LeagueFilterPills league={league} onLeagueChange={onLeagueChange} />
-        ) : null}
       </div>
-      {view === 'catchment' && mapSlot ? (
-        <div className="relative isolate z-10 w-full overflow-hidden mt-4 mb-8 h-[70vh] min-h-[600px]">
-          <div className="absolute top-4 left-4 right-4 z-20 pointer-events-auto">
-            <div className="inline-flex max-w-full rounded-lg border border-white/15 bg-[#08080A]/80 backdrop-blur-md px-2 py-2">
-              <LeagueFilterPills league={league} onLeagueChange={onLeagueChange} />
-            </div>
-          </div>
-          {mapSlot}
+
+      {loading ? (
+        <div className="state">
+          <div className="spinner" />
+          Loading athletes…
         </div>
-      ) : null}
-      {view === 'grid' && <CapitalAllocationTerminal athletes={visibleAthletes} />}
-
-      {view === 'grid' &&
-        (loading ? (
-          <div className="state">
-            <div className="spinner" />
-            Loading athletes…
-          </div>
-        ) : visibleAthletes.length === 0 ? (
-          <div className="state">
-            {targetPostcode.trim()
-              ? 'No athletes operate within that suburban perimeter.'
-              : 'No athletes match that handle, suburb, or league filter.'}
-          </div>
-        ) : (
-          <LayoutGroup>
-            <div className="flex flex-wrap gap-4 mt-2">
-              {visibleAthletes.map((athlete, index) => (
-                <AthleteRosterCard
-                  key={athlete.id ?? `athlete-${index}`}
-                  athlete={athlete}
-                  onPrimary={() => onPrimary(athlete)}
-                  onOpenProfile={onOpenProfile}
-                  onOpenFilm={onOpenFilm}
-                />
-              ))}
-            </div>
-          </LayoutGroup>
-        ))}
-    </div>
-  );
-}
-
-function LeagueFilterPills({
-  league,
-  onLeagueChange,
-}: {
-  league: LeagueFilterId;
-  onLeagueChange: (value: LeagueFilterId) => void;
-}) {
-  return (
-    <LayoutGroup id="league-filter-pills">
-      <div className="league-pills relative z-20" role="tablist" aria-label="League filters">
-        {LEAGUE_FILTERS.map((pill) => (
-          <button
-            key={pill.id}
-            type="button"
-            role="tab"
-            aria-selected={league === pill.id}
-            className={`league-pill relative overflow-hidden${league === pill.id ? ' is-active' : ''}`}
-            style={league === pill.id ? { background: 'transparent' } : undefined}
-            onClick={() => onLeagueChange(pill.id)}
-          >
-            {league === pill.id && (
-              <motion.span
-                layoutId="activeFilterPill"
-                className="absolute inset-0 z-0 bg-[#D2FF00]"
-                transition={{ type: 'spring', damping: 26, stiffness: 210 }}
-                aria-hidden="true"
+      ) : visibleAthletes.length === 0 ? (
+        <div className="state">
+          {targetPostcode.trim()
+            ? 'No athletes operate within that suburban perimeter.'
+            : 'No athletes match that handle, suburb, or league filter.'}
+        </div>
+      ) : (
+        <LayoutGroup>
+          <div className="flex flex-wrap gap-4 mt-0">
+            {visibleAthletes.map((athlete, index) => (
+              <AthleteRosterCard
+                key={athlete.id ?? `athlete-${index}`}
+                athlete={athlete}
+                onPrimary={() => onPrimary(athlete)}
+                onOpenProfile={onOpenProfile}
+                onOpenFilm={onOpenFilm}
               />
-            )}
-            <span className="relative z-10">{pill.label}</span>
-          </button>
-        ))}
-      </div>
-    </LayoutGroup>
+            ))}
+          </div>
+        </LayoutGroup>
+      )}
+      <CapitalAllocationTerminal athletes={visibleAthletes} />
+    </div>
   );
 }
 
