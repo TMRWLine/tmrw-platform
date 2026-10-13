@@ -1,14 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Check, Lock, MapPin, ShieldAlert, X } from 'lucide-react';
 import clsx from 'clsx';
 import { fetchAthletesInRadius, fetchRosterCount } from '../api';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import {
+  getAllocationDisplay,
+  getClearance,
+  getLeagueTag,
+  getReachShare,
+} from '../lib/athleteDisplay';
 import {
   ALLOCATION_RADII_KM,
   getSportComplianceBadges,
   type AllocationRadiusKm,
   type AthleteInRadius,
 } from '../types';
+import { AthleteProfileCard } from './AthleteProfileCard';
+import { Kicker, RegFrame, StadiumBackdrop, VoltPeriod } from './EditorialPrimitives';
 
 /* ------------------------------------------------------------------ */
 /* Constants                                                          */
@@ -17,17 +24,6 @@ import {
 const DEFAULT_POSTCODE = '2026';
 const POSTCODE_PATTERN = /^\d{4}$/;
 const MAX_RADIUS_KM = ALLOCATION_RADII_KM[ALLOCATION_RADII_KM.length - 1];
-
-/** The 23.0 degree kinetic rake, in radians, used to derive every chamfer. */
-const BEAM_TAN = Math.tan((23 * Math.PI) / 180);
-const BEAM_RUN_PX = 36;
-const BEAM_RISE_PX = Number((BEAM_RUN_PX * BEAM_TAN).toFixed(2));
-
-/** Outer shell keeps the full chamfer; the inner face is offset by the 1px hairline. */
-const OUTER_CLIP = `polygon(0 0, calc(100% - ${BEAM_RUN_PX}px) 0, 100% ${BEAM_RISE_PX}px, 100% 100%, 0 100%)`;
-const INNER_RUN_PX = Number((BEAM_RUN_PX - 0.8).toFixed(2));
-const INNER_RISE_PX = Number((BEAM_RISE_PX - 0.34).toFixed(2));
-const INNER_CLIP = `polygon(0 0, calc(100% - ${INNER_RUN_PX}px) 0, 100% ${INNER_RISE_PX}px, 100% 100%, 0 100%)`;
 
 const numberFormat = new Intl.NumberFormat('en-NZ');
 
@@ -41,19 +37,6 @@ type RealtimeState = 'connecting' | 'live' | 'offline';
 export function isPreCleared(athlete: AthleteInRadius): boolean {
   if (!athlete.master_licence_signed) return false;
   return getSportComplianceBadges(athlete.sport, athlete).every((badge) => badge.active);
-}
-
-function hasSportCompliance(athlete: AthleteInRadius): boolean {
-  return getSportComplianceBadges(athlete.sport, athlete).every((badge) => badge.active);
-}
-
-function initials(name: string): string {
-  return name
-    .split(' ')
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
 }
 
 /** Eases a displayed integer towards its target, and snaps when reduced motion is requested. */
@@ -108,7 +91,7 @@ function MasterMark({ className }: { className?: string }) {
         aria-hidden="true"
         className="mx-[0.2em] inline-block h-[0.95em] w-[0.11em] translate-y-[0.08em] rotate-beam bg-volt"
       />
-      <span aria-hidden="true" className="inline-block h-[0.16em] w-[0.16em] rounded-full bg-signal-white" />
+      <span aria-hidden="true" className="inline-block h-[0.16em] w-[0.16em] rounded-full bg-volt" />
     </span>
   );
 }
@@ -117,27 +100,41 @@ function MasterMark({ className }: { className?: string }) {
 /* Live counter                                                       */
 /* ------------------------------------------------------------------ */
 
-function Counter({ index, label, value, live }: { index: string; label: string; value: number; live: boolean }) {
+/** Deck style metric: oversized numeral, ruled mono label, one plain sentence beneath. */
+function Counter({
+  index,
+  label,
+  description,
+  value,
+  live,
+}: {
+  index: string;
+  label: string;
+  description: string;
+  value: number;
+  live: boolean;
+}) {
   const shown = useCountUp(value);
   return (
-    <div className="bg-carbon p-5">
-      <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-signal-white/50">
-        <span>{`[${index}] ${label}`}</span>
-        <span
-          aria-hidden="true"
-          className={clsx(
-            'inline-block h-1.5 w-1.5 rounded-full',
-            live ? 'bg-volt motion-safe:animate-volt-pulse' : 'bg-signal-white/30',
-          )}
-        />
-      </div>
+    <div className="flex flex-col border-solid border-obsidian/15 py-8 max-md:[&:not(:first-child)]:border-t md:px-8 md:py-10 md:odd:border-r md:odd:pl-0 md:even:pr-0 md:[&:nth-child(n+3)]:border-t">
       <div
-        className="mt-3 font-display text-5xl font-extrabold tracking-[-0.03em] text-signal-white"
+        className="m-0 font-display text-metric uppercase text-obsidian"
         aria-live="polite"
         aria-atomic="true"
       >
         {numberFormat.format(shown)}
       </div>
+      <div className="mt-5 flex items-center justify-between border-t border-solid border-obsidian pt-3 font-mono text-kicker font-bold uppercase text-obsidian">
+        <span>{`[${index}] ${label}`}</span>
+        <span
+          aria-hidden="true"
+          className={clsx(
+            'inline-block h-2 w-2 rounded-full ring-1 ring-obsidian',
+            live ? 'bg-volt motion-safe:animate-volt-pulse' : 'bg-obsidian/25',
+          )}
+        />
+      </div>
+      <p className="m-0 mt-2 max-w-sm text-sm leading-relaxed text-obsidian/70">{description}</p>
     </div>
   );
 }
@@ -178,7 +175,7 @@ function Radar({
               r={r}
               fill="none"
               strokeWidth={active ? 1.5 : 1}
-              className={active ? 'stroke-volt' : 'stroke-hairline'}
+              className={active ? 'stroke-volt' : 'stroke-edge'}
             />
             <text
               x={centre + 3}
@@ -191,8 +188,8 @@ function Radar({
           </g>
         );
       })}
-      <line x1={centre} y1={centre - outer} x2={centre} y2={centre + outer} strokeWidth={1} className="stroke-hairline" />
-      <line x1={centre - outer} y1={centre} x2={centre + outer} y2={centre} strokeWidth={1} className="stroke-hairline" />
+      <line x1={centre} y1={centre - outer} x2={centre} y2={centre + outer} strokeWidth={1} className="stroke-edge" />
+      <line x1={centre - outer} y1={centre} x2={centre + outer} y2={centre} strokeWidth={1} className="stroke-edge" />
 
       {athletes.map((athlete) => {
         const r = Math.min(athlete.distance_km / MAX_RADIUS_KM, 1) * outer;
@@ -215,143 +212,6 @@ function Radar({
 }
 
 /* ------------------------------------------------------------------ */
-/* Athlete card                                                       */
-/* ------------------------------------------------------------------ */
-
-function ChecklistRow({ label, ok, light }: { label: string; ok: boolean; light: boolean }) {
-  return (
-    <li
-      className={clsx(
-        'flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em]',
-        light ? 'text-carbon/70' : 'text-signal-white/70',
-      )}
-    >
-      {ok ? (
-        <Check size={12} aria-hidden="true" className="text-cobalt" />
-      ) : (
-        <X size={12} aria-hidden="true" className={light ? 'text-carbon/40' : 'text-signal-white/40'} />
-      )}
-      <span>{label}</span>
-      <span className="sr-only">{ok ? 'complete' : 'outstanding'}</span>
-    </li>
-  );
-}
-
-function AthleteCard({
-  athlete,
-  radiusKm,
-  light,
-  highlighted,
-  onHighlight,
-}: {
-  athlete: AthleteInRadius;
-  radiusKm: AllocationRadiusKm;
-  light: boolean;
-  highlighted: boolean;
-  onHighlight: (id: string | null) => void;
-}) {
-  const cleared = isPreCleared(athlete);
-  const distancePct = Math.min((athlete.distance_km / radiusKm) * 100, 100);
-
-  return (
-    <article
-      aria-label={`${athlete.name}, ${athlete.sport ?? 'sport unlisted'}`}
-      className={clsx('relative', light ? 'bg-signal-white' : 'bg-hairline')}
-      style={{ clipPath: OUTER_CLIP }}
-      onMouseEnter={() => onHighlight(athlete.id)}
-      onMouseLeave={() => onHighlight(null)}
-      onFocus={() => onHighlight(athlete.id)}
-      onBlur={() => onHighlight(null)}
-      tabIndex={0}
-    >
-      <svg
-        aria-hidden="true"
-        width={BEAM_RUN_PX}
-        height={BEAM_RISE_PX}
-        viewBox={`0 0 ${BEAM_RUN_PX} ${BEAM_RISE_PX}`}
-        className="absolute right-0 top-0 z-10"
-      >
-        <line
-          x1={0}
-          y1={0}
-          x2={BEAM_RUN_PX}
-          y2={BEAM_RISE_PX}
-          strokeWidth={3}
-          className={cleared ? 'stroke-cobalt' : highlighted ? 'stroke-volt' : 'stroke-signal-white/30'}
-        />
-      </svg>
-
-      <div
-        className={clsx('m-px flex flex-col gap-4 p-5', light ? 'bg-signal-white text-carbon' : 'bg-carbon text-signal-white')}
-        style={{ clipPath: INNER_CLIP }}
-      >
-        <div className="flex items-start gap-3 pr-8">
-          <div
-            aria-hidden="true"
-            className={clsx(
-              'flex h-10 w-10 shrink-0 items-center justify-center font-mono text-sm font-medium',
-              light ? 'bg-carbon text-signal-white' : 'bg-signal-white text-carbon',
-            )}
-          >
-            {initials(athlete.name)}
-          </div>
-          <div className="min-w-0">
-            <h3 className="truncate font-display text-lg font-extrabold leading-tight tracking-[-0.03em]">{athlete.name}</h3>
-            <p className={clsx('truncate text-sm', light ? 'text-carbon/60' : 'text-signal-white/60')}>
-              {athlete.sport ?? 'Sport unlisted'}
-            </p>
-          </div>
-        </div>
-
-        <div
-          className={clsx(
-            'flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.12em]',
-            light ? 'text-carbon/70' : 'text-signal-white/70',
-          )}
-        >
-          <span className="inline-flex items-center gap-1">
-            <MapPin size={11} aria-hidden="true" />
-            {athlete.distance_km.toFixed(1)} KM
-          </span>
-          {athlete.postcode && <span>{`PC ${athlete.postcode}`}</span>}
-          {athlete.follower_count != null && <span>{`${numberFormat.format(athlete.follower_count)} FOLLOWERS`}</span>}
-        </div>
-
-        <div
-          className={clsx('h-px w-full', light ? 'bg-hairline-light' : 'bg-hairline')}
-          role="presentation"
-        >
-          <div className="h-px bg-volt" style={{ width: `${distancePct}%` }} />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {cleared ? (
-            <span className="inline-flex w-fit items-center gap-1.5 bg-cobalt px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-signal-white">
-              <Lock size={11} aria-hidden="true" />
-              PRE-CLEARED
-            </span>
-          ) : (
-            <span
-              className={clsx(
-                'inline-flex w-fit items-center gap-1.5 border border-solid px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.18em]',
-                light ? 'border-carbon/30 text-carbon/70' : 'border-signal-white/30 text-signal-white/70',
-              )}
-            >
-              <ShieldAlert size={11} aria-hidden="true" />
-              AWAITING CLEARANCE
-            </span>
-          )}
-          <ul className="flex flex-col gap-1.5">
-            <ChecklistRow label="Master licence signed" ok={athlete.master_licence_signed} light={light} />
-            <ChecklistRow label="Sport compliance verified" ok={hasSportCompliance(athlete)} light={light} />
-          </ul>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /* Console                                                            */
 /* ------------------------------------------------------------------ */
 
@@ -361,10 +221,9 @@ export function BrandAllocationConsole({ defaultPostcode = DEFAULT_POSTCODE }: {
   const [radiusKm, setRadiusKm] = useState<AllocationRadiusKm>(10);
   const [athletes, setAthletes] = useState<AthleteInRadius[]>([]);
   const [rosterTotal, setRosterTotal] = useState(0);
-  // The mount effect below fetches immediately when Supabase is configured, so start in the
-  // loading state to avoid a one frame flash of the empty state. When Supabase is not
-  // configured no fetch runs, so loading stays false and the setup message shows instead.
-  const [loading, setLoading] = useState(isSupabaseConfigured);
+  // The first fetch is always pending on mount, so start loading and let `load` clear it.
+  // This keeps `loading` a pure fetch state, independent of the configuration flag.
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [inputError, setInputError] = useState<string | null>(null);
   const [realtime, setRealtime] = useState<RealtimeState>('connecting');
@@ -374,7 +233,10 @@ export function BrandAllocationConsole({ defaultPostcode = DEFAULT_POSTCODE }: {
 
   const load = useCallback(
     async (silent: boolean) => {
-      if (!isSupabaseConfigured) return;
+      if (!isSupabaseConfigured) {
+        setLoading(false);
+        return;
+      }
       const id = ++requestId.current;
       if (!silent) setLoading(true);
       setError(null);
@@ -441,53 +303,122 @@ export function BrandAllocationConsole({ defaultPostcode = DEFAULT_POSTCODE }: {
   );
   const live = realtime === 'live';
 
+  const resultsHeading = !isSupabaseConfigured
+    ? 'Roster offline'
+    : loading || error
+      ? 'Scanning the catchment'
+      : `${athletes.length} ${athletes.length === 1 ? 'athlete' : 'athletes'} inside ${radiusKm}km`;
+
   return (
     <section
       aria-labelledby="brand-allocation-heading"
-      className="isolate min-h-screen bg-carbon font-sans text-signal-white"
+      className="isolate min-h-screen bg-canvas font-sans text-signal-white"
     >
-      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12">
-        {/* Masthead */}
-        <header className="flex flex-col gap-6 border-b border-solid border-hairline pb-10">
-          <MasterMark className="text-6xl md:text-7xl" />
-          <p className="font-descriptor text-2xl font-medium uppercase tracking-[0.04em] text-signal-white md:text-3xl">
-            LINE UP YOUR FUTURE
-          </p>
-          <div className="flex flex-col gap-3">
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-signal-white/50">
-              [ BRAND ALLOCATION TERMINAL ]
-            </p>
-            <h1
-              id="brand-allocation-heading"
-              className="font-display text-3xl font-extrabold tracking-[-0.03em] md:text-4xl"
-            >
-              Brand Allocation Terminal
-            </h1>
-            <p className="max-w-2xl text-base text-signal-white/70">
-              Choose a postcode and a radius to see the broadcast talent your brand can allocate to today. Every athlete
-              listed is scored against their master licence and sport compliance status.
-            </p>
-          </div>
-        </header>
+      {/* Hero: dark stadium frame */}
+      <div className="relative overflow-hidden bg-canvas">
+        <StadiumBackdrop />
+        <div className="relative mx-auto max-w-6xl px-6 py-10 md:py-14">
+          <RegFrame className="flex min-h-[640px] flex-col justify-between px-6 py-8 md:min-h-[720px] md:px-12 md:py-10">
+            <header className="flex items-start justify-between gap-6 border-b border-solid border-edge pb-5">
+              <div className="flex flex-col gap-2">
+                <MasterMark className="text-4xl md:text-5xl" />
+                <p className="m-0 font-descriptor text-sm font-medium uppercase tracking-[0.3em] text-signal-white/85">
+                  Line up your future
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-1.5 text-right font-mono text-kicker uppercase text-signal-white/70">
+                <span>[ Brand allocation terminal ]</span>
+                <span className="hidden sm:inline">Australia &amp; New Zealand // Est 2026</span>
+              </div>
+            </header>
 
-        {/* Live counters */}
-        <div className="!grid grid-cols-2 gap-px bg-hairline lg:grid-cols-4">
-          <Counter index="01" label="BROADCAST TALENT" value={rosterTotal} live={live} />
-          <Counter index="02" label="IN RADIUS" value={athletes.length} live={live} />
-          <Counter index="03" label="PRE-CLEARED" value={preClearedCount} live={live} />
-          <Counter index="04" label="COMBINED REACH" value={combinedReach} live={live} />
+            <div className="flex flex-col gap-6 py-12">
+              <Kicker tone="volt" pulse>
+                Postcode allocation // live roster
+              </Kicker>
+              <h1 id="brand-allocation-heading" className="m-0 font-display text-display-xl uppercase text-white">
+                Brand
+                <br />
+                Allocation
+                <br />
+                Terminal
+                <VoltPeriod />
+              </h1>
+              <p className="m-0 max-w-xl text-lede text-signal-white/80">
+                Choose a postcode and a radius to see the broadcast talent your brand can allocate to today. Every
+                athlete listed is scored against their master licence and sport compliance status.
+              </p>
+            </div>
+
+            <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-solid border-edge pt-4 font-mono text-kicker uppercase text-signal-white/70">
+              <span>{`[ PC ${postcode} // ${radiusKm}KM ]`}</span>
+              <span className="flex items-center gap-2 font-bold text-volt">
+                <span
+                  aria-hidden="true"
+                  className={clsx(
+                    'block h-1.5 w-1.5 rounded-full',
+                    live ? 'bg-volt motion-safe:animate-volt-pulse' : 'bg-signal-white/30',
+                  )}
+                />
+                {live ? 'LIVE FEED CONNECTED' : realtime === 'connecting' ? 'CONNECTING TO LIVE FEED' : 'LIVE FEED OFFLINE'}
+              </span>
+            </footer>
+          </RegFrame>
         </div>
-        <p className="-mt-6 font-mono text-[10px] uppercase tracking-[0.2em] text-signal-white/40">
-          {live ? 'LIVE FEED CONNECTED' : realtime === 'connecting' ? 'CONNECTING TO LIVE FEED' : 'LIVE FEED OFFLINE'}
-        </p>
+      </div>
 
-        {/* Selector and radar */}
-        <div className="!grid gap-10 lg:grid-cols-[1fr_320px]">
-          <div className="flex flex-col gap-8">
+      {/* Metrics: chalk ledger band, as on the deck's evidence slides */}
+      <div className="bg-chalk text-obsidian">
+        <div className="mx-auto max-w-6xl px-6 py-14">
+          <Kicker tone="ink" className="mb-8">
+            [ The numbers // live allocation ]
+          </Kicker>
+          <div className="!grid grid-cols-1 border-y border-solid border-obsidian md:grid-cols-2">
+            <Counter
+              index="01"
+              label="BROADCAST TALENT"
+              description="Athletes registered on the roster, live from the platform."
+              value={rosterTotal}
+              live={live}
+            />
+            <Counter
+              index="02"
+              label="IN RADIUS"
+              description="Athletes sitting inside the locked postcode catchment."
+              value={athletes.length}
+              live={live}
+            />
+            <Counter
+              index="03"
+              label="PRE-CLEARED"
+              description="Master licence signed and sport compliance verified, ready to back today."
+              value={preClearedCount}
+              live={live}
+            />
+            <Counter
+              index="04"
+              label="COMBINED REACH"
+              description="Followers across every athlete inside the catchment."
+              value={combinedReach}
+              live={live}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Discovery: postcode, radius and roster */}
+      <div className="mx-auto flex max-w-6xl flex-col gap-16 px-6 py-16">
+        <div className="!grid gap-10 lg:grid-cols-[1fr_380px]">
+          <div className="flex flex-col gap-10">
+            <h2 className="m-0 font-display text-headline uppercase text-white">
+              Lock the postcode. Set the radius
+              <VoltPeriod />
+            </h2>
+
             <form onSubmit={handlePostcodeSubmit} noValidate className="flex flex-col gap-3">
               <label
                 htmlFor="allocation-postcode"
-                className="font-mono text-[10px] uppercase tracking-[0.2em] text-signal-white/50"
+                className="font-mono text-kicker uppercase text-signal-white/50"
               >
                 [ ORIGIN POSTCODE ]
               </label>
@@ -501,31 +432,28 @@ export function BrandAllocationConsole({ defaultPostcode = DEFAULT_POSTCODE }: {
                   onChange={(e) => setPostcodeInput(e.target.value.replace(/\D/g, ''))}
                   aria-invalid={inputError != null}
                   aria-describedby={inputError ? 'allocation-postcode-error' : undefined}
-                  className="w-32 border border-solid border-hairline bg-carbon px-4 py-3 font-mono text-lg tracking-[0.2em] text-signal-white outline-none placeholder:text-signal-white/30 focus:border-volt"
+                  className="w-40 rounded-none border border-solid border-edge-strong bg-canvas px-4 py-3.5 font-mono text-2xl tracking-[0.2em] text-signal-white outline-none placeholder:text-signal-white/30 focus:border-volt"
                   placeholder="2026"
                 />
                 <button
                   type="submit"
-                  className="bg-volt px-5 py-3 font-mono text-xs font-medium uppercase tracking-[0.18em] text-carbon transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-white"
+                  className="cursor-pointer rounded-none border-0 bg-volt px-7 py-3.5 font-mono text-xs font-bold uppercase tracking-telemetry text-canvas transition-all duration-150 hover:bg-volt-bright hover:shadow-volt-halo focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-white"
                 >
                   LOCK POSTCODE
                 </button>
               </div>
               {inputError && (
-                <p id="allocation-postcode-error" role="alert" className="text-sm text-signal-white">
+                <p id="allocation-postcode-error" role="alert" className="m-0 text-sm text-signal-white">
                   {inputError}
                 </p>
               )}
             </form>
 
             <div className="flex flex-col gap-3">
-              <span
-                id="allocation-radius-label"
-                className="font-mono text-[10px] uppercase tracking-[0.2em] text-signal-white/50"
-              >
+              <span id="allocation-radius-label" className="font-mono text-kicker uppercase text-signal-white/50">
                 [ RADIUS ]
               </span>
-              <div role="radiogroup" aria-labelledby="allocation-radius-label" className="flex gap-px bg-hairline">
+              <div role="radiogroup" aria-labelledby="allocation-radius-label" className="flex gap-px border border-solid border-edge bg-edge">
                 {ALLOCATION_RADII_KM.map((km) => {
                   const selected = km === radiusKm;
                   return (
@@ -536,8 +464,8 @@ export function BrandAllocationConsole({ defaultPostcode = DEFAULT_POSTCODE }: {
                       aria-checked={selected}
                       onClick={() => setRadiusKm(km)}
                       className={clsx(
-                        'flex-1 px-6 py-3 font-mono text-sm font-medium uppercase tracking-[0.14em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-white',
-                        selected ? 'bg-volt text-carbon' : 'bg-carbon text-signal-white hover:bg-hairline',
+                        'flex-1 cursor-pointer rounded-none border-0 px-6 py-4 font-mono text-sm font-bold uppercase tracking-telemetry transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-white',
+                        selected ? 'bg-volt text-canvas' : 'bg-canvas text-signal-white hover:bg-obsidian hover:text-volt',
                       )}
                     >
                       {`${km}KM`}
@@ -548,30 +476,40 @@ export function BrandAllocationConsole({ defaultPostcode = DEFAULT_POSTCODE }: {
             </div>
           </div>
 
-          <div className="flex justify-center lg:justify-end">
-            <Radar athletes={athletes} radiusKm={radiusKm} postcode={postcode} highlightedId={highlightedId} />
+          <div className="flex flex-col self-start border border-solid border-edge bg-obsidian">
+            <div className="flex justify-center p-6">
+              <Radar athletes={athletes} radiusKm={radiusKm} postcode={postcode} highlightedId={highlightedId} />
+            </div>
+            <div className="flex items-center justify-between gap-4 border-t border-solid border-edge bg-canvas px-4 py-3 font-mono text-kicker uppercase text-signal-white/80">
+              <span>{`[ RADAR // PC ${postcode} ]`}</span>
+              <span className="font-bold text-volt">{`${athletes.length} IN ${radiusKm}KM`}</span>
+            </div>
           </div>
         </div>
 
         {/* Results */}
-        <div className="flex flex-col gap-4" aria-busy={loading}>
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-signal-white/50">
-            {`[ ROSTER // PC ${postcode} // ${radiusKm}KM ]`}
-          </p>
+        <div className="flex flex-col gap-8" aria-busy={loading}>
+          <div className="flex flex-col gap-4 border-t border-solid border-edge pt-8">
+            <Kicker>{`[ ROSTER // PC ${postcode} // ${radiusKm}KM ]`}</Kicker>
+            <h2 className="m-0 font-display text-headline uppercase text-white">
+              {resultsHeading}
+              <VoltPeriod />
+            </h2>
+          </div>
 
           {!isSupabaseConfigured && (
-            <p className="border border-solid border-hairline p-5 text-sm text-signal-white/70">
+            <p className="m-0 border border-solid border-edge bg-obsidian p-5 text-sm text-signal-white/70">
               Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local.
             </p>
           )}
 
           {error && (
-            <div role="alert" className="flex flex-col items-start gap-3 border border-solid border-hairline p-5">
-              <p className="text-sm text-signal-white">{error}</p>
+            <div role="alert" className="flex flex-col items-start gap-3 border border-solid border-edge bg-obsidian p-5">
+              <p className="m-0 text-sm text-signal-white">{error}</p>
               <button
                 type="button"
                 onClick={() => void load(false)}
-                className="border border-solid border-signal-white px-4 py-2 font-mono text-xs uppercase tracking-[0.18em] text-signal-white hover:bg-signal-white hover:text-carbon"
+                className="cursor-pointer rounded-none border border-solid border-signal-white bg-transparent px-4 py-2 font-mono text-xs uppercase tracking-telemetry text-signal-white hover:bg-signal-white hover:text-canvas"
               >
                 RETRY
               </button>
@@ -579,29 +517,42 @@ export function BrandAllocationConsole({ defaultPostcode = DEFAULT_POSTCODE }: {
           )}
 
           {loading && !error && isSupabaseConfigured && (
-            <div className="!grid gap-px md:grid-cols-2 xl:grid-cols-3" aria-label="Loading broadcast talent">
+            <div className="!grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Loading broadcast talent">
               {[0, 1, 2].map((n) => (
-                <div key={n} className="h-56 bg-hairline motion-safe:animate-pulse" />
+                <div key={n} className="h-[560px] border border-solid border-edge bg-obsidian motion-safe:animate-pulse" />
               ))}
             </div>
           )}
 
           {!loading && !error && isSupabaseConfigured && athletes.length === 0 && (
-            <p className="border border-solid border-hairline p-5 text-sm text-signal-white/70">
+            <p className="m-0 border border-solid border-edge bg-obsidian p-5 text-sm text-signal-white/70">
               {`No broadcast talent sit within ${radiusKm}km of postcode ${postcode}, or that postcode is not yet mapped. Widen the radius or try another postcode.`}
             </p>
           )}
 
           {!loading && !error && athletes.length > 0 && (
-            <div className="!grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="!grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
               {athletes.map((athlete, index) => (
-                <AthleteCard
+                <AthleteProfileCard
                   key={athlete.id}
-                  athlete={athlete}
-                  radiusKm={radiusKm}
-                  light={index % 2 === 1}
+                  index={index}
+                  name={athlete.name}
+                  sport={athlete.sport}
+                  club={athlete.current_club}
+                  allocation={getAllocationDisplay(athlete.agreement_status)}
+                  suburb={null}
+                  postcode={athlete.postcode}
+                  leagueTag={getLeagueTag(athlete.sport)}
+                  catchment={{
+                    distanceKm: athlete.distance_km,
+                    radiusKm,
+                    bearingDegrees: athlete.bearing_degrees,
+                  }}
+                  followers={athlete.follower_count}
+                  reachShare={getReachShare(athlete.follower_count, combinedReach)}
+                  clearance={getClearance(athlete)}
                   highlighted={athlete.id === highlightedId}
-                  onHighlight={setHighlightedId}
+                  onActiveChange={(active) => setHighlightedId(active ? athlete.id : null)}
                 />
               ))}
             </div>

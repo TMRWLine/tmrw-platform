@@ -10,7 +10,6 @@ import {
   Check,
   Users,
   Shield,
-  ShieldCheck,
   Handshake,
   PenLine,
   Film,
@@ -36,6 +35,13 @@ import {
 import type { Athlete, AthleteLocation, MatchedSponsor, Sponsor, Agreement } from './types';
 import { fetchAgreements } from './api';
 import { getSportComplianceBadges, getUniversalComplianceBadges } from './types';
+import {
+  getAllocationDisplay,
+  getClearance,
+  getLeagueTag,
+  getReachShare,
+} from './lib/athleteDisplay';
+import { AthleteProfileCard } from './components/AthleteProfileCard';
 import { BrandKitTab } from './components/AthleteProfileModal';
 import { MessageThread } from './components/MessageThread';
 import { StatementsPanel } from './components/StatementsPanel';
@@ -230,9 +236,13 @@ export function MarketplaceApp() {
   }
 
   const panelOpen = activeAthlete !== null;
+  const combinedReach = useMemo(
+    () => athletes.reduce((sum, a) => sum + (a.follower_count ?? 0), 0),
+    [athletes],
+  );
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${view === 'athlete' ? ' is-stadium' : ''}`}>
       <header className="topnav glass-header">
         <div className="brand">
           <div className="brand-lockup">
@@ -283,12 +293,12 @@ export function MarketplaceApp() {
           </h1>
           <p>
             {view === 'athlete'
-              ? `${athletes.length} athletes · find nearby sponsors and generate outreach copy`
+              ? `${athletes.length} athletes · find nearby sponsors and generate outreach copy.`
               : view === 'sponsor'
-                ? `${sponsors.length} sponsors · browse merchant categories and budgets`
+                ? `${sponsors.length} sponsors · browse merchant categories and budgets.`
                 : view === 'marketplace'
-                  ? 'Multi-criteria search · filter by sport, gender, followers, and radius'
-                  : 'Sponsors post open briefs · athletes apply based on postcode proximity'}
+                  ? 'Multi-criteria search · filter by sport, gender, followers, and radius.'
+                  : 'Sponsors post open briefs · athletes apply based on postcode proximity.'}
           </p>
         </div>
 
@@ -328,10 +338,12 @@ export function MarketplaceApp() {
                 >All Postcodes</button>
               </div>
             </div>
-            <div className="grid">
-              {athletes.map((a) => (
+            <div className="!grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {athletes.map((a, index) => (
                 <AthleteCard
                   key={a.id}
+                  index={index}
+                  combinedReach={combinedReach}
                   athlete={a}
                   onFindNearby={() => handleFindNearby(a)}
                   onProfile={() => openProfile(a)}
@@ -592,57 +604,63 @@ function statusBadge(status: string): { label: string; cls: string } {
 
 function AthleteCard({
   athlete,
+  index,
+  combinedReach,
   onFindNearby,
   onProfile,
   onMediaStudio,
 }: {
   athlete: Athlete;
+  index: number;
+  combinedReach: number;
   onFindNearby: () => void;
   onProfile: () => void;
   onMediaStudio: () => void;
 }) {
-  const st = statusBadge(athlete.agreement_status);
-  const leagueTag = getLeagueTag(athlete.sport);
   return (
-    <div className="athlete-card">
-      <div className="athlete-card-top">
-        <div className="athlete-avatar">{initials(athlete.name)}</div>
-        <div className="athlete-card-info">
-          <h3 className="athlete-card-name">{athlete.name}</h3>
-          <span className="athlete-card-sport">{athlete.sport ?? '—'}</span>
+    <AthleteProfileCard
+      index={index}
+      name={athlete.name}
+      sport={athlete.sport}
+      club={athlete.current_club}
+      allocation={getAllocationDisplay(athlete.agreement_status)}
+      suburb={athlete.location}
+      postcode={athlete.postcode}
+      leagueTag={getLeagueTag(athlete.sport)}
+      catchment={null}
+      followers={athlete.follower_count}
+      reachShare={getReachShare(athlete.follower_count, combinedReach)}
+      clearance={getClearance(athlete)}
+      actions={
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            className="inline-flex w-full cursor-pointer items-center justify-center gap-3 whitespace-nowrap rounded-none border-0 bg-volt px-5 py-[18px] font-mono text-sm font-bold uppercase tracking-telemetry text-canvas transition-all duration-150 hover:bg-volt-bright hover:shadow-volt-halo focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-white"
+            onClick={onFindNearby}
+          >
+            <Handshake size={18} aria-hidden="true" /> Sponsor Athlete
+          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-none border border-solid border-edge-strong bg-canvas px-3 py-3 font-mono text-kicker font-bold uppercase text-signal-white transition-colors duration-150 hover:border-volt hover:text-volt focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-white"
+              onClick={onProfile}
+              aria-label="View profile"
+            >
+              <Users size={14} aria-hidden="true" /> Profile
+            </button>
+            <button
+              type="button"
+              className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-none border border-solid border-edge-strong bg-canvas px-3 py-3 font-mono text-kicker font-bold uppercase text-signal-white transition-colors duration-150 hover:border-volt hover:text-volt focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-white"
+              onClick={onMediaStudio}
+              aria-label="AI Media Studio"
+            >
+              <Film size={14} aria-hidden="true" /> Media Studio
+            </button>
+          </div>
         </div>
-        <span className={`athlete-status ${st.cls}`}>{st.label}</span>
-      </div>
-      <div className="athlete-card-tags">
-        {athlete.location && (
-          <span className="athlete-tag">
-            <MapPin size={11} /> {athlete.location}
-          </span>
-        )}
-        {athlete.postcode && (
-          <span className="athlete-tag">{athlete.postcode}</span>
-        )}
-        {leagueTag && (
-          <span className="athlete-league-badge">{leagueTag}</span>
-        )}
-        {athlete.master_licence_signed && (
-          <span className="athlete-tag ip-lock">
-            <ShieldCheck size={11} /> IP Lock
-          </span>
-        )}
-      </div>
-      <div className="athlete-card-actions">
-        <button className="btn btn-primary athlete-sponsor-btn" onClick={onFindNearby}>
-          <Handshake size={14} /> Sponsor Athlete
-        </button>
-        <button className="athlete-icon-btn" onClick={onProfile} aria-label="View profile">
-          <Users size={15} />
-        </button>
-        <button className="athlete-icon-btn" onClick={onMediaStudio} aria-label="AI Media Studio">
-          <Film size={15} />
-        </button>
-      </div>
-    </div>
+      }
+    />
   );
 }
 
@@ -654,24 +672,10 @@ export default function App() {
   const showMarketplace = new URLSearchParams(window.location.search).get('view') === 'marketplace';
   if (showMarketplace) return <MarketplaceApp />;
   return (
-    <div className="min-h-screen bg-carbon">
+    <div className="min-h-screen bg-canvas">
       <BrandAllocationConsole />
     </div>
   );
-}
-
-function getLeagueTag(sport: string | null): string | null {
-  if (!sport) return null;
-  const s = sport.toLowerCase();
-  if (s.includes('basketball')) return '@nbl1';
-  if (s.includes('soccer') || s.includes('football')) return '@nplnsw';
-  if (s.includes('rugby') && s.includes('union')) return '@shuteshield';
-  if (s.includes('rugby') && s.includes('league')) return '@nrl';
-  if (s.includes('afl')) return '@vfl';
-  if (s.includes('netball')) return '@ssn';
-  if (s.includes('cricket')) return '@nswpremier';
-  if (s.includes('combat')) return '@csa';
-  return null;
 }
 
 function MatchCard({
@@ -694,7 +698,7 @@ function MatchCard({
       <div className="match-top">
         <div>
           <h4>{sponsor.business_name}</h4>
-          <div className="sub">{sponsor.merchant_category ?? 'Uncategorized'}</div>
+          <div className="sub">{sponsor.merchant_category ?? 'Uncategorised'}</div>
         </div>
         <span className="badge accent">
           <MapPin size={12} /> {sponsor.distance_km.toFixed(1)} km
@@ -770,7 +774,7 @@ function ProfileModal({
           <div style={{ flex: 1 }}>
             <h2>{athlete.name}</h2>
             <div className="sub">
-              {athlete.sport ?? '—'}
+              {athlete.sport ?? 'N/A'}
               {athlete.current_club ? ` · ${athlete.current_club}` : ''}
             </div>
           </div>
@@ -806,17 +810,17 @@ function ProfileModal({
           {tab === 'overview' && (
             <>
               <div className="info-grid">
-                <InfoRow label="Position" value={athlete.profile_data?.position ?? '—'} />
-                <InfoRow label="Age" value={athlete.profile_data?.age != null ? String(athlete.profile_data.age) : '—'} />
+                <InfoRow label="Position" value={athlete.profile_data?.position ?? 'N/A'} />
+                <InfoRow label="Age" value={athlete.profile_data?.age != null ? String(athlete.profile_data.age) : 'N/A'} />
                 <InfoRow
                   label="Market Value"
-                  value={typeof mv === 'number' ? formatCurrency(mv, mvCurrency) : '—'}
+                  value={typeof mv === 'number' ? formatCurrency(mv, mvCurrency) : 'N/A'}
                 />
                 <InfoRow
                   label="Followers"
-                  value={athlete.follower_count != null ? athlete.follower_count.toLocaleString() : '—'}
+                  value={athlete.follower_count != null ? athlete.follower_count.toLocaleString() : 'N/A'}
                 />
-                <InfoRow label="Postcode" value={athlete.postcode ?? '—'} />
+                <InfoRow label="Postcode" value={athlete.postcode ?? 'N/A'} />
                 <InfoRow label="Agreement" value={statusBadge(athlete.agreement_status).label} />
               </div>
 
@@ -829,12 +833,12 @@ function ProfileModal({
                   {athlete.master_licence_signed ? (
                     <>
                       <BadgeCheck size={16} />
-                      <span>2-Year Master Licence MOU — Signed</span>
+                      <span>2-Year Master Licence MOU: Signed</span>
                     </>
                   ) : (
                     <>
                       <X size={16} />
-                      <span>2-Year Master Licence MOU — Not Signed</span>
+                      <span>2-Year Master Licence MOU: Not Signed</span>
                     </>
                   )}
                 </div>
@@ -1180,7 +1184,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
   const grossExGst = activeDeal?.deal_value != null ? Number(activeDeal.deal_value) : fallbackGross;
   const currency = getAthleteCurrency(athlete);
 
-  // GST / Tax breakdown — 10% GST on top of ex-GST amount
+  // GST / Tax breakdown: 10% GST on top of ex-GST amount
   const gstAmount = activeDeal?.gst_amount != null ? Number(activeDeal.gst_amount) : Math.round(grossExGst * 0.1);
   const totalIncGst = activeDeal?.total_inc_gst != null ? Number(activeDeal.total_inc_gst) : grossExGst + gstAmount;
 
@@ -1303,16 +1307,16 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         <div className="ledger-tenure-grid">
           <div className="ledger-tenure-cell">
             <span className="ledger-tenure-label">Start Date</span>
-            <span className="ledger-tenure-value">{startDate ? new Date(startDate).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+            <span className="ledger-tenure-value">{startDate ? new Date(startDate).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
           </div>
           <div className="ledger-tenure-cell">
             <span className="ledger-tenure-label">End Date</span>
-            <span className="ledger-tenure-value">{endDate ? new Date(endDate).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+            <span className="ledger-tenure-value">{endDate ? new Date(endDate).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
           </div>
           <div className="ledger-tenure-cell">
             <span className="ledger-tenure-label">Days to Expiry</span>
             <span className={`ledger-tenure-value ${daysToExpiry != null && daysToExpiry <= 30 ? 'warn' : ''}`}>
-              {daysToExpiry != null ? `${daysToExpiry} days` : '—'}
+              {daysToExpiry != null ? `${daysToExpiry} days` : 'N/A'}
             </span>
           </div>
           <div className="ledger-tenure-cell">
@@ -1339,7 +1343,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
               <p>
                 This agreement expires in {daysToExpiry} day{daysToExpiry !== 1 ? 's' : ''}.
                 {autoRenewFlag
-                  ? ' Auto-renewal is enabled — the agreement will renew automatically unless cancelled.'
+                  ? ' Auto-renewal is enabled, so the agreement will renew automatically unless cancelled.'
                   : ' Review and initiate renewal to maintain continuity.'}
               </p>
             </div>
@@ -1537,7 +1541,7 @@ function ADMModal({
               <div className="adm-override-notice">
                 <Eye size={14} />
                 <span>
-                  Manual review required — automated matches will not trigger outreach
+                  Manual review required: automated matches will not trigger outreach
                   automatically.
                 </span>
               </div>

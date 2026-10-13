@@ -4,9 +4,11 @@
 @tailwind utilities;
 
 /* ============================================================
-   tmrw/. — Swiss International Typographic Style
+   tmrw/. Swiss International Typographic Style
    Postcode Hero Marketplace · Protocol
    Cotton white surfaces · Carbon black typography · Hairline dividers
+   The roster view opts into the dark stadium theme (.is-stadium),
+   defined at the foot of this file and documented in DESIGN.md.
    ============================================================ */
 
 :root {
@@ -53,7 +55,7 @@ button { font-family: inherit; cursor: pointer; }
 
 .app-shell { min-height: 100%; display: flex; flex-direction: column; }
 
-/* ===== Top Navigation — Swiss Header ===== */
+/* ===== Top Navigation: Swiss Header ===== */
 
 .topnav {
   position: sticky; top: 0; z-index: 50;
@@ -242,7 +244,7 @@ button { font-family: inherit; cursor: pointer; }
 .leaflet-popup-tip { background: var(--bg-elev); border: var(--hairline); }
 .leaflet-popup-content { margin: 10px 14px; }
 
-/* ===== Cards (Swiss — hairline, no radius, no shadow) ===== */
+/* ===== Cards (Swiss: hairline, no radius, no shadow) ===== */
 
 .card {
   background: var(--bg-card);
@@ -254,69 +256,6 @@ button { font-family: inherit; cursor: pointer; }
 }
 .card:hover { background: #F7F7F5; }
 
-/* ===== B2B Athlete Card ===== */
-.athlete-card {
-  display: flex; flex-direction: column; gap: 14px;
-  padding: 20px; background: var(--bg-card);
-  transition: background .15s ease; height: 100%;
-}
-.athlete-card:hover { background: #F7F7F5; }
-.athlete-card-top {
-  display: flex; align-items: center; gap: 12px;
-}
-.athlete-avatar {
-  width: 44px; height: 44px; flex-shrink: 0;
-  display: grid; place-items: center; font-weight: 800; font-size: 16px;
-  color: var(--bg);
-  background: var(--text);
-}
-.athlete-card-info { flex: 1; min-width: 0; }
-.athlete-card-name {
-  margin: 0; font-size: 15px; font-weight: 700; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  letter-spacing: -0.01em;
-}
-.athlete-card-sport {
-  font-size: 12px; color: var(--text-muted); margin-top: 2px; display: block;
-  text-transform: uppercase; letter-spacing: 0.04em;
-}
-.athlete-status {
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  padding: 4px 8px; white-space: nowrap;
-  border: var(--hairline); color: var(--text-muted);
-  background: var(--bg); letter-spacing: 0.06em;
-}
-.athlete-status.success { color: var(--text); border-color: var(--text); background: var(--text); color: var(--bg); }
-.athlete-status.warning { color: var(--text-muted); border-color: var(--border); }
-.athlete-status.accent { color: var(--text); border-color: var(--text); }
-.athlete-card-tags {
-  display: flex; flex-wrap: wrap; gap: 6px;
-}
-.athlete-tag {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 10px; font-weight: 600; padding: 3px 8px;
-  border: var(--hairline); color: var(--text-muted);
-  background: var(--bg); text-transform: uppercase; letter-spacing: 0.04em;
-}
-.athlete-tag.ip-lock {
-  color: var(--text); border-color: var(--text); background: var(--text); color: var(--bg);
-}
-.athlete-league-badge {
-  font-size: 10px; font-weight: 700; padding: 3px 8px;
-  color: var(--text); background: var(--bg);
-  border: var(--hairline); text-transform: uppercase; letter-spacing: 0.04em;
-}
-.athlete-card-actions {
-  display: flex; gap: 8px; margin-top: auto; align-items: center;
-}
-.athlete-sponsor-btn { flex: 1; justify-content: center; }
-.athlete-icon-btn {
-  border: var(--hairline); background: var(--bg); color: var(--text);
-  width: 38px; height: 38px; display: grid; place-items: center;
-  transition: background .15s ease; flex-shrink: 0;
-}
-.athlete-icon-btn:hover { background: var(--text); color: var(--bg); }
-
 .card-top { display: flex; align-items: flex-start; gap: 12px; }
 .avatar {
   width: 44px; height: 44px; flex-shrink: 0;
@@ -326,7 +265,7 @@ button { font-family: inherit; cursor: pointer; }
 .card h3 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
 .card .sub { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
 
-/* Badges — Swiss style */
+/* Badges: Swiss style */
 .badge {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 11px; font-weight: 600; padding: 3px 8px;
@@ -340,7 +279,7 @@ button { font-family: inherit; cursor: pointer; }
 .card-meta { display: flex; flex-wrap: wrap; gap: 6px; }
 .card-actions { display: flex; gap: 8px; margin-top: auto; }
 
-/* ===== Buttons — Monolithic Swiss ===== */
+/* ===== Buttons: Monolithic Swiss ===== */
 .btn {
   border: var(--hairline); background: var(--bg); color: var(--text);
   padding: 10px 16px; font-weight: 600; font-size: 12px;
@@ -482,7 +421,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 .admin-run-btn { justify-content: center; }
 
-/* Terminal log — monochrome */
+/* Terminal log: monochrome */
 .admin-terminal {
   background: #1A1A1A; border: var(--hairline);
   padding: 14px 16px; height: 280px; overflow-y: auto;
@@ -515,7 +454,7 @@ button { font-family: inherit; cursor: pointer; }
   .media-studio-btn { padding: 7px 10px; }
 }
 
-/* Corporate Sign In CTA — monolithic black */
+/* Corporate Sign In CTA: monolithic black */
 .signin-cta {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 10px 18px;
@@ -694,134 +633,6 @@ button { font-family: inherit; cursor: pointer; }
   text-transform: uppercase; letter-spacing: 0.04em;
 }
 .tl-card-trigger:hover { background: var(--text); color: var(--bg); }
-
-/* ===== Hero Section — 23° Kinetic Split Layout ===== */
-
-.hero-section { margin-bottom: 48px; }
-
-.hero-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
-  align-items: stretch;
-}
-@media (min-width: 1024px) {
-  .hero-grid {
-    grid-template-columns: 58fr 42fr;
-    gap: 0;
-  }
-}
-
-/* Left column */
-.hero-content-col {
-  display: flex; flex-direction: column; gap: 24px;
-  padding: 48px 0 48px 0;
-  justify-content: center;
-}
-@media (max-width: 1023px) {
-  .hero-content-col { padding: 32px 0; }
-}
-
-.hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: 10px; font-weight: 700; color: var(--text);
-  text-transform: uppercase; letter-spacing: 0.12em;
-  padding: 6px 12px;
-  border: var(--hairline);
-  background: var(--bg);
-  align-self: flex-start;
-}
-
-.hero-headline {
-  margin: 0; font-size: clamp(36px, 5vw, 60px);
-  font-weight: 800; line-height: 1.05; letter-spacing: -0.035em;
-  color: var(--text);
-  text-transform: none;
-}
-.hero-accent { color: var(--text); font-weight: 400; }
-
-.hero-value-statement {
-  margin: 0; font-size: 16px; line-height: 1.65;
-  color: var(--text-muted); max-width: 520px;
-}
-
-.hero-kpi-row {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
-  background: var(--border); border: var(--hairline);
-}
-@media (max-width: 768px) { .hero-kpi-row { grid-template-columns: 1fr; } }
-.hero-kpi-card {
-  display: flex; flex-direction: column; gap: 6px;
-  padding: 18px 20px; background: var(--bg-card);
-  transition: background .15s ease;
-}
-.hero-kpi-card:hover { background: #F7F7F5; }
-.hero-kpi-icon { color: var(--text); margin-bottom: 4px; }
-.hero-kpi-value {
-  font-size: 22px; font-weight: 800; color: var(--text);
-  letter-spacing: -0.02em;
-}
-.hero-kpi-label {
-  font-size: 10px; color: var(--text-muted); text-transform: uppercase;
-  letter-spacing: 0.06em; font-weight: 600; line-height: 1.4;
-}
-
-.hero-cta-row {
-  display: flex; gap: 12px; flex-wrap: wrap;
-  margin-top: 8px;
-}
-.hero-cta-primary {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-weight: 700; font-size: 12px;
-  padding: 14px 22px;
-  background: #000000; color: #FFFFFF; border: 1px solid #000000;
-  cursor: pointer;
-  text-transform: uppercase; letter-spacing: 0.04em;
-  transition: background .15s ease, color .15s ease;
-}
-.hero-cta-primary:hover { background: var(--bg); color: var(--text); }
-.hero-cta-secondary {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-weight: 600; font-size: 12px;
-  padding: 14px 22px;
-  background: transparent; color: var(--text);
-  border: var(--hairline); cursor: pointer;
-  text-transform: uppercase; letter-spacing: 0.04em;
-  transition: background .15s ease, color .15s ease;
-}
-.hero-cta-secondary:hover { background: var(--text); color: var(--bg); }
-
-/* Right column — 23° kinetic image mask */
-.hero-image-col {
-  position: relative;
-  overflow: hidden;
-  min-height: 400px;
-}
-@media (max-width: 1023px) { .hero-image-col { min-height: 320px; } }
-
-.hero-kinetic-frame {
-  position: absolute; inset: 0;
-  overflow: hidden;
-  clip-path: polygon(0 15%, 100% 0, 100% 85%, 0 100%);
-}
-.hero-kinetic-image {
-  width: 100%; height: 100%; object-fit: cover;
-  filter: grayscale(100%) contrast(1.15);
-}
-.hero-kinetic-overlay {
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.15) 100%);
-  pointer-events: none;
-}
-.hero-angle-marker {
-  position: absolute; top: 24px; right: 24px;
-  display: flex; align-items: center; gap: 6px;
-  font-size: 9px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.12em;
-  color: #FFF; background: rgba(0,0,0,0.7);
-  padding: 5px 10px; border: 1px solid rgba(255,255,255,0.2);
-  z-index: 3;
-}
 
 /* ===== Sponsorship Tiers ===== */
 .tiers-section { margin-bottom: 32px; }
@@ -1813,3 +1624,97 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ===== Spin animation (used by spinner) ===== */
 .spin { animation: spin .8s linear infinite; }
+
+/* ============================================================
+   Dark stadium theme (roster view)
+   Scoped by .is-stadium on .app-shell. Re-points the shared
+   custom properties so every legacy surface follows the deck:
+   pure black canvas, #0A0A0A containers, translucent hairlines,
+   volt for the single primary action. Overlays reset to light.
+   ============================================================ */
+
+.app-shell.is-stadium {
+  --bg: #000000;
+  --bg-elev: #0A0A0A;
+  --bg-card: #0A0A0A;
+  --border: rgba(255, 255, 255, 0.15);
+  --border-strong: rgba(255, 255, 255, 0.30);
+  --text: #F9F9F8;
+  --text-muted: rgba(249, 249, 248, 0.65);
+  --text-dim: rgba(249, 249, 248, 0.45);
+  --volt: #D2FF00;
+  background: #000000;
+  color: var(--text);
+}
+
+/* Modals, drawers and the sign sheet stay on the light ledger surface. */
+.is-stadium .panel,
+.is-stadium .modal,
+.is-stadium .sign-modal {
+  --bg: #FBFBF9;
+  --bg-elev: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --border: #D0D0CE;
+  --border-strong: #B0B0AE;
+  --text: #000000;
+  --text-muted: #5A5A58;
+  --text-dim: #8A8A88;
+  color: var(--text);
+}
+.is-stadium .panel-overlay { background: rgba(0, 0, 0, 0.78); backdrop-filter: none; }
+
+/* Header */
+.is-stadium .topnav { border-bottom-color: var(--border); }
+.is-stadium .brand-slash,
+.is-stadium .brand-lockup { color: var(--text); }
+.is-stadium .brand-slash { color: var(--volt); }
+.is-stadium .brand-dot { background: var(--volt); }
+.is-stadium .nav-links button.active { border-bottom-color: var(--volt); }
+.is-stadium .signin-cta {
+  background: transparent; color: var(--text); border-color: var(--border-strong);
+}
+.is-stadium .signin-cta:hover { background: var(--text); color: #000000; border-color: var(--text); }
+.is-stadium .compliance-badge-nav .dot { background: var(--volt); }
+
+/* Roster page heading */
+.is-stadium .page-head { border-bottom-color: var(--border); }
+.is-stadium .page-head h1 {
+  font-size: clamp(2rem, 4.4vw, 3.5rem);
+  font-weight: 900; text-transform: uppercase;
+  letter-spacing: -0.05em; line-height: 0.92;
+}
+.is-stadium .page-head p {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Sponsorship tiers */
+.is-stadium .tiers-grid { background: var(--border); }
+.is-stadium .tiers-header h2 {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.24em;
+}
+.is-stadium .tier-card:hover { background: #111111; }
+.is-stadium .tier-card.selected {
+  background: var(--volt); color: #000000;
+}
+.is-stadium .tier-card.selected .tier-card-title,
+.is-stadium .tier-card.selected .tier-card-tier { color: #000000; }
+.is-stadium .tier-card.selected .tier-card-desc { color: rgba(0, 0, 0, 0.72); }
+.is-stadium .tier-card.selected .tier-card-tag {
+  border-color: rgba(0, 0, 0, 0.35); color: rgba(0, 0, 0, 0.8); background: transparent;
+}
+.is-stadium .tier-card.selected .tier-card-icon { background: #000000; color: var(--volt); border-color: #000000; }
+
+/* Radius filter */
+.is-stadium .radius-toggle button.active { background: var(--volt); color: #000000; }
+.is-stadium .radius-toggle button:not(.active):hover { color: var(--volt); }
+
+/* Shared states on the dark ground */
+.is-stadium .btn-primary { background: var(--volt); color: #000000; border-color: var(--volt); }
+.is-stadium .btn-primary:hover { background: #D4FF00; color: #000000; border-color: #D4FF00; }
+.is-stadium .state .spinner { border-top-color: var(--volt); }
+
+@media (prefers-reduced-motion: reduce) {
+  .is-stadium * { animation-duration: 0.01ms !important; }
+}

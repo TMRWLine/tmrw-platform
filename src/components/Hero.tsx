@@ -1,72 +1,79 @@
-import { ArrowRight, TrendingUp, ShieldCheck, MapPin, Clapperboard } from 'lucide-react';
+import { ArrowRight, Clapperboard } from 'lucide-react';
+import { Kicker, RegFrame, StadiumBackdrop, VoltPeriod } from './EditorialPrimitives';
 
 interface HeroProps {
   onExplore: () => void;
   onMediaStudio: () => void;
 }
 
+const KPIS = [
+  { index: '01', value: '$8.4M', label: 'Pipeline Value' },
+  { index: '02', value: '11', label: 'Signed Master Licences' },
+  { index: '03', value: '18 km', label: 'Average Proximity Match' },
+];
+
 export function Hero({ onExplore, onMediaStudio }: HeroProps) {
   return (
-    <section className="hero-section">
-      <div className="hero-grid">
-        {/* Left Column — 58% */}
-        <div className="hero-content-col">
-          <div className="hero-eyebrow">
-            <span>[ POSTCODE HERO MARKETPLACE // PROTOCOL ]</span>
-          </div>
+    <section className="relative mb-12 overflow-hidden bg-canvas text-signal-white">
+      <StadiumBackdrop />
+      <div className="relative px-4 py-6 md:px-6 md:py-8">
+        <RegFrame className="flex min-h-[620px] flex-col justify-between px-6 py-8 md:px-10 md:py-9">
+          <header className="flex items-center justify-between gap-4 border-b border-solid border-edge pb-4">
+            <Kicker tone="muted" className="text-signal-white/70">
+              [ Postcode Hero Marketplace // Protocol ]
+            </Kicker>
+            <span className="hidden font-mono text-kicker uppercase text-signal-white/70 sm:inline">
+              Australia &amp; New Zealand // Est 2026
+            </span>
+          </header>
 
-          <h1 className="hero-headline">
-            Programmatic Sports Infrastructure for Enterprise Brands
-          </h1>
+          <div className="flex flex-col gap-6 py-10">
+            <Kicker tone="volt" pulse>
+              Allocate by postcode // verified talent
+            </Kicker>
+            <h1 className="m-0 font-display text-display uppercase text-white">
+              Programmatic Sports Infrastructure For Enterprise Brands
+              <VoltPeriod />
+            </h1>
+            <p className="m-0 max-w-xl text-lede text-signal-white/80">
+              Deploy targeted in-kind and monetary sponsorship across regional athlete rosters by postcode, with
+              automated compliance and split-payout execution.
+            </p>
 
-          <p className="hero-value-statement">
-            Deploy targeted in-kind and monetary sponsorship across regional athlete rosters
-            by postcode with automated compliance and split-payout execution.
-          </p>
-
-          <div className="hero-kpi-row">
-            <div className="hero-kpi-card">
-              <TrendingUp size={16} className="hero-kpi-icon" />
-              <div className="hero-kpi-value">$8.4M</div>
-              <div className="hero-kpi-label">Pipeline Value</div>
+            <div className="flex flex-wrap gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onExplore}
+                className="inline-flex cursor-pointer items-center gap-2.5 rounded-none border-0 bg-volt px-7 py-4 font-mono text-xs font-bold uppercase tracking-telemetry text-canvas transition-all duration-150 hover:bg-volt-bright hover:shadow-volt-halo focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-white"
+              >
+                Explore Athlete Roster
+                <ArrowRight size={16} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={onMediaStudio}
+                className="inline-flex cursor-pointer items-center gap-2.5 rounded-none border border-solid border-edge-strong bg-canvas/60 px-7 py-4 font-mono text-xs font-bold uppercase tracking-telemetry text-signal-white transition-colors duration-150 hover:border-volt hover:text-volt focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-white"
+              >
+                <Clapperboard size={14} aria-hidden="true" />
+                AI Media Studio
+              </button>
             </div>
-            <div className="hero-kpi-card">
-              <ShieldCheck size={16} className="hero-kpi-icon" />
-              <div className="hero-kpi-value">11</div>
-              <div className="hero-kpi-label">Signed Master Licences</div>
-            </div>
-            <div className="hero-kpi-card">
-              <MapPin size={16} className="hero-kpi-icon" />
-              <div className="hero-kpi-value">18 km</div>
-              <div className="hero-kpi-label">Average Proximity Match</div>
-            </div>
           </div>
 
-          <div className="hero-cta-row">
-            <button className="hero-cta-primary" onClick={onExplore}>
-              Explore Athlete Roster
-              <ArrowRight size={15} />
-            </button>
-            <button className="hero-cta-secondary" onClick={onMediaStudio}>
-              <Clapperboard size={14} />
-              AI Media Studio
-            </button>
-          </div>
-        </div>
-
-        {/* Right Column — 42% — 23° Kinetic Image Mask */}
-        <div className="hero-image-col">
-          <div className="hero-kinetic-frame">
-            <img
-              className="hero-kinetic-image"
-              src="https://images.pexels.com/photos/4761359/pexels-photo-4761359.jpeg?auto=compress&cs=tinysrgb&w=1200"
-              alt="Sprinter in kinetic motion"
-              loading="eager"
-            />
-            <div className="hero-kinetic-overlay" />
-          </div>
-          <div className="hero-angle-marker">23.0° RAKE</div>
-        </div>
+          <dl className="m-0 !grid grid-cols-1 border-t border-solid border-edge sm:grid-cols-3">
+            {KPIS.map((kpi) => (
+              <div
+                key={kpi.index}
+                className="flex flex-col gap-3 border-solid border-edge py-6 max-sm:[&:not(:first-child)]:border-t sm:px-6 sm:first:pl-0 sm:[&:not(:first-child)]:border-l"
+              >
+                <dd className="m-0 font-display text-headline font-black text-white">{kpi.value}</dd>
+                <dt className="m-0 border-t border-solid border-signal-white pt-3 font-mono text-kicker font-bold uppercase text-signal-white">
+                  {`[${kpi.index}] ${kpi.label}`}
+                </dt>
+              </div>
+            ))}
+          </dl>
+        </RegFrame>
       </div>
     </section>
   );
