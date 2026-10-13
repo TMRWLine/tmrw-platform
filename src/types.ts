@@ -205,6 +205,28 @@ export interface Athlete {
   updated_at: string;
 }
 
+/** Allowed radius steps for the Brand Allocation Console. */
+export const ALLOCATION_RADII_KM = [5, 10, 15] as const;
+export type AllocationRadiusKm = (typeof ALLOCATION_RADII_KM)[number];
+
+/** Row shape returned by the get_athletes_in_radius stored procedure. */
+export interface AthleteInRadius {
+  id: string;
+  name: string;
+  sport: string | null;
+  current_club: string | null;
+  agreement_status: AgreementStatus;
+  postcode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  follower_count: number | null;
+  master_licence_signed: boolean;
+  nrl_tpa_registered: boolean;
+  shute_shield_compliant: boolean;
+  distance_km: number;
+  bearing_degrees: number;
+}
+
 export type SponsorCategory =
   | 'Sporting Goods'
   | 'Food & Beverage'

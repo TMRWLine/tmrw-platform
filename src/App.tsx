@@ -45,6 +45,7 @@ import { Navbar, type NavView } from './components/Navbar';
 import { AdminDrawer } from './components/AdminDrawer';
 import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { Hero } from './components/Hero';
+import { BrandAllocationConsole } from './components/BrandAllocationConsole';
 import { SponsorshipTiers, type TierKey } from './components/SponsorshipTiers';
 
 import {
@@ -646,7 +647,11 @@ function AthleteCard({
 }
 
 export default function App() {
-  return <MarketplaceApp />;
+  return (
+    <div className="min-h-screen bg-carbon">
+      <BrandAllocationConsole />
+    </div>
+  );
 }
 
 function getLeagueTag(sport: string | null): string | null {

@@ -1,3 +1,8 @@
+/* Tailwind layers sit first so the hand-written rules below win on specificity ties. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ============================================================
    tmrw/. — Swiss International Typographic Style
    Postcode Hero Marketplace · Protocol

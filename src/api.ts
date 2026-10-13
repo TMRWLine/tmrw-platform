@@ -1,4 +1,4 @@
-import type { Athlete, AthleteLocation, MatchedSponsor, MatchSponsorsResponse, OutreachRequest, OutreachResponse, Agreement, Message, SenderType, Campaign, CampaignApplication } from './types';
+import type { Athlete, AthleteInRadius, AthleteLocation, MatchedSponsor, MatchSponsorsResponse, OutreachRequest, OutreachResponse, Agreement, Message, SenderType, Campaign, CampaignApplication } from './types';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 
 const API_BASE = '/api';
@@ -11,6 +11,33 @@ export async function fetchAthletes(): Promise<Athlete[]> {
     .order('created_at', { ascending: true });
   if (error) throw new Error(`Failed to load athletes: ${error.message}`);
   return (data ?? []) as Athlete[];
+}
+
+/**
+ * Spatial roster query. All radius lookups run through the get_athletes_in_radius
+ * stored procedure so PostGIS does the distance work, not the browser.
+ */
+export async function fetchAthletesInRadius(
+  postcode: string,
+  radiusKm: number
+): Promise<AthleteInRadius[]> {
+  if (!isSupabaseConfigured || !supabase) return [];
+  const { data, error } = await supabase.rpc('get_athletes_in_radius', {
+    origin_postcode: postcode,
+    radius_km: radiusKm,
+  });
+  if (error) throw new Error(`Failed to load athletes in radius: ${error.message}`);
+  return (data ?? []) as AthleteInRadius[];
+}
+
+/** Total broadcast talent on the roster, used by the live counters. */
+export async function fetchRosterCount(): Promise<number> {
+  if (!isSupabaseConfigured || !supabase) return 0;
+  const { count, error } = await supabase
+    .from('athletes')
+    .select('id', { count: 'exact', head: true });
+  if (error) throw new Error(`Failed to count athletes: ${error.message}`);
+  return count ?? 0;
 }
 
 export async function fetchSponsors(): Promise<MatchedSponsor[]> {
