@@ -1,0 +1,6 @@
+# .cursorrules // tmrw/. Master Production Rules
+
+- Language & Grammar: Enforce New Zealand English spelling and grammar across all copy, documentation, and user interfaces (e.g., prioritising, commercialisation, programmes, optimise, licencing).
+- Punctuation Guardrails: Strict prohibition on em-dashes across all written copy. Sentences must be punctuated using commas, semicolons, or short separate statements. Every descriptive sentence or bullet point must terminate with a clean full stop. Monospace kickers and bracketed indices remain strictly unpunctuated.
+- Design System: Read and apply DESIGN.md tokens across all components.
+- Database: Wire all spatial queries through the get_athletes_in_radius stored procedure in Supabase.

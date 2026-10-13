@@ -361,6 +361,9 @@ export function BrandAllocationConsole({ defaultPostcode = DEFAULT_POSTCODE }: {
   const [radiusKm, setRadiusKm] = useState<AllocationRadiusKm>(10);
   const [athletes, setAthletes] = useState<AthleteInRadius[]>([]);
   const [rosterTotal, setRosterTotal] = useState(0);
+  // The mount effect below fetches immediately when Supabase is configured, so start in the
+  // loading state to avoid a one frame flash of the empty state. When Supabase is not
+  // configured no fetch runs, so loading stays false and the setup message shows instead.
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [error, setError] = useState<string | null>(null);
   const [inputError, setInputError] = useState<string | null>(null);

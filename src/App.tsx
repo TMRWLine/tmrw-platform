@@ -646,7 +646,13 @@ function AthleteCard({
   );
 }
 
+/**
+ * The Brand Allocation Console is the default view. The full marketplace remains
+ * available at `?view=marketplace`, so no existing feature is removed.
+ */
 export default function App() {
+  const showMarketplace = new URLSearchParams(window.location.search).get('view') === 'marketplace';
+  if (showMarketplace) return <MarketplaceApp />;
   return (
     <div className="min-h-screen bg-carbon">
       <BrandAllocationConsole />
