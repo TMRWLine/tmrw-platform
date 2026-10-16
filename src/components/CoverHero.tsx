@@ -63,7 +63,20 @@ export const CoverHero: React.FC<CoverHeroProps> = ({
           </div>
         </nav>
 
-        <div className="w-24 pointer-events-none" />
+        <div className="flex items-center gap-3">
+  <button
+    onClick={onAthletePortal}
+    className="bg-white text-black font-mono text-[9px] uppercase tracking-[0.2em] px-4 py-2 rounded-full hover:bg-[#D2FF00] transition-colors font-semibold"
+  >
+    Claim Backing
+  </button>
+  <button
+    onClick={onSponsorAccess}
+    className="border border-white/30 text-white font-mono text-[9px] uppercase tracking-[0.2em] px-4 py-2 rounded-full hover:bg-white/10 transition-colors font-semibold"
+  >
+    Deploy Capital
+  </button>
+</div>
       </header>
 
       {/* Monolithic Broadsheet Typography */}
