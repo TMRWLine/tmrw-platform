@@ -65,11 +65,36 @@ export function normalizeAthlete(row: Record<string, unknown> | Athlete | null |
   };
 }
 
+/**
+ * Illustrative roster returned by `fetchAthletes` when the live query fails.
+ * Sports, clubs, coordinates and follower counts are placeholders only.
+ */
+const FALLBACK_ATHLETE_ROWS: Record<string, unknown>[] = [
+  { id: 'fallback-1', name: 'Liam Toole', sport: 'Rugby League', current_club: 'Harbourside Club', agreement_status: 'active', latitude: -33.8688, longitude: 151.2093, postcode: '2000', follower_count: 12000 },
+  { id: 'fallback-2', name: 'Lachlan Miller', sport: 'Rugby Union', current_club: 'Northside Club', agreement_status: 'pending', latitude: -33.7969, longitude: 151.1796, postcode: '2069', follower_count: 8500 },
+  { id: 'fallback-3', name: 'Mitchell Vance', sport: 'Basketball', current_club: 'Westside Club', agreement_status: 'no_agreement', latitude: -33.8151, longitude: 151.0011, postcode: '2150', follower_count: 6400 },
+  { id: 'fallback-4', name: 'Sam Sterling', sport: 'Soccer', current_club: 'Eastern Club', agreement_status: 'active', latitude: -33.8915, longitude: 151.2767, postcode: '2026', follower_count: 9800 },
+  { id: 'fallback-5', name: 'Kal Slater', sport: 'Surfing', current_club: 'Coastal Club', agreement_status: 'pending', latitude: -33.9173, longitude: 151.2313, postcode: '2034', follower_count: 15200 },
+  { id: 'fallback-6', name: 'Marco Rossi', sport: 'Soccer', current_club: 'Inner City Club', agreement_status: 'no_agreement', latitude: -33.8832, longitude: 151.2009, postcode: '2010', follower_count: 7100 },
+  { id: 'fallback-7', name: 'Hunter Bligh', sport: 'Cricket', current_club: 'Southern Club', agreement_status: 'active', latitude: -34.0, longitude: 151.1, postcode: '2229', follower_count: 5300 },
+  { id: 'fallback-8', name: 'Maya Lin', sport: 'Netball', current_club: 'Parkside Club', agreement_status: 'pending', latitude: -33.7506, longitude: 150.6919, postcode: '2750', follower_count: 6900 },
+].map((row) => ({ ...row, created_at: '2026-01-01T00:00:00.000Z' }));
+
+/** Fresh copies on every call, so callers can never mutate the shared fallback. */
+function fallbackAthletes(): Athlete[] {
+  return FALLBACK_ATHLETE_ROWS.map((row) => normalizeAthlete(row));
+}
+
 export async function fetchAthletes(): Promise<Athlete[]> {
   if (!isSupabaseConfigured || !supabase) return [];
-  const { data, error } = await supabase.from('athletes').select('*').order('created_at', { ascending: true });
-  if (error) throw new Error(`Failed to load athletes: ${error.message}`);
-  return (data ?? []).map((row) => normalizeAthlete(row as Record<string, unknown>));
+  try {
+    const { data, error } = await supabase.from('athletes').select('*').order('created_at', { ascending: true });
+    if (error) throw new Error(`Failed to load athletes: ${error.message}`);
+    return (data ?? []).map((row) => normalizeAthlete(row as Record<string, unknown>));
+  } catch (e) {
+    console.warn('fetchAthletes failed, using fallback athletes.', e);
+    return fallbackAthletes();
+  }
 }
 
 /** Sydney CBD — default origin for roster proximity and tier queries. */
@@ -218,32 +243,174 @@ export async function fetchCollabDrops(athlete?: Athlete | null): Promise<Collab
   }
 }
 
-export async function fetchSponsors(): Promise<MatchedSponsor[]> {
-  if (!isSupabaseConfigured || !supabase) return [];
-  const { data, error } = await supabase
-    .from('sponsors')
-    .select('*')
-    .order('created_at', { ascending: true });
-  if (error) throw new Error(`Failed to load sponsors: ${error.message}`);
-  return (data ?? []).map((s) => ({
-    ...(s as MatchedSponsor),
+/**
+ * Illustrative sponsors returned by `fetchSponsors` when the live query fails.
+ * Names, budgets, and coordinates are placeholders only.
+ */
+const FALLBACK_SPONSORS: MatchedSponsor[] = [
+  {
+    id: 'fallback-sponsor-1',
+    business_name: 'Harbourside Performance',
+    merchant_category: 'Sporting Goods',
+    budget_allocation: 25000,
+    contact_email: 'partnerships@harbourside.example',
+    target_radius_meters: 5000,
+    location: 'Sydney CBD',
+    postcode: '2000',
+    latitude: -33.8688,
+    longitude: 151.2093,
+    currency: 'AUD',
+    created_at: '2026-01-01T00:00:00.000Z',
+    updated_at: '2026-01-01T00:00:00.000Z',
     distance_meters: 0,
     distance_km: 0,
-    lat: (s as MatchedSponsor).latitude ?? null,
-    lng: (s as MatchedSponsor).longitude ?? null,
-  }));
+    lat: -33.8688,
+    lng: 151.2093,
+  },
+  {
+    id: 'fallback-sponsor-2',
+    business_name: 'Northside Recovery',
+    merchant_category: 'Health & Wellness',
+    budget_allocation: 18000,
+    contact_email: 'hello@northside-recovery.example',
+    target_radius_meters: 8000,
+    location: 'North Sydney',
+    postcode: '2060',
+    latitude: -33.8406,
+    longitude: 151.207,
+    currency: 'AUD',
+    created_at: '2026-01-15T00:00:00.000Z',
+    updated_at: '2026-01-15T00:00:00.000Z',
+    distance_meters: 0,
+    distance_km: 0,
+    lat: -33.8406,
+    lng: 151.207,
+  },
+  {
+    id: 'fallback-sponsor-3',
+    business_name: 'Coastal Fuel Co',
+    merchant_category: 'Food & Beverage',
+    budget_allocation: 12000,
+    contact_email: 'brands@coastalfuel.example',
+    target_radius_meters: 15000,
+    location: 'Bondi',
+    postcode: '2026',
+    latitude: -33.8915,
+    longitude: 151.2767,
+    currency: 'AUD',
+    created_at: '2026-02-01T00:00:00.000Z',
+    updated_at: '2026-02-01T00:00:00.000Z',
+    distance_meters: 0,
+    distance_km: 0,
+    lat: -33.8915,
+    lng: 151.2767,
+  },
+];
+
+/** Fresh copies on every call, so callers can never mutate the shared fallback. */
+function fallbackSponsors(): MatchedSponsor[] {
+  return FALLBACK_SPONSORS.map((row) => ({ ...row }));
+}
+
+export async function fetchSponsors(): Promise<MatchedSponsor[]> {
+  if (!isSupabaseConfigured || !supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from('sponsors')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (error) throw new Error(`Failed to load sponsors: ${error.message}`);
+    return (data ?? []).map((s) => ({
+      ...(s as MatchedSponsor),
+      distance_meters: 0,
+      distance_km: 0,
+      lat: (s as MatchedSponsor).latitude ?? null,
+      lng: (s as MatchedSponsor).longitude ?? null,
+    }));
+  } catch (e) {
+    console.warn('fetchSponsors failed, using fallback sponsors.', e);
+    return fallbackSponsors();
+  }
+}
+
+/**
+ * Illustrative deals returned by `fetchAgreements` when the live query fails.
+ * Tied to the fallback athlete and sponsor ids.
+ */
+const FALLBACK_AGREEMENTS: Agreement[] = [
+  {
+    id: 'fallback-agreement-1',
+    athlete_id: 'fallback-1',
+    sponsor_id: 'fallback-sponsor-1',
+    status: 'active',
+    deal_value: 20000,
+    gst_amount: 2000,
+    total_inc_gst: 22000,
+    start_date: '2026-01-01',
+    end_date: '2026-12-31',
+    exclusivity_category: 'Sporting Goods',
+    auto_renew_flag: true,
+    terms: 'Season-long category exclusivity across social and match-day content.',
+    created_at: '2026-01-01T00:00:00.000Z',
+    updated_at: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'fallback-agreement-2',
+    athlete_id: 'fallback-4',
+    sponsor_id: 'fallback-sponsor-3',
+    status: 'pending',
+    deal_value: 8000,
+    gst_amount: 800,
+    total_inc_gst: 8800,
+    start_date: '2026-03-01',
+    end_date: '2026-08-31',
+    exclusivity_category: 'Food & Beverage',
+    auto_renew_flag: false,
+    terms: 'Six-month trial covering in-feed content only.',
+    created_at: '2026-02-10T00:00:00.000Z',
+    updated_at: '2026-02-10T00:00:00.000Z',
+  },
+  {
+    id: 'fallback-agreement-3',
+    athlete_id: 'fallback-7',
+    sponsor_id: 'fallback-sponsor-2',
+    status: 'active',
+    deal_value: 15000,
+    gst_amount: 1500,
+    total_inc_gst: 16500,
+    start_date: '2026-02-01',
+    end_date: '2027-01-31',
+    exclusivity_category: 'Health & Wellness',
+    auto_renew_flag: true,
+    terms: 'Twelve-month recovery partnership with quarterly content drops.',
+    created_at: '2026-02-01T00:00:00.000Z',
+    updated_at: '2026-02-01T00:00:00.000Z',
+  },
+];
+
+/** Fresh copies. When `athleteId` matches a fallback athlete, only their deals are returned. */
+function fallbackAgreements(athleteId?: string): Agreement[] {
+  const rows = FALLBACK_AGREEMENTS.map((row) => ({ ...row }));
+  if (!athleteId) return rows;
+  const matched = rows.filter((row) => row.athlete_id === athleteId);
+  return matched.length > 0 ? matched : rows;
 }
 
 export async function fetchAgreements(athleteId?: string): Promise<Agreement[]> {
   if (!isSupabaseConfigured || !supabase) return [];
-  let query = supabase
-    .from('agreements')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (athleteId) query = query.eq('athlete_id', athleteId);
-  const { data, error } = await query;
-  if (error) throw new Error(`Failed to load agreements: ${error.message}`);
-  return (data ?? []) as Agreement[];
+  try {
+    let query = supabase
+      .from('agreements')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (athleteId) query = query.eq('athlete_id', athleteId);
+    const { data, error } = await query;
+    if (error) throw new Error(`Failed to load agreements: ${error.message}`);
+    return (data ?? []) as Agreement[];
+  } catch (e) {
+    console.warn('fetchAgreements failed, using fallback agreements.', e);
+    return fallbackAgreements(athleteId);
+  }
 }
 
 /** Format a monetary amount with the appropriate currency label (AUD or NZD). */
@@ -419,15 +586,55 @@ export async function signMasterLicence(athleteId: string): Promise<void> {
 // Messages (two-way threaded messaging tied to agreements)
 // ---------------------------------------------------------------------------
 
+/**
+ * Illustrative thread returned by `fetchMessages` when the live query fails.
+ * Copies are stamped with the requested agreement id.
+ */
+const FALLBACK_MESSAGES: Message[] = [
+  {
+    id: 'fallback-message-1',
+    agreement_id: 'fallback-agreement-1',
+    sender_type: 'sponsor',
+    content: 'Welcome aboard. We will send the season content calendar by Friday.',
+    created_at: '2026-01-02T09:00:00.000Z',
+  },
+  {
+    id: 'fallback-message-2',
+    agreement_id: 'fallback-agreement-1',
+    sender_type: 'athlete',
+    content: 'Thanks — happy to lock the first match-day post for round one.',
+    created_at: '2026-01-02T11:30:00.000Z',
+  },
+  {
+    id: 'fallback-message-3',
+    agreement_id: 'fallback-agreement-1',
+    sender_type: 'platform',
+    content: 'Deal is active. Settlement runs on the ex-GST amount at the end of each month.',
+    created_at: '2026-01-03T00:00:00.000Z',
+  },
+];
+
+/** Fresh copies bound to `agreementId` so the thread stays on the requested deal. */
+function fallbackMessages(agreementId: string): Message[] {
+  const matched = FALLBACK_MESSAGES.filter((row) => row.agreement_id === agreementId);
+  const rows = matched.length > 0 ? matched : FALLBACK_MESSAGES;
+  return rows.map((row) => ({ ...row, agreement_id: agreementId }));
+}
+
 export async function fetchMessages(agreementId: string): Promise<Message[]> {
   if (!isSupabaseConfigured || !supabase) return [];
-  const { data, error } = await supabase
-    .from('messages')
-    .select('*')
-    .eq('agreement_id', agreementId)
-    .order('created_at', { ascending: true });
-  if (error) throw new Error(`Failed to load messages: ${error.message}`);
-  return (data ?? []) as Message[];
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('agreement_id', agreementId)
+      .order('created_at', { ascending: true });
+    if (error) throw new Error(`Failed to load messages: ${error.message}`);
+    return (data ?? []) as Message[];
+  } catch (e) {
+    console.warn('fetchMessages failed, using fallback messages.', e);
+    return fallbackMessages(agreementId);
+  }
 }
 
 export async function sendMessage(
@@ -451,14 +658,54 @@ export async function sendMessage(
 // Campaigns (sponsor briefs + athlete applications)
 // ---------------------------------------------------------------------------
 
+/**
+ * Illustrative briefs returned by `fetchCampaigns` when the live query fails.
+ */
+const FALLBACK_CAMPAIGNS: Campaign[] = [
+  {
+    id: 'fallback-campaign-1',
+    sponsor_id: 'fallback-sponsor-1',
+    title: 'Storefront Season Kickoff',
+    description: 'Local athletes within 5 km for a four-week in-store activation.',
+    budget_aud: 8000,
+    radius_km: 5,
+    sport_category: 'Rugby League',
+    status: 'active',
+    created_at: '2026-02-01T00:00:00.000Z',
+    updated_at: '2026-02-01T00:00:00.000Z',
+  },
+  {
+    id: 'fallback-campaign-2',
+    sponsor_id: 'fallback-sponsor-2',
+    title: 'Metro Recovery Series',
+    description: 'Quarterly wellness content from athletes inside a 25 km catchment.',
+    budget_aud: 15000,
+    radius_km: 25,
+    sport_category: 'Cricket',
+    status: 'draft',
+    created_at: '2026-03-01T00:00:00.000Z',
+    updated_at: '2026-03-01T00:00:00.000Z',
+  },
+];
+
+/** Fresh copies on every call, so callers can never mutate the shared fallback. */
+function fallbackCampaigns(): Campaign[] {
+  return FALLBACK_CAMPAIGNS.map((row) => ({ ...row }));
+}
+
 export async function fetchCampaigns(): Promise<Campaign[]> {
   if (!isSupabaseConfigured || !supabase) return [];
-  const { data, error } = await supabase
-    .from('campaigns')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) throw new Error(`Failed to load campaigns: ${error.message}`);
-  return (data ?? []) as Campaign[];
+  try {
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(`Failed to load campaigns: ${error.message}`);
+    return (data ?? []) as Campaign[];
+  } catch (e) {
+    console.warn('fetchCampaigns failed, using fallback campaigns.', e);
+    return fallbackCampaigns();
+  }
 }
 
 export async function createCampaign(
