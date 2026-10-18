@@ -43,7 +43,6 @@ import type {
   Sponsor,
   Agreement,
   SpatialTierCode,
-  SponsorshipTierKey,
 } from './types';
 import { SPATIAL_TIERS } from './types';
 import { fetchAgreements } from './api';
@@ -61,8 +60,12 @@ import { BrandLockup, LandingStackSlot } from './components/LandingStack';
 import { LivingContours } from './components/LivingContours';
 import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDrawer } from './components/SponsorDrawer';
-import { AthletePortal } from './components/AthletePortal';
-
+import { SponsorDirectory } from './components/SponsorDirectory';
+import { AthleteAuthModal } from './components/AthleteAuthModal';
+import { AthleteProfileManager } from './components/AthleteProfileManager';
+import { GuardianVerifyPage, GUARDIAN_VERIFY_PATH } from './components/GuardianVerifyPage';
+import { AthleteCommercialDashboard } from './components/AthleteCommercialDashboard';
+import { supabase } from './lib/supabaseClient';
 import {
   fetchAthletes,
   fetchAthletesNearby,
@@ -78,7 +81,9 @@ import {
 import MapView from './MapView';
 import { athleteInitials, athleteDisplayName } from './lib/formatName';
 
-type AppView = 'landing' | 'sponsor' | 'athlete';
+type AppView = 'landing' | 'sponsor';
+
+type AthleteSurface = 'terminal' | 'dashboard';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -121,7 +126,6 @@ export function MarketplaceApp() {
   const [mediaStudioOpen, setMediaStudioOpen] = useState(false);
   const [mediaStudioAthlete, setMediaStudioAthlete] = useState<Athlete | null>(null);
   const [navView, setNavView] = useState<NavView | null>(null);
-  const [athleteFocus, setAthleteFocus] = useState<'overview' | 'drops'>('overview');
   const [landingSection, setLandingSection] = useState<LandingSectionId | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
   const horizontalSectionRef = useRef<HTMLDivElement>(null);
@@ -129,14 +133,14 @@ export function MarketplaceApp() {
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>('all');
   const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
   const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
-  const [drawerAthlete, setDrawerAthlete] = useState<Athlete | null>(null);
-  const [booking, setBooking] = useState(false);
-  const [bookingError, setBookingError] = useState<string | null>(null);
-  const [bookingConfirmed, setBookingConfirmed] = useState(false);
-
+  const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
+  const [isSponsorDrawerOpen, setIsSponsorDrawerOpen] = useState<boolean>(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [athleteSurface, setAthleteSurface] = useState<AthleteSurface | null>(null);
+  const [routingAthlete, setRoutingAthlete] = useState(false);
+  const [terminalKey, setTerminalKey] = useState(0);
   useEffect(() => {
     if (view !== 'landing') return;
-
     const lenis = new Lenis({
       duration: 1.05,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -389,10 +393,9 @@ export function MarketplaceApp() {
     setSignError(null);
   }
 
-  function openSponsorDrawer(athlete: Athlete) {
-    setDrawerAthlete(athlete);
-    setBookingError(null);
-    setBookingConfirmed(false);
+  function openSponsorDrawer(athlete: Athlete | null) {
+    setSelectedAthlete(athlete);
+    setIsSponsorDrawerOpen(true);
   }
 
   function enterSponsorWorkspace() {
@@ -400,10 +403,44 @@ export function MarketplaceApp() {
     setNavView('sponsor');
   }
 
-  function enterAthletePortal(focus: 'overview' | 'drops' = 'overview') {
-    setAthleteFocus(focus);
-    setView('athlete');
-    setNavView(focus === 'drops' ? 'drops' : 'athlete');
+  /**
+   * Entry point for "Claim Backing" (nav / hero) and "Claim your athlete profile" (roster).
+   * Authenticated athlete with an existing profile -> Commercial Dashboard.
+   * Unauthenticated, or no athlete profile yet -> Talent Terminal (onboarding).
+   */
+  async function routeAthleteEntry() {
+    if (routingAthlete) return;
+    setRoutingAthlete(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setAthleteSurface('terminal');
+        return;
+      }
+      const { data, error } = await supabase
+        .from('athlete_profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (error) console.error('Failed to look up athlete profile:', error);
+      setAthleteSurface(!error && data ? 'dashboard' : 'terminal');
+    } catch (e) {
+      console.error('Athlete entry routing failed:', e);
+      setAthleteSurface('terminal');
+    } finally {
+      setRoutingAthlete(false);
+    }
+  }
+
+  /** Close the Talent Terminal / Commercial Dashboard and return to the main Roster view. */
+  function exitAthleteSurface() {
+    if (isAuthModalOpen) return;
+    setAthleteSurface(null);
+    setView('landing');
+    setNavView(null);
+    setLandingSection('for-players');
   }
 
   function goLandingSection(id: LandingSectionId) {
@@ -411,9 +448,6 @@ export function MarketplaceApp() {
     setNavView(null);
     setLandingSection(id);
   }
-
-  const hunterAthlete =
-    athletes.find((a) => `${a.name ?? ''} ${a.full_name ?? ''}`.toLowerCase().includes('bligh')) ?? null;
 
   const catchment3000: AthleteLocation = {
     id: 'postcode-3000',
@@ -437,34 +471,24 @@ export function MarketplaceApp() {
       distance_km: 0,
     }));
 
-  async function handleConfirmSponsorship(tier: SponsorshipTierKey, postcode: string) {
-    if (!drawerAthlete || booking || !tier || !postcode.trim()) return;
-    setBooking(true);
-    setBookingError(null);
-    try {
-      await new Promise((r) => setTimeout(r, 700));
-      const next: Athlete = {
-        ...drawerAthlete,
-        licence_status: 'ACTIVE',
-        agreement_status: 'active',
-      };
-      setDrawerAthlete(next);
-      setAthletes((prev) => prev.map((a) => (a.id === next.id ? { ...a, ...next } : a)));
-      setBookingConfirmed(true);
-    } catch (e) {
-      setBookingError(e instanceof Error ? e.message : 'Failed to book sponsorship');
-    } finally {
-      setBooking(false);
-    }
-  }
-
-  async function handleSignMOU() {
+  async function handleSignMOU(signatoryName: string) {
     if (!profileAthlete) return;
     setSigning(true);
     setSignError(null);
     try {
-      await signMasterLicence(profileAthlete.id);
-      const updated = { ...profileAthlete, master_licence_signed: true };
+      const result = await signMasterLicence(profileAthlete.id, {
+        isMinor: profileAthlete.is_minor,
+        signatoryName,
+      });
+      const updated: Athlete = {
+        ...profileAthlete,
+        // Minors are NOT licensed until the guardian co-signs.
+        master_licence_signed: result.status === 'signed',
+        master_licence_mou_status: result.status,
+        master_licence_signed_at: result.signedAt,
+        master_licence_mou_hash: result.hash,
+        is_minor: result.isMinor,
+      };
       setProfileAthlete(updated);
       setAthletes((prev) =>
         prev.map((a) => (a.id === updated.id ? updated : a))
@@ -486,8 +510,11 @@ export function MarketplaceApp() {
         <Navbar
           activeView={navView}
           onSection={goLandingSection}
-          onJoinRoster={() => enterAthletePortal('overview')}
-          onEnterprise={enterSponsorWorkspace}
+          onJoinRoster={() => void routeAthleteEntry()}
+          onEnterprise={() => {
+            enterSponsorWorkspace();
+            setIsSponsorDrawerOpen(true);
+          }}
         />
       </header>
 
@@ -511,12 +538,12 @@ export function MarketplaceApp() {
             <Hero
               FluidCanvas={HeroFluidReveal}
               onSponsorAccess={enterSponsorWorkspace}
-              onAthletePortal={enterAthletePortal}
+              onAthletePortal={() => void routeAthleteEntry()}
             />
           </LandingStackSlot>
           <LandingNarrative
             onSponsor={enterSponsorWorkspace}
-            onAthlete={enterAthletePortal}
+            onAthlete={() => void routeAthleteEntry()}
             horizontalSectionRef={horizontalSectionRef}
             horizontalTrackRef={horizontalTrackRef}
           />
@@ -525,15 +552,13 @@ export function MarketplaceApp() {
       <main className="page bg-transparent">
         <div className="page-head editorial-copy border-b border-white/10" id="athlete-roster">
           <p className="font-mono text-xs tracking-widest uppercase text-[#D2FF00] mb-3">
-            {view === 'sponsor' ? '// ENTERPRISE WORKSPACE' : '// ATHLETE LEDGER'}
+            // ENTERPRISE WORKSPACE
           </p>
           <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white mt-0">
-            {view === 'sponsor' ? 'Sponsor Discovery Workspace' : 'Athlete Commercial Dashboard'}
+            Sponsor Discovery Workspace
           </h1>
           <p className="font-mono text-[11px] tracking-widest text-zinc-400 mt-3">
-            {view === 'sponsor'
-              ? 'PostGIS radius filters · postcode 3000 catchment · live partner map'
-              : 'Hunter Bligh overview · pending payouts · collab merch rail'}
+            PostGIS radius filters · postcode 3000 catchment · live partner map
           </p>
         </div>
 
@@ -546,7 +571,7 @@ export function MarketplaceApp() {
           </div>
         )}
 
-        {view === 'sponsor' && !listError && (
+        {!listError && (
           <>
             <SpatialCatchment
               selected={catchmentTier}
@@ -600,29 +625,25 @@ export function MarketplaceApp() {
                 ))}
               </div>
             )}
+            <SponsorDirectory
+              sponsors={sponsors}
+              athletes={athletes}
+              onSponsorAthlete={(athlete) => {
+                setSelectedAthlete(athlete);
+                setIsSponsorDrawerOpen(true);
+              }}
+            />
           </>
         )}
 
-        {view === 'athlete' && (
-          <AthletePortal
-            athlete={hunterAthlete}
-            focus={athleteFocus}
-            onOpenDrops={() => setAthleteFocus('drops')}
-          />
-        )}
       </main>
       )}
 
-      {drawerAthlete && (
-        <SponsorDrawer
-          athlete={drawerAthlete}
-          submitting={booking}
-          error={bookingError}
-          confirmed={bookingConfirmed}
-          onConfirm={handleConfirmSponsorship}
-          onClose={() => setDrawerAthlete(null)}
-        />
-      )}
+      <SponsorDrawer
+        isOpen={isSponsorDrawerOpen}
+        onClose={() => setIsSponsorDrawerOpen(false)}
+        athlete={selectedAthlete}
+      />
 
       {panelOpen && (
         <>
@@ -800,10 +821,6 @@ export function MarketplaceApp() {
           onTabChange={setProfileTab}
           onClose={() => setProfileAthlete(null)}
           onSignMOU={() => setShowSignModal(true)}
-          onSigned={(updated) => {
-            setProfileAthlete(updated);
-            setAthletes((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
-          }}
         />
       )}
 
@@ -820,6 +837,8 @@ export function MarketplaceApp() {
       {showSignModal && profileAthlete && (
         <SignMOUModal
           athleteName={athleteDisplayName(profileAthlete)}
+          federationName={profileAthlete.federation_name || null}
+          sport={profileAthlete.sport}
           signing={signing}
           error={signError}
           onConfirm={handleSignMOU}
@@ -828,6 +847,38 @@ export function MarketplaceApp() {
             setSignError(null);
           }}
         />
+      )}
+      {/* Athlete Authentication Gateway */}
+      <AthleteAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          setIsAuthModalOpen(false);
+          setTerminalKey((k) => k + 1);
+          void routeAthleteEntry();
+        }}
+      />
+
+      {/* Authenticated Athlete Operational Profile Terminal */}
+      {athleteSurface === 'terminal' && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#060709]">
+          <AthleteProfileManager
+            key={terminalKey}
+            onExit={exitAthleteSurface}
+            onSaved={() => setAthleteSurface('dashboard')}
+            onRequestSignIn={() => setIsAuthModalOpen(true)}
+          />
+        </div>
+      )}
+
+      {/* Athlete Commercial Dashboard */}
+      {athleteSurface === 'dashboard' && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#060709]">
+          <AthleteCommercialDashboard
+            onExit={exitAthleteSurface}
+            onEditProfile={() => setAthleteSurface('terminal')}
+          />
+        </div>
       )}
     </div>
   );
@@ -925,6 +976,9 @@ function AthleteCard({
 }
 
 export default function App() {
+  // Lightweight path routing: the guardian signing page is public and bypasses the marketplace shell.
+  const path = window.location.pathname.replace(/\/+$/, '');
+  if (path === GUARDIAN_VERIFY_PATH) return <GuardianVerifyPage />;
   return <MarketplaceApp />;
 }
 
@@ -1018,14 +1072,12 @@ function ProfileModal({
   onTabChange,
   onClose,
   onSignMOU,
-  onSigned,
 }: {
   athlete: Athlete;
   tab: ProfileTab;
   onTabChange: (t: ProfileTab) => void;
   onClose: () => void;
   onSignMOU: () => void;
-  onSigned?: (updated: Athlete) => void;
 }) {
   const mv = athlete.profile_data?.market_value_aud ?? athlete.profile_data?.market_value_nzd;
   const mvCurrency = getAthleteCurrency(athlete);
@@ -1107,13 +1159,36 @@ function ProfileModal({
                   )}
                 </div>
                 <p className="licence-desc">
-                  The Master Licence Memorandum of Understanding grants exclusive commercial
-                  representation rights for all digital and physical branding assets, including
-                  social media content, match-day signage, and apparel branding, for a 2-year term.
+                  The Master Licence Memorandum of Understanding grants tmrw/. a non-exclusive licence to
+                  commercialise the athlete&rsquo;s Name, Image, and Likeness (NIL) across digital content,
+                  local apparel drops, and platform-brokered retail partnerships for a 2-year term.
                 </p>
-                {!athlete.master_licence_signed && (
+                {athlete.master_licence_signed ? (
+                  <div className="mou-active-wrap">
+                    <button
+                      type="button"
+                      className="btn mou-active-btn"
+                      disabled
+                      aria-disabled="true"
+                      data-testid="mou-active-button"
+                    >
+                      <BadgeCheck size={14} /> 2-YEAR MASTER LICENCE MOU - ACTIVE
+                    </button>
+                    <span className="mou-verified-badge" data-testid="mou-verified-badge">
+                      <BadgeCheck size={12} /> VERIFIED
+                      {athlete.master_licence_mou_hash
+                        ? ` · SHA-256 ${athlete.master_licence_mou_hash.slice(0, 12)}…`
+                        : ''}
+                    </span>
+                  </div>
+                ) : athlete.master_licence_mou_status === 'pending_guardian' ? (
+                  <div className="mou-pending-banner" role="alert" data-testid="mou-pending-guardian-banner">
+                    <Shield size={14} />
+                    <span>{MINOR_PENDING_NOTICE}</span>
+                  </div>
+                ) : (
                   <button className="btn btn-primary" onClick={onSignMOU}>
-                    <PenLine size={14} /> Sign Digital MOU
+                    <PenLine size={14} /> SIGN DIGITAL MOU
                   </button>
                 )}
               </div>
@@ -1129,7 +1204,7 @@ function ProfileModal({
             </>
           )}
 
-          {tab === 'brandkit' && <BrandKitTab athlete={athlete} onSigned={onSigned} />}
+          {tab === 'brandkit' && <BrandKitTab athlete={athlete} onSignMOU={onSignMOU} />}
 
           {tab === 'agreement' && <CommercialLedger athlete={athlete} />}
         </div>
@@ -1158,22 +1233,38 @@ function ComplianceChip({ label, active }: { label: string; active: boolean }) {
 
 /* ---------- Sign MOU Modal ---------- */
 
+const MASTER_LICENCE_CLAUSE =
+  'By signing this Memorandum of Understanding, the athlete grants tmrw/. a non-exclusive licence to commercialise their Name, Image, and Likeness (NIL) across digital content, local apparel drops, and platform-brokered retail partnerships for a 2-year term. Category exclusivity applies solely during active paid campaign windows. All commercial engagements remain subject to National Sporting Organisation (NSO) regulations and amateur pathway eligibility.';
+
+const MASTER_LICENCE_WARRANTY =
+  'I warrant that I have legal capacity to enter this agreement, have reviewed the Master Licence MOU terms, and confirm this representation does not breach my sporting body bylaws or amateur status.';
+
+const NSO_FALLBACK_LABEL = 'relevant National Sporting Organisation (NSO)';
+
+const MINOR_PENDING_NOTICE =
+  'Athlete signature recorded. Formal legal activation is pending co-signature sent to the registered guardian email.';
+
 function SignMOUModal({
   athleteName,
+  federationName,
+  sport,
   signing,
   error,
   onConfirm,
   onCancel,
 }: {
   athleteName: string;
+  federationName: string | null;
+  sport: string | null;
   signing: boolean;
   error: string | null;
-  onConfirm: () => void;
+  onConfirm: (signatoryName: string) => void;
   onCancel: () => void;
 }) {
   const [typedName, setTypedName] = useState('');
   const [agreed, setAgreed] = useState(false);
-  const canSubmit = typedName.trim().length > 1 && agreed && !signing;
+  const canSubmit = typedName.trim().length > 0 && agreed && !signing;
+  const governingBody = federationName?.trim() || NSO_FALLBACK_LABEL;
 
   return (
     <>
@@ -1185,7 +1276,7 @@ function SignMOUModal({
           </div>
           <div style={{ flex: 1 }}>
             <h2>Sign Master Licence MOU</h2>
-            <div className="sub">2-Year exclusive commercial representation</div>
+            <div className="sub">2-Year non-exclusive NIL licence</div>
           </div>
           <button className="icon-btn" onClick={onCancel} aria-label="Cancel">
             <X size={16} />
@@ -1194,20 +1285,13 @@ function SignMOUModal({
 
         <div className="modal-body">
           <div className="mou-clause">
-            <p>
-              By signing this Memorandum of Understanding, <strong>{athleteName}</strong> grants
-              tmrw/. exclusive commercial representation rights for all digital and physical
-              branding assets for a <strong>2-year term</strong>, including:
-            </p>
-            <ul>
-              <li>Social media content and sponsored post placement</li>
-              <li>Match-day signage and on-field branding</li>
-              <li>Apparel and merchandise branding rights</li>
-              <li>Digital broadcast and streaming overlays</li>
-            </ul>
-            <p className="mou-note">
-              This MOU is governed by the NRL Third Party Agreement framework and Shute Shield
-              compliance requirements where applicable.
+            <p data-testid="mou-licence-clause">{MASTER_LICENCE_CLAUSE}</p>
+            <p className="mou-note" data-testid="mou-governing-body">
+              Athlete: <strong>{athleteName}</strong>
+              {sport ? <> · {sport}</> : null}
+              <br />
+              Governing body: <strong>{governingBody}</strong>. Commercial engagements are subject to{' '}
+              {governingBody} regulations.
             </p>
           </div>
 
@@ -1223,18 +1307,22 @@ function SignMOUModal({
                 disabled={signing}
               />
             </label>
-            <label className="sign-check">
-              <input
-                type="checkbox"
-                checked={agreed}
-                onChange={(e) => setAgreed(e.target.checked)}
-                disabled={signing}
-              />
-              <span>I have read and agree to the terms of the Master Licence MOU</span>
-            </label>
           </div>
 
           {error && <div className="sign-error">{error}</div>}
+
+          <label className="sign-check sign-assent" htmlFor="mou-legal-assent">
+            <input
+              id="mou-legal-assent"
+              type="checkbox"
+              required
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              disabled={signing}
+              data-testid="mou-legal-assent"
+            />
+            <span>{MASTER_LICENCE_WARRANTY}</span>
+          </label>
 
           <div className="card-actions" style={{ marginTop: 8 }}>
             <button className="btn" onClick={onCancel} disabled={signing}>
@@ -1242,8 +1330,10 @@ function SignMOUModal({
             </button>
             <button
               className="btn btn-primary"
-              onClick={onConfirm}
+              onClick={() => onConfirm(typedName.trim())}
               disabled={!canSubmit}
+              aria-disabled={!canSubmit}
+              data-testid="sign-digital-mou-submit"
             >
               {signing ? (
                 <>
@@ -1251,7 +1341,7 @@ function SignMOUModal({
                 </>
               ) : (
                 <>
-                  <PenLine size={14} /> Sign &amp; Activate MOU
+                  <PenLine size={14} /> SIGN DIGITAL MOU
                 </>
               )}
             </button>

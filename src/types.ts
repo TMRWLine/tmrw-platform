@@ -207,6 +207,13 @@ export interface Athlete {
   gender: string | null;
   ip_lock?: boolean | null;
   master_licence_signed: boolean;
+  master_licence_signed_at?: string | null;
+  master_licence_mou_hash?: string | null;
+  master_licence_mou_status?: 'unsigned' | 'signed' | 'pending_guardian' | null;
+  /** Athletes under 18 route through guardian co-signature instead of immediate activation. */
+  is_minor?: boolean | null;
+  /** Governing National Sporting Organisation (NSO) for the athlete's sport, when known. */
+  federation_name?: string | null;
   nrl_tpa_registered: boolean;
   shute_shield_compliant: boolean;
   created_at: string;
@@ -363,6 +370,14 @@ export const SPATIAL_TIERS: SpatialTier[] = [
 ];
 
 export type SponsorshipTierKey = 'TIER_1' | 'TIER_2' | 'TIER_3';
+
+/** Prepared (not yet settled) capital allocation captured by the Enterprise sponsorship drawer. */
+export interface CapitalAllocation {
+  athleteId: string;
+  tier: SponsorshipTierKey;
+  postcode: string;
+  preparedAt: string;
+}
 
 export interface SponsorshipPackage {
   key: SponsorshipTierKey;

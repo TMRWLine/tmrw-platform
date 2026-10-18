@@ -571,15 +571,162 @@ export function clearOutreachCache(): void {
   promptCache.clear();
 }
 
-export async function signMasterLicence(athleteId: string): Promise<void> {
+export type MasterLicenceMouStatus = 'unsigned' | 'signed' | 'pending_guardian';
+
+export interface MasterLicenceExecution {
+  /** `signed` = adult, fully active. `pending_guardian` = minor, awaiting guardian co-signature. */
+  status: Exclude<MasterLicenceMouStatus, 'unsigned'>;
+  /** Athlete signature timestamp (ISO 8601). */
+  signedAt: string;
+  /** SHA-256 fingerprint; only issued once the MOU is fully executed (adults). */
+  hash: string | null;
+  isMinor: boolean;
+  guardianEmail: string | null;
+}
+
+export interface SignMasterLicenceOptions {
+  /** `selectedAthlete.is_minor` as known to the UI. The stored profile value can only widen this to `true`. */
+  isMinor?: boolean | null;
+  /** Name typed by the signatory; recorded in the audit trail. */
+  signatoryName?: string | null;
+}
+
+const MASTER_LICENCE_AUDIT_EVENT = 'MASTER_LICENCE_MOU_EXECUTED';
+const MASTER_LICENCE_DOCUMENT_VERSION = 'v1.0-2026';
+
+/** SHA-256 hex digest (64 lowercase hex chars) of a UTF-8 string. */
+async function sha256Hex(input: string): Promise<string> {
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    throw new Error('Secure hashing is unavailable in this browser context (HTTPS required).');
+  }
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Execute the 2-year Master Licence MOU for an athlete profile:
+ *  1. stamp `athlete_profiles`:
+ *       - adult  -> `signed` + timestamp + SHA-256 fingerprint,
+ *       - minor  -> `pending_guardian` + athlete signature timestamp (no fingerprint until guardian co-signs),
+ *  2. append a `MASTER_LICENCE_MOU_EXECUTED` row to the immutable `compliance_audit_logs`,
+ *  3. adults only: mirror the flag onto the legacy `athletes` table (best-effort).
+ * If the audit insert fails, step 1 is reverted so an executed MOU never exists without an audit trail.
+ *
+ * Minor status is `options.isMinor || athlete_profiles.is_minor`: a stale or tampered client flag can
+ * never route a minor through the adult activation path.
+ */
+export async function signMasterLicence(
+  athleteId: string,
+  options: SignMasterLicenceOptions = {}
+): Promise<MasterLicenceExecution> {
   if (!isSupabaseConfigured || !supabase) {
     throw new Error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
   }
-  const { error } = await supabase
-    .from('athletes')
-    .update({ master_licence_signed: true })
-    .eq('id', athleteId);
-  if (error) throw new Error(`Failed to sign master licence: ${error.message}`);
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error('You must be signed in to execute the Master Licence MOU.');
+
+  const { data: existing, error: lookupError } = await supabase
+    .from('athlete_profiles')
+    .select('master_licence_mou_status, master_licence_signed_at, master_licence_mou_hash, is_minor, guardian_email')
+    .eq('id', athleteId)
+    .maybeSingle();
+  if (lookupError) throw new Error(`Failed to load athlete profile: ${lookupError.message}`);
+  if (!existing) {
+    throw new Error('No athlete profile found for this athlete, or you do not have permission to sign for them.');
+  }
+
+  const isMinor = options.isMinor === true || existing.is_minor === true;
+  const guardianEmail: string | null = existing.guardian_email ?? null;
+  if (isMinor && !guardianEmail) {
+    throw new Error('A guardian email is required before a minor can sign. Add it in the Talent Terminal first.');
+  }
+
+  // Idempotent: never re-stamp (and re-hash) an MOU that has already been executed.
+  if (
+    existing.master_licence_mou_status === 'signed' &&
+    existing.master_licence_signed_at &&
+    existing.master_licence_mou_hash
+  ) {
+    return {
+      status: 'signed',
+      signedAt: existing.master_licence_signed_at,
+      hash: existing.master_licence_mou_hash,
+      isMinor,
+      guardianEmail,
+    };
+  }
+  if (existing.master_licence_mou_status === 'pending_guardian' && existing.master_licence_signed_at) {
+    return {
+      status: 'pending_guardian',
+      signedAt: existing.master_licence_signed_at,
+      hash: null,
+      isMinor: true,
+      guardianEmail,
+    };
+  }
+
+  const signedAt = new Date().toISOString();
+  const status: MasterLicenceExecution['status'] = isMinor ? 'pending_guardian' : 'signed';
+  const hash = isMinor
+    ? null
+    : await sha256Hex(`${MASTER_LICENCE_DOCUMENT_VERSION}|${athleteId}|${user.id}|${signedAt}`);
+
+  const { data: updated, error: updateError } = await supabase
+    .from('athlete_profiles')
+    .update({
+      master_licence_mou_status: status,
+      master_licence_signed_at: signedAt,
+      master_licence_mou_hash: hash,
+    })
+    .eq('id', athleteId)
+    .select('id')
+    .maybeSingle();
+  if (updateError) throw new Error(`Failed to sign master licence: ${updateError.message}`);
+  if (!updated) throw new Error('Master licence was not recorded. You may not have permission to sign for this athlete.');
+
+  const { error: auditError } = await supabase.from('compliance_audit_logs').insert({
+    entity_type: 'athlete_profile',
+    record_id: athleteId,
+    action: MASTER_LICENCE_AUDIT_EVENT,
+    event_type: MASTER_LICENCE_AUDIT_EVENT,
+    document_version: MASTER_LICENCE_DOCUMENT_VERSION,
+    actor_id: user.id,
+    change_payload: {
+      athlete_id: athleteId,
+      document_version: MASTER_LICENCE_DOCUMENT_VERSION,
+      timestamp: signedAt,
+      mou_status: status,
+      is_minor: isMinor,
+      signatory_name: options.signatoryName?.trim() || null,
+      master_licence_mou_hash: hash,
+    },
+  });
+  if (auditError) {
+    const { error: revertError } = await supabase
+      .from('athlete_profiles')
+      .update({
+        master_licence_mou_status: 'unsigned',
+        master_licence_signed_at: null,
+        master_licence_mou_hash: null,
+      })
+      .eq('id', athleteId);
+    if (revertError) console.error('Failed to revert MOU after audit log failure:', revertError);
+    throw new Error(`Failed to record audit trail, MOU not executed: ${auditError.message}`);
+  }
+
+  if (!isMinor) {
+    const { error: legacyError } = await supabase
+      .from('athletes')
+      .update({ master_licence_signed: true })
+      .eq('id', athleteId);
+    if (legacyError) console.warn('Legacy athletes.master_licence_signed mirror failed:', legacyError.message);
+  }
+
+  return { status, signedAt, hash, isMinor, guardianEmail };
 }
 
 // ---------------------------------------------------------------------------

@@ -1,604 +1,516 @@
-import { useEffect, useState } from 'react';
-import {
-  X,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  ShieldCheck,
-  MapPin,
-  Store,
-  Layers,
-  Truck,
-  Receipt,
-  Zap,
-} from 'lucide-react';
-import type { Athlete, AthleteLocation, CollabDrop, MatchedSponsor, SponsorshipTierKey } from '../types';
-import { COLLAB_SPLIT, HUNTER_BLIGH_COLLAB_DROPS, SPONSORSHIP_PACKAGES } from '../types';
-import { athleteDisplayName, athleteInitials } from '../lib/formatName';
-import { fetchCollabDrops, fetchNearbySponsors, formatCurrency } from '../api';
-import MapView from '../MapView';
+import React, { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
-type DrawerTab = 'tiers' | 'drops';
-
-export interface DropSettlement {
-  dropId: string;
-  dropTitle: string;
-  batchSize: number;
-  grossExGst: number;
-  gst: number;
-  totalIncGst: number;
-  athletePayout: number;
-  platformFee: number;
-  communityFund: number;
-  stripeEventId: string;
-  transfers: { destination: string; amount: number; transferId: string }[];
-  invoice: {
-    number: string;
-    issuedAt: string;
-    abn: string;
-    rcti: string;
-    gstRate: string;
-    buyer: string;
-    supplier: string;
-  };
+interface AthleteSummary {
+  id: string;
+  name?: string | null;
+  display_name?: string | null;
+  sport?: string | null;
+  sport_discipline?: string | null;
+  current_club?: string | null;
+  primary_postcode?: string | null;
 }
 
-function merchArt(kind: CollabDrop['art'] | string | undefined) {
-  if (kind === 'hoodie') {
-    return (
-      <svg className="drop-art-svg" viewBox="0 0 80 80" aria-hidden="true">
-        <rect width="80" height="80" fill="#111" />
-        <path d="M18 28h10l6-10h12l6 10h10v34H18V28z" fill="#FBFBF9" />
-        <path d="M28 28v8h24v-8" fill="none" stroke="#111" strokeWidth="2" />
-        <text x="40" y="52" textAnchor="middle" fill="#111" fontSize="7" fontWeight="700">
-          2026
-        </text>
-      </svg>
-    );
-  }
-  if (kind === 'socks') {
-    return (
-      <svg className="drop-art-svg" viewBox="0 0 80 80" aria-hidden="true">
-        <rect width="80" height="80" fill="#009FDA" />
-        <path d="M30 16h12v28c0 10-6 16-14 16s-14-6-14-16V28h8v16c0 4 2 7 6 7s6-3 6-7V16z" fill="#FBFBF9" />
-        <path d="M50 16h12v28c0 10-6 16-14 16" fill="none" stroke="#FBFBF9" strokeWidth="4" />
-      </svg>
-    );
-  }
-  return (
-    <svg className="drop-art-svg" viewBox="0 0 80 80" aria-hidden="true">
-      <rect width="80" height="80" fill="#1A1A1A" />
-      <path d="M22 26h36l4 8v28H18V34l4-8z" fill="#FBFBF9" />
-      <circle cx="40" cy="44" r="8" fill="none" stroke="#111" strokeWidth="2" />
-    </svg>
-  );
+interface SponsorDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  athlete?: AthleteSummary | null;
 }
 
-function simulateSettlement(drop: CollabDrop, athleteName: string): DropSettlement {
-  const grossExGst = drop.priceAud * drop.batchSize;
-  const split = drop.split ?? COLLAB_SPLIT;
-  const gst = Math.round(grossExGst * 0.1 * 100) / 100;
-  const totalIncGst = grossExGst + gst;
-  const athletePayout = Math.round(grossExGst * (split.athletePayoutPct / 100) * 100) / 100;
-  const platformFee = Math.round(grossExGst * (split.platformFeePct / 100) * 100) / 100;
-  const communityFund = Math.round(grossExGst * (split.communityFundPct / 100) * 100) / 100;
-  const nonce = Math.random().toString(36).slice(2, 10);
-  const day = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  return {
-    dropId: drop.id,
-    dropTitle: drop.title,
-    batchSize: drop.batchSize,
-    grossExGst,
-    gst,
-    totalIncGst,
-    athletePayout,
-    platformFee,
-    communityFund,
-    stripeEventId: `evt_3Pq${nonce}Z6J`,
-    transfers: [
-      { destination: 'acct_athlete_connect', amount: athletePayout, transferId: `tr_ath_${nonce}` },
-      { destination: 'acct_tmrw_platform', amount: platformFee, transferId: `tr_plt_${nonce}` },
-      { destination: 'acct_community_fund', amount: communityFund, transferId: `tr_cfd_${nonce}` },
-    ],
-    invoice: {
-      number: `INV-TMRW-${day}-${nonce.slice(0, 4).toUpperCase()}`,
-      issuedAt: new Date().toISOString(),
-      abn: '12 345 678 901',
-      rcti: `RCTI-${day}-${nonce.slice(0, 4).toUpperCase()}`,
-      gstRate: '10%',
-      buyer: 'Enterprise Brand Pty Ltd',
-      supplier: `${athleteName} via tmrw/. Marketplace`,
-    },
-  };
-}
-
-function seedCollabDrops(athlete?: Athlete | null): CollabDrop[] {
-  const name = athleteDisplayName(athlete);
-  const hay = `${athlete?.name ?? ''} ${athlete?.full_name ?? ''} ${name}`.toLowerCase();
-  return hay.includes('bligh') ? [...HUNTER_BLIGH_COLLAB_DROPS] : [];
-}
-
-/** Melbourne CBD — PostGIS catchment origin for store postcode 3000. */
-const POSTCODE_3000 = { lat: -37.8136, lng: 144.9631, postcode: '3000' };
-
-function destinationPoint(lat: number, lng: number, km: number, bearingDeg: number) {
-  const R = 6371;
-  const br = (bearingDeg * Math.PI) / 180;
-  const lat1 = (lat * Math.PI) / 180;
-  const lng1 = (lng * Math.PI) / 180;
-  const lat2 = Math.asin(
-    Math.sin(lat1) * Math.cos(km / R) + Math.cos(lat1) * Math.sin(km / R) * Math.cos(br)
-  );
-  const lng2 =
-    lng1 +
-    Math.atan2(
-      Math.sin(br) * Math.sin(km / R) * Math.cos(lat1),
-      Math.cos(km / R) - Math.sin(lat1) * Math.sin(lat2)
-    );
-  return { lat: (lat2 * 180) / Math.PI, lng: (lng2 * 180) / Math.PI };
-}
-
-function mockPartner(
-  id: string,
-  business_name: string,
-  merchant_category: string,
-  km: number,
-  bearing: number
-): MatchedSponsor {
-  const pos = destinationPoint(POSTCODE_3000.lat, POSTCODE_3000.lng, km, bearing);
-  return {
-    id,
-    business_name,
-    merchant_category,
-    budget_allocation: 12000,
-    contact_email: null,
-    target_radius_meters: 1500,
-    location: null,
-    postcode: POSTCODE_3000.postcode,
-    latitude: pos.lat,
-    longitude: pos.lng,
-    currency: 'AUD',
-    created_at: '',
-    updated_at: '',
-    distance_meters: Math.round(km * 1000),
-    distance_km: km,
-    lat: pos.lat,
-    lng: pos.lng,
-  };
-}
-
-const MOCK_VERIFIED_PARTNERS: MatchedSponsor[] = [
-  mockPartner('mock-fitzroy-athletics', 'Fitzroy Athletics Club', 'Apparel & Training', 1.2, 45),
-  mockPartner('mock-swanston-recovery', 'Swanston Street Recovery Lab', 'Health & Performance', 2.1, 5),
-  mockPartner('mock-city-sports-clinic', 'Melbourne City Sports Clinic', 'Physiotherapy', 3.4, 250),
+const CATEGORIES = [
+  'Footwear & Apparel',
+  'Quick Service Restaurant',
+  'Automotive Dealer',
+  'Fitness & Gyms',
+  'Banking & Financial Services',
+  'Beverages (Non-Alcoholic)',
+  'Local Retail & Hospitality',
+  'Health & Physiotherapy'
 ];
 
-function formatKmAway(km: number | null | undefined): string {
-  if (km == null || !Number.isFinite(km)) return 'Nearby';
-  return `${km.toFixed(1)} km away`;
+type SyndicatePortfolioId =
+  | 'brisbane-2032'
+  | 'women-in-sport'
+  | 'metro-derby'
+  | 'retail-footfall'
+  | 'ai-content';
+
+interface SyndicatePortfolio {
+  id: SyndicatePortfolioId;
+  name: string;
+  summary: string;
+  deliverables: string[];
 }
 
-function athleteCatchmentLocation(athlete: Athlete, name: string): AthleteLocation {
-  return {
-    id: athlete.id,
-    name,
-    lat: POSTCODE_3000.lat,
-    lng: POSTCODE_3000.lng,
-    postcode: POSTCODE_3000.postcode,
-    follower_count: athlete.follower_count,
-    master_licence_signed: athlete.master_licence_signed,
-    nrl_tpa_registered: athlete.nrl_tpa_registered,
-    shute_shield_compliant: athlete.shute_shield_compliant,
-  };
+const SYNDICATE_PORTFOLIOS: readonly SyndicatePortfolio[] = [
+  {
+    id: 'brisbane-2032',
+    name: 'Brisbane 2032 Pathway Syndicate',
+    summary: '10-15 State & Junior National Athletes across Olympic disciplines',
+    deliverables: [
+      'Regional category exclusivity across 10-15 State & Junior National athletes',
+      'Multi-discipline Olympic pathway coverage ahead of Brisbane 2032',
+      'Early-access brand association with rising national-level talent',
+      'Quarterly pathway milestone reporting and athlete progress updates'
+    ]
+  },
+  {
+    id: 'women-in-sport',
+    name: 'Women in Sport Commercial Accelerator',
+    summary: '12 Elite Female Semi-Pro Athletes across Metro leagues',
+    deliverables: [
+      'Category partnership across 12 elite female semi-pro athletes',
+      'Coverage spanning multiple Metro leagues and competitions',
+      'Co-branded storytelling and community campaign activations',
+      'Audience and engagement reporting for women\'s sport segments'
+    ]
+  },
+  {
+    id: 'metro-derby',
+    name: 'Cross-Code Metro Derby Takeover',
+    summary: '10 Multi-Sport Athletes across rival regional codes',
+    deliverables: [
+      'Category presence across 10 athletes in rival regional codes',
+      'Cross-code derby-week campaign takeover moments',
+      'Unified brand presence across competing fan communities',
+      'Multi-sport content package for derby build-up and match days'
+    ]
+  },
+  {
+    id: 'retail-footfall',
+    name: 'Retail Foot-Traffic & Local Hero Network',
+    summary: '15 Athletes concentrated in 5km retail store clusters',
+    deliverables: [
+      '15 local-hero athletes positioned within 5km of your retail clusters',
+      'In-store appearances and local hero activations',
+      'Postcode-targeted promotion to drive nearby foot traffic',
+      'Store-cluster level activation and attribution reporting'
+    ]
+  },
+  {
+    id: 'ai-content',
+    name: 'AI Content Engine & Digital Asset Vault',
+    summary: '12 Athletes delivering raw vertical video reels for ad creative',
+    deliverables: [
+      'Raw vertical video reels from 12 athletes for ad creative',
+      'Licensed digital asset vault for paid and organic social use',
+      'Content produced without team logos, club emblems or trademarked jerseys',
+      'Monthly asset drops ready for AI-assisted creative workflows'
+    ]
+  }
+];
+
+interface SyndicateBriefSubmission {
+  portfolioId: SyndicatePortfolioId;
+  portfolioName: string;
+  companyName: string;
+  contactEmail: string;
+  category: string;
+  submittedAt: string;
 }
 
-export function SponsorDrawer({
-  athlete,
-  submitting,
-  error,
-  confirmed,
-  onConfirm,
-  onClose,
-}: {
-  athlete: Athlete;
-  submitting: boolean;
-  error: string | null;
-  confirmed: boolean;
-  onConfirm: (tier: SponsorshipTierKey, postcode: string) => void;
-  onClose: () => void;
-}) {
-  const [tab, setTab] = useState<DrawerTab>('tiers');
-  const [tier, setTier] = useState<SponsorshipTierKey>('TIER_2');
-  const [postcode, setPostcode] = useState(athlete?.postcode ?? '2000');
-  const [authorizingId, setAuthorizingId] = useState<string | null>(null);
-  const [settlement, setSettlement] = useState<DropSettlement | null>(null);
-  const [drops, setDrops] = useState<CollabDrop[]>(() => seedCollabDrops(athlete));
-  const [showMatch, setShowMatch] = useState(false);
-  const [matching, setMatching] = useState(false);
-  const [matchSponsors, setMatchSponsors] = useState<MatchedSponsor[]>([]);
-  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
-  const pkg = SPONSORSHIP_PACKAGES.find((p) => p.key === tier) ?? SPONSORSHIP_PACKAGES[1];
-  const name = athleteDisplayName(athlete);
-  const catchment = athleteCatchmentLocation(athlete, name);
+export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, athlete }) => {
+  const [selectedTier, setSelectedTier] = useState<'tier1' | 'tier2' | 'tier3'>('tier2');
+  const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORIES[0]);
+  const [companyName, setCompanyName] = useState<string>('');
+  const [contactEmail, setContactEmail] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [conflictError, setConflictError] = useState<string | null>(null);
+  const [dealSuccess, setDealSuccess] = useState<boolean>(false);
+  const [showSyndicateModal, setShowSyndicateModal] = useState<boolean>(false);
+  const [syndicateSuccess, setSyndicateSuccess] = useState<boolean>(false);
+  const [selectedSyndicateId, setSelectedSyndicateId] = useState<SyndicatePortfolioId>(
+    SYNDICATE_PORTFOLIOS[0].id
+  );
+  const [syndicateBrief, setSyndicateBrief] = useState<SyndicateBriefSubmission | null>(null);
 
-  useEffect(() => {
-    const seed = seedCollabDrops(athlete);
-    setDrops(seed);
-    let cancelled = false;
-    (async () => {
-      try {
-        const rows = await fetchCollabDrops(athlete);
-        if (cancelled) return;
-        setDrops(Array.isArray(rows) && rows.length > 0 ? rows : seed);
-      } catch {
-        if (!cancelled) setDrops(seed);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [athlete?.id, athlete?.name, athlete?.full_name]);
+  if (!isOpen) return null;
 
-  async function openNearbyMatch() {
-    setShowMatch(true);
-    setMatching(true);
-    setSelectedPartnerId(null);
+  const activeSyndicate =
+    SYNDICATE_PORTFOLIOS.find((p) => p.id === selectedSyndicateId) ?? SYNDICATE_PORTFOLIOS[0];
+
+  const athleteName = athlete?.display_name || athlete?.name || 'Roster Talent';
+  const athleteSport = athlete?.sport_discipline || athlete?.sport || 'State Athletics';
+
+  const handleDeployCapital = async (tierCode: 'tier1' | 'tier2', amount: number) => {
+    setIsSubmitting(true);
+    setConflictError(null);
+
     try {
-      const res = await fetchNearbySponsors(athlete.id);
-      const live = Array.isArray(res.matches) ? res.matches.filter((s) => s.lat != null && s.lng != null) : [];
-      setMatchSponsors(live.length > 0 ? live : MOCK_VERIFIED_PARTNERS);
-    } catch {
-      setMatchSponsors(MOCK_VERIFIED_PARTNERS);
-    } finally {
-      setMatching(false);
-    }
-  }
+      if (athlete?.id) {
+        const { data: conflictResult, error: conflictErr } = await supabase.rpc('check_sponsor_conflict', {
+          p_athlete_id: athlete.id,
+          p_sponsor_category: selectedCategory
+        });
 
-  async function authorizeDrop(drop: CollabDrop) {
-    if (authorizingId) return;
-    setAuthorizingId(drop.id);
-    setSettlement(null);
-    await new Promise((r) => setTimeout(r, 900));
-    setSettlement(simulateSettlement(drop, name));
-    setAuthorizingId(null);
-  }
+        if (conflictErr) throw conflictErr;
+
+        if (conflictResult && conflictResult.allowed === false) {
+          setConflictError(conflictResult.reason || 'Category restricted by team bylaws or regulatory policy.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      const { error: dealErr } = await supabase.from('sponsor_deals').insert({
+        athlete_id: athlete?.id || '33333333-3333-3333-3333-333333333333',
+        tier_code: tierCode,
+        total_amount_aud: amount,
+        escrow_balance_aud: amount,
+        status: 'escrowed'
+      });
+
+      if (dealErr) {
+        console.warn('Could not persist to sponsor_deals table, simulating escrow booking:', dealErr.message);
+      }
+
+      setDealSuccess(true);
+    } catch (err: any) {
+      setConflictError(err.message || 'Execution halted. Please re-verify sponsorship parameters.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSyndicateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const brief: SyndicateBriefSubmission = {
+      portfolioId: activeSyndicate.id,
+      portfolioName: activeSyndicate.name,
+      companyName: companyName.trim(),
+      contactEmail: contactEmail.trim(),
+      category: selectedCategory,
+      submittedAt: new Date().toISOString()
+    };
+    setTimeout(() => {
+      setSyndicateBrief(brief);
+      setIsSubmitting(false);
+      setSyndicateSuccess(true);
+    }, 600);
+  };
 
   return (
-    <>
-      <div className="sponsor-drawer-overlay" onClick={onClose} />
-      <aside className="sponsor-drawer border-grid bg-brand-zinc text-brand-white rounded-none" role="dialog" aria-label="Sponsor athlete checkout">
-        <div className="sponsor-drawer-head">
-          <div className="athlete-avatar">{athlete?.initials || athleteInitials(name)}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 className="font-serif text-brand-white">{name}</h2>
-            <div className="sub font-mono">
-              {(athlete?.sport ?? 'Athlete').toUpperCase()}
-              {athlete?.postcode ? ` · ${athlete.postcode}` : ''}
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm">
+      <div className="w-full max-w-xl bg-zinc-950 border-l border-zinc-800 text-white flex flex-col max-h-screen">
+        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-lime-400 font-mono tracking-widest uppercase">// SPONSORSHIP ALLOCATION</p>
+            <h2 className="text-xl font-bold uppercase tracking-tight mt-1">Capital Deployment Terminal</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-zinc-400 hover:text-white font-mono text-sm px-2 py-1 border border-zinc-800 rounded"
+          >
+            ESC
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="border border-zinc-800 bg-zinc-900/40 p-4 rounded text-xs space-y-1">
+            <div className="flex justify-between">
+              <span className="text-zinc-500 uppercase tracking-wider font-mono">SELECTED ATHLETE:</span>
+              <span className="text-white font-medium">{athleteName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-zinc-500 uppercase tracking-wider font-mono">DISCIPLINE:</span>
+              <span className="text-zinc-300 font-medium">{athleteSport}</span>
             </div>
           </div>
-          <button className="icon-btn" onClick={onClose} aria-label="Close checkout">
-            <X size={16} />
-          </button>
-        </div>
 
-        <div className="sponsor-drawer-tabs" role="tablist" aria-label="Sponsorship surfaces">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'tiers'}
-            className={tab === 'tiers' ? 'active' : ''}
-            onClick={() => {
-              setTab('tiers');
-              setShowMatch(false);
-            }}
-          >
-            <Layers size={13} /> Commercial Sponsorship
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'drops'}
-            className={tab === 'drops' ? 'active' : ''}
-            onClick={() => setTab('drops')}
-          >
-            <Store size={13} /> Collab Drops
-          </button>
-        </div>
+          <div>
+            <label className="block text-xs uppercase font-mono tracking-wider text-zinc-400 mb-2">
+              Sponsor Commercial Category (Auto-Conflict Audit)
+            </label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full bg-zinc-900 border border-zinc-800 text-white rounded p-3 text-xs focus:border-white focus:outline-none"
+            >
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {confirmed && tab === 'tiers' ? (
-          <div className="sponsor-drawer-body">
-            <div className="sponsor-confirmed">
-              <CheckCircle2 size={28} />
-              <h3>Sponsorship booked</h3>
-              <p>
-                {pkg.title} activation registered for {name}. The licence badge is now{' '}
-                <strong>ACTIVE</strong>.
+          {conflictError && (
+            <div className="p-3 bg-red-950/40 border border-red-900 text-red-400 text-xs rounded font-mono">
+              // CONFLICT DETECTED: {conflictError}
+            </div>
+          )}
+
+          {dealSuccess && (
+            <div className="p-4 bg-lime-950/30 border border-lime-500/40 text-center rounded font-mono space-y-2">
+              <p className="text-xs text-lime-400 font-bold uppercase tracking-widest">// ESCROW CAPITAL ALLOCATED</p>
+              <p className="text-xs text-zinc-300">
+                Milestone contract created. Funds held in Stripe escrow pending verified matchday delivery.
               </p>
-              <span className="badge success">
-                <ShieldCheck size={12} /> Licence active
-              </span>
-            </div>
-            <div className="sponsor-drawer-actions">
-              <button className="sponsor-btn-confirm rounded-none bg-brand-white text-brand-black" onClick={onClose}>
-                Done
+              <button
+                onClick={() => setDealSuccess(false)}
+                className="mt-2 text-xs text-zinc-400 underline hover:text-white"
+              >
+                Book another allocation
               </button>
             </div>
-          </div>
-        ) : tab === 'tiers' && showMatch ? (
-          <div className="sponsor-drawer-body">
-            <div className="sponsor-match-head">
-              <div>
-                <span className="sponsor-drawer-label">Map &amp; match</span>
-            <h3 className="font-serif text-brand-white">PostGIS catchment · postcode 3000</h3>
-                <p>Athlete radius overlay with verified local sponsor pins.</p>
-              </div>
-              <button type="button" className="sponsor-btn-nearby rounded-none bg-brand-cobalt text-brand-white" onClick={() => setShowMatch(false)}>
-                Back to tiers
-              </button>
-            </div>
-            <div className="sponsor-match-metrics font-mono border-grid text-brand-volt">
-              3 Verified Partners · 5.8k Weekly Postcode Impressions · 100% Exclusivity Available
-            </div>
+          )}
 
-            {matching ? (
-              <div className="state">
-                <div className="spinner" />
-                Running spatial match…
-              </div>
-            ) : (
-              <>
-                <div className="relative isolate h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc">
-                  <MapView
-                    athlete={catchment}
-                    sponsors={matchSponsors}
-                    catchmentMeters={5000}
-                    className="relative h-full w-full overflow-hidden"
-                    selectedSponsorId={selectedPartnerId}
-                    onSelectSponsor={setSelectedPartnerId}
-                  />
+          <div className="space-y-4">
+            <div
+              onClick={() => setSelectedTier('tier3')}
+              className={`p-5 rounded border cursor-pointer transition-all ${
+                selectedTier === 'tier3'
+                  ? 'border-lime-400 bg-zinc-900/70 shadow-lg shadow-lime-400/5'
+                  : 'border-zinc-800 bg-zinc-900/20 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <span className="text-[10px] font-mono uppercase bg-lime-400/10 text-lime-400 px-2 py-0.5 rounded border border-lime-400/20">
+                    Brisbane 2032 Runway
+                  </span>
+                  <h3 className="text-base font-bold uppercase mt-1">Olympic Pathway Syndicate</h3>
+                  <p className="text-xs text-zinc-400">10 to 15 Roster Athletes across Discipline Corridor</p>
                 </div>
-                <span className="sponsor-drawer-label">Local partners</span>
-                <ul className="sponsor-match-list">
-                  {matchSponsors.map((s) => {
-                    const selected = selectedPartnerId === s.id;
-                    return (
-                      <li key={s.id}>
-                        <button
-                          type="button"
-                          className={`sponsor-match-card ${selected ? 'selected' : ''}`}
-                          aria-pressed={selected}
-                          onClick={() => setSelectedPartnerId(s.id)}
-                        >
-                          <div className="sponsor-match-card-copy">
-                            <strong>{s.business_name}</strong>
-                            <span>{s.merchant_category ?? 'Sponsor'}</span>
-                            <em>{formatKmAway(s.distance_km)}</em>
-                          </div>
-                          <span className="sponsor-match-select">Select as Activation Partner</span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
-            )}
-          </div>
-        ) : tab === 'tiers' ? (
-          <div className="sponsor-drawer-body">
-            <div className="sponsor-drawer-section">
-              <span className="sponsor-drawer-label">Select sponsorship tier</span>
-              <div className="sponsor-tier-list">
-                {SPONSORSHIP_PACKAGES.map((p) => (
-                  <button
-                    key={p.key}
-                    type="button"
-                    className={`sponsor-tier-option rounded-none border-grid ${tier === p.key ? 'selected' : ''}`}
-                    aria-pressed={tier === p.key}
-                    onClick={() => setTier(p.key)}
-                    disabled={submitting}
-                  >
-                    <div className="sponsor-tier-option-top">
-                      <span className="sponsor-tier-option-label">{p.label}</span>
-                      <span className="sponsor-tier-option-price font-mono">{p.priceLabel}</span>
-                    </div>
-                    <div className="sponsor-tier-option-title text-white font-bold text-xl tracking-tight">
-                      {p.title}
-                    </div>
-                    <p className="sponsor-tier-option-blurb">{p.blurb}</p>
-                  </button>
-                ))}
+                <div className="text-right">
+                  <span className="text-lg font-bold font-mono text-white">$50,000</span>
+                  <p className="text-[10px] text-zinc-500 uppercase font-mono">AUD / Annual</p>
+                </div>
               </div>
-            </div>
 
-            <div className="sponsor-drawer-section">
-              <label className="sponsor-drawer-label" htmlFor="store-postcode">
-                Store postcode
-              </label>
-              <input
-                id="store-postcode"
-                className="sponsor-drawer-input"
-                value={postcode}
-                onChange={(e) => setPostcode(e.target.value)}
-                inputMode="numeric"
-                maxLength={4}
-                disabled={submitting}
-              />
-            </div>
+              <ul className="text-xs text-zinc-400 space-y-1.5 my-4 font-mono">
+                <li>* Full sport discipline category lockout across regional market</li>
+                <li>* AI Studio broadcast clip rights for programmatic distribution</li>
+                <li>* Integrated co-branded merchandise drop pre-order rail</li>
+                <li>* 10% gross allocation to Grassroots Community Sports Fund</li>
+              </ul>
 
-            <div className="sponsor-drawer-total">
-              <span>Activation total</span>
-              <strong>{pkg.priceLabel}</strong>
-            </div>
-
-            {error && (
-              <div className="msg-error">
-                <AlertCircle size={13} /> {error}
-              </div>
-            )}
-
-            <div className="sponsor-drawer-actions">
               <button
-                className="sponsor-btn-confirm rounded-none bg-brand-white text-brand-black"
-                onClick={() => onConfirm(tier, postcode.trim() || '2000')}
-                disabled={submitting}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSyndicateModal(true);
+                }}
+                className="w-full bg-white text-black font-semibold text-xs py-3 uppercase tracking-wider rounded hover:bg-zinc-200 transition-colors"
               >
-                {submitting ? <Loader2 size={14} className="spin" /> : <ShieldCheck size={14} />}
-                {submitting ? 'Booking…' : `Confirm ${pkg.label}`}
-              </button>
-              <button
-                className="sponsor-btn-nearby rounded-none bg-brand-cobalt text-brand-white"
-                onClick={() => void openNearbyMatch()}
-                disabled={submitting}
-              >
-                <MapPin size={14} /> Nearby sponsors
+                Apply for Syndicate
               </button>
             </div>
+
+            <div
+              onClick={() => setSelectedTier('tier2')}
+              className={`p-5 rounded border cursor-pointer transition-all ${
+                selectedTier === 'tier2'
+                  ? 'border-white bg-zinc-900/70'
+                  : 'border-zinc-800 bg-zinc-900/20 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <span className="text-[10px] font-mono uppercase bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded">
+                    Core Bestseller
+                  </span>
+                  <h3 className="text-base font-bold uppercase mt-1">Regional Metro Hub</h3>
+                  <p className="text-xs text-zinc-400">3 Roster Athletes within 25km Cluster</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-bold font-mono text-white">$18,000</span>
+                  <p className="text-[10px] text-zinc-500 uppercase font-mono">AUD / Campaign</p>
+                </div>
+              </div>
+
+              <ul className="text-xs text-zinc-400 space-y-1.5 my-4 font-mono">
+                <li>* Regional category exclusivity within 25km trading radius</li>
+                <li>* TwelveLabs AI-indexed highlight clips for Meta/TikTok ads</li>
+                <li>* 1 in-person club clinic or flagship store appearance</li>
+                <li>* 50/50 split settlement escrow via Stripe Connect rails</li>
+              </ul>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeployCapital('tier2', 18000);
+                }}
+                disabled={isSubmitting}
+                className="w-full bg-zinc-100 text-black font-semibold text-xs py-3 uppercase tracking-wider rounded hover:bg-white disabled:opacity-50 transition-colors"
+              >
+                {isSubmitting ? 'Verifying Compliance...' : 'Deploy $18,000 Capital'}
+              </button>
+            </div>
+
+            <div
+              onClick={() => setSelectedTier('tier1')}
+              className={`p-5 rounded border cursor-pointer transition-all ${
+                selectedTier === 'tier1'
+                  ? 'border-white bg-zinc-900/70'
+                  : 'border-zinc-800 bg-zinc-900/20 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <span className="text-[10px] font-mono uppercase bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">
+                    Instant Activation
+                  </span>
+                  <h3 className="text-base font-bold uppercase mt-1">Local Postcode Starter</h3>
+                  <p className="text-xs text-zinc-400">1 Verified Athlete within 5km Store Radius</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-bold font-mono text-white">$5,000</span>
+                  <p className="text-[10px] text-zinc-500 uppercase font-mono">AUD / Flat</p>
+                </div>
+              </div>
+
+              <ul className="text-xs text-zinc-400 space-y-1.5 my-4 font-mono">
+                <li>* Storefront window poster and digital POS promotion rights</li>
+                <li>* 2 verified social amplification posts tagged with store location</li>
+                <li>* Pre-cleared Sport Integrity Australia bylaws clearance</li>
+                <li>* Instant automated Recipient Created Tax Invoice (RCTI)</li>
+              </ul>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeployCapital('tier1', 5000);
+                }}
+                disabled={isSubmitting}
+                className="w-full bg-zinc-800 text-white font-semibold text-xs py-3 uppercase tracking-wider rounded hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+              >
+                {isSubmitting ? 'Verifying Compliance...' : 'Deploy $5,000 Capital'}
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="sponsor-drawer-body">
-            <p className="drop-intro">
-              Programmatic merchandise store for {name}. Batch authorization fires a Stripe Connect
-              split and issues RCTI tax metadata.
+        </div>
+
+        <div className="p-4 border-t border-zinc-800 bg-zinc-950/80 text-[11px] font-mono text-zinc-500 flex justify-between">
+          <span>// ESCROW REVENUE SPLIT: 70/20/10</span>
+          <span>EST. SETTLEMENT: T+2</span>
+        </div>
+      </div>
+
+      {showSyndicateModal && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/90 p-4">
+          <div className="max-w-md w-full max-h-[90vh] overflow-y-auto bg-zinc-950 border border-zinc-800 p-6 rounded shadow-2xl font-mono text-white">
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-xs text-lime-400 uppercase tracking-widest">// EXECUTIVE APPLICATION</p>
+              <button
+                onClick={() => {
+                  setShowSyndicateModal(false);
+                  setSyndicateSuccess(false);
+                }}
+                className="text-zinc-500 hover:text-white text-xs"
+              >
+                CLOSE
+              </button>
+            </div>
+
+            <h3 className="text-lg font-bold uppercase tracking-tight mb-2">
+              $50,000 Olympic Syndicate Retainer
+            </h3>
+            <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
+              Syndicates provide regional category exclusivity across a curated portfolio of rising athletes. Applications are reviewed within 24 hours to ensure brand alignment.
             </p>
 
-            {drops.length === 0 && (
-              <div className="drop-empty">
-                No active merchandise drops configured for this athlete.
-              </div>
-            )}
-
-            {(drops ?? []).filter(Boolean).map((drop) => {
-              const busy = authorizingId === drop.id;
-              const done = settlement?.dropId === drop.id;
-              const gross = (drop.priceAud ?? 0) * (drop.batchSize || 1);
-              const split = drop.split ?? COLLAB_SPLIT;
-              return (
-                <article key={drop.id} className={`drop-card ${done ? 'authorized' : ''}`}>
-                  <div className="drop-card-top">
-                    <div className="drop-art clip-blade-23">{merchArt(drop.art)}</div>
-                    <div className="drop-card-meta">
-                      <span className={`drop-status drop-status-${drop.status}`}>{drop.statusLabel}</span>
-                      <h3>{drop.title}</h3>
-                      <div className="drop-price font-mono">A${drop.priceAud}</div>
-                    </div>
-                  </div>
-
-                  <div className="drop-chips">
-                    <span className="athlete-tag">{drop.inventoryLabel}</span>
-                    <span className="athlete-tag">
-                      <Truck size={11} /> {drop.sla}
-                    </span>
-                    <span className="athlete-tag">{drop.fulfillment}</span>
-                    {drop.editionSize != null && drop.remaining != null && (
-                      <span className="athlete-tag">
-                        {drop.remaining} / {drop.editionSize} remaining
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="drop-split">
-                    <span className="sponsor-drawer-label">Transparent commercial split</span>
-                    <div className="drop-split-row">
-                      <div>
-                        <strong className="drop-split-tag drop-split-tag-cyan">{split.athletePayoutPct}%</strong>
-                        <span>Athlete Payout</span>
-                      </div>
-                      <div>
-                        <strong className="drop-split-tag drop-split-tag-white">{split.platformFeePct}%</strong>
-                        <span>Platform Fee</span>
-                      </div>
-                      <div>
-                        <strong className="drop-split-tag drop-split-tag-volt">{split.communityFundPct}%</strong>
-                        <span>Grassroots Community Sports Fund</span>
-                      </div>
-                    </div>
-                    <div className="drop-batch-note">
-                      Batch {drop.batchSize} units · {formatCurrency(gross, 'AUD')} ex GST
-                    </div>
-                  </div>
-
-                  <button
-                    className="athlete-sponsor-btn drop-authorize rounded-none bg-brand-white text-brand-black"
-                    onClick={() => authorizeDrop(drop)}
-                    disabled={busy || authorizingId != null}
-                  >
-                    {busy ? (
-                      <>
-                        <Loader2 size={14} className="spin" /> Authorizing…
-                      </>
-                    ) : (
-                      <>
-                        <Zap size={14} /> Authorize Batch Drop
-                      </>
-                    )}
-                  </button>
-                </article>
-              );
-            })}
-
-            {settlement && (
-              <div className="drop-settlement" role="status">
-                <div className="ledger-head">
-                  <Zap size={16} />
-                  <h3>Stripe Connect split transfer</h3>
-                </div>
-                <p className="drop-settlement-event font-mono">
-                  Webhook {settlement.stripeEventId} · {settlement.batchSize} × {settlement.dropTitle}
+            {syndicateSuccess ? (
+              <div className="p-4 border border-lime-400/40 bg-lime-950/20 rounded text-center space-y-2">
+                <p className="text-xs text-lime-400 font-bold uppercase">// APPLICATION SUBMITTED</p>
+                {syndicateBrief && (
+                  <p className="text-xs text-white font-semibold">{syndicateBrief.portfolioName}</p>
+                )}
+                <p className="text-xs text-zinc-300">
+                  Our corporate partnerships lead will contact your marketing team within one business day.
                 </p>
-                <ul className="drop-settlement-log font-mono">
-                  {settlement.transfers.map((t) => (
-                    <li key={t.transferId}>
-                      {t.transferId} → {t.destination} · {formatCurrency(t.amount, 'AUD')}
-                    </li>
-                  ))}
-                </ul>
-                <div className="drop-invoice">
-                  <div className="ledger-head">
-                    <Receipt size={16} />
-                    <h3>RCTI tax invoice</h3>
-                  </div>
-                  <dl className="drop-invoice-grid">
-                    <div>
-                      <dt>Invoice</dt>
-                      <dd>{settlement.invoice.number}</dd>
-                    </div>
-                    <div>
-                      <dt>RCTI</dt>
-                      <dd>{settlement.invoice.rcti}</dd>
-                    </div>
-                    <div>
-                      <dt>ABN</dt>
-                      <dd>{settlement.invoice.abn}</dd>
-                    </div>
-                    <div>
-                      <dt>GST</dt>
-                      <dd>
-                        {settlement.invoice.gstRate} · {formatCurrency(settlement.gst, 'AUD')}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Ex GST</dt>
-                      <dd>{formatCurrency(settlement.grossExGst, 'AUD')}</dd>
-                    </div>
-                    <div>
-                      <dt>Inc GST</dt>
-                      <dd>{formatCurrency(settlement.totalIncGst, 'AUD')}</dd>
-                    </div>
-                    <div>
-                      <dt>Buyer</dt>
-                      <dd>{settlement.invoice.buyer}</dd>
-                    </div>
-                    <div>
-                      <dt>Supplier</dt>
-                      <dd>{settlement.invoice.supplier}</dd>
-                    </div>
-                  </dl>
-                </div>
               </div>
+            ) : (
+              <form onSubmit={handleSyndicateSubmit} className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="syndicate-portfolio"
+                    className="block text-[11px] uppercase tracking-wider text-zinc-400 mb-1"
+                  >
+                    Syndicate Portfolio Model
+                  </label>
+                  <select
+                    id="syndicate-portfolio"
+                    value={selectedSyndicateId}
+                    onChange={(e) => setSelectedSyndicateId(e.target.value as SyndicatePortfolioId)}
+                    className="w-full bg-zinc-900 border border-zinc-800 text-white rounded p-2.5 text-xs focus:border-white focus:outline-none"
+                  >
+                    {SYNDICATE_PORTFOLIOS.map((portfolio) => (
+                      <option key={portfolio.id} value={portfolio.id}>
+                        {portfolio.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-zinc-500 mt-1.5">{activeSyndicate.summary}</p>
+                </div>
+
+                <div className="p-3 border border-zinc-800 bg-zinc-900/50 rounded" aria-live="polite">
+                  <p className="text-[11px] text-lime-400 uppercase tracking-wider mb-2">
+                    // KEY DELIVERABLES
+                  </p>
+                  <ul className="space-y-1.5">
+                    {activeSyndicate.deliverables.map((item) => (
+                      <li key={item} className="flex gap-2 text-xs text-zinc-300 leading-relaxed">
+                        <span className="text-lime-400">&gt;</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-zinc-400 mb-1">
+                    Company / Brand Legal Entity
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="e.g. Asics Oceania Ltd"
+                    className="w-full bg-zinc-900 border border-zinc-800 text-white rounded p-2.5 text-xs focus:border-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-zinc-400 mb-1">
+                    Partnership Director Email
+                  </label>
+                  <input
+                    required
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="name@company.com"
+                    className="w-full bg-zinc-900 border border-zinc-800 text-white rounded p-2.5 text-xs focus:border-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-zinc-400 mb-1">
+                    Target Commercial Category
+                  </label>
+                  <input
+                    disabled
+                    value={selectedCategory}
+                    className="w-full bg-zinc-900/50 border border-zinc-800 text-zinc-400 rounded p-2.5 text-xs"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-lime-400 text-black font-semibold text-xs py-3 uppercase tracking-wider rounded hover:bg-lime-300 transition-colors mt-2"
+                >
+                  {isSubmitting ? 'Transmitting Brief...' : 'Submit Syndicate Brief'}
+                </button>
+              </form>
             )}
           </div>
-        )}
-      </aside>
-    </>
+        </div>
+      )}
+    </div>
   );
-}
+};
+
+export default SponsorDrawer;

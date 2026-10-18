@@ -26,7 +26,6 @@ import {
 import type { Athlete } from '../types';
 import { getSportComplianceBadges, getUniversalComplianceBadges } from '../types';
 import { athleteInitials, displayName, firstName } from '../lib/formatName';
-import { signMasterLicence } from '../api';
 import {
   isTwelveLabsConfigured,
   ingestMatchFootage,
@@ -42,16 +41,16 @@ import {
 
 export interface BrandKitTabProps {
   athlete: Athlete;
-  onSigned?: (updated: Athlete) => void;
+  /** Opens the Master Licence MOU signing modal (legal assent + guardian handling live there). */
+  onSignMOU: () => void;
 }
 
-export function BrandKitTab({ athlete, onSigned }: BrandKitTabProps) {
+export function BrandKitTab({ athlete, onSignMOU }: BrandKitTabProps) {
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   const [progress, setProgress] = useState(0);
-  const [signing, setSigning] = useState(false);
-  const [signError, setSignError] = useState<string | null>(null);
-  const [signed, setSigned] = useState(athlete.master_licence_signed);
+  const signed = athlete.master_licence_signed;
+  const pendingGuardian = athlete.master_licence_mou_status === 'pending_guardian';
 
   // Video ingestion state
   const [events, setEvents] = useState<TwelveLabsEvent[]>(() => generateMockEvents(athlete));
@@ -121,21 +120,6 @@ export function BrandKitTab({ athlete, onSigned }: BrandKitTabProps) {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (file && file.type.startsWith('video/')) handleFileSelect(file);
-  }
-
-  async function handleSign() {
-    setSigning(true);
-    setSignError(null);
-    try {
-      await signMasterLicence(athlete.id);
-      const updated = { ...athlete, master_licence_signed: true };
-      setSigned(true);
-      onSigned?.(updated);
-    } catch (e) {
-      setSignError(e instanceof Error ? e.message : 'Failed to sign MOU');
-    } finally {
-      setSigning(false);
-    }
   }
 
   return (
@@ -366,16 +350,19 @@ export function BrandKitTab({ athlete, onSigned }: BrandKitTabProps) {
             />
           </div>
 
-          {!signed && (
+          {!signed && pendingGuardian && (
+            <div className="mou-pending-banner" role="alert">
+              <Lock size={14} />
+              <span>Athlete signature recorded. Formal legal activation is pending co-signature sent to the registered guardian email.</span>
+            </div>
+          )}
+
+          {!signed && !pendingGuardian && (
             <div className="asset-locked-cta">
               <Lock size={14} />
               <span>Sign the Master Licence MOU to unlock all brand asset downloads.</span>
-              <button className="btn btn-primary btn-sm" onClick={handleSign} disabled={signing}>
-                {signing ? (
-                  <><Loader2 size={13} className="spin" /> Signing…</>
-                ) : (
-                  <><PenLine size={13} /> Sign Digital MOU</>
-                )}
+              <button type="button" className="btn btn-primary btn-sm" onClick={onSignMOU}>
+                <PenLine size={13} /> SIGN DIGITAL MOU
               </button>
             </div>
           )}
@@ -386,8 +373,6 @@ export function BrandKitTab({ athlete, onSigned }: BrandKitTabProps) {
               <span>MOU signed — all brand assets unlocked for download.</span>
             </div>
           )}
-
-          {signError && <div className="sign-error">{signError}</div>}
         </div>
       </div>
     </div>

@@ -110,9 +110,12 @@ type OutreachState = {
 export function SponsorDirectory({
   sponsors,
   athletes,
+  onSponsorAthlete,
 }: {
   sponsors: Sponsor[];
   athletes: Athlete[];
+  /** Opens the capital deployment drawer for the chosen athlete. */
+  onSponsorAthlete?: (athlete: any) => void;
 }) {
   // Sponsor filters
   const [sponsorSearch, setSponsorSearch] = useState<string>('');
@@ -429,6 +432,15 @@ export function SponsorDirectory({
                         {athlete.gender && (
                           <span className="badge accent">{athlete.gender}</span>
                         )}
+                      </div>
+                      <div className="card-actions">
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm"
+                          onClick={() => onSponsorAthlete && onSponsorAthlete(athlete)}
+                        >
+                          Sponsor Athlete
+                        </button>
                       </div>
                     </div>
                   ))}
