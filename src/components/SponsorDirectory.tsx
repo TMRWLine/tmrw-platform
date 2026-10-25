@@ -302,7 +302,7 @@ export function SponsorDirectory({
       <div className="master-detail-grid">
         {/* LEFT: Sponsor Grid */}
         <div className="master-column">
-          <div className="grid">
+          <div className="card-grid">
             {filteredSponsors.map((s) => {
               const isSelected = s.id === selectedSponsorId;
               return (
@@ -317,7 +317,7 @@ export function SponsorDirectory({
                     </div>
                     <div style={{ flex: 1 }}>
                       <h3>{s.business_name}</h3>
-                      <div className="sub">{s.merchant_category ?? 'Uncategorized'}</div>
+                      <div className="sub">{s.merchant_category ?? 'Uncategorised'}</div>
                     </div>
                     {isSelected && <Crosshair size={16} className="sponsor-selected-icon" />}
                   </div>
@@ -421,7 +421,7 @@ export function SponsorDirectory({
                       <div className="detail-athlete-meta">
                         {athlete.follower_count != null && (
                           <span className="badge">
-                            <Users size={11} /> {athlete.follower_count.toLocaleString()}
+                            <Users size={11} /> {String(Math.trunc(athlete.follower_count))}
                           </span>
                         )}
                         {athlete.postcode && (
@@ -479,7 +479,7 @@ export function SponsorDirectory({
               <div style={{ flex: 1 }}>
                 <h2>Pitch to {pitchSponsor.business_name}</h2>
                 <div className="sub">
-                  {pitchSponsor.merchant_category ?? 'Uncategorized'}
+                  {pitchSponsor.merchant_category ?? 'Uncategorised'}
                   {' · '}
                   {formatCurrency(pitchSponsor.budget_allocation ?? 0, pitchSponsor.currency)} budget
                   {' · '}
@@ -525,7 +525,7 @@ export function SponsorDirectory({
                       {selectedAthlete.sport ?? '—'}
                       {selectedAthlete.current_club ? ` · ${selectedAthlete.current_club}` : ''}
                       {selectedAthlete.follower_count != null
-                        ? ` · ${selectedAthlete.follower_count.toLocaleString()} followers`
+                        ? ` / ${String(Math.trunc(selectedAthlete.follower_count))} followers`
                         : ''}
                     </div>
                   </div>

@@ -160,6 +160,190 @@ app.get('/api/match-sponsors', async (req, res) => {
   }
 });
 
+const FALLBACK_COMMERCIAL_TIERS = {
+  local_merchant: { name: 'Precinct Contra & Micro', price_aud: 750 },
+  pathway_flight: { name: 'Pathway Contender', price_aud: 3500 },
+  national_challenger: { name: 'National Challenger', price_aud: 12500 },
+  world_class: { name: 'World-Class Benchmark', price_aud: 25000 },
+  syndicate: { name: 'Brisbane 2032 Corporate Syndicate', price_aud: 50000 },
+};
+
+function loadMockDeliverables() {
+  try {
+    return JSON.parse(
+      readFileSync(join(__dirname, '..', 'src', 'data', 'mockDeliverables.json'), 'utf8'),
+    );
+  } catch {
+    return null;
+  }
+}
+
+function loadCommercialTiers() {
+  const raw = loadMockDeliverables();
+  const packages = Array.isArray(raw?.packages) ? raw.packages : [];
+  if (!packages.length) return FALLBACK_COMMERCIAL_TIERS;
+  return Object.fromEntries(
+    packages.map((pkg) => [
+      pkg.tier_id,
+      { name: pkg.name, price_aud: Number(pkg.price_aud) },
+    ]),
+  );
+}
+
+function appBaseUrl(req) {
+  const configured = process.env.APP_BASE_URL || process.env.PUBLIC_APP_URL;
+  const origin =
+    configured ||
+    (typeof req.get === 'function' && req.get('origin')) ||
+    'http://localhost:5173';
+  return String(origin).replace(/\/$/, '');
+}
+
+function absoluteAssetUrl(url, base) {
+  const value = String(url ?? '').trim();
+  if (!value) return '';
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${base}${value.startsWith('/') ? '' : '/'}${value}`;
+}
+
+function snapshotFromBody(body) {
+  const athlete = body?.athlete && typeof body.athlete === 'object' ? body.athlete : {};
+  return {
+    full_name: String(athlete.full_name ?? body?.fullName ?? '').trim(),
+    grassroots_club_name: String(athlete.grassroots_club_name ?? body?.clubName ?? '').trim(),
+    image_url: String(athlete.image_url ?? body?.imageUrl ?? '').trim(),
+  };
+}
+
+function resolveCheckoutAthlete(athleteId, reqBody) {
+  const snapshot = snapshotFromBody(reqBody);
+  const mockAthlete = loadMockDeliverables()?.athlete;
+  const fromMock = mockAthlete?.id === athleteId ? mockAthlete : null;
+  return {
+    id: athleteId,
+    full_name: snapshot.full_name || fromMock?.full_name || 'Verified athlete',
+    grassroots_club_name:
+      snapshot.grassroots_club_name || fromMock?.grassroots_club?.name || 'Grassroots club',
+    image_url: snapshot.image_url || fromMock?.image_url || '',
+  };
+}
+
+async function hydrateAthleteFromSupabase(athlete) {
+  const supabaseRestUrl = (process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
+  if (!supabaseRestUrl || !SUPABASE_ANON_KEY) return athlete;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(athlete.id)) {
+    return athlete;
+  }
+  if (athlete.full_name && athlete.full_name !== 'Verified athlete' && athlete.image_url) {
+    return athlete;
+  }
+  try {
+    const athleteRes = await fetch(
+      `${supabaseRestUrl}/rest/v1/athletes?id=eq.${encodeURIComponent(athlete.id)}&select=*`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          Accept: 'application/json',
+        },
+      },
+    );
+    if (!athleteRes.ok) return athlete;
+    const rows = await athleteRes.json();
+    const row = Array.isArray(rows) ? rows[0] : null;
+    if (!row) return athlete;
+    return {
+      ...athlete,
+      full_name: athlete.full_name !== 'Verified athlete'
+        ? athlete.full_name
+        : (row.full_name || row.name || athlete.full_name),
+      grassroots_club_name:
+        athlete.grassroots_club_name !== 'Grassroots club'
+          ? athlete.grassroots_club_name
+          : (row.current_club || row.club_name || athlete.grassroots_club_name),
+      image_url: athlete.image_url || row.image_url || row.image || '',
+    };
+  } catch {
+    return athlete;
+  }
+}
+
+/**
+ * POST /api/checkout/create-session
+ * Body: { athleteId, tierId, athlete? }
+ * Returns { checkoutUrl } for Stripe Checkout, or a local confirmation URL in demo mode.
+ */
+app.post('/api/checkout/create-session', async (req, res) => {
+  try {
+    const athleteId = String(req.body?.athleteId ?? '').trim();
+    const tierId = String(req.body?.tierId ?? '').trim();
+    if (!athleteId || !tierId) {
+      return res.status(400).json({ error: 'athleteId and tierId are required' });
+    }
+
+    const catalogue = { ...FALLBACK_COMMERCIAL_TIERS, ...loadCommercialTiers() };
+    const pkg = catalogue[tierId];
+    if (!pkg || !Number.isFinite(pkg.price_aud) || pkg.price_aud <= 0) {
+      return res.status(400).json({ error: `Unknown commercial tier: ${tierId}` });
+    }
+
+    const origin = appBaseUrl(req);
+    const athlete = await hydrateAthleteFromSupabase(resolveCheckoutAthlete(athleteId, req.body));
+    const successQuery = `athleteId=${encodeURIComponent(athleteId)}&tierId=${encodeURIComponent(tierId)}`;
+    const successUrl = `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&${successQuery}`;
+    const cancelUrl = athleteId
+      ? `${process.env.APP_BASE_URL}/#roster?athlete=${athleteId}&drawer=open`
+      : `${process.env.APP_BASE_URL}/#commercial-tiers`;
+    const productImage = absoluteAssetUrl(athlete.image_url, origin);
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (stripeKey) {
+      const body = new URLSearchParams();
+      body.set('mode', 'payment');
+      body.set('success_url', successUrl);
+      body.set('cancel_url', cancelUrl);
+      body.set('line_items[0][quantity]', '1');
+      body.set('line_items[0][price_data][currency]', 'aud');
+      body.set('line_items[0][price_data][unit_amount]', String(Math.round(pkg.price_aud * 100)));
+      body.set(
+        'line_items[0][price_data][product_data][name]',
+        `tmrw/. ${pkg.name} // ${athlete.full_name}`,
+      );
+      body.set(
+        'line_items[0][price_data][product_data][description]',
+        `70% to ${athlete.full_name} · 15% to ${athlete.grassroots_club_name} · 15% platform escrow`,
+      );
+      if (productImage) {
+        body.set('line_items[0][price_data][product_data][images][0]', productImage);
+      }
+      body.set('metadata[athleteId]', athleteId);
+      body.set('metadata[tierId]', tierId);
+
+      const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${stripeKey}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body,
+      });
+      const session = await stripeRes.json();
+      if (!stripeRes.ok || !session?.url) {
+        return res.status(502).json({
+          error: session?.error?.message ?? 'Stripe could not create a checkout session.',
+        });
+      }
+      return res.json({ checkoutUrl: session.url });
+    }
+
+    return res.json({
+      checkoutUrl: `/checkout/success?session_id=cs_demo_${Date.now()}&${successQuery}`,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err?.message ?? 'Unable to initialise checkout.' });
+  }
+});
+
 // Serve the built React frontend from dist/ for any non-/api request.
 // In dev, Vite handles HMR on :5173 and proxies /api here; in production,
 // Express serves both the API and the SPA from a single unified port.

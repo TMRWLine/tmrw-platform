@@ -395,7 +395,7 @@ export const SPONSORSHIP_PACKAGES: SponsorshipPackage[] = [
     title: 'Product In-Kind',
     blurb: 'Gear, nutrition, and equipment supply with content obligations.',
     budgetCents: 500_000,
-    priceLabel: 'A$5,000',
+    priceLabel: 'A$5000',
   },
   {
     key: 'TIER_2',
@@ -403,7 +403,7 @@ export const SPONSORSHIP_PACKAGES: SponsorshipPackage[] = [
     title: 'Regional Hub',
     blurb: 'Postcode-targeted paid activation across the metro cluster.',
     budgetCents: 1_800_000,
-    priceLabel: 'A$18,000',
+    priceLabel: 'A$18000',
   },
   {
     key: 'TIER_3',
@@ -411,7 +411,7 @@ export const SPONSORSHIP_PACKAGES: SponsorshipPackage[] = [
     title: 'Run-of-Network',
     blurb: 'Enterprise commitment across the full league roster.',
     budgetCents: 4_200_000,
-    priceLabel: 'A$42,000',
+    priceLabel: 'A$42000',
   },
 ];
 

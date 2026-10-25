@@ -147,7 +147,7 @@ export function LandingNarrative({
               <article className="catchment-card">
                 <div className="catchment-card-head">
                   <span className="catchment-card-index text-zinc-400 font-mono">
-                    5 – 25 KM CLUSTER | A$2,000 – A$8,000 per Cluster
+                    5 – 25 KM CLUSTER | A$2000 – A$8000 per Cluster
                   </span>
                 </div>
                 <h3 className="catchment-card-title" style={{ color: '#FFFFFF' }}>
@@ -238,7 +238,7 @@ function AthleteTelemetryPanel() {
         </article>
       </div>
       <p className="text-[11px] text-zinc-400 font-mono pt-4 border-t border-white/10">
-        SETTLEMENT: A$1,250.00 // STRIPE CONNECT RAIL // CLEARED FOR MATCH DAY
+        SETTLEMENT: A$1250.00 // STRIPE CONNECT RAIL // CLEARED FOR MATCH DAY
       </p>
     </aside>
   );

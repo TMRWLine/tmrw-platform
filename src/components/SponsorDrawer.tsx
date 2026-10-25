@@ -137,6 +137,7 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
     setConflictError(null);
 
     try {
+      if (!supabase) throw new Error('Deployment service is not configured.');
       if (athlete?.id) {
         const { data: conflictResult, error: conflictErr } = await supabase.rpc('check_sponsor_conflict', {
           p_athlete_id: athlete.id,
@@ -274,7 +275,7 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
                   <p className="text-xs text-zinc-400">10 to 15 Roster Athletes across Discipline Corridor</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-lg font-bold font-mono text-white">$50,000</span>
+                  <span className="text-lg font-bold font-mono text-white">A$50000</span>
                   <p className="text-[10px] text-zinc-500 uppercase font-mono">AUD / Annual</p>
                 </div>
               </div>
@@ -314,7 +315,7 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
                   <p className="text-xs text-zinc-400">3 Roster Athletes within 25km Cluster</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-lg font-bold font-mono text-white">$18,000</span>
+                  <span className="text-lg font-bold font-mono text-white">A$18000</span>
                   <p className="text-[10px] text-zinc-500 uppercase font-mono">AUD / Campaign</p>
                 </div>
               </div>
@@ -334,7 +335,7 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
                 disabled={isSubmitting}
                 className="w-full bg-zinc-100 text-black font-semibold text-xs py-3 uppercase tracking-wider rounded hover:bg-white disabled:opacity-50 transition-colors"
               >
-                {isSubmitting ? 'Verifying Compliance...' : 'Deploy $18,000 Capital'}
+                {isSubmitting ? 'Verifying Compliance...' : 'Deploy A$18000 Capital'}
               </button>
             </div>
 
@@ -355,7 +356,7 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
                   <p className="text-xs text-zinc-400">1 Verified Athlete within 5km Store Radius</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-lg font-bold font-mono text-white">$5,000</span>
+                  <span className="text-lg font-bold font-mono text-white">A$5000</span>
                   <p className="text-[10px] text-zinc-500 uppercase font-mono">AUD / Flat</p>
                 </div>
               </div>
@@ -375,14 +376,14 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
                 disabled={isSubmitting}
                 className="w-full bg-zinc-800 text-white font-semibold text-xs py-3 uppercase tracking-wider rounded hover:bg-zinc-700 disabled:opacity-50 transition-colors"
               >
-                {isSubmitting ? 'Verifying Compliance...' : 'Deploy $5,000 Capital'}
+                {isSubmitting ? 'Verifying Compliance...' : 'Deploy A$5000 Capital'}
               </button>
             </div>
           </div>
         </div>
 
         <div className="p-4 border-t border-zinc-800 bg-zinc-950/80 text-[11px] font-mono text-zinc-500 flex justify-between">
-          <span>// ESCROW REVENUE SPLIT: 70/20/10</span>
+          <span>// ESCROW REVENUE SPLIT: 70/15/15</span>
           <span>EST. SETTLEMENT: T+2</span>
         </div>
       </div>
@@ -404,7 +405,7 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
             </div>
 
             <h3 className="text-lg font-bold uppercase tracking-tight mb-2">
-              $50,000 Olympic Syndicate Retainer
+              A$50000 Olympic Syndicate Retainer
             </h3>
             <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
               Syndicates provide regional category exclusivity across a curated portfolio of rising athletes. Applications are reviewed within 24 hours to ensure brand alignment.

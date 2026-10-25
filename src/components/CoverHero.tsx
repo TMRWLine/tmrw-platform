@@ -1,138 +1,114 @@
 import React from 'react';
+import type { LandingSectionId } from './Navigation';
+import { CourtLinesOverlay } from './CourtLinesOverlay';
+import { RollingPillButton } from './RollingPillButton';
+
+/** Shared editorial plumb line for the hero card and every section beneath it. */
+export const PAGE_SHELL = 'max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full';
 
 interface CoverHeroProps {
-  onAthletePortal?: () => void;
-  onSponsorAccess?: () => void;
-  onSection?: (section: string) => void;
+  /**
+   * Optional host router. The landing page owns smooth-scroll (Lenis), so when provided it
+   * lands precisely under the fixed bar. Falls back to a native smooth scroll against `#roster`.
+   */
+  onNavigateSection?: (id: LandingSectionId) => void;
 }
 
-export const CoverHero: React.FC<CoverHeroProps> = ({
-  onAthletePortal,
-  onSponsorAccess,
-  onSection,
-}) => {
+export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
+  const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
+
+  const scrollToRoster = () => {
+    if (onNavigateSection) {
+      onNavigateSection('roster');
+      return;
+    }
+    document.getElementById('roster')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
-    <section className="relative w-full h-screen bg-[#060709] overflow-hidden select-none">
-      {/* Stadium Photographic Plate */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+    <div className="pb-4">
+      <section
+        aria-label="tmrw cover"
+        className="relative flex min-h-[80vh] w-full select-none flex-col justify-between overflow-hidden rounded-[28px] border border-[#EAEAEA] bg-[#080808] p-8 shadow-sm md:rounded-[32px] md:p-14"
+        onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width - 0.5;
+          const y = (e.clientY - rect.top) / rect.height - 0.5;
+          setMousePos({ x: x * 36, y: y * 36 });
+        }}
+        onMouseLeave={() => setMousePos({ x: 0, y: 0 })}
+      >
+        {/* Full-bleed photography */}
         <img
           src="/coverpage.jpg"
-          alt="Stadium Atmosphere"
-          className="w-full h-full object-cover object-[center_34%]"
-          style={{ filter: 'contrast(125%) saturate(145%) brightness(92%)' }}
+          alt=""
+          aria-hidden="true"
+          fetchPriority="high"
+          draggable={false}
+          className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover object-center"
         />
-        
-        {/* Halogen Floodlight Bloom */}
-        <div className="absolute top-0 inset-x-0 h-[420px] bg-gradient-to-b from-amber-500/25 via-amber-900/10 to-transparent pointer-events-none mix-blend-screen z-10" />
 
-        {/* Inky Optical Text Pocket */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_65%_55%_at_50%_35%,_rgba(6,7,9,0.92)_0%,_rgba(6,7,9,0.45)_55%,_transparent_80%)] pointer-events-none z-10" />
-
-        {/* Tactile 35mm Film Grain Emulsion */}
+        {/* Atmospheric warm red rim-light, left of subject. */}
         <div
-          className="absolute inset-0 pointer-events-none z-20 opacity-20 mix-blend-screen"
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_20%_40%,rgba(235,59,48,0.30)_0%,transparent_60%)]"
+        />
+
+        {/* Subtle vignette to keep the photograph dark and cinematic. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/15"
+        />
+
+        {/* Cursor-tracking ambient bloom: low and wide so it adds depth without washing the silhouette.
+            No film grain on this card: it degrades the silhouette edges. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0 transition-transform duration-500 ease-out"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat',
+            transform: `translate3d(${mousePos.x * 0.6}px, ${mousePos.y * 0.6}px, 0)`,
+            background:
+              'radial-gradient(ellipse 70% 50% at 50% 65%, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.6) 80%, transparent 100%)',
           }}
         />
-      </div>
 
-      {/* Vertical Broadsheet Touchlines */}
-      <div className="absolute top-0 bottom-0 left-[14%] w-[1px] bg-white/30 pointer-events-none z-30" />
-      <div className="absolute top-0 bottom-0 right-[14%] w-[1px] bg-white/30 pointer-events-none z-30" />
+        <CourtLinesOverlay />
 
-      {/* Top Masthead */}
-      <header className="absolute top-0 inset-x-0 px-8 lg:px-12 py-6 flex items-center justify-between z-40">
-        <div className="flex flex-col">
-          <div className="flex items-baseline font-black tracking-[-0.04em] text-white text-2xl leading-none">
-            tmrw<span className="text-[#D2FF00]">/</span><span className="inline-block w-1.5 h-1.5 rounded-full bg-[#D2FF00] ml-0.5" />
-          </div>
-          <span className="font-mono text-[9px] tracking-[0.28em] text-white/80 uppercase mt-1.5 font-semibold">
-            LINE UP YOUR FUTURE
+        {/* Centred content lockup. `my-auto` centres it inside the justify-between column. */}
+        <div className="relative z-20 my-auto flex flex-col items-center text-center">
+          <span className="mb-6 self-center rounded-full bg-[#B8FF00] px-3.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-widest text-[#080808] shadow-md">
+            Olympic Runway // LA 2028 · Brisbane 2032
           </span>
-        </div>
-
-        {/* Dead-Centred Navigation Capsule */}
-        <nav className="absolute left-1/2 -translate-x-1/2 top-6">
-          <div className="flex items-center gap-6 px-6 py-2 rounded-full bg-black/60 border border-white/20 backdrop-blur-md">
-            <span onClick={() => onSection?.('roster')} className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/80 hover:text-white cursor-pointer transition-colors">01 // ROSTER</span>
-            <span onClick={() => onSection?.('enterprise')} className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/80 hover:text-white cursor-pointer transition-colors">02 // ENTERPRISE</span>
-            <span onClick={() => onSection?.('infrastructure')} className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/80 hover:text-white cursor-pointer transition-colors">03 // INFRASTRUCTURE</span>
-            <span onClick={() => onSection?.('manifesto')} className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/80 hover:text-white cursor-pointer transition-colors">04 // MANIFESTO</span>
+          <h1 className="m-0 inline-flex items-baseline justify-center text-center font-display text-6xl font-extrabold tracking-tight text-[#F7F7F6] drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] md:text-8xl">
+            Line up your future
+            <span
+              aria-hidden="true"
+              className="ml-2 inline-block h-3.5 w-3.5 align-baseline rounded-full bg-[#CCFF00] shadow-[0_0_14px_rgba(204,255,0,0.85)] md:h-4 md:w-4"
+            />
+          </h1>
+          <p className="z-20 mb-8 mt-4 max-w-2xl text-center text-sm leading-relaxed text-[#D1D1D1] md:text-base">
+            Medals are not won at the podium. They are funded in suburban sheds, state leagues, and local gyms. tmrw/. clears direct commercial equity for emerging Australian and New Zealand athletes, backed by institutional escrow and an automated 70/15/15 dividend to the clubs that raised them.
+          </p>
+          <div className="z-20 flex flex-wrap items-center justify-center gap-3">
+            <RollingPillButton variant="primary" onClick={scrollToRoster}>
+              Explore the Roster
+            </RollingPillButton>
+            <RollingPillButton
+              variant="glass"
+              onClick={() => {
+                if (onNavigateSection) {
+                  onNavigateSection('syndicate');
+                  return;
+                }
+                window.location.assign('/brisbane-2032-runway');
+              }}
+            >
+              Brisbane 2032 Runway
+            </RollingPillButton>
           </div>
-        </nav>
-
-        <div className="flex items-center gap-3">
-  <button
-    onClick={onAthletePortal}
-    className="bg-white text-black font-mono text-[9px] uppercase tracking-[0.2em] px-4 py-2 rounded-full hover:bg-[#D2FF00] transition-colors font-semibold"
-  >
-    Claim Backing
-  </button>
-  <button
-    onClick={onSponsorAccess}
-    className="border border-white/30 text-white font-mono text-[9px] uppercase tracking-[0.2em] px-4 py-2 rounded-full hover:bg-white/10 transition-colors font-semibold"
-  >
-    Deploy Capital
-  </button>
-</div>
-      </header>
-
-      {/* Monolithic Broadsheet Typography */}
-      <div className="absolute top-[14%] inset-x-0 z-30 max-w-4xl mx-auto text-center px-4 flex flex-col items-center pointer-events-none">
-        <h1 className="whitespace-nowrap font-extrabold tracking-[-0.04em] leading-none uppercase text-white text-[clamp(2rem,3.8vw,3.65rem)]">
-          YOU OWN THE GAME<span className="inline-block text-[#D2FF00] drop-shadow-[0_0_14px_#D2FF00]">.</span>
-        </h1>
-        <h2 className="whitespace-nowrap font-extrabold tracking-[-0.04em] leading-none uppercase text-white text-[clamp(2rem,3.8vw,3.65rem)] mt-2">
-          NOW OWN THE BAG<span className="inline-block text-[#D2FF00] drop-shadow-[0_0_14px_#D2FF00]">.</span>
-        </h2>
-        <p className="max-w-lg mx-auto text-center mt-5 text-[14px] leading-relaxed text-white font-medium font-sans drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-          The sovereign commercial network for suburban sport. Local businesses secure exclusive 15km retail territory. Representative athletes clear guaranteed match fees before kickoff.
-        </p>
-      </div>
-
-      {/* 22-Metre Pitch Geometry & Docked Actions */}
-      <div className="absolute top-[74%] inset-x-0 -translate-y-1/2 z-30">
-        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[1px] bg-white/70 shadow-[0_0_12px_rgba(255,255,255,0.6)]" />
-
-        {/* Pitch Reticles */}
-        <div className="absolute left-[14%] top-1/2 -translate-y-1/2 -translate-x-1/2 flex items-center gap-2 bg-[#060709] px-2 py-0.5 border border-white/20 rounded z-10">
-          <span className="text-[#D2FF00] font-mono text-[11px] leading-none">+</span>
-          <span className="font-mono text-[8px] tracking-[0.24em] text-white">22M // MARK</span>
         </div>
-        <div className="absolute right-[14%] top-1/2 -translate-y-1/2 translate-x-1/2 flex items-center gap-2 bg-[#060709] px-2 py-0.5 border border-white/20 rounded z-10">
-          <span className="font-mono text-[8px] tracking-[0.24em] text-white">22M // MARK</span>
-          <span className="text-[#D2FF00] font-mono text-[11px] leading-none">+</span>
-        </div>
-
-        {/* Action Triggers */}
-        <div className="relative flex items-center justify-center gap-4 z-20 pointer-events-auto">
-          <button
-            onClick={onAthletePortal}
-            className="bg-white text-[#060709] font-mono text-[11px] uppercase tracking-[0.16em] px-8 py-3.5 rounded-full hover:bg-[#D2FF00] hover:text-[#060709] transition-all duration-200 active:scale-[0.98] shadow-[0_0_30px_rgba(255,255,255,0.35)] font-semibold"
-          >
-            Get Backed as an Athlete -&gt;
-          </button>
-          <button
-            onClick={onSponsorAccess}
-            className="border border-white/40 bg-black/60 text-white font-mono text-[11px] uppercase tracking-[0.16em] px-8 py-3.5 rounded-full hover:bg-white/15 transition-all duration-200 active:scale-[0.98] backdrop-blur-md font-semibold"
-          >
-            Sponsor Your Suburbs -&gt;
-          </button>
-        </div>
-      </div>
-
-      {/* Pinned Baseline Rule */}
-      <footer className="absolute bottom-0 inset-x-0 px-8 lg:px-12 py-4 border-t border-white/15 flex items-center justify-between z-40 bg-gradient-to-t from-[#060709] to-transparent">
-        <span className="font-mono text-[10px] tracking-[0.2em] text-white animate-pulse font-semibold">
-          [ SCROLL ↓ ]
-        </span>
-        <span className="font-mono text-[9px] tracking-[0.2em] text-white font-medium">
-          BRISBANE 2032 RUNWAY // REGULATORY BYLAWS CLEARED // AUSTRALIA &amp; NEW ZEALAND EST. 2026
-        </span>
-      </footer>
-    </section>
+      </section>
+    </div>
   );
 };
 

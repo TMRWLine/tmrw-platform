@@ -417,13 +417,9 @@ export async function fetchAgreements(athleteId?: string): Promise<Agreement[]> 
 export function formatCurrency(amount: number | null | undefined, currency: string | null | undefined): string {
   if (amount == null) return '—';
   const code = currency ?? 'AUD';
-  const formatted = new Intl.NumberFormat('en-AU', {
-    style: 'currency',
-    currency: code,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-  return `${formatted} ${code}`;
+  const prefix = code === 'NZD' ? 'NZ$' : code === 'USD' ? 'US$' : 'A$';
+  const sign = amount < 0 ? '-' : '';
+  return `${sign}${prefix}${Math.round(Math.abs(amount))} ${code}`;
 }
 
 export async function fetchNearbySponsors(
@@ -897,3 +893,5 @@ export async function applyToCampaign(
   if (error) throw new Error(`Failed to apply: ${error.message}`);
   return data as CampaignApplication;
 }
+
+export { createCheckoutSession, CHECKOUT_SUCCESS_PATH } from './lib/checkout';

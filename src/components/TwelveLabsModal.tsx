@@ -88,7 +88,11 @@ function HighlightTab({
   const [error, setError] = useState<string | null>(null);
   const videoIdRef = useRef(`vid-${Date.now()}`);
 
-  const selected = athletes.find((a) => a.id === selectedId) ?? null;
+  const roster =
+    preselectedAthlete && !athletes.some((athlete) => athlete.id === preselectedAthlete.id)
+      ? [preselectedAthlete, ...athletes]
+      : athletes;
+  const selected = roster.find((a) => a.id === selectedId) ?? null;
 
   async function handleGenerate() {
     if (!selected || generating) return;
@@ -120,7 +124,7 @@ function HighlightTab({
             disabled={generating}
           >
             <option value="">Choose an athlete…</option>
-            {athletes.map((a) => (
+            {roster.map((a) => (
               <option key={a.id} value={a.id}>
                 {displayName(a?.name)} — {a.sport ?? 'athlete'}
               </option>

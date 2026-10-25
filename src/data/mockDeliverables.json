@@ -1,0 +1,152 @@
+{
+  "athlete": {
+    "id": "ath_7f8a9b2c",
+    "display_name": "M. Thorne",
+    "full_name": "Marcus Thorne",
+    "sport": "Basketball",
+    "league": "NBL1 North",
+    "current_club": "Gold Coast Rollers",
+    "grassroots_club": {
+      "name": "Southport Amateur Basketball Association",
+      "suburb": "Southport",
+      "state": "QLD"
+    },
+    "postcode": "4215",
+    "integrity_status": "Sport Integrity Australia Cleared",
+    "image_url": "/athletes/m-thorne.jpg"
+  },
+  "packages": [
+    {
+      "tier_id": "local_merchant",
+      "name": "Precinct Contra & Micro",
+      "price_aud": 750,
+      "price_display": "A$750",
+      "price_range": "A$250 - A$1000",
+      "billing_type": "Quarterly Cycle",
+      "catchment_label": "15KM PRECINCT LOCKED",
+      "contra_eligible": true,
+      "contra_allowance_percent": 50,
+      "summary": "Hyper-local roots. Fuel, recovery, and equipment backing anchored within fifteen kilometres of the training shed. Direct social tags, genuine product testing, and in-store hero promotional rights.",
+      "deliverables": [
+        "Verified 15km suburban radius",
+        "1x in-store appearance",
+        "2x verified social deliverables"
+      ],
+      "split_breakdown": {
+        "athlete_amount": 525.0,
+        "athlete_percent": 70,
+        "club_amount": 112.5,
+        "club_percent": 15,
+        "platform_amount": 112.5,
+        "platform_percent": 15
+      },
+      "cta_label": "Allocate Flight Capital"
+    },
+    {
+      "tier_id": "pathway_flight",
+      "name": "Pathway Contender",
+      "price_aud": 3500,
+      "price_display": "A$3500",
+      "price_range": "A$2500 - A$5000",
+      "billing_type": "Annual Season",
+      "catchment_label": "NATIONAL PATHWAY SANCTIONED",
+      "contra_eligible": false,
+      "contra_allowance_percent": 0,
+      "summary": "Backing the grind before the stadium lights turn on. Training kit placement, quarterly digital campaign assets, and travel underwriting through national selection trials.",
+      "deliverables": [
+        "State pathway validation",
+        "4x quarterly asset suites",
+        "1x corporate appearance"
+      ],
+      "split_breakdown": {
+        "athlete_amount": 2450.0,
+        "athlete_percent": 70,
+        "club_amount": 525.0,
+        "club_percent": 15,
+        "platform_amount": 525.0,
+        "platform_percent": 15
+      },
+      "cta_label": "Allocate Flight Capital"
+    },
+    {
+      "tier_id": "national_challenger",
+      "name": "National Challenger",
+      "price_aud": 12500,
+      "price_display": "A$12500",
+      "price_range": "A$10000 - A$15000",
+      "billing_type": "Annual Category Lock",
+      "catchment_label": "CATEGORY EXCLUSIVITY LOCKED",
+      "contra_eligible": false,
+      "contra_allowance_percent": 0,
+      "summary": "Category exclusivity across your commercial vertical. Complete media day asset suite, executive appearance rights, and certified high-performance training backing.",
+      "deliverables": [
+        "Full 48-code category lockout",
+        "Comprehensive digital rights",
+        "Broadcast-cleared imagery"
+      ],
+      "split_breakdown": {
+        "athlete_amount": 8750.0,
+        "athlete_percent": 70,
+        "club_amount": 1875.0,
+        "club_percent": 15,
+        "platform_amount": 1875.0,
+        "platform_percent": 15
+      },
+      "cta_label": "Allocate Flight Capital"
+    },
+    {
+      "tier_id": "world_class",
+      "name": "World-Class Benchmark",
+      "price_aud": 25000,
+      "price_display": "A$25000",
+      "price_range": "A$20000 - A$30000",
+      "billing_type": "Major Campaign Cycle",
+      "catchment_label": "PAN-PACIFIC BROADCAST CLEARED",
+      "contra_eligible": false,
+      "contra_allowance_percent": 0,
+      "summary": "Direct association with world championship contenders. Premium digital rights, internal staff town hall keynote, and full commercial usage rights across Australia and New Zealand.",
+      "deliverables": [
+        "Pan-Pacific media usage",
+        "Keynote appearance",
+        "Verified national broadcast recognition"
+      ],
+      "split_breakdown": {
+        "athlete_amount": 17500.0,
+        "athlete_percent": 70,
+        "club_amount": 3750.0,
+        "club_percent": 15,
+        "platform_amount": 3750.0,
+        "platform_percent": 15
+      },
+      "cta_label": "Allocate Flight Capital"
+    },
+    {
+      "tier_id": "syndicate",
+      "name": "Brisbane 2032 Corporate Syndicate",
+      "price_aud": 50000,
+      "price_display": "A$50000",
+      "price_range": "A$25000 - A$50000+",
+      "billing_type": "Annual Syndicate Allocation",
+      "catchment_label": "Green & Gold Runway Allocation",
+      "contra_eligible": false,
+      "contra_allowance_percent": 0,
+      "summary": "An enterprise portfolio funding five future Olympians and Paralympians on the runway to the home Games. Includes verified ESG community impact reporting and direct capital distributions to five grassroots sporting clubs.",
+      "deliverables": [
+        "Portfolio of five Olympic and Paralympic pathway contenders",
+        "Verified ESG community impact reporting",
+        "Direct capital distributions to five grassroots sporting clubs",
+        "Joint production days with a full commercial asset suite",
+        "Corporate hospitality at national championship selection trials"
+      ],
+      "split_breakdown": {
+        "athlete_amount": 35000.0,
+        "athlete_percent": 70,
+        "club_amount": 7500.0,
+        "club_percent": 15,
+        "platform_amount": 7500.0,
+        "platform_percent": 15
+      },
+      "cta_label": "Apply for Syndicate Allocation"
+    }
+  ]
+}

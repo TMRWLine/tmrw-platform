@@ -52,12 +52,13 @@ export default function MapView({
       center: [-37.8136, 144.9631],
       zoom: 13,
       scrollWheelZoom: false,
+      zoomControl: false,
       attributionControl: true,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      subdomains: 'abc',
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
       maxZoom: 19,
     }).addTo(map);
 
@@ -110,7 +111,7 @@ export default function MapView({
       L.marker(pos, { icon: makeAthleteIcon() })
         .addTo(layer)
         .bindPopup(
-          `<div class="map-popup"><strong>${escapeHtml(displayName(athlete?.name))}</strong><br/><span class="popup-sub">Athlete${athlete.postcode ? ' &middot; ' + escapeHtml(athlete.postcode) : ''}${athlete.follower_count != null ? ' &middot; ' + athlete.follower_count.toLocaleString() + ' followers' : ''}</span>${complianceLine}</div>`
+          `<div class="map-popup"><strong>${escapeHtml(displayName(athlete?.name))}</strong><br/><span class="popup-sub">Athlete${athlete.postcode ? ' / ' + escapeHtml(athlete.postcode) : ''}${athlete.follower_count != null ? ' / ' + String(Math.trunc(athlete.follower_count)) + ' followers' : ''}</span>${complianceLine}</div>`
         );
       points.push(pos);
     }

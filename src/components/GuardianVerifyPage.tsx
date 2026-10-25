@@ -40,6 +40,7 @@ export const GuardianVerify: React.FC = () => {
   useEffect(() => {
     const fetchAgreement = async () => {
       try {
+        if (!supabase) throw new Error('Verification service is not configured.');
         const token = getEffectiveToken();
         const { data: agreement, error } = await supabase.rpc('get_guardian_agreement', {
           lookup_token: token
@@ -67,6 +68,7 @@ export const GuardianVerify: React.FC = () => {
     setErrorMessage(null);
 
     try {
+      if (!supabase) throw new Error('Verification service is not configured.');
       const token = getEffectiveToken();
       const { data: response, error } = await supabase.rpc('countersign_guardian_mou', {
         lookup_token: token,

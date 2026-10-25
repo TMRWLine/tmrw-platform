@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Lenis from '@studio-freight/lenis';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   MapPin,
   X,
@@ -11,9 +9,7 @@ import {
   RefreshCw,
   Copy,
   Check,
-  User,
   Shield,
-  ShieldCheck,
   PenLine,
   Film,
   BadgeCheck,
@@ -34,7 +30,6 @@ import {
   Lock,
   Maximize2,
   Globe,
-  Crosshair,
 } from 'lucide-react';
 import type {
   Athlete,
@@ -50,20 +45,39 @@ import { getSportComplianceBadges, getUniversalComplianceBadges } from './types'
 import { BrandKitTab } from './components/AthleteProfileModal';
 import { MessageThread } from './components/MessageThread';
 import { StatementsPanel } from './components/StatementsPanel';
-import { Navbar, type LandingSectionId, type NavView } from './components/Navbar';
+import { Navigation, landingSectionElementId, type LandingSectionId } from './components/Navigation';
+import { SearchOverlay } from './components/SearchOverlay';
+import { MenuOverlay } from './components/MenuOverlay';
+import {
+  OPEN_DEPLOY_DRAWER_EVENT,
+  OPEN_MENU_OVERLAY_EVENT,
+  OPEN_SEARCH_OVERLAY_EVENT,
+} from './lib/overlayEvents';
 import { AdminDrawer } from './components/AdminDrawer';
 import { TwelveLabsModal } from './components/TwelveLabsModal';
-import { Hero } from './components/Hero';
-import { HeroFluidReveal } from './components/HeroFluidReveal';
-import { LandingNarrative } from './components/LandingNarrative';
-import { BrandLockup, LandingStackSlot } from './components/LandingStack';
+import { CoverHero, PAGE_SHELL } from './components/CoverHero';
+import { BroadcastMatrix } from './components/BroadcastMatrix';
+import { RadialCatchment } from './components/RadialCatchment';
+import { RosterGrid } from './components/RosterGrid';
+import { AthleteCard } from './components/AthleteCard';
+import { SettlementLedger } from './components/SettlementLedger';
+import { SiteFooter } from './components/SiteFooter';
 import { LivingContours } from './components/LivingContours';
 import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDrawer } from './components/SponsorDrawer';
 import { SponsorDirectory } from './components/SponsorDirectory';
 import { AthleteAuthModal } from './components/AthleteAuthModal';
+import { AthletePortalDrawer } from './components/AthletePortalDrawer';
+import { SyndicateEnquiryModal } from './components/SyndicateEnquiryModal';
 import { AthleteProfileManager } from './components/AthleteProfileManager';
 import { GuardianVerifyPage, GUARDIAN_VERIFY_PATH } from './components/GuardianVerifyPage';
+import { CommercialTiers } from './components/CommercialTiers';
+import { SyndicateRunway } from './components/SyndicateRunway';
+import { HowItWorks } from './components/HowItWorks';
+import { ViewportFrame } from './components/ViewportFrame';
+import { ObsidianWipe } from './components/ObsidianWipe';
+import { CheckoutSuccessPage, CHECKOUT_SUCCESS_PATH } from './pages/checkout/success';
+import { CANVAS_OBSIDIAN, CANVAS_WHITE, mixHex, syndicateProgress } from './lib/canvasTone';
 import { AthleteCommercialDashboard } from './components/AthleteCommercialDashboard';
 import { supabase } from './lib/supabaseClient';
 import {
@@ -80,12 +94,24 @@ import {
 } from './api';
 import MapView from './MapView';
 import { athleteInitials, athleteDisplayName } from './lib/formatName';
+import { BRISBANE_RUNWAY_PATH, COMMERCIAL_TIERS_PATH, HOW_IT_WORKS_PATH, THE_ROSTER_PATH } from './lib/routes';
 
-type AppView = 'landing' | 'sponsor';
+type AppView = 'landing' | 'sponsor' | 'how-it-works' | 'the-roster' | 'commercial-tiers' | 'brisbane-runway';
+
+function viewFromLocation(): AppView {
+  if (typeof window === 'undefined') return 'landing';
+  const path = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (path === HOW_IT_WORKS_PATH) return 'how-it-works';
+  if (path === THE_ROSTER_PATH) return 'the-roster';
+  if (path === COMMERCIAL_TIERS_PATH) return 'commercial-tiers';
+  if (path === BRISBANE_RUNWAY_PATH) return 'brisbane-runway';
+  return 'landing';
+}
+
+/** Height of the fixed navigation bar; section scrolls land beneath it. */
+const NAV_HEIGHT_PX = 74;
 
 type AthleteSurface = 'terminal' | 'dashboard';
-
-gsap.registerPlugin(ScrollTrigger);
 
 export type RadiusFilter = '25km' | '50km' | 'all';
 
@@ -99,7 +125,7 @@ type OutreachState = {
 type ProfileTab = 'overview' | 'brandkit' | 'agreement';
 
 export function MarketplaceApp() {
-  const [view, setView] = useState<AppView>('landing');
+  const [view, setView] = useState<AppView>(viewFromLocation);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [loadingList, setLoadingList] = useState(true);
@@ -125,115 +151,90 @@ export function MarketplaceApp() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [mediaStudioOpen, setMediaStudioOpen] = useState(false);
   const [mediaStudioAthlete, setMediaStudioAthlete] = useState<Athlete | null>(null);
-  const [navView, setNavView] = useState<NavView | null>(null);
   const [landingSection, setLandingSection] = useState<LandingSectionId | null>(null);
+  const [canvasProgress, setCanvasProgress] = useState(0);
   const lenisRef = useRef<Lenis | null>(null);
-  const horizontalSectionRef = useRef<HTMLDivElement>(null);
-  const horizontalTrackRef = useRef<HTMLDivElement>(null);
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>('all');
   const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
   const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [isSponsorDrawerOpen, setIsSponsorDrawerOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isPortalDrawerOpen, setIsPortalDrawerOpen] = useState(false);
+  const [isSyndicateEnquiryOpen, setIsSyndicateEnquiryOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [focusedSpecimenId, setFocusedSpecimenId] = useState<string | null>(null);
+  const [requestedPackage, setRequestedPackage] = useState<string | null>(null);
   const [athleteSurface, setAthleteSurface] = useState<AthleteSurface | null>(null);
   const [routingAthlete, setRoutingAthlete] = useState(false);
   const [terminalKey, setTerminalKey] = useState(0);
+  // Smooth momentum scroll across the application. Skipped for reduced-motion users.
   useEffect(() => {
-    if (view !== 'landing') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const lenis = new Lenis({
-      duration: 1.05,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      lerp: 0.08,
+      smoothWheel: true,
+      wheelMultiplier: 0.9,
     });
     lenisRef.current = lenis;
-    const onLenisScroll = () => ScrollTrigger.update();
-    lenis.on('scroll', onLenisScroll);
-
-    const ticker = (time: number) => {
-      lenis.raf(time * 1000);
+    let raf = 0;
+    const tick = (time: number) => {
+      lenis.raf(time);
+      raf = requestAnimationFrame(tick);
     };
-    gsap.ticker.add(ticker);
-    gsap.ticker.lagSmoothing(0);
-
-    const mm = gsap.matchMedia();
-    mm.add('(min-width: 768px)', () => {
-      const section = horizontalSectionRef.current;
-      const track = horizontalTrackRef.current;
-      if (!section || !track) return;
-
-      const tween = gsap.to(track, {
-        xPercent: -50,
-        ease: 'none',
-        scrollTrigger: {
-          id: 'horizontal-pin',
-          trigger: section,
-          pin: true,
-          scrub: 1,
-          start: 'top top',
-          end: '+=1800',
-          pinSpacing: true,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-          fastScrollEnd: true,
-          preventOverlaps: true,
-        },
-      });
-
-      return () => {
-        tween.scrollTrigger?.kill();
-        tween.kill();
-        gsap.set(track, { clearProps: 'transform' });
-      };
-    });
-
-    let refreshDebounce = 0;
-    const refreshAll = () => {
-      window.clearTimeout(refreshDebounce);
-      refreshDebounce = window.setTimeout(() => ScrollTrigger.refresh(), 90);
-    };
-    const refreshTimer = window.setTimeout(refreshAll, 120);
-    const layoutTimer = window.setTimeout(refreshAll, 480);
-    window.addEventListener('load', refreshAll);
-    window.addEventListener('tmrw-hero-ready', refreshAll);
-    let fontsAlive = true;
-    void document.fonts?.ready.then(() => {
-      if (fontsAlive) refreshAll();
-    });
-
+    raf = requestAnimationFrame(tick);
     return () => {
-      fontsAlive = false;
-      window.clearTimeout(refreshTimer);
-      window.clearTimeout(layoutTimer);
-      window.clearTimeout(refreshDebounce);
-      window.removeEventListener('load', refreshAll);
-      window.removeEventListener('tmrw-hero-ready', refreshAll);
-      gsap.ticker.remove(ticker);
-      mm.revert();
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-      lenis.off('scroll', onLenisScroll);
+      cancelAnimationFrame(raf);
       lenisRef.current = null;
       lenis.destroy();
     };
-  }, [view]);
+  }, []);
 
   useEffect(() => {
-    if (view !== 'landing' || !landingSection) return;
-    const id = landingSection;
-    const t = window.setTimeout(() => {
-      let target: number | HTMLElement | null = document.getElementById(id);
-      const pin = document.getElementById('horizontal-wrapper');
-      if (pin && (id === 'for-brands' || id === 'campaign-architecture')) {
-        const pinRect = pin.getBoundingClientRect();
-        const spacer = pin.parentElement;
-        const spacerRect = spacer?.getBoundingClientRect();
-        const start = window.scrollY + pinRect.top;
-        const span = (spacerRect?.height ?? pinRect.height) - window.innerHeight;
-        const end = window.scrollY + (spacerRect?.top ?? pinRect.top) + Math.max(span, 0);
-        target = id === 'campaign-architecture' ? end : start;
+    if (view === 'brisbane-runway') {
+      setCanvasProgress(1);
+      return;
+    }
+    if (view !== 'landing') {
+      setCanvasProgress(0);
+      return;
+    }
+    const update = () => {
+      const section = document.getElementById('brisbane-2032-runway');
+      if (!section) {
+        setCanvasProgress(0);
+        return;
       }
+      const next = syndicateProgress(section, window.innerHeight);
+      setCanvasProgress((prev) => (Math.abs(prev - next) < 0.012 ? prev : next));
+    };
+    update();
+    const onScroll = () => update();
+    lenisRef.current?.on('scroll', onScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      lenisRef.current?.off('scroll', onScroll);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', update);
+    };
+  }, [view]);
+
+  // Section routing from the navigation bar and hero CTAs.
+  useEffect(() => {
+    if (view !== 'landing' || !landingSection) return;
+    const t = window.setTimeout(() => {
+      const target: number | HTMLElement | null =
+        landingSection === 'top'
+          ? 0
+          : document.getElementById(landingSectionElementId(landingSection));
       if (target != null) {
         if (lenisRef.current) {
-          lenisRef.current.scrollTo(target, { offset: 0, duration: 1.15 });
+          lenisRef.current.scrollTo(target, {
+            offset: typeof target === 'number' ? 0 : -NAV_HEIGHT_PX,
+            duration: 1.15,
+          });
         } else if (typeof target === 'number') {
           window.scrollTo({ top: target, behavior: 'smooth' });
         } else {
@@ -248,6 +249,64 @@ export function MarketplaceApp() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [view]);
+
+  // Full-screen overlays (search / menu): freeze the page behind them. Lenis intercepts wheel
+  // events and would otherwise keep scrolling the document even with `overflow: hidden`.
+  const isOverlayActive = isSearchOpen || isMenuOpen;
+  useEffect(() => {
+    if (!isOverlayActive) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    lenisRef.current?.stop();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      lenisRef.current?.start();
+    };
+  }, [isOverlayActive, view]);
+
+  // Escape closes any open overlay immediately.
+  useEffect(() => {
+    if (!isOverlayActive) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setIsSearchOpen(false);
+      setIsMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOverlayActive]);
+
+  // Decoupled entry points: any component can emit these window events (see lib/overlayEvents).
+  useEffect(() => {
+    const openSearch = () => {
+      setIsMenuOpen(false);
+      setIsSearchOpen(true);
+    };
+    const openMenu = () => {
+      setIsSearchOpen(false);
+      setIsMenuOpen(true);
+    };
+    const openDeployDrawer = (event: Event) => {
+      setIsSearchOpen(false);
+      setIsMenuOpen(false);
+      const path = window.location.pathname.replace(/\/+$/, '') || '/';
+      if (path !== THE_ROSTER_PATH) {
+        window.history.pushState(null, '', THE_ROSTER_PATH);
+      }
+      setView('the-roster');
+      const packageId =
+        (event as CustomEvent<{ packageId?: string }>).detail?.packageId ?? 'storefront';
+      setRequestedPackage(packageId);
+    };
+    window.addEventListener(OPEN_SEARCH_OVERLAY_EVENT, openSearch);
+    window.addEventListener(OPEN_MENU_OVERLAY_EVENT, openMenu);
+    window.addEventListener(OPEN_DEPLOY_DRAWER_EVENT, openDeployDrawer);
+    return () => {
+      window.removeEventListener(OPEN_SEARCH_OVERLAY_EVENT, openSearch);
+      window.removeEventListener(OPEN_MENU_OVERLAY_EVENT, openMenu);
+      window.removeEventListener(OPEN_DEPLOY_DRAWER_EVENT, openDeployDrawer);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -399,8 +458,9 @@ export function MarketplaceApp() {
   }
 
   function enterSponsorWorkspace() {
-    setView('sponsor');
-    setNavView('sponsor');
+    const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    if (path !== THE_ROSTER_PATH) window.history.pushState(null, '', THE_ROSTER_PATH);
+    setView('the-roster');
   }
 
   /**
@@ -438,15 +498,9 @@ export function MarketplaceApp() {
   function exitAthleteSurface() {
     if (isAuthModalOpen) return;
     setAthleteSurface(null);
-    setView('landing');
-    setNavView(null);
-    setLandingSection('for-players');
-  }
-
-  function goLandingSection(id: LandingSectionId) {
-    setView('landing');
-    setNavView(null);
-    setLandingSection(id);
+    const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    if (path !== THE_ROSTER_PATH) window.history.pushState(null, '', THE_ROSTER_PATH);
+    setView('the-roster');
   }
 
   const catchment3000: AthleteLocation = {
@@ -503,24 +557,157 @@ export function MarketplaceApp() {
 
   const panelOpen = activeAthlete !== null;
 
-  return (
-    <div className={`app-shell bg-brand-black text-brand-white font-sans bg-grain${view === 'landing' ? '' : ' app-shell-padded'}`}>
-      <header className="topnav fixed top-0 left-0 w-full z-50 px-8 py-5 flex items-center justify-between backdrop-blur-md bg-[#08080A]/85 border-b border-white/5 transition-colors pointer-events-auto">
-        <BrandLockup onClick={() => setView('landing')} />
-        <Navbar
-          activeView={navView}
-          onSection={goLandingSection}
-          onJoinRoster={() => void routeAthleteEntry()}
-          onEnterprise={() => {
-            enterSponsorWorkspace();
-            setIsSponsorDrawerOpen(true);
-          }}
-        />
-      </header>
+  function navigateSection(id: LandingSectionId) {
+    const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    if (id === 'how-it-works') {
+      if (path !== HOW_IT_WORKS_PATH) window.history.pushState(null, '', HOW_IT_WORKS_PATH);
+      setView('how-it-works');
+      return;
+    }
+    if (id === 'roster' || id === 'athletes' || id === 'sponsors') {
+      if (path !== THE_ROSTER_PATH) window.history.pushState(null, '', THE_ROSTER_PATH);
+      setView('the-roster');
+      return;
+    }
+    if (id === 'commercial-tiers') {
+      if (path !== COMMERCIAL_TIERS_PATH) window.history.pushState(null, '', COMMERCIAL_TIERS_PATH);
+      setView('commercial-tiers');
+      return;
+    }
+    if (id === 'syndicate') {
+      if (path !== BRISBANE_RUNWAY_PATH) window.history.pushState(null, '', BRISBANE_RUNWAY_PATH);
+      setView('brisbane-runway');
+      return;
+    }
+    if (path !== '/') {
+      window.history.pushState(null, '', id === 'top' ? '/' : `/#${landingSectionElementId(id)}`);
+    }
+    setView('landing');
+    setLandingSection(id);
+  }
 
-      <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden bg-[#08080A]">
-        <LivingContours />
-      </div>
+  // Stripe cancel and deep links land on `#roster?athlete=<id>`.
+  useEffect(() => {
+    const applyRosterHash = () => {
+      if (!window.location.hash.startsWith('#roster')) return;
+      const query = window.location.hash.includes('?')
+        ? window.location.hash.slice(window.location.hash.indexOf('?'))
+        : '';
+      window.history.replaceState(null, '', `${THE_ROSTER_PATH}${query}`);
+      setView('the-roster');
+    };
+    applyRosterHash();
+    window.addEventListener('hashchange', applyRosterHash);
+    return () => window.removeEventListener('hashchange', applyRosterHash);
+  }, []);
+
+  useEffect(() => {
+    const alias = window.location.hash.replace(/^#/, '').split('?')[0];
+    if (alias === 'how-it-works') {
+      window.history.replaceState(null, '', HOW_IT_WORKS_PATH);
+      setView('how-it-works');
+    } else if (alias === 'roster') {
+      const query = window.location.hash.includes('?')
+        ? window.location.hash.slice(window.location.hash.indexOf('?'))
+        : '';
+      window.history.replaceState(null, '', `${THE_ROSTER_PATH}${query}`);
+      setView('the-roster');
+    } else if (alias === 'commercial-tiers') {
+      window.history.replaceState(null, '', COMMERCIAL_TIERS_PATH);
+      setView('commercial-tiers');
+    } else if (alias === 'syndicate') {
+      window.history.replaceState(null, '', BRISBANE_RUNWAY_PATH);
+      setView('brisbane-runway');
+    }
+  }, []);
+
+  useEffect(() => {
+    const syncPath = () => {
+      const next = viewFromLocation();
+      setView((current) => (current === 'sponsor' && next === 'landing' ? current : next));
+    };
+    window.addEventListener('popstate', syncPath);
+    return () => window.removeEventListener('popstate', syncPath);
+  }, []);
+
+  function closeOverlays() {
+    setIsSearchOpen(false);
+    setIsMenuOpen(false);
+    setIsSponsorDrawerOpen(false);
+    setIsPortalDrawerOpen(false);
+  }
+
+  /** Brand lockup: dismiss everything and return to the top of the landing page. */
+  function goHome() {
+    closeOverlays();
+    navigateSection('top');
+  }
+
+  const frameTone =
+    view === 'brisbane-runway' || (view === 'landing' && canvasProgress > 0.48) ? 'dark' : 'light';
+  const shellBackground =
+    view === 'landing'
+      ? mixHex(CANVAS_WHITE, CANVAS_OBSIDIAN, canvasProgress)
+      : view === 'brisbane-runway'
+        ? CANVAS_OBSIDIAN
+        : view === 'sponsor'
+          ? '#080808'
+          : CANVAS_WHITE;
+  const inkClass = frameTone === 'dark' ? 'text-white' : 'text-[#080808]';
+
+  return (
+    <div
+      className={`app-shell font-sans ${inkClass} ${view === 'sponsor' ? 'app-shell-padded bg-grain' : ''}`}
+      style={{ backgroundColor: shellBackground }}
+    >
+      <ViewportFrame tone={frameTone} />
+      {view === 'landing' ? <ObsidianWipe progress={canvasProgress} /> : null}
+      <Navigation
+        isSearchOpen={isSearchOpen}
+        isMenuOpen={isMenuOpen}
+        onToggleSearch={() => {
+          setIsMenuOpen(false);
+          setIsSearchOpen((v) => !v);
+        }}
+        onToggleMenu={() => {
+          setIsSearchOpen(false);
+          setIsMenuOpen((v) => !v);
+        }}
+        onCloseOverlays={closeOverlays}
+        onNavigateSection={navigateSection}
+        tone={frameTone}
+        onOpenPortal={() => {
+          setIsSearchOpen(false);
+          setIsMenuOpen(false);
+          setIsPortalDrawerOpen(true);
+        }}
+      />
+
+      <SearchOverlay
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onHome={goHome}
+        onSponsorAthlete={(athlete) => {
+          setIsSearchOpen(false);
+          openSponsorDrawer(athlete);
+        }}
+      />
+
+      <MenuOverlay
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        onHome={goHome}
+        onNavigateSection={navigateSection}
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenPortal={() => setIsPortalDrawerOpen(true)}
+        onOpenSponsorWorkspace={enterSponsorWorkspace}
+      />
+
+      {view === 'sponsor' && (
+        <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden bg-[#08080A]">
+          <LivingContours />
+        </div>
+      )}
 
       <AdminDrawer open={adminOpen} onClose={() => setAdminOpen(false)} />
 
@@ -532,21 +719,61 @@ export function MarketplaceApp() {
         />
       )}
 
-      {view === 'landing' ? (
-        <div className="landing-scroll landing-stack relative z-10 w-full bg-transparent">
-          <LandingStackSlot z={10} className="pointer-events-none">
-            <Hero
-              FluidCanvas={HeroFluidReveal}
-              onSponsorAccess={enterSponsorWorkspace}
-              onAthletePortal={() => void routeAthleteEntry()}
-            />
-          </LandingStackSlot>
-          <LandingNarrative
-            onSponsor={enterSponsorWorkspace}
-            onAthlete={() => void routeAthleteEntry()}
-            horizontalSectionRef={horizontalSectionRef}
-            horizontalTrackRef={horizontalTrackRef}
+      {view === 'how-it-works' ? (
+        <div className="relative z-10 min-h-screen w-full bg-white pt-[74px]">
+          <HowItWorks />
+          <SettlementLedger />
+          <SiteFooter onHome={() => navigateSection('top')} />
+        </div>
+      ) : view === 'the-roster' ? (
+        <div className="relative z-10 min-h-screen w-full bg-white pt-[74px]">
+          <RosterGrid
+            onSponsorAthlete={(athlete) => openSponsorDrawer(athlete)}
+            onOpenMediaStudio={(athlete) => {
+              setMediaStudioAthlete(athlete);
+              setMediaStudioOpen(true);
+            }}
+            focusAthleteId={focusedSpecimenId}
+            onFocusAthlete={setFocusedSpecimenId}
+            requestedPackage={requestedPackage}
+            onPackageHandled={() => setRequestedPackage(null)}
           />
+          <SiteFooter onHome={() => navigateSection('top')} />
+        </div>
+      ) : view === 'commercial-tiers' ? (
+        <div className="relative z-10 min-h-screen w-full bg-white">
+          <CommercialTiers onNavigateSection={navigateSection} />
+          <SiteFooter onHome={() => navigateSection('top')} />
+        </div>
+      ) : view === 'brisbane-runway' ? (
+        <div className="relative z-10 min-h-screen w-full bg-[#0A0A0A] pt-[74px]">
+          <SyndicateRunway onOpenSyndicateEnquiry={() => setIsSyndicateEnquiryOpen(true)} />
+          <SiteFooter onHome={() => navigateSection('top')} tone="dark" />
+        </div>
+      ) : view === 'landing' ? (
+        <div className="landing-scroll relative z-10 w-full bg-[#FFFFFF]">
+          <main className="bg-[#FFFFFF]">
+            <div className={`${PAGE_SHELL} pt-20`}>
+              <CoverHero onNavigateSection={navigateSection} />
+            </div>
+            <BroadcastMatrix />
+            <RadialCatchment />
+            <SettlementLedger />
+            <RosterGrid
+              onSponsorAthlete={(athlete) => openSponsorDrawer(athlete)}
+              onOpenMediaStudio={(athlete) => {
+                setMediaStudioAthlete(athlete);
+                setMediaStudioOpen(true);
+              }}
+              focusAthleteId={focusedSpecimenId}
+              onFocusAthlete={setFocusedSpecimenId}
+              requestedPackage={requestedPackage}
+              onPackageHandled={() => setRequestedPackage(null)}
+            />
+            <CommercialTiers onNavigateSection={navigateSection} />
+            <SyndicateRunway onOpenSyndicateEnquiry={() => setIsSyndicateEnquiryOpen(true)} />
+          </main>
+          <SiteFooter onHome={() => setLandingSection('top')} tone={canvasProgress > 0.62 ? 'dark' : 'light'} />
         </div>
       ) : (
       <main className="page bg-transparent">
@@ -613,9 +840,9 @@ export function MarketplaceApp() {
                 Loading athletes…
               </div>
             ) : (
-              <div className="grid">
+              <div className="card-grid">
                 {athletes.filter(Boolean).map((a, i) => (
-                  <AthleteCard
+                  <MarketplaceAthleteCard
                     key={a.id ?? `athlete-${i}`}
                     athlete={a}
                     onFindNearby={() => openSponsorDrawer(a)}
@@ -848,6 +1075,21 @@ export function MarketplaceApp() {
           }}
         />
       )}
+      {/* Athlete portal slide-over (clean entry point; replaces the raw terminal for PORTAL) */}
+      <AthletePortalDrawer
+        isOpen={isPortalDrawerOpen}
+        onClose={() => setIsPortalDrawerOpen(false)}
+        onContinue={() => {
+          setIsPortalDrawerOpen(false);
+          setIsAuthModalOpen(true);
+        }}
+      />
+
+      <SyndicateEnquiryModal
+        isOpen={isSyndicateEnquiryOpen}
+        onClose={() => setIsSyndicateEnquiryOpen(false)}
+      />
+
       {/* Athlete Authentication Gateway */}
       <AthleteAuthModal
         isOpen={isAuthModalOpen}
@@ -909,7 +1151,8 @@ function statusBadge(status?: string | null): { label: string; cls: string } {
   }
 }
 
-function AthleteCard({
+/** Adapts a Supabase athlete record onto the editorial `AthleteCard`. */
+function MarketplaceAthleteCard({
   athlete,
   onFindNearby,
   onProfile,
@@ -924,62 +1167,47 @@ function AthleteCard({
   const leagueTag = (athlete?.tier_tag || getLeagueTag(athlete?.sport))?.toLowerCase();
   const ipLocked = athlete?.ip_lock === true || athlete?.master_licence_signed === true;
   const name = athleteDisplayName(athlete);
+  const postcode = athlete?.postcode;
+
+  const catchmentTag = leagueTag
+    ? `${leagueTag} // Postcode ${postcode ?? '2026'}`
+    : postcode
+      ? `Postcode ${postcode}`
+      : 'Catchment 2026';
+
+  const tags: string[] = [];
+  if (st.label) tags.push(st.label);
+  if (ipLocked) tags.push('IP Lock');
+  if (athlete?.nrl_tpa_registered) tags.push('NRL TPA');
+  if (athlete?.shute_shield_compliant) tags.push('Shute Shield');
+
   return (
-    <div className="athlete-card border-grid">
-      <div className="athlete-card-top">
-        <div className="athlete-avatar">{athlete?.initials || initials(name)}</div>
-        <div className="athlete-card-info">
-          <h3 className="athlete-card-name">{name}</h3>
-          <span className="athlete-card-sport">{athlete?.sport ?? '—'}</span>
-        </div>
-        <span className={`athlete-status ${st.cls}`}>
-          {st.cls === 'active' && <span className="status-dot" />}
-          {st.label}
-        </span>
-      </div>
-      <div className="athlete-card-tags">
-        {athlete?.postcode && (
-          <span className="athlete-tag font-mono">
-            <Crosshair size={11} /> {athlete.postcode}
-          </span>
-        )}
-        {leagueTag && <span className="athlete-league-badge">{leagueTag}</span>}
-        {ipLocked && (
-          <span className="athlete-tag ip-lock">
-            <ShieldCheck size={11} /> IP Lock
-          </span>
-        )}
-        {athlete?.nrl_tpa_registered && (
-          <span className="athlete-tag">
-            <BadgeCheck size={11} /> NRL TPA
-          </span>
-        )}
-        {athlete?.shute_shield_compliant && (
-          <span className="athlete-tag">
-            <BadgeCheck size={11} /> Shute Shield
-          </span>
-        )}
-      </div>
-      <div className="athlete-card-actions">
-        <button className="athlete-sponsor-btn bg-brand-white text-brand-black rounded-none" onClick={onFindNearby}>
-          Sponsor Athlete
-        </button>
-        <button className="athlete-icon-btn" onClick={onProfile} aria-label="View profile">
-          <User size={16} />
-        </button>
-        <button className="athlete-icon-btn" onClick={onMediaStudio} aria-label="AI Media Studio">
-          <Film size={16} />
-        </button>
-      </div>
-    </div>
+    <AthleteCard
+      name={name}
+      initials={athlete?.initials || initials(name)}
+      sportLeague={athlete?.sport ?? '\u2014'}
+      catchmentTag={catchmentTag}
+      tags={tags}
+      athlete={athlete}
+      onSponsor={onFindNearby}
+      onOpenDossier={onProfile}
+      onMediaStudio={onMediaStudio}
+    />
   );
 }
 
 export default function App() {
-  // Lightweight path routing: the guardian signing page is public and bypasses the marketplace shell.
+  // Lightweight path routing: public confirmation and guardian pages bypass the marketplace shell.
   const path = window.location.pathname.replace(/\/+$/, '');
-  if (path === GUARDIAN_VERIFY_PATH) return <GuardianVerifyPage />;
-  return <MarketplaceApp />;
+  const surface =
+    path === GUARDIAN_VERIFY_PATH ? (
+      <GuardianVerifyPage />
+    ) : path === CHECKOUT_SUCCESS_PATH ? (
+      <CheckoutSuccessPage />
+    ) : (
+      <MarketplaceApp />
+    );
+  return <div className="min-h-screen w-full bg-white">{surface}</div>;
 }
 
 function getLeagueTag(sport: string | null): string | null {
@@ -1016,7 +1244,7 @@ function MatchCard({
       <div className="match-top">
         <div>
           <h4>{sponsor.business_name}</h4>
-          <div className="sub">{sponsor.merchant_category ?? 'Uncategorized'}</div>
+          <div className="sub">{sponsor.merchant_category ?? 'Uncategorised'}</div>
         </div>
         <span className="badge accent">
           <MapPin size={12} /> {sponsor.distance_km.toFixed(1)} km
@@ -1134,7 +1362,7 @@ function ProfileModal({
                 />
                 <InfoRow
                   label="Followers"
-                  value={athlete.follower_count != null ? athlete.follower_count.toLocaleString() : '—'}
+                  value={athlete.follower_count != null ? String(Math.trunc(athlete.follower_count)) : '-'}
                 />
                 <InfoRow label="Postcode" value={athlete.postcode ?? '—'} />
                 <InfoRow label="Agreement" value={statusBadge(athlete.agreement_status).label} />

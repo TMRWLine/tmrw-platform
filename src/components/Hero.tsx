@@ -1,3 +1,4 @@
+import { CourtLinesOverlay } from './CourtLinesOverlay';
 import { HeroFluidReveal } from './HeroFluidReveal';
 
 interface HeroProps {
@@ -15,6 +16,7 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
       <div className="hero-pane-media absolute inset-0 w-full h-full pointer-events-auto z-0">
         <FluidCanvas imageSrc={HERO_TENNIS} />
         <div className="hero-legibility pointer-events-none absolute inset-0 z-[2]" aria-hidden="true" />
+        <CourtLinesOverlay />
       </div>
       <div className="hero-pane hero-pane-copy relative z-10 w-full h-screen min-h-screen max-h-screen overflow-hidden flex flex-col justify-start pt-32 md:pt-40 pb-12 px-8 md:px-16 bg-transparent pointer-events-none">
         <div>
@@ -42,7 +44,7 @@ export function Hero({ onSponsorAccess, onAthletePortal, FluidCanvas = HeroFluid
           </div>
           <div className="flex items-center gap-3.5 mt-8 font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-400">
             <span className="w-1.5 h-1.5 rounded-full bg-[#D2FF00] animate-pulse shrink-0" />
-            <span className="text-zinc-300">3,000 Verified Athletes</span>
+            <span className="text-zinc-300">3000 Verified Athletes</span>
             <span className="text-white/20">//</span>
             <span className="text-zinc-400">Brisbane 2032 Runway</span>
             <span className="text-white/20">//</span>

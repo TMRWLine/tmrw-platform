@@ -316,7 +316,7 @@ export function BrandKitTab({ athlete, onSignMOU }: BrandKitTabProps) {
           />
           <InfoRow
             label="Follower Reach"
-            value={athlete.follower_count != null ? athlete.follower_count.toLocaleString() : '—'}
+            value={athlete.follower_count != null ? String(Math.trunc(athlete.follower_count)) : '-'}
           />
           <InfoRow label="Content Format" value="9:16 Vertical" />
           <InfoRow label="Events Detected" value={String(events.length)} />

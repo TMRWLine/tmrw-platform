@@ -88,11 +88,11 @@ th{background:#F5F5F3;font-weight:700;text-transform:uppercase;font-size:11px;le
 <strong>Agreement Term:</strong> ${startDate ?? '—'} to ${endDate ?? '—'}</p>
 <table>
 <tr><th>Field</th><th>Amount (${currency})</th></tr>
-<tr><td>Gross Earnings (Ex. GST)</td><td>${selected.grossExGst.toLocaleString()}</td></tr>
-<tr><td>GST (10%)</td><td>${selected.gst.toLocaleString()}</td></tr>
-<tr class="total"><td>Total (Inc. GST)</td><td>${selected.totalIncGst.toLocaleString()}</td></tr>
-<tr><td>Platform Commission (20%)</td><td>−${selected.commission.toLocaleString()}</td></tr>
-<tr class="total"><td>Net Athlete Payout</td><td>${selected.netPayout.toLocaleString()}</td></tr>
+<tr><td>Gross Earnings (Ex. GST)</td><td>A$${Math.round(selected.grossExGst)}</td></tr>
+<tr><td>GST (10%)</td><td>A$${Math.round(selected.gst)}</td></tr>
+<tr class="total"><td>Total (Inc. GST)</td><td>A$${Math.round(selected.totalIncGst)}</td></tr>
+<tr><td>Platform Commission (20%)</td><td>−A$${Math.round(selected.commission)}</td></tr>
+<tr class="total"><td>Net Athlete Payout</td><td>A$${Math.round(selected.netPayout)}</td></tr>
 </table>
 <p style="margin-top:30px;font-size:12px;color:#64748b">
 This RCTI is issued by tmrw/. on behalf of the athlete under ATO reciprocal agreement.
