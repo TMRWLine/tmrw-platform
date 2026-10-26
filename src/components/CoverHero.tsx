@@ -86,10 +86,21 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
               className="ml-2 inline-block h-3.5 w-3.5 align-baseline rounded-full bg-[#CCFF00] shadow-[0_0_14px_rgba(204,255,0,0.85)] md:h-4 md:w-4"
             />
           </h1>
-          <p className="z-20 mb-8 mt-4 max-w-2xl text-center text-sm leading-relaxed text-[#D1D1D1] md:text-base">
-            Medals are not won at the podium. They are funded in suburban sheds, state leagues, and local gyms. tmrw/. clears direct commercial equity for emerging Australian and New Zealand athletes, backed by institutional escrow and an automated 70/15/15 dividend to the clubs that raised them.
-          </p>
-          <div className="z-20 flex flex-wrap items-center justify-center gap-3">
+          <div className="mx-auto mb-6 max-w-xl space-y-3 text-center font-sans">
+            <p className="text-sm font-normal leading-relaxed text-white/95 md:text-base">
+              The grind starts long before the spotlight.{' '}
+              <span className="rounded-sm bg-[#CCFF00] px-1.5 py-0.5 font-semibold text-black">tmrw/.</span>{' '}
+              connects emerging athletes with brands looking to support the next generation of talent, from first grade through to Olympic and Paralympic competition.
+            </p>
+            <p className="text-sm font-normal leading-relaxed text-white/95 md:text-base">
+              <span className="rounded-sm bg-[#CCFF00] px-1.5 py-0.5 font-semibold text-black">No agents</span>.{' '}
+              <span className="rounded-sm bg-[#CCFF00] px-1.5 py-0.5 font-semibold text-black">No chasing payments</span>. Just{' '}
+              <span className="rounded-sm bg-[#CCFF00] px-1.5 py-0.5 font-semibold text-black">secure deals</span>, fast payouts, and a clean split supporting your local club and your journey to LA 2028, Brisbane 2032, and beyond.
+            </p>
+          </div>
+
+          <div className="mx-auto mb-6 mt-12 flex w-full max-w-lg flex-wrap items-center justify-center gap-4">
+            {/* Action buttons maintain pristine spacing mirroring the top Olympic badge frame */}
             <RollingPillButton variant="primary" onClick={scrollToRoster}>
               Explore the Roster
             </RollingPillButton>
