@@ -31,10 +31,38 @@ function startApiServer(): PluginOption {
   };
 }
 
+// SPA fallback middleware: serve index.html for all non-API, non-asset routes
+// This ensures direct navigation to /guardian-verify, /checkout-success, etc. works
+function spaFallback(): PluginOption {
+  return {
+    name: 'spa-fallback',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = req.url || '';
+        // Skip API routes, assets, and actual files
+        if (
+          url.startsWith('/api') ||
+          url.startsWith('/@') ||
+          url.includes('.') ||
+          url.startsWith('/__') ||
+          url === '/favicon.ico'
+        ) {
+          return next();
+        }
+        // Rewrite all other routes to /index.html
+        req.url = '/index.html';
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
     react(),
     startApiServer(),
+    spaFallback(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon.png'],
@@ -131,6 +159,20 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
+      },
+    },
+  },
+  preview: {
+    port: 4173,
+    // SPA fallback for preview server
+    strictPort: false,
+  },
+  build: {
+    // Ensure proper asset handling
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
       },
     },
   },

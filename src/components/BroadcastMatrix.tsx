@@ -4,7 +4,7 @@ import { PAGE_SHELL } from './CoverHero';
 interface BroadcastRegister {
   figure: string;
   label: string;
-  body: string;
+  body: string | React.ReactNode;
   badge?: string;
   live?: boolean;
   showSplitBar?: boolean;
@@ -18,20 +18,27 @@ interface BroadcastCarrier {
 
 const REGISTERS: readonly BroadcastRegister[] = [
   {
-    figure: '15000',
+    figure: '15,000',
     label: 'PATHWAY COMPETITORS',
     body: 'Active competitors across national leagues without commercial retainers, including NBL1, Shute Shield, VFL, Hostplus Cup, and Olympic selection trials.',
   },
   {
     figure: '$0.00',
     label: 'DIRECT BROADCAST DIVIDEND',
-    body: 'Nil commercial remuneration from television rights. The current median broadcast dividend paid to emerging competitors remains $0.00.',
+    body: 'Nil commercial remuneration from television rights. Zero payment flowing back to the athletes generating the ratings.',
     badge: 'CURRENT MEDIAN',
   },
   {
     figure: '70/15/15',
     label: 'THE CLEARING PROTOCOL',
-    body: 'Audited capital settlement routing 70 per cent to the athlete, 15 per cent to their junior club, and 15 per cent to platform operations and escrow.',
+    body: (
+      <>
+        <span className="bg-[#CCFF00] text-black font-semibold px-1 py-0.5 rounded-sm">No agents</span>
+        . <span className="bg-[#CCFF00] text-black font-semibold px-1 py-0.5 rounded-sm">No chasing payments</span>
+        . Just <span className="bg-[#CCFF00] text-black font-semibold px-1.5 py-0.5 rounded-sm">secure brand deals</span>
+        , fast payouts, and a clean split supporting your local club and your journey towards LA 2028, Brisbane 2032 and beyond.
+      </>
+    ),
     live: true,
     showSplitBar: true,
   },
@@ -126,27 +133,41 @@ export const BroadcastMatrix: React.FC = () => (
     aria-labelledby="mandate-heading"
     className={`${PAGE_SHELL} mt-24 md:mt-32 mb-28 scroll-mt-[74px] bg-transparent text-neutral-900`}
   >
+    <style>{`
+      @keyframes marquee {
+        0% {
+          transform: translateX(0%);
+        }
+        100% {
+          transform: translateX(-50%);
+        }
+      }
+      .marquee-container {
+        animation: marquee 30s linear infinite;
+        display: inline-flex;
+        white-space: nowrap;
+      }
+    `}</style>
     <div className="pb-12 border-b border-neutral-200">
-      <div className="flex justify-between items-center text-xs font-mono uppercase tracking-widest text-neutral-400 mb-6">
-        <span>INDEPENDENT AUDIT · CAPITAL DEFICIT REGISTER</span>
-        <span>NATIONAL AIRTIME MONETISATION INDEX · AU & NZ</span>
+      <div className="overflow-hidden text-xs font-mono uppercase tracking-widest text-neutral-400 mb-6">
+        <div className="marquee-container">
+          <span className="tracking-widest pr-16">INDEPENDENT AUDIT · CAPITAL DEFICIT REGISTER · NATIONAL AIRTIME MONETISATION INDEX · AU & NZ</span>
+          <span className="tracking-widest pr-16">INDEPENDENT AUDIT · CAPITAL DEFICIT REGISTER · NATIONAL AIRTIME MONETISATION INDEX · AU & NZ</span>
+        </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
         <h2
           id="mandate-heading"
-          className="lg:col-span-7 m-0 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight uppercase text-neutral-900 leading-[1.02]"
+          className="lg:col-span-7 m-0 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight uppercase text-neutral-900 leading-tight"
         >
-          15000 ATHLETES ON LIVE TV. ZERO COMMERCIAL RETAINERS.
+          15,000 ATHLETES ON LIVE TV. ZERO COMMERCIAL RETAINERS.
         </h2>
         <div className="lg:col-span-5 pb-1">
           <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 mb-2 block">
             STRUCTURAL MARKET DEFICIT
           </span>
           <p className="m-0 text-sm md:text-base text-neutral-600 leading-relaxed font-sans">
-            National contenders generate millions in broadcast value for television networks while
-            competing on amateur stipends below the minimum wage. tmrw/. converts passive screen time
-            into liquid commercial equity, clearing sovereign sponsorships under an audited 70/15/15
-            settlement protocol.
+            The hard work starts long before the spotlight. While national competitors generate millions in broadcast value for television networks, they receive zero commercial return. tmrw/. converts that screen time into direct cash, backing every brand partnership with verified performance data.
           </p>
         </div>
       </div>
@@ -156,9 +177,9 @@ export const BroadcastMatrix: React.FC = () => (
       {REGISTERS.map((register) => (
         <div
           key={register.label}
-          className="py-8 first:pt-0 last:pb-0 md:py-0 md:px-10 first:md:pl-0 last:md:pr-0"
+          className="group py-8 first:pt-0 last:pb-0 md:py-0 md:px-10 first:md:pl-0 last:md:pr-0"
         >
-          <p className="m-0 text-6xl lg:text-7xl font-bold tracking-tighter text-neutral-900">
+          <p className="m-0 text-6xl lg:text-7xl font-bold tracking-tighter text-neutral-900 tabular-nums transition-all duration-300 ease-out will-change-transform group-hover:scale-[1.02] group-hover:tracking-tight">
             {register.figure}
           </p>
           <div className="mt-4 mb-2 flex flex-wrap items-center gap-2">
@@ -214,9 +235,11 @@ export const BroadcastMatrix: React.FC = () => (
       ))}
     </ul>
 
-    <div className="pt-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-[11px] font-mono uppercase text-neutral-400">
-      <span>OFFICIAL REGISTER · ASC AND TRIBUNAL BENCHMARK DATA</span>
-      <span>SETTLEMENT PROTOCOL · DIRECT AUD ESCROW ACTIVE</span>
+    <div className="pt-6 overflow-hidden text-[11px] font-mono uppercase text-neutral-400 tracking-widest">
+      <div className="marquee-container">
+        <span className="pr-16">OFFICIAL REGISTER · ASC AND TRIBUNAL BENCHMARK DATA · SETTLEMENT PROTOCOL · DIRECT AUD ESCROW ACTIVE</span>
+        <span className="pr-16">OFFICIAL REGISTER · ASC AND TRIBUNAL BENCHMARK DATA · SETTLEMENT PROTOCOL · DIRECT AUD ESCROW ACTIVE</span>
+      </div>
     </div>
   </section>
 );
