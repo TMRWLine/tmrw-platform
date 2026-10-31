@@ -92,7 +92,7 @@ function athleteIdFromLocation(): string | null {
 const normalise = (s: string | null | undefined) => (s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
 
 const MANIFESTO =
-  "We don’t trade in social vanity or manufactured reach. tmrw/. hooks elite ballers, track stars, and grassroots icons straight up with local merchants and national podium campaigns before the whistle blows. Zero 90-day invoice traps. Just pure athletic equity backed by airtight 70/15/15 escrow ledgers.";
+  "Followers don't win matches. Influence doesn't clear checks. tmrw/. hooks elite ballers, track stars, and grassroots icons straight up with local merchants and major campaigns before the whistle blows. Zero ninety-day invoice traps. Just raw financial backing and an immediate 70/15/15 split the second the deal is locked.";
 
 function matchLive(name: string, athletes: readonly DbAthlete[]): DbAthlete | null {
   const target = normalise(name);
@@ -323,7 +323,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 id="roster-heading"
                 className="m-0 font-display text-4xl sm:text-6xl md:text-7xl font-black tracking-tight uppercase text-black"
               >
-                VERIFIED TALENT DIRECTORY<span className="text-[#CCFF00]">.</span>
+                THE ROSTER<span className="text-[#CCFF00]">.</span>
               </h2>
             </div>
             <p className="m-0 max-w-xl font-sans text-sm sm:text-base text-neutral-600 leading-relaxed">
@@ -346,56 +346,60 @@ export const RosterPage: React.FC<RosterPageProps> = ({
             </div>
           ) : null}
 
-          {/* Pangram-Exact Single-Line Menu Bar */}
-          <div ref={dropdownRef} className="relative flex items-center justify-between mb-12">
+          {/* Benchmark-Matched 4-Column Spread Menu Bar */}
+          <div ref={dropdownRef} className="relative grid grid-cols-1 md:grid-cols-4 items-center mb-12 gap-4">
             
-            {/* Left Group: Our athlete library + Showing count */}
-            <div className="flex items-center gap-8">
+            {/* Col 1: Our athlete library */}
+            <div>
               <span className="font-display font-bold text-base text-black tracking-tight">
                 Our athlete library
               </span>
+            </div>
+
+            {/* Col 2: Showing count */}
+            <div>
               <span className="font-mono text-xs text-neutral-500 tracking-wide">
                 Showing {catalogueCount} of {ROSTER_DATA.length} athletes
               </span>
             </div>
 
-            {/* Right Group: Card view, List view, Filters, Recent first in a single continuous line */}
-            <div className="flex items-center gap-10">
+            {/* Col 3: Card view & List view with doubled 32px (w-8 h-8) sizing and #CCFF00 acid green accent */}
+            <div className="flex items-center gap-8 font-mono text-xs font-bold uppercase tracking-wider">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-2.5 border-0 bg-transparent p-0 cursor-pointer transition-colors ${
+                  viewMode === 'grid' ? 'text-[#CCFF00]' : 'text-neutral-400 hover:text-black'
+                }`}
+              >
+                <svg className={`w-8 h-8 ${viewMode === 'grid' ? 'text-[#CCFF00]' : 'text-neutral-400'}`} viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="3" y="3" width="8" height="8" rx="1.5" />
+                  <rect x="13" y="3" width="8" height="8" rx="1.5" />
+                  <rect x="3" y="13" width="8" height="8" rx="1.5" />
+                  <rect x="13" y="13" width="8" height="8" rx="1.5" />
+                </svg>
+                <span className={viewMode === 'grid' ? 'text-[#CCFF00]' : ''}>Card view</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setViewMode('directory')}
+                className={`flex items-center gap-2.5 border-0 bg-transparent p-0 cursor-pointer transition-colors ${
+                  viewMode === 'directory' ? 'text-black' : 'text-neutral-400 hover:text-black'
+                }`}
+              >
+                <svg className="w-8 h-8 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+                <span>List view</span>
+              </button>
+            </div>
+
+            {/* Col 4: Filters & Recent first (Right-aligned with precise control icons) */}
+            <div className="flex items-center justify-end gap-8">
               
-              {/* Card & List View Toggles */}
-              <div className="flex items-center gap-8 font-mono text-xs font-bold uppercase tracking-wider">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('grid')}
-                  className={`flex items-center gap-2 border-0 bg-transparent p-0 cursor-pointer transition-colors ${
-                    viewMode === 'grid' ? 'text-black' : 'text-neutral-400 hover:text-black'
-                  }`}
-                >
-                  <svg className={`w-3.5 h-3.5 ${viewMode === 'grid' ? 'text-[#CCFF00]' : 'text-neutral-400'}`} viewBox="0 0 24 24" fill="currentColor">
-                    <rect x="3" y="3" width="7" height="7" rx="1" />
-                    <rect x="14" y="3" width="7" height="7" rx="1" />
-                    <rect x="3" y="14" width="7" height="7" rx="1" />
-                    <rect x="14" y="14" width="7" height="7" rx="1" />
-                  </svg>
-                  <span className={viewMode === 'grid' ? 'text-black' : ''}>Card view</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setViewMode('directory')}
-                  className={`flex items-center gap-2 border-0 bg-transparent p-0 cursor-pointer transition-colors ${
-                    viewMode === 'directory' ? 'text-black' : 'text-neutral-400 hover:text-black'
-                  }`}
-                >
-                  <svg className={`w-3.5 h-3.5 ${viewMode === 'directory' ? 'text-black' : 'text-neutral-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <line x1="3" y1="12" x2="21" y2="12" />
-                    <line x1="3" y1="18" x2="21" y2="18" />
-                  </svg>
-                  <span className={viewMode === 'directory' ? 'text-black' : ''}>List view</span>
-                </button>
-              </div>
-
               {/* Filters Dropdown */}
               <div className="relative">
                 <button
@@ -407,16 +411,13 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                   className="flex items-center gap-2 font-mono text-xs font-medium tracking-wider text-black hover:text-neutral-600 cursor-pointer border-0 bg-transparent p-0"
                 >
                   <span>Filters</span>
-                  <svg className="w-3.5 h-3.5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="4" y1="21" x2="4" y2="14"></line>
-                    <line x1="4" y1="10" x2="4" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12" y2="3"></line>
-                    <line x1="20" y1="21" x2="20" y2="16"></line>
-                    <line x1="20" y1="12" x2="20" y2="3"></line>
-                    <line x1="1" y1="14" x2="7" y2="14"></line>
-                    <line x1="9" y1="8" x2="15" y2="8"></line>
-                    <line x1="17" y1="16" x2="23" y2="16"></line>
+                  <svg className="w-4 h-4 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                    <circle cx="8" cy="6" r="2" fill="currentColor"></circle>
+                    <circle cx="16" cy="12" r="2" fill="currentColor"></circle>
+                    <circle cx="10" cy="18" r="2" fill="currentColor"></circle>
                   </svg>
                 </button>
 
@@ -466,9 +467,9 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                   className="flex items-center gap-2 font-mono text-xs font-medium tracking-wider text-black hover:text-neutral-600 cursor-pointer border-0 bg-transparent p-0"
                 >
                   <span>{activeSort === 'recent' ? 'Recent first' : activeSort === 'popular' ? 'Most popular first' : activeSort === 'az' ? 'Alphabetical A-Z' : 'Alphabetical Z-A'}</span>
-                  <svg className="w-3.5 h-3.5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M7 15l5 5 5-5"></path>
-                    <path d="M7 9l5-5 5 5"></path>
+                  <svg className="w-4 h-4 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 16V4m0 0L3 8m4-4l4 4"></path>
+                    <path d="M17 8v12m0 0l4-4m-4 4l-4-4"></path>
                   </svg>
                 </button>
 
