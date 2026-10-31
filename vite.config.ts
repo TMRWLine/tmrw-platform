@@ -155,6 +155,7 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
+    strictPort: true,
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
@@ -164,11 +165,9 @@ export default defineConfig({
   },
   preview: {
     port: 4173,
-    // SPA fallback for preview server
     strictPort: false,
   },
   build: {
-    // Ensure proper asset handling
     assetsDir: 'assets',
     rollupOptions: {
       output: {

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { fetchAthletes } from '../api';
 import type { Athlete as DbAthlete } from '../types';
 import {
@@ -38,21 +38,22 @@ export { ROSTER_DATA };
 
 type ViewMode = 'grid' | 'directory' | 'map';
 type TierFilter = 'all' | Athlete['tier'] | 'national';
-type DisciplineFilter = 'all' | 'track' | 'rowing' | 'basketball' | 'combat' | 'swimming';
-
-const VIEWS: readonly { id: ViewMode; label: string }[] = [
-  { id: 'grid', label: 'Grid' },
-  { id: 'directory', label: 'Directory' },
-  { id: 'map', label: 'Map' },
-];
+type DisciplineFilter = 'all' | 'track' | 'rowing' | 'basketball' | 'combat' | 'swimming' | 'endurance' | 'surfing' | 'triathlon' | 'rugby' | 'soccer' | 'boxing' | 'crossfit';
 
 const DISCIPLINES: readonly { id: DisciplineFilter; label: string }[] = [
-  { id: 'all', label: 'All Disciplines' },
+  { id: 'all', label: 'All Sports' },
+  { id: 'basketball', label: 'Basketball' },
   { id: 'track', label: 'Track & Field' },
   { id: 'rowing', label: 'Rowing' },
-  { id: 'basketball', label: 'Basketball' },
   { id: 'combat', label: 'Combat Sports' },
   { id: 'swimming', label: 'Swimming' },
+  { id: 'endurance', label: 'Endurance' },
+  { id: 'surfing', label: 'Surfing' },
+  { id: 'triathlon', label: 'Triathlon' },
+  { id: 'rugby', label: 'Rugby League' },
+  { id: 'soccer', label: 'Soccer' },
+  { id: 'boxing', label: 'Boxing' },
+  { id: 'crossfit', label: 'CrossFit' },
 ];
 
 function athleteMatchesFilter(athleteTier: Athlete['tier'], filter: TierFilter): boolean {
@@ -67,13 +68,15 @@ function athleteMatchesDiscipline(sport: string, filter: DisciplineFilter): bool
   if (filter === 'track') return value.includes('track') || value.includes('athletics');
   if (filter === 'rowing') return value.includes('rowing');
   if (filter === 'basketball') return value.includes('basketball');
-  if (filter === 'combat') return value.includes('combat') || value.includes('boxing');
+  if (filter === 'combat') return value.includes('combat') || value.includes('wrestling');
   if (filter === 'swimming') return value.includes('swim');
+  if (filter === 'surfing') return value.includes('surf');
+  if (filter === 'triathlon') return value.includes('triathlon');
+  if (filter === 'rugby') return value.includes('rugby') || value.includes('league');
+  if (filter === 'soccer') return value.includes('soccer') || value.includes('football');
+  if (filter === 'boxing') return value.includes('boxing');
+  if (filter === 'crossfit') return value.includes('crossfit');
   return true;
-}
-
-function countForDiscipline(filter: DisciplineFilter): number {
-  return ROSTER_DATA.filter((athlete) => athleteMatchesDiscipline(athlete.sport, filter)).length;
 }
 
 function athleteIdFromLocation(): string | null {
@@ -89,26 +92,18 @@ function athleteIdFromLocation(): string | null {
 const normalise = (s: string | null | undefined) => (s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
 
 const MANIFESTO =
-  'We do not trade in social vanity or manufactured reach. tmrw/. clears direct, verified commercial rights for the emerging athletes who carry postcodes, grassroots clubs, and national podium campaigns on their backs. Every dollar is escrowed and settled across our audited 70/15/15 protocol.';
+  "We don’t trade in social vanity or manufactured reach. tmrw/. hooks elite ballers, track stars, and grassroots icons straight up with local merchants and national podium campaigns before the whistle blows. Zero 90-day invoice traps. Just pure athletic equity backed by airtight 70/15/15 escrow ledgers.";
 
-/** Finds the live Supabase athlete behind a specimen card by name. */
 function matchLive(name: string, athletes: readonly DbAthlete[]): DbAthlete | null {
   const target = normalise(name);
   return athletes.find((a) => normalise(a.full_name) === target || normalise(a.name) === target) ?? null;
 }
 
 interface RosterPageProps {
-  /**
-   * Retained for callers that still pass a sponsor callback. The card pill opens the
-   * Capital Deployment Terminal directly, pre-loaded with the athlete id and valuation.
-   */
   onSponsorAthlete?: (athlete: DbAthlete | null) => void;
-  /** Film reel button. Receives the live athlete when resolved, otherwise `null`. */
   onOpenMediaStudio?: (athlete: DbAthlete | null) => void;
-  /** Beacon filter. When set, grid and directory keep only that specimen. */
   focusAthleteId?: string | null;
   onFocusAthlete?: (id: string | null) => void;
-  /** Opens the map on a catchment ring and the capital drawer. */
   requestedPackage?: string | null;
   onPackageHandled?: () => void;
 }
@@ -126,9 +121,16 @@ export const RosterPage: React.FC<RosterPageProps> = ({
   const [capitalPackageId, setCapitalPackageId] = useState<string | null>(null);
   const [tier, setTier] = useState<TierFilter>('all');
   const [discipline, setDiscipline] = useState<DisciplineFilter>('all');
+  const [tempDiscipline, setTempDiscipline] = useState<DisciplineFilter>('all');
   const [preferredPackageId, setPreferredPackageId] = useState<string | null>(null);
   const [tierNotice, setTierNotice] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
+  
+  const [activeDropdown, setActiveDropdown] = useState<'filters' | 'sort' | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [activeSort, setActiveSort] = useState<'recent' | 'popular' | 'az' | 'za'>('recent');
+  const [tempSort, setTempSort] = useState<'recent' | 'popular' | 'az' | 'za'>('recent');
+
   const [activeDossier, setActiveDossier] = useState<AthleteRecord | null>(null);
   const [deployAthlete, setDeployAthlete] = useState<AthleteRecord | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -136,14 +138,22 @@ export const RosterPage: React.FC<RosterPageProps> = ({
   const [drawerTierId, setDrawerTierId] = useState(mockDeliverables.packages[0].tier_id);
 
   useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setActiveDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     fetchAthletes()
       .then((rows) => {
         if (!cancelled) setLive(rows);
       })
-      .catch(() => {
-        // Specimen valuations remain the baseline when the backend is unreachable.
-      });
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -168,36 +178,28 @@ export const RosterPage: React.FC<RosterPageProps> = ({
   );
 
   const matchedCards = useMemo(() => {
-    const q = normalise(query);
     return cards.filter((card) => {
       if (!athleteMatchesFilter(card.athlete.tier, tier)) return false;
       if (!athleteMatchesDiscipline(card.athlete.sport, discipline)) return false;
-      if (!q) return true;
-      const haystack = normalise(
-        [
-          card.athlete.name,
-          card.athlete.record.full_name,
-          card.athlete.record.current_club,
-          card.athlete.record.social.instagram_handle,
-          card.athlete.sport,
-          card.athlete.league,
-          card.athlete.postcode,
-          card.athlete.status,
-          card.athlete.agreementStatus,
-          card.athlete.repCredentials,
-          card.athlete.bio,
-          ...card.athlete.brandCategories.available,
-          ...card.athlete.brandCategories.locked,
-          ...card.athlete.stats.map((stat) => `${stat.label} ${stat.value}`),
-        ].join(' '),
-      );
-      return haystack.includes(q);
+      return true;
     });
-  }, [cards, query, tier, discipline]);
+  }, [cards, tier, discipline]);
+
+  const sortedCards = useMemo(() => {
+    const copy = [...matchedCards];
+    if (activeSort === 'az') {
+      copy.sort((a, b) => a.athlete.name.localeCompare(b.athlete.name));
+    } else if (activeSort === 'za') {
+      copy.sort((a, b) => b.athlete.name.localeCompare(a.athlete.name));
+    } else if (activeSort === 'popular') {
+      copy.sort((a, b) => b.valuation - a.valuation);
+    }
+    return copy;
+  }, [matchedCards, activeSort]);
 
   const visibleCards = useMemo(
-    () => (focusAthleteId ? matchedCards.filter((card) => card.athlete.id === focusAthleteId) : matchedCards),
-    [focusAthleteId, matchedCards],
+    () => (focusAthleteId ? sortedCards.filter((card) => card.athlete.id === focusAthleteId) : sortedCards),
+    [focusAthleteId, sortedCards],
   );
 
   const mapSpecimens = useMemo(
@@ -255,8 +257,6 @@ export const RosterPage: React.FC<RosterPageProps> = ({
     openFromLocation();
     window.addEventListener('hashchange', openFromLocation);
     return () => window.removeEventListener('hashchange', openFromLocation);
-    // preferredPackageId is read at click-time; hash return should open even if it changes later.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -270,19 +270,8 @@ export const RosterPage: React.FC<RosterPageProps> = ({
 
   const onOpenDossier = (athlete: AthleteRecord) => setActiveDossier(athlete);
 
-  const onViewKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
-    event.preventDefault();
-    const index = VIEWS.findIndex((view) => view.id === viewMode);
-    const delta = event.key === 'ArrowRight' ? 1 : -1;
-    const next = VIEWS[(index + delta + VIEWS.length) % VIEWS.length];
-    setViewMode(next.id);
-  };
-
   const focusedName = focusAthleteId ? specimenFor(focusAthleteId)?.name : null;
-
-  const catalogueCount = focusAthleteId || query || tier !== 'all' || discipline !== 'all' ? visibleCards.length : ROSTER_DATA.length;
-  const telemetry = `Showing ${catalogueCount} pre-cleared athletes across 8 codes / Postcodes 2000 to 4217 / AUD escrow active`;
+  const catalogueCount = focusAthleteId || tier !== 'all' || discipline !== 'all' ? visibleCards.length : ROSTER_DATA.length;
 
   type RosterCard = (typeof visibleCards)[number];
   const renderSpecimen = (card: RosterCard, layout: 'hero' | 'specimen' | 'cell') => {
@@ -307,6 +296,8 @@ export const RosterPage: React.FC<RosterPageProps> = ({
           fallbackFiles: specimen.imageFallbacks,
           alt: specimen.imageAlt,
         }}
+        badge={athlete.id === ROSTER_DATA[0].id ? 'New' : athlete.id === ROSTER_DATA[3].id ? 'Update' : undefined}
+        badgeVariant={athlete.id === ROSTER_DATA[3].id ? 'yellow' : 'green'}
         athlete={athlete.record}
         onSelect={() => onOpenDossier(athlete.record)}
         onSponsor={() => openCommercialDrawer(athlete.record, flight.tierId)}
@@ -321,24 +312,27 @@ export const RosterPage: React.FC<RosterPageProps> = ({
       <section
         id="athletes"
         aria-labelledby="roster-heading"
-        className="w-full bg-white text-black scroll-mt-[74px]"
+        className="w-full bg-[#FFFFFF] text-black pt-8 pb-12 scroll-mt-[100px]"
       >
-        <div id="roster" className="mx-auto max-w-[1600px] scroll-mt-[74px] px-4 py-16 sm:px-6 md:px-8 md:py-24">
-        <div className="mb-10 flex flex-col gap-8">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <h2
-              id="roster-heading"
-              className="m-0 font-display text-4xl font-bold tracking-[-0.03em] leading-[0.95] text-black md:text-5xl"
-            >
-              Verified talent directory
-            </h2>
-            <p className="m-0 text-sm font-mono uppercase tracking-[0.08em] text-black/45 md:max-w-xs md:text-right">
-              Pure athletic equity. Pre-cleared for live commerce.
+        <div id="roster" className="mx-auto max-w-[1600px] px-4 sm:px-6 md:px-8 w-full my-12 bg-[#FFFFFF]">
+          
+          {/* Editorial Manifesto Header */}
+          <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8 pb-4">
+            <div>
+              <h2
+                id="roster-heading"
+                className="m-0 font-display text-4xl sm:text-6xl md:text-7xl font-black tracking-tight uppercase text-black"
+              >
+                VERIFIED TALENT DIRECTORY<span className="text-[#CCFF00]">.</span>
+              </h2>
+            </div>
+            <p className="m-0 max-w-xl font-sans text-sm sm:text-base text-neutral-600 leading-relaxed">
+              {MANIFESTO}
             </p>
           </div>
-          <p className="m-0 max-w-3xl text-sm leading-relaxed text-black/65 md:text-base">{MANIFESTO}</p>
+
           {focusAthleteId ? (
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="mb-6 flex flex-wrap items-center gap-3">
               <p className="m-0 font-mono text-[11px] uppercase tracking-wider text-neutral-500">
                 Filtered to {focusedName ?? 'one athlete'}.
               </p>
@@ -351,218 +345,294 @@ export const RosterPage: React.FC<RosterPageProps> = ({
               </button>
             </div>
           ) : null}
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <p className="m-0 inline-flex max-w-full items-center rounded-full border border-neutral-200 bg-neutral-50 px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-neutral-600">
-              {telemetry}
-            </p>
-            <div
-              role="tablist"
-              aria-label="Roster view"
-              onKeyDown={onViewKeyDown}
-              className="inline-flex shrink-0 items-center self-start rounded-full bg-neutral-200/80 p-1 shadow-[inset_0_1px_2px_rgba(15,15,17,0.08)]"
-            >
-              {VIEWS.map((view) => {
-                const active = viewMode === view.id;
-                return (
-                  <button
-                    key={view.id}
-                    id={`roster-tab-${view.id}`}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    aria-controls="roster-view-panel"
-                    tabIndex={active ? 0 : -1}
-                    onClick={() => setViewMode(view.id)}
-                    className={`rounded-full px-4 py-1.5 text-xs font-mono transition-all cursor-pointer border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F0F11] focus-visible:ring-offset-2 ${
-                      active
-                        ? 'bg-white text-neutral-900 shadow-sm'
-                        : 'bg-transparent text-neutral-500 hover:text-neutral-900'
-                    }`}
-                  >
-                    {view.label}
-                  </button>
-                );
-              })}
+
+          {/* Pangram-Exact Single-Line Menu Bar */}
+          <div ref={dropdownRef} className="relative flex items-center justify-between mb-12">
+            
+            {/* Left Group: Our athlete library + Showing count */}
+            <div className="flex items-center gap-8">
+              <span className="font-display font-bold text-base text-black tracking-tight">
+                Our athlete library
+              </span>
+              <span className="font-mono text-xs text-neutral-500 tracking-wide">
+                Showing {catalogueCount} of {ROSTER_DATA.length} athletes
+              </span>
             </div>
-          </div>
-        </div>
 
-        {tierNotice ? (
-          <div
-            role="status"
-            className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-[#CCFF00] bg-[#CCFF00]/15 px-5 py-3"
-          >
-            <p className="m-0 font-mono text-[11px] leading-relaxed text-[#080808]">
-              Showing athletes pre-cleared for {tierNotice}. Select an athlete to fund this flight.
-            </p>
-            <button
-              type="button"
-              onClick={() => applyRosterFilter('all')}
-              className="shrink-0 self-start rounded-full border border-[#080808]/15 bg-white px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-[#080808] cursor-pointer hover:border-[#080808]"
-            >
-              Clear filter
-            </button>
-          </div>
-        ) : null}
-
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Discipline">
-            {DISCIPLINES.map((item) => {
-              const active = discipline === item.id;
-              const count = countForDiscipline(item.id);
-              return (
+            {/* Right Group: Card view, List view, Filters, Recent first in a single continuous line */}
+            <div className="flex items-center gap-10">
+              
+              {/* Card & List View Toggles */}
+              <div className="flex items-center gap-8 font-mono text-xs font-bold uppercase tracking-wider">
                 <button
-                  key={item.id}
                   type="button"
-                  aria-pressed={active}
-                  onClick={() => setDiscipline(item.id)}
-                  className={`rounded-full px-4 py-1.5 font-mono text-[10px] font-medium uppercase tracking-widest border cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F0F11] focus-visible:ring-offset-2 ${
-                    active
-                      ? 'bg-[#CCFF00] text-black border-[#CCFF00]'
-                      : 'bg-white border-black/10 text-black/70 hover:border-black'
+                  onClick={() => setViewMode('grid')}
+                  className={`flex items-center gap-2 border-0 bg-transparent p-0 cursor-pointer transition-colors ${
+                    viewMode === 'grid' ? 'text-black' : 'text-neutral-400 hover:text-black'
                   }`}
                 >
-                  {item.label}
-                  <span className="ml-2 tabular-nums">{count}</span>
+                  <svg className={`w-3.5 h-3.5 ${viewMode === 'grid' ? 'text-[#CCFF00]' : 'text-neutral-400'}`} viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                  </svg>
+                  <span className={viewMode === 'grid' ? 'text-black' : ''}>Card view</span>
                 </button>
-              );
-            })}
-          </div>
-          <label className="block w-full lg:w-80">
-            <span className="sr-only">Search the verified roster</span>
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search name, sport, league or postcode"
-              className="w-full bg-white border border-[#080808]/15 rounded-full px-4 py-2 font-mono text-[11px] text-[#080808] placeholder:text-[#888888] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#080808]"
-            />
-          </label>
-        </div>
 
-        <div
-          id="roster-view-panel"
-          role="tabpanel"
-          aria-labelledby={`roster-tab-${viewMode}`}
-          key={viewMode}
-          className="roster-view"
-        >
-          {viewMode === 'map' ? (
-            <div>
-              <p className="m-0 font-mono text-[11px] uppercase tracking-[0.2em] text-neutral-500">
-                Local Merchant & Contra Tier
-              </p>
-              <h3 className="m-0 mt-3 max-w-3xl font-display text-4xl font-extrabold tracking-tight text-[#080808] md:text-5xl">
-                Real loyalty never leaves the suburb.
-              </h3>
-              <p className="m-0 mt-4 max-w-2xl text-sm leading-relaxed text-neutral-600 md:text-base">
-                A stadium billboard is seen by thousands who live 50km away and will never visit your store.
-                An emerging athlete lives, trains, and commands genuine community loyalty within 15 minutes of your front counter. Back them with cash or equipment contra, and own exclusive commercial endorsement across your local postcode.
-              </p>
-              <div className="mt-8">
-                <RosterCatchmentMap
-                  activeRing={activeRing}
-                  specimens={mapSpecimens}
-                  focusAthleteId={focusAthleteId}
-                  onSelectAthlete={(id) => onFocusAthlete?.(focusAthleteId === id ? null : id)}
-                  onChangeRing={setActiveRing}
-                />
+                <button
+                  type="button"
+                  onClick={() => setViewMode('directory')}
+                  className={`flex items-center gap-2 border-0 bg-transparent p-0 cursor-pointer transition-colors ${
+                    viewMode === 'directory' ? 'text-black' : 'text-neutral-400 hover:text-black'
+                  }`}
+                >
+                  <svg className={`w-3.5 h-3.5 ${viewMode === 'directory' ? 'text-black' : 'text-neutral-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </svg>
+                  <span className={viewMode === 'directory' ? 'text-black' : ''}>List view</span>
+                </button>
               </div>
-            </div>
-          ) : visibleCards.length === 0 ? (
-            <p className="m-0 font-mono text-xs uppercase tracking-widest text-[#666666]">
-              No verified athletes match this filter.
-            </p>
-          ) : viewMode === 'directory' ? (
-            <div className="border-t border-neutral-200">
-              <div className="hidden border-b border-neutral-200 py-3 md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.1fr)_minmax(0,1.15fr)_minmax(0,0.95fr)_auto] md:items-center md:gap-4">
-                {['Specimen / Name', 'Discipline', 'League / Level', 'Postcode Catchment', 'Tier Status', 'Action CTA'].map(
-                  (heading) => (
-                    <span
-                      key={heading}
-                      className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-500"
+
+              {/* Filters Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempDiscipline(discipline);
+                    setActiveDropdown(activeDropdown === 'filters' ? null : 'filters');
+                  }}
+                  className="flex items-center gap-2 font-mono text-xs font-medium tracking-wider text-black hover:text-neutral-600 cursor-pointer border-0 bg-transparent p-0"
+                >
+                  <span>Filters</span>
+                  <svg className="w-3.5 h-3.5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="4" y1="21" x2="4" y2="14"></line>
+                    <line x1="4" y1="10" x2="4" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12" y2="3"></line>
+                    <line x1="20" y1="21" x2="20" y2="16"></line>
+                    <line x1="20" y1="12" x2="20" y2="3"></line>
+                    <line x1="1" y1="14" x2="7" y2="14"></line>
+                    <line x1="9" y1="8" x2="15" y2="8"></line>
+                    <line x1="17" y1="16" x2="23" y2="16"></line>
+                  </svg>
+                </button>
+
+                {activeDropdown === 'filters' && (
+                  <div className="absolute right-0 mt-3 w-80 bg-white border border-black/10 rounded-2xl p-5 shadow-2xl z-50">
+                    <div className="grid grid-cols-2 gap-2 mb-6 max-h-64 overflow-y-auto pr-1">
+                      {DISCIPLINES.map((item) => {
+                        const isSelected = tempDiscipline === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setTempDiscipline(item.id)}
+                            className={`rounded-full px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer border ${
+                              isSelected
+                                ? 'bg-black text-white border-black'
+                                : 'bg-neutral-100 text-neutral-700 border-transparent hover:bg-neutral-200'
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDiscipline(tempDiscipline);
+                        setActiveDropdown(null);
+                      }}
+                      className="w-full rounded-full bg-[#CCFF00] hover:bg-black hover:text-white text-black font-mono font-bold text-xs uppercase tracking-widest py-3 transition-colors cursor-pointer shadow-sm"
                     >
-                      {heading}
-                    </span>
-                  ),
+                      Apply
+                    </button>
+                  </div>
                 )}
               </div>
-              <ul className="m-0 list-none p-0">
-                {visibleCards.map(({ athlete, specimen }) =>
-                  specimen ? (
-                    <li
-                      key={athlete.id}
-                      className="grid grid-cols-1 gap-3 border-b border-neutral-200 py-5 md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.1fr)_minmax(0,1.15fr)_minmax(0,0.95fr)_auto] md:items-center md:gap-4 md:py-4"
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-white font-display text-sm font-extrabold tracking-tight text-[#080808]">
-                          {athlete.initials}
-                        </span>
-                        <div className="min-w-0">
-                          <button
-                            type="button"
-                            onClick={() => onOpenDossier(athlete.record)}
-                            className="m-0 border-0 bg-transparent p-0 text-left font-display text-2xl font-extrabold tracking-tight text-[#080808] cursor-pointer hover:text-black"
-                          >
-                            {athlete.name}
-                          </button>
-                          <p className="m-0 mt-0.5 truncate font-mono text-[10px] uppercase tracking-widest text-neutral-500">
-                            {athlete.record.full_name}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="m-0 font-display text-base tracking-tight text-[#080808]">{athlete.sport}</p>
-                      <div>
-                        <p className="m-0 text-sm text-[#080808]">{athlete.league}</p>
-                        <p className="m-0 mt-0.5 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
-                          {athlete.record.current_club}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="m-0 font-mono text-xs uppercase tracking-wider text-[#0F0F11]">
-                          {disciplineLockup(athlete.league, athlete.postcode)}
-                        </p>
-                        <p className="m-0 mt-0.5 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
-                          {suburbForPostcode(athlete.postcode)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="m-0 font-mono text-[10px] font-bold uppercase tracking-wider text-[#0F0F11]">
-                          {rosterFlightPresentation(athlete.tier, tier, athlete.league).lockup}
-                        </p>
-                        <p className="m-0 mt-1 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
-                          {rosterFlightPresentation(athlete.tier, tier, athlete.league).tag}
-                        </p>
-                        <p className="m-0 mt-1 font-mono text-[10px] uppercase tracking-wider text-neutral-500">
-                          {rosterFlightPresentation(athlete.tier, tier, athlete.league).split}
-                        </p>
-                      </div>
+
+              {/* Recent First Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempSort(activeSort);
+                    setActiveDropdown(activeDropdown === 'sort' ? null : 'sort');
+                  }}
+                  className="flex items-center gap-2 font-mono text-xs font-medium tracking-wider text-black hover:text-neutral-600 cursor-pointer border-0 bg-transparent p-0"
+                >
+                  <span>{activeSort === 'recent' ? 'Recent first' : activeSort === 'popular' ? 'Most popular first' : activeSort === 'az' ? 'Alphabetical A-Z' : 'Alphabetical Z-A'}</span>
+                  <svg className="w-3.5 h-3.5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 15l5 5 5-5"></path>
+                    <path d="M7 9l5-5 5 5"></path>
+                  </svg>
+                </button>
+
+                {activeDropdown === 'sort' && (
+                  <div className="absolute right-0 mt-3 w-56 bg-white border border-black/10 rounded-2xl p-2 shadow-2xl z-50">
+                    {[
+                      { id: 'recent', label: 'Recent first' },
+                      { id: 'popular', label: 'Most popular first' },
+                      { id: 'az', label: 'Alphabetical A-Z' },
+                      { id: 'za', label: 'Alphabetical Z-A' },
+                    ].map((sortOption) => {
+                      const isSelected = tempSort === sortOption.id;
+                      return (
+                        <button
+                          key={sortOption.id}
+                          type="button"
+                          onClick={() => setTempSort(sortOption.id as any)}
+                          className={`w-full text-left rounded-xl px-4 py-2.5 font-mono text-xs tracking-wider transition-colors cursor-pointer border-0 ${
+                            isSelected ? 'bg-black text-white font-bold' : 'bg-transparent text-neutral-700 hover:bg-neutral-100'
+                          }`}
+                        >
+                          {sortOption.label}
+                        </button>
+                      );
+                    })}
+                    <div className="pt-2 border-t border-neutral-100 mt-1">
                       <button
                         type="button"
-                        onClick={() =>
-                          openCommercialDrawer(
-                            athlete.record,
-                            rosterFlightPresentation(athlete.tier, tier, athlete.league).tierId,
-                          )
-                        }
-                        className="justify-self-start rounded-full border-0 bg-[#0F0F11] px-4 py-2 font-mono text-[10px] font-medium uppercase tracking-widest text-white transition-colors hover:bg-[#CCFF00] hover:text-black cursor-pointer md:justify-self-end"
+                        onClick={() => {
+                          setActiveSort(tempSort);
+                          setActiveDropdown(null);
+                        }}
+                        className="w-full rounded-xl bg-[#CCFF00] hover:bg-black hover:text-white text-black font-mono font-bold text-[11px] uppercase tracking-widest py-2.5 transition-colors cursor-pointer shadow-sm"
                       >
-                        View commercial deliverables
+                        Apply Sort
                       </button>
-                    </li>
-                  ) : null,
+                    </div>
+                  </div>
                 )}
-              </ul>
+              </div>
+
             </div>
-          ) : (
-            <ul className="m-0 grid list-none grid-cols-1 items-stretch p-0 md:grid-cols-2 lg:grid-cols-3">
-              {visibleCards.map((card) => (
-                <li key={card.athlete.id} className="m-0 flex min-w-0 flex-col p-0">
-                  {renderSpecimen(card, 'cell')}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+          </div>
+
+          {tierNotice ? (
+            <div
+              role="status"
+              className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-[#CCFF00] bg-[#CCFF00]/15 px-5 py-3"
+            >
+              <p className="m-0 font-mono text-[11px] leading-relaxed text-[#080808]">
+                Showing athletes pre-cleared for {tierNotice}. Select an athlete to fund this flight.
+              </p>
+              <button
+                type="button"
+                onClick={() => applyRosterFilter('all')}
+                className="shrink-0 self-start rounded-full border border-[#080808]/15 bg-white px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-[#080808] cursor-pointer hover:border-[#080808]"
+              >
+                Clear filter
+              </button>
+            </div>
+          ) : null}
+
+          <div
+            id="roster-view-panel"
+            role="tabpanel"
+            aria-labelledby={`roster-tab-${viewMode}`}
+            key={viewMode}
+            className="roster-view bg-[#FFFFFF]"
+          >
+            {visibleCards.length === 0 ? (
+              <p className="m-0 font-mono text-xs uppercase tracking-widest text-[#666666]">
+                No verified athletes match this filter.
+              </p>
+            ) : viewMode === 'directory' ? (
+              <div className="border-t border-neutral-200">
+                <div className="hidden border-b border-neutral-200 py-3 md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.1fr)_minmax(0,1.15fr)_minmax(0,0.95fr)_auto] md:items-center md:gap-4">
+                  {['Specimen / Name', 'Discipline', 'League / Level', 'Postcode Catchment', 'Tier Status', 'Action CTA'].map(
+                    (heading) => (
+                      <span
+                        key={heading}
+                        className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-500"
+                      >
+                        {heading}
+                      </span>
+                    ),
+                  )}
+                </div>
+                <ul className="m-0 list-none p-0">
+                  {visibleCards.map(({ athlete, specimen }) =>
+                    specimen ? (
+                      <li
+                        key={athlete.id}
+                        className="grid grid-cols-1 gap-3 border-b border-neutral-200 py-5 md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.1fr)_minmax(0,1.15fr)_minmax(0,0.95fr)_auto] md:items-center md:gap-4 md:py-4"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-white font-display text-sm font-extrabold tracking-tight text-[#080808]">
+                            {athlete.initials}
+                          </span>
+                          <div className="min-w-0">
+                            <button
+                              type="button"
+                              onClick={() => onOpenDossier(athlete.record)}
+                              className="m-0 border-0 bg-transparent p-0 text-left font-display text-2xl font-extrabold tracking-tight text-[#080808] cursor-pointer hover:text-black"
+                            >
+                              {athlete.name}
+                            </button>
+                            <p className="m-0 mt-0.5 truncate font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+                              {athlete.record.full_name}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="m-0 font-display text-base tracking-tight text-[#080808]">{athlete.sport}</p>
+                        <div>
+                          <p className="m-0 text-sm text-[#080808]">{athlete.league}</p>
+                          <p className="m-0 mt-0.5 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+                            {athlete.record.current_club}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="m-0 font-mono text-xs uppercase tracking-wider text-[#0F0F11]">
+                            {disciplineLockup(athlete.league, athlete.postcode)}
+                          </p>
+                          <p className="m-0 mt-0.5 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+                            {suburbForPostcode(athlete.postcode)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="m-0 font-mono text-[10px] font-bold uppercase tracking-wider text-[#0F0F11]">
+                            {rosterFlightPresentation(athlete.tier, tier, athlete.league).lockup}
+                          </p>
+                          <p className="m-0 mt-1 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+                            {rosterFlightPresentation(athlete.tier, tier, athlete.league).tag}
+                          </p>
+                          <p className="m-0 mt-1 font-mono text-[10px] uppercase tracking-wider text-neutral-500">
+                            {rosterFlightPresentation(athlete.tier, tier, athlete.league).split}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openCommercialDrawer(
+                              athlete.record,
+                              rosterFlightPresentation(athlete.tier, tier, athlete.league).tierId,
+                            )
+                          }
+                          className="justify-self-start rounded-full border-0 bg-[#0F0F11] px-4 py-2 font-mono text-[10px] font-medium uppercase tracking-widest text-white transition-colors hover:bg-[#CCFF00] hover:text-black cursor-pointer md:justify-self-end"
+                        >
+                          View commercial deliverables
+                        </button>
+                      </li>
+                    ) : null,
+                  )}
+                </ul>
+              </div>
+            ) : (
+              <ul className="m-0 grid list-none grid-cols-1 items-stretch gap-8 p-0 md:grid-cols-2 lg:grid-cols-3">
+                {visibleCards.map((card) => (
+                  <li key={card.athlete.id} className="m-0 flex min-w-0 flex-col p-0">
+                    {renderSpecimen(card, 'card')}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </section>
 
@@ -610,5 +680,4 @@ export const RosterPage: React.FC<RosterPageProps> = ({
 
 export default RosterPage;
 
-/** Kept so map callers can read the same count the workspace renders. */
 export const ROSTER_COUNT = ROSTER_SPECIMENS.length;
