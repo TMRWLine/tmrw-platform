@@ -18,7 +18,6 @@ import { AthleteDossierDrawer } from '../components/AthleteDossierDrawer';
 import { CapitalDeploymentDrawer } from '../components/CapitalDeploymentDrawer';
 import { DeliverablesDrawer } from '../components/DeliverablesDrawer';
 import {
-  RosterCatchmentMap,
   ringForPackage,
   type CatchmentRingId,
 } from '../components/RosterCatchmentMap';
@@ -81,7 +80,7 @@ function athleteMatchesDiscipline(sport: string, filter: DisciplineFilter): bool
 
 function athleteIdFromLocation(): string | null {
   const hash = window.location.hash;
-  if (hash.startsWith('#roster')) {
+  if (hash.startsWith('#roster') || hash.startsWith('#the-roster')) {
     const query = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
     const fromHash = new URLSearchParams(query).get('athlete');
     if (fromHash) return fromHash;
@@ -90,9 +89,6 @@ function athleteIdFromLocation(): string | null {
 }
 
 const normalise = (s: string | null | undefined) => (s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
-
-const MANIFESTO =
-  "Followers don't win matches. Influence doesn't clear checks. tmrw/. hooks elite ballers, track stars, and grassroots icons straight up with local merchants and major campaigns before the whistle blows. Zero ninety-day invoice traps. Just raw financial backing and an immediate 70/15/15 split the second the deal is locked.";
 
 function matchLive(name: string, athletes: readonly DbAthlete[]): DbAthlete | null {
   const target = normalise(name);
@@ -117,7 +113,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
 }) => {
   const [live, setLive] = useState<DbAthlete[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [activeRing, setActiveRing] = useState<CatchmentRingId>('15km');
+  const [, setActiveRing] = useState<CatchmentRingId>('15km');
   const [capitalPackageId, setCapitalPackageId] = useState<string | null>(null);
   const [tier, setTier] = useState<TierFilter>('all');
   const [discipline, setDiscipline] = useState<DisciplineFilter>('all');
@@ -130,6 +126,8 @@ export const RosterPage: React.FC<RosterPageProps> = ({
 
   const [activeSort, setActiveSort] = useState<'recent' | 'popular' | 'az' | 'za'>('recent');
   const [tempSort, setTempSort] = useState<'recent' | 'popular' | 'az' | 'za'>('recent');
+
+  const [highlightedCardId, setHighlightedCardId] = useState<string>(ROSTER_DATA[0]?.id ?? '');
 
   const [activeDossier, setActiveDossier] = useState<AthleteRecord | null>(null);
   const [deployAthlete, setDeployAthlete] = useState<AthleteRecord | null>(null);
@@ -202,11 +200,6 @@ export const RosterPage: React.FC<RosterPageProps> = ({
     [focusAthleteId, sortedCards],
   );
 
-  const mapSpecimens = useMemo(
-    () => matchedCards.flatMap((card) => (card.specimen ? [card.specimen] : [])),
-    [matchedCards],
-  );
-
   const applyRosterFilter = (filter: TierFilter) => {
     setTier(filter);
     setPreferredPackageId(filter === 'all' ? null : (ROSTER_FILTER_TO_PACKAGE[filter] ?? null));
@@ -274,13 +267,22 @@ export const RosterPage: React.FC<RosterPageProps> = ({
   const catalogueCount = focusAthleteId || tier !== 'all' || discipline !== 'all' ? visibleCards.length : ROSTER_DATA.length;
 
   type RosterCard = (typeof visibleCards)[number];
-  const renderSpecimen = (card: RosterCard, layout: 'hero' | 'specimen' | 'cell') => {
+  const renderSpecimen = (card: RosterCard, index: number) => {
     const { athlete, specimen, liveAthlete, record } = card;
     if (!specimen || !record) return null;
     const flight = rosterFlightPresentation(athlete.tier, tier, athlete.league);
+
+    const badge =
+      index === 0 || index === 1 || index === 2 || index === 4 || index === 5
+        ? 'New'
+        : index === 3
+        ? 'Update'
+        : undefined;
+    const badgeVariant = index === 3 ? 'yellow' : 'red';
+
     return (
       <AthleteCard
-        layout={layout}
+        layout="card"
         name={athlete.name}
         initials={athlete.initials}
         sportLeague={athlete.sport}
@@ -291,13 +293,15 @@ export const RosterPage: React.FC<RosterPageProps> = ({
         tierTag={flight.tag}
         splitLine={flight.split}
         statusLabel={athlete.status}
+        isHighlighted={highlightedCardId === athlete.id}
+        onActivate={() => setHighlightedCardId(athlete.id)}
         image={{
           file: specimen.image,
           fallbackFiles: specimen.imageFallbacks,
           alt: specimen.imageAlt,
         }}
-        badge={athlete.id === ROSTER_DATA[0].id ? 'New' : athlete.id === ROSTER_DATA[3].id ? 'Update' : undefined}
-        badgeVariant={athlete.id === ROSTER_DATA[3].id ? 'yellow' : 'green'}
+        badge={badge}
+        badgeVariant={badgeVariant}
         athlete={athlete.record}
         onSelect={() => onOpenDossier(athlete.record)}
         onSponsor={() => openCommercialDrawer(athlete.record, flight.tierId)}
@@ -312,95 +316,149 @@ export const RosterPage: React.FC<RosterPageProps> = ({
       <section
         id="athletes"
         aria-labelledby="roster-heading"
-        className="w-full bg-[#FFFFFF] text-black pt-8 pb-12 scroll-mt-[100px]"
+        className="w-full bg-[#FFFFFF] text-[#080808] pt-2 pb-16 scroll-mt-[64px]"
       >
-        <div id="roster" className="mx-auto max-w-[1600px] px-4 sm:px-6 md:px-8 w-full my-12 bg-[#FFFFFF]">
+        {/* Anchor target for #the-roster and #roster */}
+        <div id="the-roster" className="scroll-mt-[64px]" />
+        <div
+          id="roster"
+          className="mx-auto max-w-[1840px] px-4 sm:px-6 md:px-10 w-full bg-[#FFFFFF] scroll-mt-[64px]"
+        >
           
-          {/* Editorial Manifesto Header */}
-          <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8 pb-4">
-            <div>
-              <h2
-                id="roster-heading"
-                className="m-0 font-display text-4xl sm:text-6xl md:text-7xl font-black tracking-tight uppercase text-black"
-              >
-                THE ROSTER<span className="text-[#CCFF00]">.</span>
-              </h2>
+          {/* Calibrated Single-Viewport Magazine Masthead (Fits Masthead + Toolbar + Full Row 1 in 100vh) */}
+          <div className="mb-4 border-t border-b border-black/10 py-3.5 md:py-4">
+            {/* Top Editorial Meta Strip aligned to 4-Column Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5 pb-3 mb-3 border-b border-black/5 font-mono text-[9.5px] uppercase tracking-[0.18em] text-neutral-500">
+              <div className="flex items-center gap-2 text-[#080808] font-bold">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#CCFF00] ring-1 ring-black/20" />
+                <span>INDEX 01 · VERIFIED NIL ROSTER</span>
+              </div>
+              <div>SEASON 26/27 · LA28 &amp; BRISBANE 32 RUNWAY</div>
+              <div className="hidden md:block">SETTLEMENT · 70% ATHLETE · 15% CLUB · 15% OPS</div>
+              <div className="text-right text-[#080808] font-bold">PRE-CLEARED FOR IMMEDIATE DEPLOYMENT</div>
             </div>
-            <p className="m-0 max-w-xl font-sans text-sm sm:text-base text-neutral-600 leading-relaxed">
-              {MANIFESTO}
-            </p>
+
+            {/* 4-Column Editorial Grid Aligned Directly to the 4 Athlete Cards Below */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-5 items-center">
+              {/* Col 1 & 2: Monumental Masthead Title */}
+              <div className="lg:col-span-2">
+                <h2
+                  id="roster-heading"
+                  className="m-0 font-display text-5xl sm:text-6xl xl:text-[74px] font-black tracking-[-0.04em] leading-[0.86] uppercase text-[#080808]"
+                >
+                  THE ROSTER<span className="text-[#CCFF00]">.</span>
+                </h2>
+              </div>
+
+              {/* Col 3: Primary Lead Deck */}
+              <div className="lg:border-l lg:border-black/10 lg:pl-5">
+                <p className="m-0 font-sans text-[14.5px] sm:text-[15.5px] font-bold tracking-[-0.02em] leading-[1.28] text-[#080808]">
+                  Algorithms don’t win premierships. Followers don’t fund the runway.
+                </p>
+                <p className="m-0 mt-1 font-sans text-[12px] leading-[1.45] text-neutral-600">
+                  <strong className="text-[#080808] font-semibold">tmrw/.</strong> backs the next generation of icons with direct commercial capital from local businesses and major brands before the whistle blows.
+                </p>
+              </div>
+
+              {/* Col 4: Commercial Mechanics & Partner Trust */}
+              <div className="lg:border-l lg:border-black/10 lg:pl-5">
+                <p className="m-0 font-sans text-[12px] leading-[1.45] text-neutral-600">
+                  No ninety-day invoice traps or agency middlemen. Every package locks exclusive postcode rights for partners and triggers an instant <span className="bg-[#CCFF00] text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">70/15/15 split</span> between the athlete, their junior club, and clearinghouse operations.
+                </p>
+              </div>
+            </div>
           </div>
 
           {focusAthleteId ? (
-            <div className="mb-6 flex flex-wrap items-center gap-3">
-              <p className="m-0 font-mono text-[11px] uppercase tracking-wider text-neutral-500">
+            <div className="mb-3 flex flex-wrap items-center gap-3">
+              <p className="m-0 font-sans text-xs text-neutral-500">
                 Filtered to {focusedName ?? 'one athlete'}.
               </p>
               <button
                 type="button"
                 onClick={() => onFocusAthlete?.(null)}
-                className="rounded-full border border-neutral-200 bg-white px-4 py-1.5 font-mono text-[10px] font-medium uppercase tracking-widest text-neutral-700 transition-colors hover:border-black hover:text-black cursor-pointer"
+                className="rounded-full border border-neutral-200 bg-white px-4 py-1 font-sans text-xs font-medium text-neutral-700 transition-colors hover:border-black hover:text-black cursor-pointer"
               >
                 Clear beacon filter
               </button>
             </div>
           ) : null}
 
-          {/* Benchmark-Matched 4-Column Spread Menu Bar */}
-          <div ref={dropdownRef} className="relative grid grid-cols-1 md:grid-cols-4 items-center mb-12 gap-4">
+          {/* Exact Pangram 4-Column Spread Toolbar */}
+          <div ref={dropdownRef} className="relative grid grid-cols-1 md:grid-cols-4 items-center mb-4 gap-5">
             
             {/* Col 1: Our athlete library */}
             <div>
-              <span className="font-display font-bold text-base text-black tracking-tight">
+              <span className="font-sans font-bold text-[14px] text-[#080808] tracking-tight">
                 Our athlete library
               </span>
             </div>
 
             {/* Col 2: Showing count */}
             <div>
-              <span className="font-mono text-xs text-neutral-500 tracking-wide">
+              <span className="font-sans text-[12.5px] font-normal text-[#080808] tracking-tight">
                 Showing {catalogueCount} of {ROSTER_DATA.length} athletes
               </span>
             </div>
 
-            {/* Col 3: Card view & List view with doubled 32px (w-8 h-8) sizing and #CCFF00 acid green accent */}
-            <div className="flex items-center gap-8 font-mono text-xs font-bold uppercase tracking-wider">
+            {/* Col 3: Card view & List view */}
+            <div className="flex items-center gap-7 font-sans text-[12.5px] font-medium tracking-tight">
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
-                className={`flex items-center gap-2.5 border-0 bg-transparent p-0 cursor-pointer transition-colors ${
-                  viewMode === 'grid' ? 'text-[#CCFF00]' : 'text-neutral-400 hover:text-black'
+                className={`flex items-center gap-2 border-0 bg-transparent p-0 cursor-pointer transition-colors ${
+                  viewMode === 'grid' ? 'text-[#080808] font-bold' : 'text-neutral-500 hover:text-black'
                 }`}
               >
-                <svg className={`w-8 h-8 ${viewMode === 'grid' ? 'text-[#CCFF00]' : 'text-neutral-400'}`} viewBox="0 0 24 24" fill="currentColor">
-                  <rect x="3" y="3" width="8" height="8" rx="1.5" />
-                  <rect x="13" y="3" width="8" height="8" rx="1.5" />
-                  <rect x="3" y="13" width="8" height="8" rx="1.5" />
-                  <rect x="13" y="13" width="8" height="8" rx="1.5" />
+                <svg
+                  className={`w-5 h-5 shrink-0 ${viewMode === 'grid' ? 'text-[#CCFF00]' : 'text-neutral-400'}`}
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  stroke="#080808"
+                  strokeWidth={viewMode === 'grid' ? '1.2' : '0'}
+                >
+                  <rect x="3" y="3" width="7.5" height="7.5" rx="1.5" />
+                  <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" />
+                  <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" />
+                  <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" />
                 </svg>
-                <span className={viewMode === 'grid' ? 'text-[#CCFF00]' : ''}>Card view</span>
+                <span
+                  className={
+                    viewMode === 'grid'
+                      ? 'bg-[#CCFF00] text-[#080808] px-2 py-0.5 rounded-[4px] font-bold'
+                      : ''
+                  }
+                >
+                  Card view
+                </span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setViewMode('directory')}
-                className={`flex items-center gap-2.5 border-0 bg-transparent p-0 cursor-pointer transition-colors ${
-                  viewMode === 'directory' ? 'text-black' : 'text-neutral-400 hover:text-black'
+                className={`flex items-center gap-2 border-0 bg-transparent p-0 cursor-pointer transition-colors ${
+                  viewMode === 'directory' ? 'text-[#080808] font-bold' : 'text-[#080808] hover:text-neutral-600'
                 }`}
               >
-                <svg className="w-8 h-8 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <svg className="w-5 h-5 text-[#080808] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <line x1="3" y1="12" x2="21" y2="12" />
                   <line x1="3" y1="18" x2="21" y2="18" />
                 </svg>
-                <span>List view</span>
+                <span
+                  className={
+                    viewMode === 'directory'
+                      ? 'bg-[#CCFF00] text-[#080808] px-2 py-0.5 rounded-[4px] font-bold'
+                      : ''
+                  }
+                >
+                  List view
+                </span>
               </button>
             </div>
 
-            {/* Col 4: Filters & Recent first (Right-aligned with precise control icons) */}
-            <div className="flex items-center justify-end gap-8">
-              
-              {/* Filters Dropdown */}
+            {/* Col 4: Filters & Recent first */}
+            <div className="flex items-center justify-end gap-8 font-sans text-[12.5px] font-normal">
               <div className="relative">
                 <button
                   type="button"
@@ -408,16 +466,14 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                     setTempDiscipline(discipline);
                     setActiveDropdown(activeDropdown === 'filters' ? null : 'filters');
                   }}
-                  className="flex items-center gap-2 font-mono text-xs font-medium tracking-wider text-black hover:text-neutral-600 cursor-pointer border-0 bg-transparent p-0"
+                  className="flex items-center gap-2 text-[#080808] hover:text-neutral-600 cursor-pointer border-0 bg-transparent p-0"
                 >
                   <span>Filters</span>
-                  <svg className="w-4 h-4 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                    <circle cx="8" cy="6" r="2" fill="currentColor"></circle>
-                    <circle cx="16" cy="12" r="2" fill="currentColor"></circle>
-                    <circle cx="10" cy="18" r="2" fill="currentColor"></circle>
+                  <svg className="w-4 h-4 text-[#080808]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="3" y1="8" x2="21" y2="8"></line>
+                    <line x1="3" y1="16" x2="21" y2="16"></line>
+                    <circle cx="9" cy="8" r="2.5" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.8"></circle>
+                    <circle cx="15" cy="16" r="2.5" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.8"></circle>
                   </svg>
                 </button>
 
@@ -456,7 +512,6 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 )}
               </div>
 
-              {/* Recent First Dropdown */}
               <div className="relative">
                 <button
                   type="button"
@@ -464,12 +519,12 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                     setTempSort(activeSort);
                     setActiveDropdown(activeDropdown === 'sort' ? null : 'sort');
                   }}
-                  className="flex items-center gap-2 font-mono text-xs font-medium tracking-wider text-black hover:text-neutral-600 cursor-pointer border-0 bg-transparent p-0"
+                  className="flex items-center gap-2 text-[#080808] hover:text-neutral-600 cursor-pointer border-0 bg-transparent p-0"
                 >
                   <span>{activeSort === 'recent' ? 'Recent first' : activeSort === 'popular' ? 'Most popular first' : activeSort === 'az' ? 'Alphabetical A-Z' : 'Alphabetical Z-A'}</span>
-                  <svg className="w-4 h-4 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M7 16V4m0 0L3 8m4-4l4 4"></path>
-                    <path d="M17 8v12m0 0l4-4m-4 4l-4-4"></path>
+                  <svg className="w-4 h-4 text-[#080808]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 4v16m0 0l-3.5-3.5M7 20l3.5-3.5"></path>
+                    <path d="M17 20V4m0 0l-3.5 3.5M17 4l3.5 3.5"></path>
                   </svg>
                 </button>
 
@@ -510,14 +565,13 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                   </div>
                 )}
               </div>
-
             </div>
           </div>
 
           {tierNotice ? (
             <div
               role="status"
-              className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-[#CCFF00] bg-[#CCFF00]/15 px-5 py-3"
+              className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-[#CCFF00] bg-[#CCFF00]/15 px-5 py-2.5"
             >
               <p className="m-0 font-mono text-[11px] leading-relaxed text-[#080808]">
                 Showing athletes pre-cleared for {tierNotice}. Select an athlete to fund this flight.
@@ -525,7 +579,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
               <button
                 type="button"
                 onClick={() => applyRosterFilter('all')}
-                className="shrink-0 self-start rounded-full border border-[#080808]/15 bg-white px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-[#080808] cursor-pointer hover:border-[#080808]"
+                className="shrink-0 self-start rounded-full border border-[#080808]/15 bg-white px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-[#080808] cursor-pointer hover:border-[#080808]"
               >
                 Clear filter
               </button>
@@ -590,7 +644,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                         </div>
                         <div>
                           <p className="m-0 font-mono text-xs uppercase tracking-wider text-[#0F0F11]">
-                            {disciplineLockup(athlete.league, athlete.postcode)}
+                            {disciplineLockup(athlete.league, athlete.postcode).replace(/\/\//g, '·')}
                           </p>
                           <p className="m-0 mt-0.5 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
                             {suburbForPostcode(athlete.postcode)}
@@ -625,10 +679,10 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 </ul>
               </div>
             ) : (
-              <ul className="m-0 grid list-none grid-cols-1 items-stretch gap-8 p-0 md:grid-cols-2 lg:grid-cols-3">
-                {visibleCards.map((card) => (
+              <ul className="m-0 grid list-none grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch gap-x-5 gap-y-6 p-0 pt-2">
+                {visibleCards.map((card, index) => (
                   <li key={card.athlete.id} className="m-0 flex min-w-0 flex-col p-0">
-                    {renderSpecimen(card, 'card')}
+                    {renderSpecimen(card, index)}
                   </li>
                 ))}
               </ul>
@@ -640,6 +694,10 @@ export const RosterPage: React.FC<RosterPageProps> = ({
       <AthleteDossierDrawer
         athlete={activeDossier}
         onClose={() => setActiveDossier(null)}
+        onSelectAthlete={(athlete) => {
+          setHighlightedCardId(athlete.id);
+          setActiveDossier(athlete);
+        }}
         onDeployCapital={(athlete) => {
           setActiveDossier(null);
           setDeployAthlete(athlete);
