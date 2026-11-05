@@ -56,6 +56,7 @@ import {
 import { AdminDrawer } from './components/AdminDrawer';
 import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { CoverHero, PAGE_SHELL } from './components/CoverHero';
+import { ManifestoTrail } from './components/ManifestoTrail';
 import { BroadcastMatrix } from './components/BroadcastMatrix';
 import { RadialCatchment } from './components/RadialCatchment';
 import { RosterGrid } from './components/RosterGrid';
@@ -756,6 +757,7 @@ export function MarketplaceApp() {
             <div className={`${PAGE_SHELL} pt-20`}>
               <CoverHero onNavigateSection={navigateSection} />
             </div>
+            <ManifestoTrail onNavigateSection={navigateSection} />
             <BroadcastMatrix />
             <RadialCatchment />
             <SettlementLedger />

@@ -5,7 +5,7 @@ export type PortalLeague = 'NBL1' | 'SHUTE SHIELD' | 'VFL';
 export type PortalMode = 'authenticate' | 'claim';
 
 /** Typed hand-off from the drawer. `league` / `postcode` are only populated when claiming a profile. */
-export interface PortalSubmission {
+interface PortalSubmission {
   mode: PortalMode;
   /** Digits only (AU mobile without the +61 prefix, or numeric athlete ID). */
   identifier: string;
@@ -19,6 +19,8 @@ interface AthletePortalDrawerProps {
   onClose: () => void;
   /** Continues into the secure athlete sign-in / account creation modal. */
   onContinue: (submission: PortalSubmission) => void;
+  /** Optional instant sandbox bypass for local testing. */
+  onTestBypass?: (sandboxAthlete: any) => void;
 }
 
 const LEAGUES: ReadonlyArray<PortalLeague> = ['NBL1', 'SHUTE SHIELD', 'VFL'];
@@ -28,11 +30,11 @@ const MODE_TABS: ReadonlyArray<{ mode: PortalMode; label: string }> = [
   { mode: 'claim', label: 'CLAIM PROFILE' },
 ];
 
-const FIELD_LABEL = 'font-mono text-[9px] tracking-[0.2em] text-[#666666] uppercase block mb-2';
+const FIELD_LABEL = 'font-mono text-[9px] tracking-[0.2em] text-[#555555] uppercase block mb-2 font-bold';
 const FIELD_SHELL =
-  'bg-white border border-[#080808]/15 rounded-xl px-4 py-3 text-sm font-mono text-[#080808] placeholder-[#999999] outline-none focus-within:border-[#080808] transition-colors w-full flex items-center';
+  'bg-[#FFFFFF] border border-black/15 rounded-xl px-4 py-3 text-sm font-mono text-[#080808] placeholder-[#888888] outline-none focus-within:border-[#080808] transition-colors w-full flex items-center shadow-sm';
 const FIELD_INPUT =
-  'bg-transparent text-sm font-mono text-[#080808] placeholder-[#999999] outline-none w-full select-text border-0 p-0';
+  'bg-transparent text-sm font-mono text-[#080808] placeholder-[#888888] outline-none w-full select-text border-0 p-0';
 
 const PROTOCOL_ROWS: ReadonlyArray<{ label: string; value: string }> = [
   { label: 'Identity Validation', value: 'Passport / NBL1' },
@@ -56,17 +58,11 @@ const CloseIcon: React.FC = () => (
   </svg>
 );
 
-/**
- * Unified athlete sign-in and onboarding slide-over. Destination for the ATHLETE PORTAL
- * utility trigger, the menu overlay portal entry and "Claim Your Profile". Two modes share one
- * shell: `AUTHENTICATE` (existing roster athletes) and `CLAIM PROFILE` (new athletes,
- * adds league and postcode catchment). Luxury off-white editorial terminal that shares the site's
- * primary canvas: hairline rules, monospace telemetry, Kinetic Volt on hover.
- */
 export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
   isOpen,
   onClose,
   onContinue,
+  onTestBypass,
 }) => {
   const baseId = useId();
   const identifierId = `${baseId}-identifier`;
@@ -82,7 +78,6 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
   const isClaim = mode === 'claim';
   const canSubmit = !isClaim || (league !== '' && /^\d{4}$/.test(postcode));
 
-  // Fresh form each time the drawer is reopened.
   useEffect(() => {
     if (isOpen) return;
     setMode('authenticate');
@@ -101,6 +96,31 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
     });
   };
 
+  const handleTestBypass = () => {
+    const sandboxAthlete = {
+      id: 'athlete_marcus_thorne',
+      full_name: 'Marcus Thorne',
+      display_name: 'Marcus Thorne',
+      sport: 'Basketball',
+      league: 'NBL1 East',
+      current_club: 'Bankstown Bruins',
+      postcode: '2200',
+      status: 'Verified',
+      agreement_status: 'cleared',
+    };
+    if (onTestBypass) {
+      onTestBypass(sandboxAthlete);
+    } else {
+      onContinue({
+        mode: 'authenticate',
+        identifier: '0400000000',
+        league: null,
+        postcode: null,
+      });
+    }
+    onClose();
+  };
+
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -113,41 +133,40 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
-      {/* Backdrop: clicking outside closes the drawer */}
+    <div className="fixed inset-0 z-50 selection:bg-[#CCFF00] selection:text-[#080808]">
       <button
         type="button"
         aria-label="Close athlete portal"
         tabIndex={-1}
         onClick={onClose}
-        className="absolute inset-0 bg-black/40 backdrop-blur-md transition-opacity duration-300 animate-fadeIn border-0 p-0 cursor-default"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 animate-fadeIn border-0 p-0 cursor-default"
       />
       <aside
         role="dialog"
         aria-modal="true"
         aria-label="Athlete portal"
-        className="absolute top-0 right-0 h-full w-full max-w-[480px] bg-[#F7F7F6] border-l border-[#080808]/10 z-10 p-8 md:p-12 flex flex-col justify-between shadow-2xl animate-slideInRight select-none overflow-y-auto"
+        className="absolute top-0 right-0 h-full w-full max-w-[480px] bg-[#FFFFFF] border-l border-black/10 z-10 p-8 md:p-12 flex flex-col justify-between shadow-2xl animate-slideInRight select-none overflow-y-auto"
       >
         <div>
-          {/* Header row: lockup / close */}
-          <div className="flex items-center justify-between border-b border-[#080808]/10 pb-6">
+          {/* Header row */}
+          <div className="flex items-center justify-between border-b border-black/10 pb-6">
             <BrandLockup onClick={onClose} />
 
             <button
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="inline-flex items-center justify-center p-1 text-[#666666] hover:text-[#080808] transition-colors duration-150 cursor-pointer bg-transparent border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#080808]/40 rounded-full"
+              className="inline-flex items-center justify-center p-1.5 text-neutral-500 hover:text-[#080808] transition-colors duration-150 cursor-pointer bg-transparent border-0 rounded-full hover:bg-neutral-100"
             >
               <CloseIcon />
             </button>
           </div>
 
-          {/* Mode switch: light pill capsule */}
+          {/* Mode switch: Pangram daylight capsule */}
           <div
             role="tablist"
             aria-label="Portal access mode"
-            className="grid grid-cols-2 p-1 bg-[#EBEBEA] rounded-full my-8"
+            className="grid grid-cols-2 p-1 bg-[#EAEAE6] rounded-full my-8 border border-black/10"
           >
             {MODE_TABS.map((tab) => {
               const active = tab.mode === mode;
@@ -160,10 +179,10 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                   aria-selected={active}
                   aria-controls={panelId}
                   onClick={() => setMode(tab.mode)}
-                  className={`py-2 text-[10px] font-mono font-bold tracking-[0.2em] uppercase rounded-full transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#080808]/40 ${
+                  className={`py-2.5 text-[10px] font-mono font-bold tracking-[0.2em] uppercase rounded-full transition-all duration-200 cursor-pointer border-0 ${
                     active
-                      ? 'bg-[#080808] text-[#F7F7F6] shadow-sm'
-                      : 'text-[#666666] hover:text-[#080808]'
+                      ? 'bg-[#080808] text-[#CCFF00] shadow-sm'
+                      : 'bg-transparent text-neutral-600 hover:text-[#080808]'
                   }`}
                 >
                   {tab.label}
@@ -172,16 +191,33 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
             })}
           </div>
 
+          {/* Instant Sandbox Test Bypass Box */}
+          <div className="mb-8 rounded-[18px] bg-[#080808] text-white p-5 space-y-3 border border-black/15 shadow-md">
+            <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-[#CCFF00] block">
+              // LOCAL TESTING BYPASS
+            </span>
+            <p className="m-0 font-sans text-xs text-neutral-300 leading-relaxed">
+              Skip mobile verification right now and enter the operator console immediately as Marcus Thorne (Postcode 2200).
+            </p>
+            <button
+              type="button"
+              onClick={handleTestBypass}
+              className="w-full rounded-full bg-[#CCFF00] hover:bg-white text-[#080808] font-mono text-[10px] font-bold uppercase tracking-widest py-3 border-0 cursor-pointer transition-colors shadow-sm font-bold"
+            >
+              ⚡ Bypass Login (Test Portal Now) →
+            </button>
+          </div>
+
           {/* Content */}
-          <span className="font-mono text-[10px] tracking-[0.24em] text-[#888888] uppercase block mb-2">
+          <span className="font-mono text-[10px] tracking-[0.24em] text-neutral-400 uppercase block mb-2">
             SOVEREIGN CLEARINGHOUSE
           </span>
 
-          <h2 className="font-display font-extrabold text-4xl tracking-[-0.03em] text-[#080808] leading-tight mb-3">
-            Your career. Your terms.
+          <h2 className="font-display font-black text-4xl uppercase tracking-[-0.03em] text-[#080808] leading-tight mb-3">
+            Your career.<br />Your terms<span className="text-[#CCFF00]">.</span>
           </h2>
 
-          <p className="font-display text-xs text-[#555555] leading-relaxed mb-8">
+          <p className="font-sans text-xs text-neutral-600 leading-relaxed mb-8">
             No predatory management cuts. Log in with your mobile number to review brand partnerships, verify your junior club, and receive automated bank transfers the second deliverables are cleared.
           </p>
 
@@ -190,7 +226,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
             role="tabpanel"
             id={panelId}
             aria-labelledby={`${baseId}-tab-${mode}`}
-            className="w-full space-y-5 mb-8 min-h-[244px]"
+            className="w-full space-y-5 mb-8"
           >
             <div className="w-full">
               <label htmlFor={identifierId} className={FIELD_LABEL}>
@@ -218,7 +254,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
               <>
                 <div className="w-full">
                   <label htmlFor={leagueId} className={FIELD_LABEL}>
-                    SELECT LEAGUE (NBL1 / SHUTE SHIELD / VFL)
+                    Select League (NBL1 / Shute Shield / VFL)
                   </label>
                   <div className={`${FIELD_SHELL} relative`}>
                     <select
@@ -226,7 +262,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                       value={league}
                       onChange={(e) => setLeague(e.target.value as PortalLeague | '')}
                       className={`${FIELD_INPUT} appearance-none cursor-pointer pr-6 ${
-                        league === '' ? 'text-[#999999]' : ''
+                        league === '' ? 'text-neutral-400' : ''
                       }`}
                       style={{ colorScheme: 'light' }}
                     >
@@ -241,7 +277,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                     </select>
                     <svg
                       viewBox="0 0 24 24"
-                      className="pointer-events-none absolute right-4 w-4 h-4 text-[#666666]"
+                      className="pointer-events-none absolute right-4 w-4 h-4 text-neutral-500"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth={1.5}
@@ -257,7 +293,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
 
                 <div className="w-full">
                   <label htmlFor={postcodeId} className={FIELD_LABEL}>
-                    POSTCODE CATCHMENT
+                    Postcode Catchment
                   </label>
                   <div className={FIELD_SHELL}>
                     <input
@@ -282,10 +318,10 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
           </div>
 
           {/* Protocol specs table */}
-          <div className="border-t border-b border-[#080808]/10 py-5 space-y-3.5 mb-8">
+          <div className="border-t border-b border-black/10 py-5 space-y-3.5 mb-8">
             {PROTOCOL_ROWS.map((row) => (
               <div key={row.label} className="flex items-center justify-between gap-4 font-mono text-[10px]">
-                <span className="text-[#666666] uppercase tracking-wider">{row.label}</span>
+                <span className="text-neutral-500 uppercase tracking-wider">{row.label}</span>
                 <span className="text-[#080808] font-bold text-right">{row.value}</span>
               </div>
             ))}
@@ -298,25 +334,14 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
             type="button"
             onClick={submit}
             disabled={!canSubmit}
-            className="group relative w-full h-[52px] rounded-full bg-[#080808] text-[#F7F7F6] font-bold text-xs uppercase tracking-widest overflow-hidden hover:bg-[#B8FF00] hover:text-[#080808] transition-all duration-200 cursor-pointer shadow-md flex items-center justify-center mb-6 border-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#080808] disabled:hover:text-[#F7F7F6]"
+            className="w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] font-mono font-bold text-xs uppercase tracking-widest py-4 transition-colors duration-200 cursor-pointer shadow-md border-0 disabled:opacity-40 disabled:cursor-not-allowed mb-6"
           >
-            <span className="relative block h-[15px] overflow-hidden leading-[15px] whitespace-nowrap">
-              <span className="block whitespace-nowrap transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-full">
-                Request Login Code
-              </span>
-              <span
-                aria-hidden="true"
-                className="absolute top-full left-0 block w-full whitespace-nowrap text-center transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-full text-[#080808]"
-              >
-                Request Login Code
-              </span>
-            </span>
+            Request Login Code →
           </button>
 
-          {/* Institutional footer */}
-          <div className="flex items-center justify-center text-[9px] font-mono text-[#888888]">
+          <div className="flex items-center justify-center text-[9px] font-mono text-neutral-500">
             <span className="tracking-widest uppercase text-center leading-relaxed">
-              Stripe Connect Escrow | Sport Integrity Australia Aligned | Automated ATO Tax Invoicing
+              Stripe Connect Escrow · Sport Integrity Australia Aligned · Automated ATO Tax Invoicing
             </span>
           </div>
         </div>

@@ -31,6 +31,9 @@ interface AthleteProfileRow {
   guardian_signed_at: string | null;
   stripe_account_id: string | null;
   compliance_status: ComplianceStatus;
+  instagram_handle: string | null;
+  tiktok_handle: string | null;
+  whitelisting_opt_in: boolean;
 }
 
 /** Writable columns upserted by the form. Compliance/agreement fields are never sent from the client. */
@@ -51,6 +54,9 @@ type AthleteProfileUpsert = Pick<
   | 'abn'
   | 'abn_verified'
   | 'guardian_token'
+  | 'instagram_handle'
+  | 'tiktok_handle'
+  | 'whitelisting_opt_in'
 > & {
   market_valuation: number;
   match_fee: number;
@@ -73,6 +79,9 @@ interface ProfileFormState {
   amateur_eligibility_maintained: boolean;
   abn: string;
   abn_verified: boolean;
+  instagram_handle: string;
+  tiktok_handle: string;
+  whitelisting_opt_in: boolean;
 }
 
 const EMPTY_FORM: ProfileFormState = {
@@ -91,6 +100,9 @@ const EMPTY_FORM: ProfileFormState = {
   amateur_eligibility_maintained: true,
   abn: '',
   abn_verified: false,
+  instagram_handle: '',
+  tiktok_handle: '',
+  whitelisting_opt_in: true,
 };
 
 const FIELD_LABELS: Record<string, string> = {
@@ -127,7 +139,6 @@ const emptyToNull = (value: string): string | null => {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const fieldFromText = (text: string): string | null => {
-  // Matches `column "foo"` / `"foo"` / constraint names like athlete_profiles_market_valuation_check
   const columnMatch = text.match(/column "([a-z_]+)"/i);
   if (columnMatch) return columnMatch[1];
   for (const key of Object.keys(FIELD_LABELS)) {
@@ -136,7 +147,7 @@ const fieldFromText = (text: string): string | null => {
   return null;
 };
 
-/** Validate locally so the common failure modes never reach the network. */
+/** Validate locally so common failure modes never reach the network. */
 const validateForm = (form: ProfileFormState): string | null => {
   const required: Array<'legal_full_name' | 'display_name' | 'sport_discipline' | 'primary_postcode'> = [
     'legal_full_name',
@@ -177,9 +188,9 @@ const describeSupabaseError = (error: Pick<PostgrestError, 'code' | 'message' | 
   const label = field ? FIELD_LABELS[field] ?? field : null;
 
   switch (error.code) {
-    case '23502': // not_null_violation
+    case '23502':
       return label ? `${label} is required.` : 'A required field is missing.';
-    case '23514': // check_violation
+    case '23514':
       if (text.includes('market_valuation')) return 'Market valuation cannot be negative.';
       if (text.includes('match_fee')) return 'Match fee cannot be negative.';
       if (text.includes('check_guardian_required')) return 'Guardian email is required for athletes under 18.';
@@ -188,16 +199,16 @@ const describeSupabaseError = (error: Pick<PostgrestError, 'code' | 'message' | 
         return `Settlement currency must be one of ${SETTLEMENT_CURRENCIES.join(', ')}.`;
       }
       return 'One of the values you entered is not allowed. Please review the form.';
-    case '23503': // foreign_key_violation
+    case '23503':
       return 'Your account setup is incomplete (no base user profile found). Please sign out and back in, then retry.';
-    case '22003': // numeric_value_out_of_range
+    case '22003':
       return 'A monetary amount is too large.';
-    case '22P02': // invalid_text_representation
-    case '22007': // invalid_datetime_format
+    case '22P02':
+    case '22007':
       return 'One of the values has an invalid format.';
-    case '42501': // insufficient_privilege (RLS)
+    case '42501':
       return 'You do not have permission to save this profile. Please sign in again.';
-    case 'PGRST301': // JWT expired / invalid
+    case 'PGRST301':
       return 'Your session has expired. Please sign in again.';
     default:
       return 'We could not save your profile right now. Please try again.';
@@ -209,11 +220,8 @@ const inputClass =
 const labelClass = 'block font-mono text-[9px] uppercase tracking-[0.2em] text-white/60 mb-2';
 
 interface AthleteProfileManagerProps {
-  /** Return to the main Roster (landing) view. */
   onExit?: () => void;
-  /** Called after the profile upsert succeeds (e.g. to route to the Commercial Dashboard). */
   onSaved?: () => void;
-  /** Open the sign-in gateway when there is no authenticated session. */
   onRequestSignIn?: () => void;
 }
 
@@ -232,14 +240,12 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
   const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProfileFormState>(EMPTY_FORM);
   const [abnTouched, setAbnTouched] = useState(false);
-  /** Persisted guardian state; used to keep an issued token stable across saves. */
   const [guardian, setGuardian] = useState<{ token: string | null; email: string | null; signedAt: string | null }>({
     token: null,
     email: null,
     signedAt: null,
   });
 
-  // Synchronous guard: state updates are async, so two fast clicks could both pass `saving`.
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
 
@@ -273,7 +279,7 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
       const { data, error } = await supabase
         .from('athlete_profiles')
         .select(
-          'id, legal_full_name, display_name, sport_discipline, current_club, playing_position, representative_league, primary_postcode, market_valuation, match_fee, settlement_currency, is_minor, guardian_email, amateur_eligibility_maintained, abn, abn_verified, guardian_token, guardian_signed_at, stripe_account_id, compliance_status'
+          'id, legal_full_name, display_name, sport_discipline, current_club, playing_position, representative_league, primary_postcode, market_valuation, match_fee, settlement_currency, is_minor, guardian_email, amateur_eligibility_maintained, abn, abn_verified, guardian_token, guardian_signed_at, stripe_account_id, compliance_status, instagram_handle, tiktok_handle, whitelisting_opt_in'
         )
         .eq('id', user.id)
         .maybeSingle<AthleteProfileRow>();
@@ -297,6 +303,9 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
         amateur_eligibility_maintained: data.amateur_eligibility_maintained ?? true,
         abn: data.abn ?? '',
         abn_verified: isValidAbn(data.abn ?? ''),
+        instagram_handle: data.instagram_handle ?? '',
+        tiktok_handle: data.tiktok_handle ?? '',
+        whitelisting_opt_in: data.whitelisting_opt_in ?? true,
       });
       setGuardian({
         token: data.guardian_token ?? null,
@@ -326,7 +335,6 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
     setFormData((prev) => ({
       ...prev,
       [name]: next,
-      // Offline Modulus 89 check: verification toggles automatically as the ABN is typed.
       ...(name === 'abn' ? { abn_verified: isValidAbn(String(next)) } : {}),
     }));
     setSaveError(null);
@@ -363,8 +371,6 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
 
       const abnDigits = stripNonDigits(formData.abn);
       const guardianEmail = formData.is_minor ? formData.guardian_email.trim() : null;
-      // Minors get a guardian_token UUID. An issued token is kept (so a link already sent stays valid)
-      // unless the guardian email changed, in which case it is rotated to revoke the previous recipient.
       const guardianToken = !formData.is_minor
         ? null
         : guardian.token && guardian.email?.toLowerCase() === guardianEmail?.toLowerCase()
@@ -384,12 +390,14 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
         match_fee: formData.match_fee.trim() === '' ? 0 : Number(formData.match_fee),
         settlement_currency: formData.settlement_currency,
         is_minor: formData.is_minor,
-        // DB constraint: guardian_email is mandatory for minors; never persist a stale one for adults.
         guardian_email: guardianEmail,
         guardian_token: guardianToken,
         amateur_eligibility_maintained: formData.amateur_eligibility_maintained,
         abn: abnDigits === '' ? null : abnDigits,
         abn_verified: abnDigits !== '' && isValidAbn(abnDigits),
+        instagram_handle: emptyToNull(formData.instagram_handle),
+        tiktok_handle: emptyToNull(formData.tiktok_handle),
+        whitelisting_opt_in: formData.whitelisting_opt_in,
       };
 
       const { data, error } = await supabase
@@ -421,7 +429,6 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
       setUnauthenticated(false);
       onSaved?.();
     } catch (err) {
-      // Network failures and any other thrown errors land here — never leave them unhandled.
       console.error('Unexpected failure saving athlete profile:', err);
       setSaveError('Network error while saving your profile. Check your connection and try again.');
     } finally {
@@ -457,7 +464,6 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
     );
   }
 
-  // Minors cannot be submitted without a guardian contact (mirrors DB constraint check_guardian_required).
   const guardianMissing = formData.is_minor && !EMAIL_PATTERN.test(formData.guardian_email.trim());
   const submitDisabled = saving || guardianMissing;
 
@@ -481,389 +487,442 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
     <div className="min-h-screen bg-[#060709] text-white selection:bg-[#D2FF00] selection:text-black">
       {exitBar}
       <div className="px-6 py-12 lg:px-16">
-      <div className="max-w-4xl mx-auto border border-white/15 bg-black/40 backdrop-blur-md p-8 md:p-12 relative">
-        <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-6 mb-8 gap-4">
-          <div>
-            <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-[#D2FF00] font-semibold">
-              // ATHLETE OPERATIONAL PROFILE
-            </span>
-            <h1 className="text-3xl font-extrabold uppercase tracking-tight mt-1">
-              {formData.display_name || formData.legal_full_name || 'TALENT TERMINAL'}
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <span
-              data-testid="profile-status-badge"
-              className={`font-mono text-[9px] uppercase tracking-[0.16em] px-3 py-1 rounded-full border ${badgeClass}`}
-            >
-              {badgeLabel}
-            </span>
-            <span className="font-mono text-[9px] uppercase tracking-[0.16em] px-3 py-1 rounded-full border border-white/20 text-white/70">
-              COMPLIANCE: {complianceStatus.replace(/_/g, ' ')}
-            </span>
-          </div>
-        </div>
-
-        {unauthenticated && (
-          <div
-            role="status"
-            data-testid="terminal-signin-prompt"
-            className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-amber-400/50 bg-amber-400/10 px-4 py-3 font-mono text-[11px] tracking-[0.08em] text-amber-200"
-          >
-            <span>You are not signed in. Sign in to save your athlete profile.</span>
-            {onRequestSignIn && (
-              <button
-                type="button"
-                onClick={onRequestSignIn}
-                className="px-4 py-2 border border-amber-400 text-amber-300 hover:bg-amber-400 hover:text-black uppercase tracking-[0.16em] text-[10px] transition-colors"
-              >
-                Sign in
-              </button>
-            )}
-          </div>
-        )}
-
-        <form onSubmit={handleSave} noValidate aria-busy={saving} className="space-y-8">
-          <fieldset disabled={saving} className="space-y-8 min-w-0 border-0 p-0 m-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="legal_full_name" className={labelClass}>
-                  Legal Full Name
-                </label>
-                <input
-                  id="legal_full_name"
-                  type="text"
-                  name="legal_full_name"
-                  value={formData.legal_full_name}
-                  onChange={handleChange}
-                  required
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label htmlFor="display_name" className={labelClass}>
-                  Display Name (Roster)
-                </label>
-                <input
-                  id="display_name"
-                  type="text"
-                  name="display_name"
-                  value={formData.display_name}
-                  onChange={handleChange}
-                  required
-                  className={inputClass}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label htmlFor="sport_discipline" className={labelClass}>
-                  Sport Discipline
-                </label>
-                <input
-                  id="sport_discipline"
-                  type="text"
-                  name="sport_discipline"
-                  value={formData.sport_discipline}
-                  onChange={handleChange}
-                  required
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label htmlFor="current_club" className={labelClass}>
-                  Current Club (Optional)
-                </label>
-                <input
-                  id="current_club"
-                  type="text"
-                  name="current_club"
-                  value={formData.current_club}
-                  onChange={handleChange}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label htmlFor="playing_position" className={labelClass}>
-                  Playing Position (Optional)
-                </label>
-                <input
-                  id="playing_position"
-                  type="text"
-                  name="playing_position"
-                  value={formData.playing_position}
-                  onChange={handleChange}
-                  placeholder="e.g. Flyhalf, Point Guard"
-                  className={inputClass}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="representative_league" className={labelClass}>
-                  Representative League (Optional)
-                </label>
-                <input
-                  id="representative_league"
-                  type="text"
-                  name="representative_league"
-                  value={formData.representative_league}
-                  onChange={handleChange}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label htmlFor="primary_postcode" className={labelClass}>
-                  Primary Postcode (Geospatial Anchor)
-                </label>
-                <input
-                  id="primary_postcode"
-                  type="text"
-                  name="primary_postcode"
-                  value={formData.primary_postcode}
-                  onChange={handleChange}
-                  required
-                  className={inputClass}
-                />
-              </div>
-            </div>
-
-            <div className="border-t border-white/10 pt-6">
-              <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-white/60 mb-4 block">
-                // FINANCIAL PARAMETERS & COMMERCIAL CLEARANCE
+        <div className="max-w-4xl mx-auto border border-white/15 bg-black/40 backdrop-blur-md p-8 md:p-12 relative">
+          <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-6 mb-8 gap-4">
+            <div>
+              <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-[#D2FF00] font-semibold">
+                // ATHLETE OPERATIONAL PROFILE
               </span>
+              <h1 className="text-3xl font-extrabold uppercase tracking-tight mt-1">
+                {formData.display_name || formData.legal_full_name || 'TALENT TERMINAL'}
+              </h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <span
+                data-testid="profile-status-badge"
+                className={`font-mono text-[9px] uppercase tracking-[0.16em] px-3 py-1 rounded-full border ${badgeClass}`}
+              >
+                {badgeLabel}
+              </span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.16em] px-3 py-1 rounded-full border border-white/20 text-white/70">
+                COMPLIANCE: {complianceStatus.replace(/_/g, ' ')}
+              </span>
+            </div>
+          </div>
+
+          {unauthenticated && (
+            <div
+              role="status"
+              data-testid="terminal-signin-prompt"
+              className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-amber-400/50 bg-amber-400/10 px-4 py-3 font-mono text-[11px] tracking-[0.08em] text-amber-200"
+            >
+              <span>You are not signed in. Sign in to save your athlete profile.</span>
+              {onRequestSignIn && (
+                <button
+                  type="button"
+                  onClick={onRequestSignIn}
+                  className="px-4 py-2 border border-amber-400 text-amber-300 hover:bg-amber-400 hover:text-black uppercase tracking-[0.16em] text-[10px] transition-colors"
+                >
+                  Sign in
+                </button>
+              )}
+            </div>
+          )}
+
+          <form onSubmit={handleSave} noValidate aria-busy={saving} className="space-y-8">
+            <fieldset disabled={saving} className="space-y-8 min-w-0 border-0 p-0 m-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="legal_full_name" className={labelClass}>
+                    Legal Full Name
+                  </label>
+                  <input
+                    id="legal_full_name"
+                    type="text"
+                    name="legal_full_name"
+                    value={formData.legal_full_name}
+                    onChange={handleChange}
+                    required
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="display_name" className={labelClass}>
+                    Display Name (Roster)
+                  </label>
+                  <input
+                    id="display_name"
+                    type="text"
+                    name="display_name"
+                    value={formData.display_name}
+                    onChange={handleChange}
+                    required
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label htmlFor="market_valuation" className={labelClass}>
-                    Market Valuation
+                  <label htmlFor="sport_discipline" className={labelClass}>
+                    Sport Discipline
                   </label>
                   <input
-                    id="market_valuation"
-                    type="number"
-                    inputMode="decimal"
-                    step="0.01"
-                    name="market_valuation"
-                    value={formData.market_valuation}
+                    id="sport_discipline"
+                    type="text"
+                    name="sport_discipline"
+                    value={formData.sport_discipline}
+                    onChange={handleChange}
+                    required
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="current_club" className={labelClass}>
+                    Current Club (Optional)
+                  </label>
+                  <input
+                    id="current_club"
+                    type="text"
+                    name="current_club"
+                    value={formData.current_club}
                     onChange={handleChange}
                     className={inputClass}
                   />
                 </div>
                 <div>
-                  <label htmlFor="match_fee" className={labelClass}>
-                    Match Fee (Ex GST)
+                  <label htmlFor="playing_position" className={labelClass}>
+                    Playing Position (Optional)
                   </label>
                   <input
-                    id="match_fee"
-                    type="number"
-                    inputMode="decimal"
-                    step="0.01"
-                    name="match_fee"
-                    value={formData.match_fee}
+                    id="playing_position"
+                    type="text"
+                    name="playing_position"
+                    value={formData.playing_position}
                     onChange={handleChange}
+                    placeholder="e.g. Flyhalf, Point Guard"
                     className={inputClass}
                   />
-                </div>
-                <div>
-                  <label htmlFor="settlement_currency" className={labelClass}>
-                    Settlement Currency
-                  </label>
-                  <select
-                    id="settlement_currency"
-                    name="settlement_currency"
-                    value={formData.settlement_currency}
-                    onChange={handleChange}
-                    className={inputClass}
-                  >
-                    <option value="AUD">AUD ($)</option>
-                    <option value="NZD">NZD ($)</option>
-                    <option value="USD">USD ($)</option>
-                  </select>
                 </div>
               </div>
-            </div>
 
-            <div className="border-t border-white/10 pt-6">
-              <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-white/60 mb-4 block">
-                // ELIGIBILITY, GUARDIANSHIP & TAX
-              </span>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <label htmlFor="is_minor" className="flex items-center gap-3 font-mono text-xs text-white cursor-pointer">
+                <div>
+                  <label htmlFor="representative_league" className={labelClass}>
+                    Representative League (Optional)
+                  </label>
                   <input
-                    id="is_minor"
-                    type="checkbox"
-                    name="is_minor"
-                    checked={formData.is_minor}
+                    id="representative_league"
+                    type="text"
+                    name="representative_league"
+                    value={formData.representative_league}
                     onChange={handleChange}
-                    className="h-4 w-4 accent-[#D2FF00]"
+                    className={inputClass}
                   />
-                  Athlete is under 18 (minor)
-                </label>
-                <label
-                  htmlFor="amateur_eligibility_maintained"
-                  className="flex items-center gap-3 font-mono text-xs text-white cursor-pointer"
-                >
+                </div>
+                <div>
+                  <label htmlFor="primary_postcode" className={labelClass}>
+                    Primary Postcode (Geospatial Anchor)
+                  </label>
                   <input
-                    id="amateur_eligibility_maintained"
-                    type="checkbox"
-                    name="amateur_eligibility_maintained"
-                    checked={formData.amateur_eligibility_maintained}
+                    id="primary_postcode"
+                    type="text"
+                    name="primary_postcode"
+                    value={formData.primary_postcode}
                     onChange={handleChange}
-                    className="h-4 w-4 accent-[#D2FF00]"
+                    required
+                    className={inputClass}
                   />
-                  Amateur eligibility maintained
-                </label>
-                {formData.is_minor && (
+                </div>
+              </div>
+
+              <div className="border-t border-white/10 pt-6">
+                <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-white/60 mb-4 block">
+                  // FINANCIAL PARAMETERS & COMMERCIAL CLEARANCE
+                </span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label htmlFor="guardian_email" className={labelClass}>
-                      Guardian Email (Required for Minors)
+                    <label htmlFor="market_valuation" className={labelClass}>
+                      Market Valuation
                     </label>
                     <input
-                      id="guardian_email"
-                      type="email"
-                      name="guardian_email"
-                      value={formData.guardian_email}
+                      id="market_valuation"
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      name="market_valuation"
+                      value={formData.market_valuation}
                       onChange={handleChange}
-                      required
-                      autoComplete="email"
                       className={inputClass}
                     />
-                    {guardian.signedAt ? (
-                      <p
-                        role="status"
-                        data-testid="guardian-signed-status"
-                        className="mt-2 font-mono text-[10px] tracking-[0.08em] text-emerald-300"
-                      >
-                        Guardian countersigned {new Date(guardian.signedAt).toLocaleDateString('en-AU')}.
-                      </p>
-                    ) : guardianLink ? (
-                      <div className="mt-2 space-y-1" data-testid="guardian-link-block">
-                        <span className="block font-mono text-[9px] uppercase tracking-[0.16em] text-white/60">
-                          Guardian signing link — send to your guardian
-                        </span>
-                        <input
-                          type="text"
-                          readOnly
-                          value={guardianLink}
-                          onFocus={(e) => e.currentTarget.select()}
-                          aria-label="Guardian signing link"
-                          className={`${inputClass} text-[11px]`}
-                        />
-                      </div>
-                    ) : (
-                      <p className="mt-2 font-mono text-[10px] tracking-[0.08em] text-white/50">
-                        A guardian signing link is generated when you save your profile.
-                      </p>
-                    )}
                   </div>
-                )}
-                <div>
-                  <div className="flex items-center justify-between gap-3">
-                    <label htmlFor="abn" className={labelClass}>
-                      ABN (Optional)
+                  <div>
+                    <label htmlFor="match_fee" className={labelClass}>
+                      Match Fee (Ex GST)
                     </label>
-                    {formData.abn_verified && (
-                      <span
-                        data-testid="abn-verified-badge"
-                        className="mb-2 inline-flex items-center gap-1 rounded-full border border-emerald-400/60 bg-emerald-400/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.16em] text-emerald-300"
-                      >
-                        <span aria-hidden="true">✓</span> ABN Verified
-                      </span>
-                    )}
+                    <input
+                      id="match_fee"
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      name="match_fee"
+                      value={formData.match_fee}
+                      onChange={handleChange}
+                      className={inputClass}
+                    />
                   </div>
-                  <input
-                    id="abn"
-                    type="text"
-                    inputMode="numeric"
-                    name="abn"
-                    value={formData.abn}
-                    onChange={handleChange}
-                    onBlur={() => setAbnTouched(true)}
-                    placeholder="11 digits"
-                    maxLength={14}
-                    aria-invalid={abnInvalid}
-                    aria-describedby={abnInvalid ? 'abn-error' : undefined}
-                    className={`${inputClass} ${
-                      formData.abn_verified
-                        ? 'border-emerald-400/60'
-                        : abnInvalid
-                          ? 'border-amber-400/70'
-                          : ''
-                    }`}
-                  />
-                  {abnInvalid && (
-                    <p
-                      id="abn-error"
-                      role="alert"
-                      data-testid="abn-invalid-warning"
-                      className="mt-2 font-mono text-[10px] tracking-[0.08em] text-amber-300"
+                  <div>
+                    <label htmlFor="settlement_currency" className={labelClass}>
+                      Settlement Currency
+                    </label>
+                    <select
+                      id="settlement_currency"
+                      name="settlement_currency"
+                      value={formData.settlement_currency}
+                      onChange={handleChange}
+                      className={inputClass}
                     >
-                      {ABN_ERROR_MESSAGE}
-                    </p>
-                  )}
+                      <option value="AUD">AUD ($)</option>
+                      <option value="NZD">NZD ($)</option>
+                      <option value="USD">USD ($)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-            </div>
-          </fieldset>
 
-          <div className="border border-white/10 p-4 bg-[#0A0C10] flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/60">
-                Stripe Express Payout Rail
-              </span>
-              <span className="font-mono text-xs text-white mt-1">
-                {stripeAccountId ? `CONNECTED: ${stripeAccountId}` : 'NO PAYOUT ACCOUNT CONNECTED'}
-              </span>
-            </div>
-            <button
-              type="button"
-              className="px-4 py-2 border border-white/20 hover:border-white font-mono text-[10px] tracking-[0.16em] uppercase transition-colors"
-            >
-              {stripeAccountId ? 'UPDATE STRIPE' : 'CONNECT PAYOUTS'}
-            </button>
-          </div>
-
-          <div className="pt-6 border-t border-white/10 space-y-4">
-            {saveError && (
-              <div
-                role="alert"
-                data-testid="profile-save-error"
-                className="border border-red-500/50 bg-red-500/10 px-4 py-3 font-mono text-[11px] tracking-[0.08em] text-red-300"
-              >
-                {saveError}
-              </div>
-            )}
-            <div className="flex items-center justify-between">
-              {justSaved ? (
-                <span
-                  role="status"
-                  className="font-mono text-[10px] tracking-[0.2em] text-[#D2FF00] uppercase font-semibold"
-                >
-                  PROFILE SAVED
+              {/* 1-CLICK PAID AD WHITELISTING SOCIAL HANDLES SECTION */}
+              <div className="border-t border-white/10 pt-6">
+                <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-[#D2FF00] font-semibold mb-2 block">
+                  // 1-CLICK PAID AD WHITELISTING (META & TIKTOK)
                 </span>
-              ) : (
-                <div />
-              )}
+                <p className="font-sans text-xs text-white/60 mb-4">
+                  Link your verified social handles to allow local brands and partners to run geo-fenced paid ads directly through your accounts. No password sharing required.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="instagram_handle" className={labelClass}>
+                      Instagram Handle
+                    </label>
+                    <input
+                      id="instagram_handle"
+                      type="text"
+                      name="instagram_handle"
+                      value={formData.instagram_handle}
+                      onChange={handleChange}
+                      placeholder="@handle"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="tiktok_handle" className={labelClass}>
+                      TikTok Handle
+                    </label>
+                    <input
+                      id="tiktok_handle"
+                      type="text"
+                      name="tiktok_handle"
+                      value={formData.tiktok_handle}
+                      onChange={handleChange}
+                      placeholder="@handle"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label htmlFor="whitelisting_opt_in" className="flex items-center gap-3 font-mono text-xs text-white cursor-pointer">
+                    <input
+                      id="whitelisting_opt_in"
+                      type="checkbox"
+                      name="whitelisting_opt_in"
+                      checked={formData.whitelisting_opt_in}
+                      onChange={handleChange}
+                      className="h-4 w-4 accent-[#D2FF00]"
+                    />
+                    Enable automatic 90-day postcode ad token minting upon deal settlement
+                  </label>
+                </div>
+              </div>
+
+              <div className="border-t border-white/10 pt-6">
+                <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-white/60 mb-4 block">
+                  // ELIGIBILITY, GUARDIANSHIP & TAX
+                </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <label htmlFor="is_minor" className="flex items-center gap-3 font-mono text-xs text-white cursor-pointer">
+                    <input
+                      id="is_minor"
+                      type="checkbox"
+                      name="is_minor"
+                      checked={formData.is_minor}
+                      onChange={handleChange}
+                      className="h-4 w-4 accent-[#D2FF00]"
+                    />
+                    Athlete is under 18 (minor)
+                  </label>
+                  <label
+                    htmlFor="amateur_eligibility_maintained"
+                    className="flex items-center gap-3 font-mono text-xs text-white cursor-pointer"
+                  >
+                    <input
+                      id="amateur_eligibility_maintained"
+                      type="checkbox"
+                      name="amateur_eligibility_maintained"
+                      checked={formData.amateur_eligibility_maintained}
+                      onChange={handleChange}
+                      className="h-4 w-4 accent-[#D2FF00]"
+                    />
+                    Amateur eligibility maintained
+                  </label>
+                  {formData.is_minor && (
+                    <div>
+                      <label htmlFor="guardian_email" className={labelClass}>
+                        Guardian Email (Required for Minors)
+                      </label>
+                      <input
+                        id="guardian_email"
+                        type="email"
+                        name="guardian_email"
+                        value={formData.guardian_email}
+                        onChange={handleChange}
+                        required
+                        autoComplete="email"
+                        className={inputClass}
+                      />
+                      {guardian.signedAt ? (
+                        <p
+                          role="status"
+                          data-testid="guardian-signed-status"
+                          className="mt-2 font-mono text-[10px] tracking-[0.08em] text-emerald-300"
+                        >
+                          Guardian countersigned {new Date(guardian.signedAt).toLocaleDateString('en-AU')}.
+                        </p>
+                      ) : guardianLink ? (
+                        <div className="mt-2 space-y-1" data-testid="guardian-link-block">
+                          <span className="block font-mono text-[9px] uppercase tracking-[0.16em] text-white/60">
+                            Guardian signing link — send to your guardian
+                          </span>
+                          <input
+                            type="text"
+                            readOnly
+                            value={guardianLink}
+                            onFocus={(e) => e.currentTarget.select()}
+                            aria-label="Guardian signing link"
+                            className={`${inputClass} text-[11px]`}
+                          />
+                        </div>
+                      ) : (
+                        <p className="mt-2 font-mono text-[10px] tracking-[0.08em] text-white/50">
+                          A guardian signing link is generated when you save your profile.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex items-center justify-between gap-3">
+                      <label htmlFor="abn" className={labelClass}>
+                        ABN (Optional)
+                      </label>
+                      {formData.abn_verified && (
+                        <span
+                          data-testid="abn-verified-badge"
+                          className="mb-2 inline-flex items-center gap-1 rounded-full border border-emerald-400/60 bg-emerald-400/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.16em] text-emerald-300"
+                        >
+                          <span aria-hidden="true">✓</span> ABN Verified
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      id="abn"
+                      type="text"
+                      inputMode="numeric"
+                      name="abn"
+                      value={formData.abn}
+                      onChange={handleChange}
+                      onBlur={() => setAbnTouched(true)}
+                      placeholder="11 digits"
+                      maxLength={14}
+                      aria-invalid={abnInvalid}
+                      aria-describedby={abnInvalid ? 'abn-error' : undefined}
+                      className={`${inputClass} ${
+                        formData.abn_verified
+                          ? 'border-emerald-400/60'
+                          : abnInvalid
+                            ? 'border-amber-400/70'
+                            : ''
+                      }`}
+                    />
+                    {abnInvalid && (
+                      <p
+                        id="abn-error"
+                        role="alert"
+                        data-testid="abn-invalid-warning"
+                        className="mt-2 font-mono text-[10px] tracking-[0.08em] text-amber-300"
+                      >
+                        {ABN_ERROR_MESSAGE}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+
+            <div className="border border-white/10 p-4 bg-[#0A0C10] flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/60">
+                  Stripe Express Payout Rail
+                </span>
+                <span className="font-mono text-xs text-white mt-1">
+                  {stripeAccountId ? `CONNECTED: ${stripeAccountId}` : 'NO PAYOUT ACCOUNT CONNECTED'}
+                </span>
+              </div>
               <button
-                type="submit"
-                disabled={submitDisabled}
-                aria-disabled={submitDisabled}
-                title={guardianMissing ? 'A valid guardian email is required for athletes under 18.' : undefined}
-                className="bg-white text-black font-mono text-[11px] uppercase tracking-[0.16em] px-8 py-3.5 rounded-full hover:bg-[#D2FF00] transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white inline-flex items-center gap-2"
+                type="button"
+                className="px-4 py-2 border border-white/20 hover:border-white font-mono text-[10px] tracking-[0.16em] uppercase transition-colors"
               >
-                {saving && (
-                  <span
-                    aria-hidden="true"
-                    className="inline-block h-3 w-3 rounded-full border-2 border-black/30 border-t-black animate-spin"
-                  />
-                )}
-                {saving ? 'SAVING...' : 'SAVE ATHLETE PROFILE ->'}
+                {stripeAccountId ? 'UPDATE STRIPE' : 'CONNECT PAYOUTS'}
               </button>
             </div>
-          </div>
-        </form>
-      </div>
+
+            <div className="pt-6 border-t border-white/10 space-y-4">
+              {saveError && (
+                <div
+                  role="alert"
+                  data-testid="profile-save-error"
+                  className="border border-red-500/50 bg-red-500/10 px-4 py-3 font-mono text-[11px] tracking-[0.08em] text-red-300"
+                >
+                  {saveError}
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                {justSaved ? (
+                  <span
+                    role="status"
+                    className="font-mono text-[10px] tracking-[0.2em] text-[#D2FF00] uppercase font-semibold"
+                  >
+                    PROFILE SAVED
+                  </span>
+                ) : (
+                  <div />
+                )}
+                <button
+                  type="submit"
+                  disabled={submitDisabled}
+                  aria-disabled={submitDisabled}
+                  title={guardianMissing ? 'A valid guardian email is required for athletes under 18.' : undefined}
+                  className="bg-white text-black font-mono text-[11px] uppercase tracking-[0.16em] px-8 py-3.5 rounded-full hover:bg-[#D2FF00] transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white inline-flex items-center gap-2"
+                >
+                  {saving && (
+                    <span
+                      aria-hidden="true"
+                      className="inline-block h-3 w-3 rounded-full border-2 border-black/30 border-t-black animate-spin"
+                    />
+                  )}
+                  {saving ? 'SAVING...' : 'SAVE ATHLETE PROFILE ->'}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
