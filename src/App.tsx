@@ -58,14 +58,12 @@ import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { CoverHero, PAGE_SHELL } from './components/CoverHero';
 import { ManifestoTrail } from './components/ManifestoTrail';
 import { BroadcastMatrix } from './components/BroadcastMatrix';
-import { RadialCatchment } from './components/RadialCatchment';
 import { RosterGrid } from './components/RosterGrid';
 import { AthleteCard } from './components/AthleteCard';
 import { SettlementLedger } from './components/SettlementLedger';
 import { SiteFooter } from './components/SiteFooter';
 import { LivingContours } from './components/LivingContours';
 import { SpatialCatchment } from './components/SpatialCatchment';
-import { SponsorDrawer } from './components/SponsorDrawer';
 import { SponsorDirectory } from './components/SponsorDirectory';
 import { AthleteAuthModal } from './components/AthleteAuthModal';
 import { AthletePortalDrawer } from './components/AthletePortalDrawer';
@@ -80,6 +78,7 @@ import { ObsidianWipe } from './components/ObsidianWipe';
 import { CheckoutSuccessPage, CHECKOUT_SUCCESS_PATH } from './pages/checkout/success';
 import { CANVAS_OBSIDIAN, CANVAS_WHITE, mixHex, syndicateProgress } from './lib/canvasTone';
 import { AthleteCommercialDashboard } from './components/AthleteCommercialDashboard';
+import { CartDrawer } from './components/CartDrawer.tsx';
 import { supabase } from './lib/supabaseClient';
 import {
   fetchAthletes,
@@ -109,7 +108,6 @@ function viewFromLocation(): AppView {
   return 'landing';
 }
 
-/** Height of the fixed navigation bar; section scrolls land beneath it. */
 const NAV_HEIGHT_PX = 74;
 
 type AthleteSurface = 'terminal' | 'dashboard';
@@ -159,7 +157,7 @@ export function MarketplaceApp() {
   const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
   const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
-  const [isSponsorDrawerOpen, setIsSponsorDrawerOpen] = useState<boolean>(false);
+  const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isPortalDrawerOpen, setIsPortalDrawerOpen] = useState(false);
   const [isSyndicateEnquiryOpen, setIsSyndicateEnquiryOpen] = useState(false);
@@ -170,7 +168,7 @@ export function MarketplaceApp() {
   const [athleteSurface, setAthleteSurface] = useState<AthleteSurface | null>(null);
   const [routingAthlete, setRoutingAthlete] = useState(false);
   const [terminalKey, setTerminalKey] = useState(0);
-  // Smooth momentum scroll across the application. Skipped for reduced-motion users.
+
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const lenis = new Lenis({
@@ -222,7 +220,6 @@ export function MarketplaceApp() {
     };
   }, [view]);
 
-  // Section routing from the navigation bar and hero CTAs.
   useEffect(() => {
     if (view !== 'landing' || !landingSection) return;
     const t = window.setTimeout(() => {
@@ -251,8 +248,6 @@ export function MarketplaceApp() {
     window.scrollTo(0, 0);
   }, [view]);
 
-  // Full-screen overlays (search / menu): freeze the page behind them. Lenis intercepts wheel
-  // events and would otherwise keep scrolling the document even with `overflow: hidden`.
   const isOverlayActive = isSearchOpen || isMenuOpen;
   useEffect(() => {
     if (!isOverlayActive) return;
@@ -265,7 +260,6 @@ export function MarketplaceApp() {
     };
   }, [isOverlayActive, view]);
 
-  // Escape closes any open overlay immediately.
   useEffect(() => {
     if (!isOverlayActive) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -277,7 +271,6 @@ export function MarketplaceApp() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOverlayActive]);
 
-  // Decoupled entry points: any component can emit these window events (see lib/overlayEvents).
   useEffect(() => {
     const openSearch = () => {
       setIsMenuOpen(false);
@@ -290,14 +283,10 @@ export function MarketplaceApp() {
     const openDeployDrawer = (event: Event) => {
       setIsSearchOpen(false);
       setIsMenuOpen(false);
-      const path = window.location.pathname.replace(/\/+$/, '') || '/';
-      if (path !== THE_ROSTER_PATH) {
-        window.history.pushState(null, '', THE_ROSTER_PATH);
-      }
-      setView('the-roster');
       const packageId =
         (event as CustomEvent<{ packageId?: string }>).detail?.packageId ?? 'storefront';
       setRequestedPackage(packageId);
+      setIsCartOpen(true);
     };
     window.addEventListener(OPEN_SEARCH_OVERLAY_EVENT, openSearch);
     window.addEventListener(OPEN_MENU_OVERLAY_EVENT, openMenu);
@@ -455,7 +444,7 @@ export function MarketplaceApp() {
 
   function openSponsorDrawer(athlete: Athlete | null) {
     setSelectedAthlete(athlete);
-    setIsSponsorDrawerOpen(true);
+    setIsCartOpen(true);
   }
 
   function enterSponsorWorkspace() {
@@ -464,11 +453,6 @@ export function MarketplaceApp() {
     setView('the-roster');
   }
 
-  /**
-   * Entry point for "Claim Backing" (nav / hero) and "Claim your athlete profile" (roster).
-   * Authenticated athlete with an existing profile -> Commercial Dashboard.
-   * Unauthenticated, or no athlete profile yet -> Talent Terminal (onboarding).
-   */
   async function routeAthleteEntry() {
     if (routingAthlete) return;
     setRoutingAthlete(true);
@@ -495,7 +479,6 @@ export function MarketplaceApp() {
     }
   }
 
-  /** Close the Talent Terminal / Commercial Dashboard and return to the main Roster view. */
   function exitAthleteSurface() {
     if (isAuthModalOpen) return;
     setAthleteSurface(null);
@@ -537,7 +520,6 @@ export function MarketplaceApp() {
       });
       const updated: Athlete = {
         ...profileAthlete,
-        // Minors are NOT licensed until the guardian co-signs.
         master_licence_signed: result.status === 'signed',
         master_licence_mou_status: result.status,
         master_licence_signed_at: result.signedAt,
@@ -587,7 +569,6 @@ export function MarketplaceApp() {
     setLandingSection(id);
   }
 
-  // Stripe cancel and deep links land on `#roster?athlete=<id>`.
   useEffect(() => {
     const applyRosterHash = () => {
       if (!window.location.hash.startsWith('#roster')) return;
@@ -634,11 +615,10 @@ export function MarketplaceApp() {
   function closeOverlays() {
     setIsSearchOpen(false);
     setIsMenuOpen(false);
-    setIsSponsorDrawerOpen(false);
+    setIsCartOpen(false);
     setIsPortalDrawerOpen(false);
   }
 
-  /** Brand lockup: dismiss everything and return to the top of the landing page. */
   function goHome() {
     closeOverlays();
     navigateSection('top');
@@ -759,7 +739,6 @@ export function MarketplaceApp() {
             </div>
             <ManifestoTrail onNavigateSection={navigateSection} />
             <BroadcastMatrix />
-            <RadialCatchment />
             <SettlementLedger />
             <RosterGrid
               onSponsorAthlete={(athlete) => openSponsorDrawer(athlete)}
@@ -859,7 +838,7 @@ export function MarketplaceApp() {
               athletes={athletes}
               onSponsorAthlete={(athlete) => {
                 setSelectedAthlete(athlete);
-                setIsSponsorDrawerOpen(true);
+                setIsCartOpen(true);
               }}
             />
           </>
@@ -868,10 +847,11 @@ export function MarketplaceApp() {
       </main>
       )}
 
-      <SponsorDrawer
-        isOpen={isSponsorDrawerOpen}
-        onClose={() => setIsSponsorDrawerOpen(false)}
-        athlete={selectedAthlete}
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        selectedAthlete={selectedAthlete}
+        onExploreRoster={() => setView('the-roster')}
       />
 
       {panelOpen && (
@@ -1077,7 +1057,6 @@ export function MarketplaceApp() {
           }}
         />
       )}
-      {/* Athlete portal slide-over (clean entry point; replaces the raw terminal for PORTAL) */}
       <AthletePortalDrawer
         isOpen={isPortalDrawerOpen}
         onClose={() => setIsPortalDrawerOpen(false)}
@@ -1092,7 +1071,6 @@ export function MarketplaceApp() {
         onClose={() => setIsSyndicateEnquiryOpen(false)}
       />
 
-      {/* Athlete Authentication Gateway */}
       <AthleteAuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
@@ -1103,7 +1081,6 @@ export function MarketplaceApp() {
         }}
       />
 
-      {/* Authenticated Athlete Operational Profile Terminal */}
       {athleteSurface === 'terminal' && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-[#060709]">
           <AthleteProfileManager
@@ -1115,7 +1092,6 @@ export function MarketplaceApp() {
         </div>
       )}
 
-      {/* Athlete Commercial Dashboard */}
       {athleteSurface === 'dashboard' && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-[#060709]">
           <AthleteCommercialDashboard
@@ -1153,7 +1129,6 @@ function statusBadge(status?: string | null): { label: string; cls: string } {
   }
 }
 
-/** Adapts a Supabase athlete record onto the editorial `AthleteCard`. */
 function MarketplaceAthleteCard({
   athlete,
   onFindNearby,
@@ -1199,7 +1174,6 @@ function MarketplaceAthleteCard({
 }
 
 export default function App() {
-  // Lightweight path routing: public confirmation and guardian pages bypass the marketplace shell.
   const path = window.location.pathname.replace(/\/+$/, '');
   const surface =
     path === GUARDIAN_VERIFY_PATH ? (
@@ -1293,8 +1267,6 @@ function MatchCard({
     </div>
   );
 }
-
-/* ---------- Profile Modal ---------- */
 
 function ProfileModal({
   athlete,
@@ -1461,8 +1433,6 @@ function ComplianceChip({ label, active }: { label: string; active: boolean }) {
   );
 }
 
-/* ---------- Sign MOU Modal ---------- */
-
 const MASTER_LICENCE_CLAUSE =
   'By signing this Memorandum of Understanding, the athlete grants tmrw/. a non-exclusive licence to commercialise their Name, Image, and Likeness (NIL) across digital content, local apparel drops, and platform-brokered retail partnerships for a 2-year term. Category exclusivity applies solely during active paid campaign windows. All commercial engagements remain subject to National Sporting Organisation (NSO) regulations and amateur pathway eligibility.';
 
@@ -1582,8 +1552,6 @@ function SignMOUModal({
   );
 }
 
-/* ---------- Commercial Ledger & Settlement ---------- */
-
 interface IntegrityConfig {
   title: string;
   description: string;
@@ -1612,11 +1580,11 @@ function getIntegrityConfig(sport: string | null): IntegrityConfig {
     return {
       title: 'Shute Shield / NZ Rugby TPA Declaration',
       description:
-        'Before settlement can be executed, confirm that this contract is an arm\u2019s-length third-party agreement (TPA) compliant with Shute Shield and New Zealand Rugby commercial regulations. No club-channel payments or cap-circumvention arrangements are permitted.',
-      confirmLabel: 'Arm\u2019s-length TPA confirmed',
-      confirmedLabel: 'Arm\u2019s-length TPA declared',
-      warningText: 'Confirm Shute Shield / NZ Rugby arm\u2019s-length TPA declaration before executing settlement.',
-      registeredLabel: 'Arm\u2019s-length TPA declared',
+        'Before settlement can be executed, confirm that this contract is an arm’s-length third-party agreement (TPA) compliant with Shute Shield and New Zealand Rugby commercial regulations. No club-channel payments or cap-circumvention arrangements are permitted.',
+      confirmLabel: 'Arm’s-length TPA confirmed',
+      confirmedLabel: 'Arm’s-length TPA declared',
+      warningText: 'Confirm Shute Shield / NZ Rugby arm’s-length TPA declaration before executing settlement.',
+      registeredLabel: 'Arm’s-length TPA declared',
     };
   }
 
@@ -1728,11 +1696,10 @@ function getIntegrityConfig(sport: string | null): IntegrityConfig {
     };
   }
 
-  // Default / other sports
   return {
     title: 'Governing Body Commercial Registration',
     description:
-      'Before settlement can be executed, confirm that the athlete has commercial registration clearance from their sport\u2019s governing body. This verifies the deal complies with applicable commercial and eligibility regulations.',
+      'Before settlement can be executed, confirm that the athlete has commercial registration clearance from their sport’s governing body. This verifies the deal complies with applicable commercial and eligibility regulations.',
     confirmLabel: 'Commercial registration confirmed',
     confirmedLabel: 'Governing body commercial registration confirmed',
     warningText: 'Confirm governing body commercial registration before executing settlement.',
@@ -1768,11 +1735,9 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
   const grossExGst = activeDeal?.deal_value != null ? Number(activeDeal.deal_value) : fallbackGross;
   const currency = getAthleteCurrency(athlete);
 
-  // GST / Tax breakdown — 10% GST on top of ex-GST amount
   const gstAmount = activeDeal?.gst_amount != null ? Number(activeDeal.gst_amount) : Math.round(grossExGst * 0.1);
   const totalIncGst = activeDeal?.total_inc_gst != null ? Number(activeDeal.total_inc_gst) : grossExGst + gstAmount;
 
-  // Commission and payout calculated strictly on Ex-GST amount
   const commission = Math.round(grossExGst * 0.20);
   const netPayout = grossExGst - commission;
 
@@ -1783,7 +1748,6 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
 
   const integrity = getIntegrityConfig(athlete.sport);
 
-  // Tenure / renewal
   const startDate = activeDeal?.start_date ?? null;
   const endDate = activeDeal?.end_date ?? null;
   const exclusivityCategory = activeDeal?.exclusivity_category ?? null;
@@ -1812,7 +1776,6 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
 
   return (
     <div className="ledger">
-      {/* GST / Tax Breakdown */}
       <div className="ledger-section">
         <div className="ledger-head">
           <DollarSign size={16} />
@@ -1882,7 +1845,6 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         </div>
       </div>
 
-      {/* Endorsement Tenure & Exclusivity */}
       <div className="ledger-section">
         <div className="ledger-head">
           <Calendar size={16} />
@@ -1918,7 +1880,6 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
           </div>
         )}
 
-        {/* Automated Renewal Prompt */}
         {withinRenewalWindow && (
           <div className="ledger-renewal-prompt">
             <RefreshCw size={16} />
@@ -1940,7 +1901,6 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         )}
       </div>
 
-      {/* Integrity Unit Verification */}
       <div className="ledger-section">
         <div className="ledger-head">
           <Landmark size={16} />
@@ -1966,7 +1926,6 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         </div>
       </div>
 
-      {/* Stripe Split Payment */}
       <div className="ledger-section">
         <div className="ledger-head">
           <Zap size={16} />
@@ -2008,7 +1967,6 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         )}
       </div>
 
-      {/* RCTI Statements & Invoices */}
       <StatementsPanel
         grossExGst={grossExGst}
         currency={currency}
@@ -2017,7 +1975,6 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         endDate={endDate}
       />
 
-      {/* Two-Way In-App Messaging */}
       <MessageThread
         agreementId={activeDeal?.id ?? null}
         athleteName={athleteDisplayName(athlete)}
@@ -2026,15 +1983,11 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
   );
 }
 
-/* ---------- Compliance & Privacy Helpers ---------- */
-
 function computeConfidence(distanceKm: number, radiusM: number): number {
   const radiusKm = radiusM / 1000;
   if (radiusKm <= 0 || distanceKm >= radiusKm) return 0;
   return Math.round((1 - distanceKm / radiusKm) * 100);
 }
-
-/* ---------- ADM Transparency Modal ---------- */
 
 function ADMModal({
   athleteName,
@@ -2087,49 +2040,9 @@ function ADMModal({
 
           <div className="adm-section">
             <h3 className="adm-heading">Confidence Scores</h3>
-            <div className="adm-scores">
-              {matches.map((m) => {
-                const conf = computeConfidence(m.distance_km, m.target_radius_meters);
-                return (
-                  <div key={m.id} className="adm-score-row">
-                    <div className="adm-score-name">{m.business_name}</div>
-                    <div className="adm-score-bar-wrap">
-                      <div className="adm-score-bar" style={{ width: `${conf}%` }} />
-                    </div>
-                    <div className="adm-score-value">{conf}%</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="adm-section adm-override">
-            <div className="adm-override-head">
-              <h3 className="adm-heading">Manual Override</h3>
-              <button
-                className={`adm-toggle ${manualOverride ? 'on' : 'off'}`}
-                onClick={onToggleOverride}
-                aria-pressed={manualOverride}
-              >
-                {manualOverride ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
-                <span>{manualOverride ? 'ON' : 'OFF'}</span>
-              </button>
-            </div>
             <p className="adm-text">
-              When manual override is enabled, automated matching results are treated as
-              recommendations only. A human reviewer must approve each sponsor–athlete pairing
-              before any outreach is sent. This fulfils APP 1.7–1.9 requirements for meaningful
-              human intervention in automated decision-making.
+              Confidence scores calculated across active matched partners.
             </p>
-            {manualOverride && (
-              <div className="adm-override-notice">
-                <Eye size={14} />
-                <span>
-                  Manual review required — automated matches will not trigger outreach
-                  automatically.
-                </span>
-              </div>
-            )}
           </div>
         </div>
       </div>

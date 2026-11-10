@@ -9,26 +9,6 @@ interface CoverHeroProps {
   onNavigateSection?: (id: LandingSectionId) => void;
 }
 
-interface SpatialNode {
-  id: string;
-  text: string;
-  x: number;
-  y: number;
-}
-
-const SPATIAL_QUOTES: readonly SpatialNode[] = [
-  { id: 'center', text: 'Line up your future', x: 0, y: 0 },
-  { id: 'q1', text: "Exposure doesn't pay rent", x: -28, y: -25 },
-  { id: 'q2', text: 'No agents taking a cut', x: 28, y: -24 },
-  { id: 'q3', text: "The grind isn't free content", x: -30, y: 4 },
-  { id: 'q4', text: 'Own your local postcode', x: 30, y: 6 },
-  { id: 'q5', text: '70% straight to your bank', x: -24, y: 27 },
-  { id: 'q6', text: '15% back to your junior club', x: 26, y: 26 },
-  { id: 'q7', text: 'First grade to Brisbane 2032', x: 0, y: -31 },
-  { id: 'q8', text: 'Your name. Your likeness. Your bag', x: -18, y: -13 },
-  { id: 'q9', text: 'Live minutes into fast cash', x: 20, y: -13 },
-];
-
 const INTRO_WORDS = ['Line', 'up', 'your', 'future'];
 
 const PULSE_BLINK_CSS =
@@ -40,7 +20,6 @@ const PULSE_BLINK_CSS =
 
 export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [activeNodeId, setActiveNodeId] = useState<string>('center');
   const [phase, setPhase] = useState<'intro' | 'settled'>('intro');
   const [visibleWords, setVisibleWords] = useState<number>(0);
 
@@ -56,7 +35,7 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
 
     const settleTimer = window.setTimeout(() => {
       setPhase('settled');
-    }, 2900);
+    }, 2800);
     timers.push(settleTimer);
 
     return () => {
@@ -64,7 +43,6 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
     };
   }, []);
 
-  const activeNode = SPATIAL_QUOTES.find((n) => n.id === activeNodeId) ?? SPATIAL_QUOTES[0];
   const isIntro = phase === 'intro';
 
   const scrollToRoster = () => {
@@ -75,94 +53,8 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
     document.getElementById('roster')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const renderStatementWithDot = (text: string, isActive: boolean, isCenterAnchor: boolean) => {
-    const words = text.trim().split(' ');
-    const lastWord = words.pop() ?? '';
-    const leadingWords = words.join(' ');
-
-    if (isCenterAnchor && isIntro) {
-      return (
-        <span className="block text-center font-extrabold leading-[0.92] tracking-tight text-[#F7F7F6] drop-shadow-[0_8px_36px_rgba(0,0,0,0.9)] text-7xl sm:text-8xl md:text-[7.5rem] lg:text-[9.2rem]">
-          <span className="block">
-            <span
-              className={[
-                'inline-block transition-all duration-300',
-                visibleWords >= 1
-                  ? 'opacity-100 translate-y-0 blur-0'
-                  : 'opacity-0 translate-y-3 blur-sm',
-              ].join(' ')}
-            >
-              Line
-            </span>{' '}
-            <span
-              className={[
-                'inline-block transition-all duration-300',
-                visibleWords >= 2
-                  ? 'opacity-100 translate-y-0 blur-0'
-                  : 'opacity-0 translate-y-3 blur-sm',
-              ].join(' ')}
-            >
-              up
-            </span>
-          </span>
-          <span className="block">
-            <span
-              className={[
-                'inline-block transition-all duration-300',
-                visibleWords >= 3
-                  ? 'opacity-100 translate-y-0 blur-0'
-                  : 'opacity-0 translate-y-3 blur-sm',
-              ].join(' ')}
-            >
-              your
-            </span>{' '}
-            <span
-              className={[
-                'inline-block whitespace-nowrap transition-all duration-300',
-                visibleWords >= 4
-                  ? 'opacity-100 translate-y-0 blur-0'
-                  : 'opacity-0 translate-y-3 blur-sm',
-              ].join(' ')}
-            >
-              future
-              <span
-                aria-hidden="true"
-                className="tmrw-dot-blink ml-2.5 inline-block h-4 w-4 rounded-full bg-[#CCFF00] align-baseline shadow-[0_0_24px_rgba(204,255,0,1)] md:h-6 md:w-6"
-              />
-            </span>
-          </span>
-        </span>
-      );
-    }
-
-    return (
-      <span
-        className={[
-          'block text-center font-extrabold leading-[0.96] tracking-tight text-[#F7F7F6] drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)] transition-all duration-700',
-          isCenterAnchor
-            ? 'max-w-[12ch] text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem]'
-            : 'max-w-[13ch] text-4xl sm:text-5xl md:text-6xl',
-        ].join(' ')}
-      >
-        {leadingWords ? leadingWords + ' ' : ''}
-        <span className="whitespace-nowrap">
-          {lastWord}
-          <span
-            aria-hidden="true"
-            className={[
-              'ml-2 inline-block shrink-0 rounded-full bg-[#CCFF00] align-baseline transition-all duration-500',
-              isActive
-                ? 'tmrw-dot-blink h-3.5 w-3.5 opacity-100 shadow-[0_0_16px_rgba(204,255,0,0.95)] md:h-4 md:w-4'
-                : 'h-2 w-2 opacity-40',
-            ].join(' ')}
-          />
-        </span>
-      </span>
-    );
-  };
-
   return (
-    <div className="pb-4">
+    <div className="pb-12 md:pb-20">
       <section
         aria-label="tmrw cover"
         className="relative flex min-h-[82vh] w-full select-none flex-col justify-between overflow-hidden rounded-[28px] border border-[#EAEAEA] bg-[#080808] p-8 shadow-sm md:rounded-[32px] md:p-14"
@@ -171,11 +63,10 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const x = (e.clientX - rect.left) / rect.width - 0.5;
           const y = (e.clientY - rect.top) / rect.height - 0.5;
-          setMousePos({ x: x * 36, y: y * 36 });
+          setMousePos({ x: x * 32, y: y * 32 });
         }}
         onMouseLeave={() => {
           setMousePos({ x: 0, y: 0 });
-          setActiveNodeId('center');
         }}
       >
         <style>{PULSE_BLINK_CSS}</style>
@@ -194,9 +85,9 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
             transform: isIntro
               ? 'scale(1.1)'
               : 'scale(1.04) translate3d(' +
-                (-activeNode.x * 0.25 - mousePos.x * 0.2) +
+                -mousePos.x * 0.25 +
                 'px, ' +
-                (-activeNode.y * 0.25 - mousePos.y * 0.2) +
+                -mousePos.y * 0.25 +
                 'px, 0)',
           }}
         />
@@ -223,63 +114,98 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
 
         <CourtLinesOverlay />
 
-        <div
-          className="relative z-10 my-auto flex h-[56vh] w-full items-center justify-center transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform"
-          style={{
-            transform:
-              'translate3d(' + -activeNode.x * 0.75 + '%, ' + -activeNode.y * 0.75 + '%, 0)',
-          }}
-        >
-          {SPATIAL_QUOTES.map((node) => {
-            const isActive = node.id === activeNodeId;
-            const isCenterAnchor = node.id === 'center';
-
-            const peripheralOpacityClass = isIntro
-              ? 'opacity-10 blur-[3px] pointer-events-none'
-              : 'opacity-25 blur-[1.5px] hover:opacity-60 hover:blur-0';
-
-            const scaleVal = isCenterAnchor && isIntro ? 1.12 : isActive ? 1 : 0.44;
-
-            return (
-              <button
-                key={node.id}
-                type="button"
-                onClick={() => {
-                  if (isIntro) {
-                    setPhase('settled');
-                    return;
-                  }
-                  setActiveNodeId(isActive ? 'center' : node.id);
-                }}
-                onMouseEnter={() => {
-                  if (!isIntro) setActiveNodeId(node.id);
-                }}
-                style={{
-                  left: 50 + node.x + '%',
-                  top: 50 + node.y + '%',
-                  transform: 'translate(-50%, -50%) scale(' + scaleVal + ')',
-                }}
-                className={[
-                  'absolute cursor-pointer border-0 bg-transparent p-2 text-center font-display transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[transform,opacity,filter] focus:outline-none',
-                  isActive ? 'z-30 opacity-100 blur-0' : 'z-10 ' + peripheralOpacityClass,
-                ].join(' ')}
-              >
-                {renderStatementWithDot(node.text, isActive, isCenterAnchor)}
-              </button>
-            );
-          })}
+        {/* Pure Central Headline */}
+        <div className="relative z-10 my-auto flex h-[56vh] w-full items-center justify-center">
+          <div
+            onClick={() => {
+              if (isIntro) setPhase('settled');
+            }}
+            style={{
+              transform: isIntro
+                ? 'scale(1.12)'
+                : 'translate3d(' + mousePos.x * 0.18 + 'px, ' + mousePos.y * 0.18 + 'px, 0) scale(1)',
+            }}
+            className="transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform"
+          >
+            {isIntro ? (
+              <h1 className="m-0 block text-center font-display font-extrabold leading-[0.92] tracking-tight text-[#F7F7F6] drop-shadow-[0_8px_36px_rgba(0,0,0,0.9)] text-7xl sm:text-8xl md:text-[7.5rem] lg:text-[9.2rem]">
+                <span className="block">
+                  <span
+                    className={[
+                      'inline-block transition-all duration-300',
+                      visibleWords >= 1
+                        ? 'opacity-100 translate-y-0 blur-0'
+                        : 'opacity-0 translate-y-3 blur-sm',
+                    ].join(' ')}
+                  >
+                    Line
+                  </span>{' '}
+                  <span
+                    className={[
+                      'inline-block transition-all duration-300',
+                      visibleWords >= 2
+                        ? 'opacity-100 translate-y-0 blur-0'
+                        : 'opacity-0 translate-y-3 blur-sm',
+                    ].join(' ')}
+                  >
+                    up
+                  </span>
+                </span>
+                <span className="block">
+                  <span
+                    className={[
+                      'inline-block transition-all duration-300',
+                      visibleWords >= 3
+                        ? 'opacity-100 translate-y-0 blur-0'
+                        : 'opacity-0 translate-y-3 blur-sm',
+                    ].join(' ')}
+                  >
+                    your
+                  </span>{' '}
+                  <span
+                    className={[
+                      'inline-block whitespace-nowrap transition-all duration-300',
+                      visibleWords >= 4
+                        ? 'opacity-100 translate-y-0 blur-0'
+                        : 'opacity-0 translate-y-3 blur-sm',
+                    ].join(' ')}
+                  >
+                    future
+                    <span
+                      aria-hidden="true"
+                      className="tmrw-dot-blink ml-2.5 inline-block h-4 w-4 rounded-full bg-[#CCFF00] align-baseline shadow-[0_0_24px_rgba(204,255,0,1)] md:h-6 md:w-6"
+                    />
+                  </span>
+                </span>
+              </h1>
+            ) : (
+              <h1 className="m-0 block max-w-[12ch] text-center font-display font-extrabold leading-[0.96] tracking-tight text-[#F7F7F6] drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)] transition-all duration-700 text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem]">
+                Line up your{' '}
+                <span className="whitespace-nowrap">
+                  future
+                  <span
+                    aria-hidden="true"
+                    className="tmrw-dot-blink ml-2 inline-block h-3.5 w-3.5 shrink-0 rounded-full bg-[#CCFF00] align-baseline opacity-100 shadow-[0_0_16px_rgba(204,255,0,0.95)] md:h-4 md:w-4"
+                  />
+                </span>
+              </h1>
+            )}
+          </div>
         </div>
 
+        {/* Buttons Split Perfectly Across Either Side of the Center Guideline */}
         <div
           className={[
-            'relative z-20 flex flex-col items-center gap-5 transition-all duration-700',
+            'relative z-20 flex w-full items-center justify-between px-4 pb-2 transition-all duration-700 md:px-12',
             isIntro ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0',
           ].join(' ')}
         >
-          <div className="mx-auto flex w-full max-w-lg flex-wrap items-center justify-center gap-4">
+          <div className="flex justify-start">
             <RollingPillButton variant="primary" onClick={scrollToRoster}>
               Explore the Roster
             </RollingPillButton>
+          </div>
+          <div className="flex justify-end">
             <RollingPillButton
               variant="glass"
               onClick={() => {

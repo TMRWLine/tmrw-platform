@@ -19,7 +19,7 @@ interface CanonicalFlight {
   numeral: string;
   code: string;
   badge: string;
-  badgeVariant: 'red' | 'yellow' | 'green';
+  badgeVariant: 'black' | 'yellow' | 'green';
   name: string;
   firstWord: string;
   restWords: string;
@@ -41,7 +41,7 @@ const CANONICAL_FLIGHTS: readonly CanonicalFlight[] = [
     numeral: '01',
     code: 'FLIGHT 01',
     badge: '5km Lock',
-    badgeVariant: 'red',
+    badgeVariant: 'black',
     name: 'Precinct Contra & Micro',
     firstWord: 'Precinct',
     restWords: 'Contra & Micro',
@@ -67,7 +67,7 @@ const CANONICAL_FLIGHTS: readonly CanonicalFlight[] = [
     numeral: '02',
     code: 'FLIGHT 02',
     badge: '15km Lock',
-    badgeVariant: 'red',
+    badgeVariant: 'black',
     name: 'Pathway Contender',
     firstWord: 'Pathway',
     restWords: 'Contender',
@@ -243,7 +243,6 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
       onClick={onClose}
       className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
-      {/* Attachment 2 Look & Feel: Full-Width Architectural Frame for Commercial Flight Selection */}
       <div
         role="dialog"
         aria-modal="true"
@@ -253,7 +252,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-[1840px] h-[94dvh] rounded-[24px] bg-[#FFFFFF] text-[#080808] shadow-[0_30px_90px_rgba(0,0,0,0.28)] border border-black/10 flex flex-col overflow-hidden"
       >
-        {/* Top Bar with Red Close Pill in Center (Exact Attachment 2 Match) */}
+        {/* Top Bar with Luxury Obsidian Black Close Button */}
         <header className="shrink-0 z-30 grid grid-cols-3 items-center px-4 sm:px-6 md:px-10 py-3.5 bg-[#FFFFFF]/95 backdrop-blur-md border-b border-black/10">
           <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#080808]">
             <span className="inline-block h-2 w-2 rounded-full bg-[#CCFF00] ring-1 ring-black/20" />
@@ -265,11 +264,12 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
               ref={closeRef}
               type="button"
               onClick={onClose}
-              title="Close and return to Roster [ESC]"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#FF3300] hover:bg-[#080808] text-white px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-colors cursor-pointer border-0"
+              title="Close [ESC]"
+              aria-label="Close modal"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/25 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
             >
               <span>Close</span>
-              <span className="text-[11px]">✕</span>
+              <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">✕</span>
             </button>
           </div>
 
@@ -283,7 +283,6 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
           data-lenis-prevent="true"
           className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 md:px-10 pt-4 pb-10 bg-[#FFFFFF]"
         >
-          {/* Attachment 2 4-Column Magazine Masthead */}
           <div className="mb-4 border-b border-black/10 pb-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-5 pb-3 mb-3 border-b border-black/5 font-mono text-[9.5px] uppercase tracking-[0.18em] text-neutral-500">
               <div className="flex items-center gap-2 text-[#080808] font-bold">
@@ -343,7 +342,6 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
             </div>
           </div>
 
-          {/* 4-Column Spread Subbar */}
           <div className="grid grid-cols-1 md:grid-cols-4 items-center mb-5 gap-5">
             <div>
               <span className="font-sans font-bold text-[14px] text-[#080808] tracking-tight">
@@ -363,7 +361,6 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
             </div>
           </div>
 
-          {/* Attachment 2 Exact 4-Column Stone-Grey Specimen Cards */}
           <ul className="m-0 grid list-none grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch gap-x-5 gap-y-6 p-0 pt-2">
             {CANONICAL_FLIGHTS.map((flight) => {
               const isSelected = flight.tier_id === activeFlight.tier_id;
@@ -372,7 +369,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
                   ? 'bg-[#FFB800] text-black'
                   : flight.badgeVariant === 'green'
                   ? 'bg-[#CCFF00] text-black'
-                  : 'bg-[#FF3300] text-white';
+                  : 'bg-[#0F0F11] text-white';
 
               return (
                 <li key={flight.tier_id} className="m-0 flex min-w-0 flex-col p-0">

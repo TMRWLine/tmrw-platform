@@ -1,5 +1,6 @@
 import React from 'react';
-import { PAGE_SHELL } from './CoverHero';
+
+const PAGE_SHELL = 'max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full';
 
 interface BroadcastRegister {
   figure: string;
@@ -34,11 +35,17 @@ const REGISTERS: readonly BroadcastRegister[] = [
     label: 'THE CLEARING PROTOCOL',
     body: (
       <>
-        <span className="bg-[#CCFF00] text-black font-semibold px-1 py-0.5 rounded-sm">No agents</span>
-        {' '}taking a clip.{' '}
-        <span className="bg-[#CCFF00] text-black font-semibold px-1 py-0.5 rounded-sm">No chasing invoices</span>
+        <span className="bg-[#CCFF00] text-[#0F0F11] font-semibold px-1.5 py-0.5 rounded-[3px]">
+          No agents
+        </span>{' '}
+        taking a clip.{' '}
+        <span className="bg-[#CCFF00] text-[#0F0F11] font-semibold px-1.5 py-0.5 rounded-[3px]">
+          No chasing invoices
+        </span>
         .{' '}
-        <span className="bg-[#CCFF00] text-black font-semibold px-1.5 py-0.5 rounded-sm">Pre-cleared deals</span>
+        <span className="bg-[#CCFF00] text-[#0F0F11] font-semibold px-1.5 py-0.5 rounded-[3px]">
+          Pre-cleared deals
+        </span>
         , instant payouts, and a hardwired split backing you and the junior club that built you on the road to LA 2028 and Brisbane 2032.
       </>
     ),
@@ -47,15 +54,19 @@ const REGISTERS: readonly BroadcastRegister[] = [
   },
   {
     figure: 'LOCAL',
-    label: 'SPONSOR ADS ON YOUR FEED',
-    badge: 'PAID WHITELISTING',
+    label: 'DIRECT HANDLE SPONSORSHIP',
+    badge: 'POSTCODE AD DOMINANCE',
     body: (
       <>
-        Followers don’t pay rent. Every brand deal unlocks{' '}
-        <span className="bg-[#CCFF00] text-black font-semibold px-1.5 py-0.5 rounded-sm">1-click whitelisting</span>
-        . Local businesses sponsor posts directly through your handle to{' '}
-        <span className="bg-[#CCFF00] text-black font-semibold px-1.5 py-0.5 rounded-sm">own every scroll</span>
-        {' '}within a 5km to 50km radius.
+        Followers don’t pay rent. Automated{' '}
+        <span className="bg-[#CCFF00] text-[#0F0F11] font-semibold px-1.5 py-0.5 rounded-[3px]">
+          API handle linking
+        </span>{' '}
+        and postcode token locks let local brands run geo-fenced Meta and TikTok ads straight through your verified handle for{' '}
+        <span className="bg-[#CCFF00] text-[#0F0F11] font-semibold px-1.5 py-0.5 rounded-[3px]">
+          paid social amplification
+        </span>{' '}
+        across a 5km to 50km radius.
       </>
     ),
     live: true,
@@ -69,7 +80,7 @@ const ChannelNineMark: React.FC = () => (
   <img
     src="/logos/National_Nine_Network_Logo_1969.svg"
     alt="Channel 9"
-    className={'h-6 ' + MARK_IMG}
+    className={'h-5 ' + MARK_IMG}
   />
 );
 
@@ -77,7 +88,7 @@ const StanSportMark: React.FC = () => (
   <img
     src="/logos/stan-sport-mono.png"
     alt="Stan Sport"
-    className={'h-7 ' + MARK_IMG + ' brightness-0'}
+    className={'h-6 ' + MARK_IMG + ' brightness-0'}
   />
 );
 
@@ -85,14 +96,14 @@ const KayoMark: React.FC = () => (
   <img
     src="/logos/kayo-sports-mono.png"
     alt="Kayo"
-    className="h-[22px] w-auto object-contain object-left"
+    className="h-5 w-auto object-contain object-left"
   />
 );
 
 const TenPlayMark: React.FC = () => (
   <svg
     viewBox="0 0 1569.37 623.62"
-    className="h-6 w-auto"
+    className="h-5 w-auto"
     xmlns="http://www.w3.org/2000/svg"
     role="img"
     aria-label="10 Play"
@@ -122,7 +133,7 @@ const SevenPlusMark: React.FC = () => (
   <img
     src="/logos/7plus-wordmark.svg"
     alt="7plus"
-    className={'h-6 ' + MARK_IMG}
+    className={'h-5 ' + MARK_IMG}
   />
 );
 
@@ -130,7 +141,7 @@ const SkySportNzMark: React.FC = () => (
   <img
     src="/logos/Sky_Sport_NZ_2019.svg.webp"
     alt="Sky Sport NZ"
-    className={'h-[18px] ' + MARK_IMG + ' brightness-0'}
+    className={'h-4 ' + MARK_IMG + ' brightness-0'}
   />
 );
 
@@ -143,66 +154,59 @@ const CARRIERS: readonly BroadcastCarrier[] = [
   { kind: 'PAY TV · NZ', name: 'SKY SPORT NZ', Mark: SkySportNzMark },
 ];
 
-const MARK_WRAP = 'h-8 flex items-center justify-start w-full overflow-hidden';
+const MARK_WRAP = 'h-6 flex items-center justify-start w-full overflow-hidden';
 
 export const BroadcastMatrix: React.FC = () => (
   <section
     id="mandate"
     aria-labelledby="mandate-heading"
-    className={PAGE_SHELL + ' mt-24 md:mt-32 mb-28 scroll-mt-[74px] bg-transparent text-neutral-900'}
+    className={PAGE_SHELL + ' pt-6 pb-14 scroll-mt-[74px] bg-transparent text-[#0F0F11]'}
   >
-    <style>{`
-      @keyframes marquee {
-        0% { transform: translateX(0%); }
-        100% { transform: translateX(-50%); }
-      }
-      .marquee-container {
-        animation: marquee 30s linear infinite;
-        display: inline-flex;
-        white-space: nowrap;
-      }
-    `}</style>
-    <div className="pb-12 border-b border-neutral-200">
-      <div className="overflow-hidden text-xs font-mono uppercase tracking-widest text-neutral-400 mb-6">
-        <div className="marquee-container">
-          <span className="tracking-widest pr-16">INDEPENDENT AUDIT · CAPITAL DEFICIT REGISTER · NATIONAL AIRTIME MONETISATION INDEX · AU &amp; NZ</span>
-          <span className="tracking-widest pr-16">INDEPENDENT AUDIT · CAPITAL DEFICIT REGISTER · NATIONAL AIRTIME MONETISATION INDEX · AU &amp; NZ</span>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+    {/* Compact Masthead Lockup (02 // Header Removed Completely) */}
+    <div className="pb-8 border-b border-neutral-200">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end">
         <h2
           id="mandate-heading"
-          className="lg:col-span-7 m-0 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight uppercase text-neutral-900 leading-tight"
+          className="lg:col-span-7 m-0 font-sans text-4xl sm:text-5xl lg:text-[3.85rem] xl:text-[4.35rem] font-black tracking-[-0.045em] uppercase text-[#0F0F11] leading-[0.92]"
         >
-          15,000 ATHLETES ON LIVE TV<span className="text-[#CCFF00]">.</span> ZERO COMMERCIAL RETAINERS<span className="text-[#CCFF00]">.</span>
+          <span className="block">
+            15,000 athletes on live TV
+            <span className="text-[#CCFF00] drop-shadow-[0_0_16px_rgba(204,255,0,0.85)]">.</span>
+          </span>
+          <span className="mt-1 block">
+            Zero commercial retainers
+            <span className="text-[#CCFF00] drop-shadow-[0_0_16px_rgba(204,255,0,0.85)]">.</span>
+          </span>
         </h2>
-        <div className="lg:col-span-5 pb-1">
-          <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 mb-2 block">
+
+        <div className="lg:col-span-5 lg:border-l lg:border-neutral-200 lg:pl-8">
+          <span className="text-[10px] font-mono uppercase tracking-[0.16em] text-neutral-400 mb-2 block">
             STRUCTURAL MARKET DEFICIT
           </span>
-          <p className="m-0 text-sm md:text-base text-neutral-600 leading-relaxed font-sans">
-            The grind starts long before the stadium lights. Every weekend, emerging Australian and New Zealand contenders fill broadcast slots for major networks while seeing zero commercial return. tmrw<span className="text-[#CCFF00] font-bold">/.</span> turns live screen time into direct cash, hyper-local sponsor ads, and club dividends.
+          <p className="m-0 font-sans text-sm sm:text-base font-medium leading-[1.48] text-[#0F0F11]">
+            Every weekend, emerging Australian and New Zealand contenders fill broadcast slots for major networks while seeing zero commercial return. tmrw<span className="text-[#CCFF00] font-black">/.</span> turns live screen time into direct brand cash, sponsored feed amplification, and club dividends<span className="text-[#CCFF00] font-black">.</span>
           </p>
         </div>
       </div>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-neutral-200 py-12 mb-10">
+    {/* Tightened 4-Column Register Grid */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-neutral-200 py-8 mb-6">
       {REGISTERS.map((register) => (
         <div
           key={register.label}
-          className="group py-8 first:pt-0 last:pb-0 lg:py-0 lg:px-8 first:lg:pl-0 last:lg:pr-0 flex flex-col justify-between"
+          className="group py-6 first:pt-0 last:pb-0 lg:py-0 lg:px-7 first:lg:pl-0 last:lg:pr-0 flex flex-col justify-between"
         >
           <div>
-            <p className="m-0 text-6xl xl:text-7xl font-bold tracking-tighter text-neutral-900 tabular-nums transition-all duration-300 ease-out will-change-transform group-hover:scale-[1.02] group-hover:tracking-tight">
+            <p className="m-0 font-sans text-5xl xl:text-6xl font-black tracking-[-0.04em] text-[#0F0F11] tabular-nums transition-all duration-300 ease-out will-change-transform group-hover:scale-[1.02]">
               {register.figure}
             </p>
-            <div className="mt-4 mb-2 flex flex-wrap items-center gap-2">
-              <p className="m-0 text-xs font-mono uppercase text-neutral-400 tracking-wider">
+            <div className="mt-3 mb-2 flex flex-wrap items-center gap-2">
+              <p className="m-0 text-[11px] font-mono font-semibold uppercase text-[#0F0F11] tracking-[0.12em]">
                 {register.label}
               </p>
               {register.badge ? (
-                <span className="text-[10px] font-mono bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded">
+                <span className="text-[9px] font-mono bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded-[3px] tracking-wider">
                   {register.badge}
                 </span>
               ) : null}
@@ -213,14 +217,14 @@ export const BroadcastMatrix: React.FC = () => (
                 </span>
               ) : null}
             </div>
-            <p className="m-0 text-xs font-sans text-neutral-600 leading-relaxed max-w-sm">
+            <p className="m-0 text-xs sm:text-[13px] font-sans text-neutral-600 leading-relaxed max-w-sm">
               {register.body}
             </p>
           </div>
 
           {register.showSplitBar ? (
             <div
-              className="mt-5 flex h-[3px] w-full overflow-hidden"
+              className="mt-4 flex h-[3px] w-full overflow-hidden"
               role="img"
               aria-label="70 per cent athlete, 15 per cent junior club, 15 per cent platform operations and escrow"
             >
@@ -232,7 +236,7 @@ export const BroadcastMatrix: React.FC = () => (
 
           {register.showRadiusBar ? (
             <div
-              className="mt-5 flex h-[3px] w-full overflow-hidden"
+              className="mt-4 flex h-[3px] w-full overflow-hidden"
               role="img"
               aria-label="5km local storefront ring, 15km suburban trade catchment, 50km regional hub"
             >
@@ -245,30 +249,31 @@ export const BroadcastMatrix: React.FC = () => (
       ))}
     </div>
 
-    <p className="m-0 text-[11px] font-mono uppercase tracking-widest text-neutral-400 mb-4">
-      CARRIED LIVE ON
-    </p>
-    <ul className="m-0 p-0 list-none grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-      {CARRIERS.map((carrier) => (
-        <li
-          key={carrier.name}
-          className="h-20 bg-[#FAFAFA] border border-neutral-200 rounded-xl px-4 py-3 flex flex-col justify-between hover:border-black hover:bg-white transition-all"
-        >
-          <span className="text-[9px] font-mono text-neutral-500 uppercase tracking-wider">
-            {carrier.kind}
-          </span>
-          <div className={MARK_WRAP}>
-            <carrier.Mark />
-          </div>
-        </li>
-      ))}
-    </ul>
-
-    <div className="pt-6 overflow-hidden text-[11px] font-mono uppercase text-neutral-400 tracking-widest">
-      <div className="marquee-container">
-        <span className="pr-16">OFFICIAL REGISTER · ASC AND TRIBUNAL BENCHMARK DATA · SETTLEMENT PROTOCOL · DIRECT AUD ESCROW ACTIVE</span>
-        <span className="pr-16">OFFICIAL REGISTER · ASC AND TRIBUNAL BENCHMARK DATA · SETTLEMENT PROTOCOL · DIRECT AUD ESCROW ACTIVE</span>
+    {/* Broadcast Network Strip */}
+    <div className="pt-4 border-t border-neutral-200">
+      <div className="flex items-center justify-between mb-3">
+        <p className="m-0 text-[10px] font-mono font-semibold uppercase tracking-[0.16em] text-neutral-500">
+          CARRIED LIVE ON
+        </p>
+        <p className="m-0 text-[10px] font-mono uppercase tracking-[0.16em] text-neutral-400">
+          6 NATIONAL BROADCAST CARRIERS · AU &amp; NZ
+        </p>
       </div>
+      <ul className="m-0 p-0 list-none grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+        {CARRIERS.map((carrier) => (
+          <li
+            key={carrier.name}
+            className="h-16 bg-[#FAFAFA] border border-neutral-200 rounded-lg px-3.5 py-2.5 flex flex-col justify-between hover:border-[#0F0F11] hover:bg-white transition-all"
+          >
+            <span className="text-[9px] font-mono text-neutral-500 uppercase tracking-wider">
+              {carrier.kind}
+            </span>
+            <div className={MARK_WRAP}>
+              <carrier.Mark />
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   </section>
 );

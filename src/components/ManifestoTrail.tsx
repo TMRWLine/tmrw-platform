@@ -1,38 +1,25 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { PAGE_SHELL } from './CoverHero';
+import React, { useEffect, useRef } from 'react';
+import type { LandingSectionId } from './Navigation';
 
-interface TrailCard {
-  id: number;
-  x: number;
-  y: number;
-  rotation: number;
-  src: string;
+const PAGE_SHELL = 'max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full';
+
+interface ManifestoTrailProps {
+  onNavigateSection?: (id: LandingSectionId) => void;
 }
 
-const ATHLETE_POOL = [
-  '/coverpage.jpg',
-  '/coverpage.jpg',
-  '/coverpage.jpg',
-  '/coverpage.jpg',
-  '/coverpage.jpg',
-  '/coverpage.jpg',
-];
+interface HeatNode {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  age: number;
+  intensity: number;
+}
 
-const TRAIL_ANIM_CSS =
-  '@keyframes trailPop {' +
-  '0% { opacity: 0; transform: translate(-50%, -50%) scale(0.45); }' +
-  '18% { opacity: 0.92; transform: translate(-50%, -50%) scale(1); }' +
-  '100% { opacity: 0; transform: translate(-50%, -60%) scale(1.05); }' +
-  '}' +
-  '.trail-card-anim { animation: trailPop 820ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }';
-
-export const ManifestoTrail: React.FC = () => {
+export const ManifestoTrail: React.FC<ManifestoTrailProps> = () => {
   const containerRef = useRef<HTMLElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const lastSpawnPos = useRef({ x: 0, y: 0 });
-  const imageIndexRef = useRef(0);
-  const trailIdCounter = useRef(0);
-  const [cards, setCards] = useState<TrailCard[]>([]);
+  const lastMouseRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -41,7 +28,7 @@ export const ManifestoTrail: React.FC = () => {
     if (!ctx) return;
 
     let animationFrameId: number;
-    const points: Array<{ x: number; y: number; age: number }> = [];
+    const nodes: HeatNode[] = [];
 
     const resize = () => {
       const parent = canvas.parentElement;
@@ -49,7 +36,7 @@ export const ManifestoTrail: React.FC = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = parent.clientWidth * dpr;
       canvas.height = parent.clientHeight * dpr;
-      ctx.scale(dpr, dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
     resize();
@@ -60,24 +47,23 @@ export const ManifestoTrail: React.FC = () => {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      const dx = x - lastSpawnPos.current.x;
-      const dy = y - lastSpawnPos.current.y;
-      const dist = Math.hypot(dx, dy);
+      const prev = lastMouseRef.current ?? { x, y };
+      const vx = x - prev.x;
+      const vy = y - prev.y;
+      const speed = Math.min(Math.hypot(vx, vy), 65);
+      lastMouseRef.current = { x, y };
 
-      points.push({ x, y, age: 1.0 });
+      nodes.push({
+        x,
+        y,
+        vx: vx * 0.18,
+        vy: vy * 0.18,
+        age: 1.0,
+        intensity: Math.max(0.45, Math.min(1.35, speed / 28)),
+      });
 
-      if (dist > 70) {
-        lastSpawnPos.current = { x, y };
-        const src = ATHLETE_POOL[imageIndexRef.current % ATHLETE_POOL.length];
-        imageIndexRef.current += 1;
-        const id = (trailIdCounter.current += 1);
-        const rotation = Math.max(-10, Math.min(10, dx * 0.16));
-
-        setCards((prev) => [...prev.slice(-6), { id, x, y, rotation, src }]);
-
-        window.setTimeout(() => {
-          setCards((prev) => prev.filter((item) => item.id !== id));
-        }, 820);
+      if (nodes.length > 55) {
+        nodes.shift();
       }
     };
 
@@ -90,26 +76,30 @@ export const ManifestoTrail: React.FC = () => {
         ctx.clearRect(0, 0, parent.clientWidth, parent.clientHeight);
       }
 
-      for (let i = points.length - 1; i >= 0; i -= 1) {
-        const pt = points[i];
-        pt.age *= 0.935;
+      for (let i = nodes.length - 1; i >= 0; i -= 1) {
+        const n = nodes[i];
+        n.x += n.vx;
+        n.y += n.vy;
+        n.vx *= 0.92;
+        n.vy *= 0.92;
+        n.age *= 0.94;
 
-        if (pt.age < 0.02) {
-          points.splice(i, 1);
+        if (n.age < 0.02) {
+          nodes.splice(i, 1);
           continue;
         }
 
-        const radius = 180 * pt.age + 50;
-        const grad = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, radius);
+        const radius = 150 * n.intensity * n.age + 45;
+        const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, radius);
 
-        grad.addColorStop(0, 'rgba(15, 15, 17, ' + pt.age * 0.38 + ')');
-        grad.addColorStop(0.35, 'rgba(204, 255, 0, ' + pt.age * 0.88 + ')');
-        grad.addColorStop(0.7, 'rgba(204, 255, 0, ' + pt.age * 0.35 + ')');
+        grad.addColorStop(0, 'rgba(204, 255, 0, ' + n.age * 0.95 + ')');
+        grad.addColorStop(0.42, 'rgba(204, 255, 0, ' + n.age * 0.55 + ')');
+        grad.addColorStop(0.75, 'rgba(15, 15, 17, ' + n.age * 0.12 + ')');
         grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
+        ctx.arc(n.x, n.y, radius, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -129,64 +119,54 @@ export const ManifestoTrail: React.FC = () => {
     <section
       ref={containerRef}
       aria-label="Athlete commercial manifesto"
-      className="relative w-full select-none overflow-hidden bg-transparent pt-20 pb-16 md:pt-32 md:pb-24"
+      className="relative w-full select-none overflow-hidden bg-transparent pt-3 pb-10 md:pt-4 md:pb-14"
     >
-      <style>{TRAIL_ANIM_CSS}</style>
-
-      {/* Unboxed Full-Bleed Thermal Heatmap Canvas */}
+      {/* Invisible Kinetic Thermal Heatmap Shader */}
       <canvas
         ref={canvasRef}
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-10 h-full w-full blur-[32px]"
+        className="pointer-events-none absolute inset-0 z-10 h-full w-full blur-[28px]"
       />
 
-      {/* Velocity-Spawned Borderless Monochrome Athlete Trail */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
-        {cards.map((card) => (
-          <div
-            key={card.id}
-            style={{
-              left: card.x + 'px',
-              top: card.y + 'px',
-              transform: 'translate(-50%, -50%) rotate(' + card.rotation + 'deg)',
-            }}
-            className="trail-card-anim absolute h-52 w-40 overflow-hidden bg-neutral-950 shadow-[0_20px_50px_rgba(0,0,0,0.25)] md:h-64 md:w-48"
-          >
+      <div className={PAGE_SHELL + ' relative z-20'}>
+        {/* Pangram-Style 3-Card Bento Grid (Exact Box Proportions & Sizing) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          
+          {/* Box 1: Carbon Black with White Text & Green Full Stop */}
+          <div className="rounded-[28px] bg-[#0F0F11] p-8 sm:p-12 text-white flex flex-col justify-center shadow-2xl border border-neutral-800 relative overflow-hidden min-h-[380px]">
+            <h3 className="m-0 font-sans text-4xl sm:text-5xl lg:text-[3.25rem] font-black uppercase tracking-[-0.03em] leading-[1.05] text-white">
+              You fill the broadcast slots<span className="text-[#CCFF00]">.</span>
+            </h3>
+          </div>
+
+          {/* Box 2: Exact "Seeing in Colour" Gradient Background & Size */}
+          <div className="rounded-[28px] bg-gradient-to-br from-[#93C5FD] via-[#818CF8] to-[#C084FC] p-8 sm:p-12 text-[#0F0F11] flex flex-col justify-center shadow-2xl border border-indigo-200/50 relative overflow-hidden min-h-[380px]">
+            <h3 className="m-0 font-sans text-4xl sm:text-5xl lg:text-[3.25rem] font-black uppercase tracking-tight text-[#0F0F11] leading-[1.05]">
+              Now own the upside<span className="text-[#CCFF00]">.</span>
+            </h3>
+          </div>
+
+          {/* Box 3: Cinematic Image Card using shoe.jpg with Overlaid Narrative Copy */}
+          <div className="rounded-[28px] bg-neutral-900 overflow-hidden shadow-2xl border border-neutral-800 relative flex flex-col justify-end p-8 sm:p-12 group min-h-[380px]">
             <img
-              src={card.src}
+              src="/shoe.jpg"
               alt=""
-              className="h-full w-full object-cover grayscale contrast-125"
+              className="absolute inset-0 h-full w-full object-cover contrast-110 opacity-70 group-hover:scale-105 transition-transform duration-700"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+            
+            <div className="relative z-10">
+              <p className="m-0 font-sans text-sm sm:text-base font-medium leading-[1.45] text-white tracking-[-0.01em]">
+                Networks bank the broadcast ratings while you fund the runway. tmrw
+                <span className="text-[#CCFF00] font-black">/.</span> cuts out the middleman, locking in direct brand cash, direct handle sponsorship, and a hardwired{' '}
+                <span className="bg-[#CCFF00] text-[#0F0F11] font-bold px-1 py-0.5 rounded-[2px]">
+                  70/15/15 split
+                </span>{' '}
+                straight to your bank and junior club.
+              </p>
+            </div>
           </div>
-        ))}
-      </div>
 
-      {/* Monumental Poster-Grid Layout */}
-      <div className={PAGE_SHELL + ' relative z-35'}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
-          {/* Left Column: Edge-to-Edge Monumental Headline */}
-          <div className="lg:col-span-7">
-            <h2 className="m-0 font-sans text-6xl sm:text-7xl lg:text-[7rem] font-black tracking-[-0.05em] text-neutral-900 leading-[0.88] uppercase">
-              You fill the broadcast slots. Now own the upside
-              <span className="text-[#CCFF00] drop-shadow-[0_0_20px_rgba(204,255,0,0.8)]">.</span>
-            </h2>
-          </div>
-
-          {/* Right Column: Balanced Sub-Dek */}
-          <div className="lg:col-span-5 lg:pt-4">
-            <p className="m-0 font-sans text-lg sm:text-xl md:text-2xl font-normal leading-[1.42] text-neutral-700 tracking-tight">
-              Networks bank the broadcast ratings while you fund the runway. tmrw
-              <span className="text-[#CCFF00] font-bold">/.</span> cuts out the middleman, locking in{' '}
-              <span className="text-neutral-900 font-bold underline decoration-[#CCFF00] decoration-3 underline-offset-6">
-                direct brand cash
-              </span>
-              , hyper-local feed whitelisting, and a hardwired{' '}
-              <span className="inline-block rounded bg-[#CCFF00] px-2.5 py-0.5 font-bold text-black leading-none shadow-sm">
-                70/15/15 split
-              </span>{' '}
-              straight to your bank and junior club.
-            </p>
-          </div>
         </div>
       </div>
     </section>

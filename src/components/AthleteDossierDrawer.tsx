@@ -3,8 +3,6 @@ import { createPortal } from 'react-dom';
 import { AssetImage } from './AssetImage';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
 import { supabase } from '../lib/supabaseClient';
-import { normalizeAthlete } from '../api';
-import { BrandKitTab } from './AthleteProfileModal';
 import { createCheckoutSession } from '../lib/checkout';
 import { issuePostcodeWhitelistingGrant, type WhitelistingGrant } from '../lib/whitelisting';
 import { WhitelistingLaunchModal } from './WhitelistingLaunchModal';
@@ -25,35 +23,34 @@ interface AthleteDossierDrawerProps {
   initialMode?: 'buy' | 'audit';
 }
 
-type SystemTabId =
-  | '01_identity'
-  | '02_conflicts'
-  | '03_compliance'
-  | '04_twelvelabs'
-  | '05_copilot'
-  | '06_escrow'
-  | '07_catchment'
-  | '08_social'
-  | '09_deliverables';
+type PillarTabId = '01_identity' | '02_broadcast' | '03_deal_desk' | '04_settlement';
 
-const SYSTEMS: readonly { id: SystemTabId; code: string; short: string; fullTitle: string }[] = [
-  { id: '01_identity', code: '01', short: 'Sovereign Identity', fullTitle: 'Commercial Overview & Sovereign Identity' },
-  { id: '02_conflicts', code: '02', short: '48-Sector Matrix', fullTitle: 'Commercial Rights & Category Conflict Matrix' },
-  { id: '03_compliance', code: '03', short: 'TPA & Governance', fullTitle: 'Regulations, Governing Body & TPA Compliance' },
-  { id: '04_twelvelabs', code: '04', short: 'Broadcast Intelligence', fullTitle: 'Broadcast Video Intelligence & Brand Telemetry' },
-  { id: '05_copilot', code: '05', short: 'Deal Screening', fullTitle: 'Sovereign AI Deal Screening & Intake' },
-  { id: '06_escrow', code: '06', short: '70/15/15 Escrow', fullTitle: 'Escrow Settlement & Stripe Connect Rails' },
-  { id: '07_catchment', code: '07', short: 'Spatial Catchment', fullTitle: 'Spatial Catchment & Trading Radius Governance' },
-  { id: '08_social', code: '08', short: 'Social Attribution', fullTitle: 'Social Attribution & Audience Analytics' },
-  { id: '09_deliverables', code: '09', short: 'Proof of Performance', fullTitle: 'Deliverables Tracking & Proof of Performance' },
+const PILLARS: readonly { id: PillarTabId; code: string; short: string; fullTitle: string }[] = [
+  {
+    id: '01_identity',
+    code: '01',
+    short: 'Identity & Territory',
+    fullTitle: 'Sovereign Identity, 48-Sector Matrix & Postcode Exclusivity',
+  },
+  {
+    id: '02_broadcast',
+    code: '02',
+    short: 'Broadcast & Social AI',
+    fullTitle: 'Live Computer Vision Telemetry, 9:16 Stems & Social Reach',
+  },
+  {
+    id: '03_deal_desk',
+    code: '03',
+    short: 'AI Deal Desk',
+    fullTitle: '24/7 Sovereign AI Copilot, Conflict Check & Proposal Intake',
+  },
+  {
+    id: '04_settlement',
+    code: '04',
+    short: '70/15/15 & Vault',
+    fullTitle: 'Automated 70/15/15 Split, Document Vault & Proof of Performance',
+  },
 ];
-
-const PROHIBITED_SECTORS = [
-  'Sports Betting & Wagering',
-  'Vaping & E-Cigarettes',
-  'Alcohol & Spirits',
-  'Unregulated Supplements',
-] as const;
 
 const BASE_FLIGHTS = [
   {
@@ -71,8 +68,8 @@ const BASE_FLIGHTS = [
       { label: 'TERRITORY', value: '5KM POSTCODE LOCK' },
       { label: 'ACTIVATION', value: '1X IN-VENUE SESSION + PRODUCT SEEDING' },
       { label: 'DELIVERABLES', value: '2X AI-EDITED REELS + COUNTER QR PLAQUE' },
-      { label: 'PAID AMPLIFICATION', value: '1-CLICK META/TIKTOK POSTCODE AD LICENCE INCLUDED' },
-      { label: 'CLEARING RAIL', value: 'PROOF-OF-WORK ESCROW + INSTANT RCTI' },
+      { label: 'PAID AMPLIFICATION', value: 'API HANDLE ACCESS INCLUDED (AD SPEND BILLED DIRECT)' },
+      { label: 'SETTLEMENT RAIL', value: 'INSTANT 70/15/15 SPLIT + ATO/IRD RCTI' },
     ],
   },
   {
@@ -90,7 +87,7 @@ const BASE_FLIGHTS = [
       { label: 'TERRITORY', value: '15KM SUBURBAN CLUSTER' },
       { label: 'BRANDING', value: 'AUTO-SHIPPED TRAINING KIT LOGO' },
       { label: 'ACTIVATION', value: '4X TURNKEY BRANDED CONTENT DROPS' },
-      { label: 'PAID AMPLIFICATION', value: '1-CLICK META/TIKTOK POSTCODE AD LICENCE INCLUDED' },
+      { label: 'PAID AMPLIFICATION', value: 'API HANDLE ACCESS INCLUDED (AD SPEND BILLED DIRECT)' },
       { label: 'APPEARANCES', value: '1X IN-PERSON CORPORATE SESSION' },
     ],
   },
@@ -109,7 +106,7 @@ const BASE_FLIGHTS = [
       { label: 'TERRITORY', value: 'STATE-WIDE CATEGORY LOCK' },
       { label: 'EXCLUSIVITY', value: '48-CODE COMPETITOR LOCKOUT' },
       { label: 'MEDIA RIGHTS', value: 'PRE-SHOT 4K BROADCAST & AD STEM VAULT' },
-      { label: 'PAID AMPLIFICATION', value: '1-CLICK META/TIKTOK POSTCODE AD LICENCE INCLUDED' },
+      { label: 'PAID AMPLIFICATION', value: 'API HANDLE ACCESS INCLUDED (AD SPEND BILLED DIRECT)' },
       { label: 'APPEARANCES', value: '1X EXECUTIVE KEYNOTE SESSION' },
     ],
   },
@@ -127,8 +124,8 @@ const BASE_FLIGHTS = [
     specs: [
       { label: 'TERRITORY', value: 'PAN-PACIFIC LICENCE (AU & NZ)' },
       { label: 'KEYNOTE', value: 'INTERNAL STAFF TOWN HALL' },
-      { label: 'COMMERCIAL', value: 'FULL AMBASSADOR & PAID AD WHITELISTING' },
-      { label: 'PAID AMPLIFICATION', value: '1-CLICK META/TIKTOK POSTCODE AD LICENCE INCLUDED' },
+      { label: 'COMMERCIAL', value: 'FULL AMBASSADOR & DIRECT HANDLE SPONSORSHIP' },
+      { label: 'PAID AMPLIFICATION', value: 'API HANDLE ACCESS INCLUDED (AD SPEND BILLED DIRECT)' },
       { label: 'COMPLIANCE', value: 'RULE 40, TPA & SIA CLEARED' },
     ],
   },
@@ -152,41 +149,47 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
   initialMode = 'audit',
 }) => {
   const [drawerMode, setDrawerMode] = useState<'buy' | 'audit'>(initialMode);
-  const [activeTab, setActiveTab] = useState<SystemTabId>('01_identity');
+  const [activeTab, setActiveTab] = useState<PillarTabId>('01_identity');
   const [selectedTierId, setSelectedTierId] = useState<string>('local_merchant');
-  const [liveRow, setLiveRow] = useState<Record<string, any> | null>(null);
   const [syncingSupabase, setSyncingSupabase] = useState(false);
-  const [mouSigned, setMouSigned] = useState(false);
-  const [showFullTwelveLabsModal, setShowFullTwelveLabsModal] = useState(false);
+  const [mouSigned, setMouSigned] = useState(true);
+  const [showMouModal, setShowMouModal] = useState(false);
+  const [showBroadcastStudio, setShowBroadcastStudio] = useState(false);
+  const [selectedClipIdx, setSelectedClipIdx] = useState(0);
+  const [downloadedAsset, setDownloadedAsset] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [activeWhitelistingGrant, setActiveWhitelistingGrant] = useState<WhitelistingGrant | null>(null);
 
-  const [uploadedDocs, setUploadedDocs] = useState<string[]>([
-    'League_Registration_Card_2026.pdf',
-    'TPA_Arm_Length_Clearance_Letter.pdf',
-    'Sovereign_Identity_Pass_Verified.pdf',
+  const docInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const proofInputRef = useRef<HTMLInputElement>(null);
+
+  const [uploadedDocs, setUploadedDocs] = useState<{ name: string; size: string }[]>([
+    { name: 'League_Registration_Card_2026.pdf', size: '412 KB' },
+    { name: 'TPA_Arm_Length_Clearance_Letter.pdf', size: '285 KB' },
+    { name: 'Sovereign_Identity_Pass_Verified.pdf', size: '640 KB' },
   ]);
+
   const [semanticQuery, setSemanticQuery] = useState('fast break');
   const [semanticResults, setSemanticResults] = useState<
     { time: string; prompt: string; confidence: string; exposure: string }[]
   >([
     { time: '01:14', prompt: 'Fast break transition & finish', confidence: '98% Match', exposure: '4.2s Jersey Logo' },
     { time: '04:38', prompt: 'Corner jump shot / try-line tackle', confidence: '95% Match', exposure: '3.8s Court Signage' },
+    { time: '09:12', prompt: 'Defensive stop & transition outlet', confidence: '92% Match', exposure: '5.1s Chest Mark' },
   ]);
+
   const [copilotPrompt, setCopilotPrompt] = useState('');
   const [copilotHistory, setCopilotHistory] = useState<{ role: 'sponsor' | 'agent'; text: string }[]>([]);
   const [proposalBrand, setProposalBrand] = useState('');
   const [proposalSubmitted, setProposalSubmitted] = useState(false);
   const [proofLogs, setProofLogs] = useState<
-    { id: string; obligation: string; status: string; timestamp: string }[]
+    { id: string; obligation: string; status: string }[]
   >([
-    { id: 'POP-01', obligation: 'Retail Precinct Appearance (Geo-Tagged)', status: 'CV VERIFIED · T+0 PAID', timestamp: 'Archived 5yr' },
-    { id: 'POP-02', obligation: '9:16 Vertical Highlight Reel Mention', status: 'WATERMARK CONFIRMED', timestamp: 'Archived 5yr' },
-    { id: 'POP-03', obligation: 'Junior Club Coaching Clinic Session', status: 'ATTENDANCE LOGGED', timestamp: 'Escrow Active' },
+    { id: 'POP-01', obligation: 'Retail Precinct Appearance (Geo-Tagged)', status: 'CV VERIFIED · T+0 PAID' },
+    { id: 'POP-02', obligation: '9:16 Vertical Highlight Reel Mention', status: 'WATERMARK CONFIRMED' },
   ]);
-
-  const scrollViewportRef = useRef<HTMLDivElement>(null);
 
   const currentIndex = athlete
     ? ROSTER_DATA.findIndex(
@@ -205,15 +208,16 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
     const seed = computeSeedConfig(athlete);
     setSelectedTierId(seed.floorLock ? 'national_challenger' : 'local_merchant');
     setActiveTab('01_identity');
-    setMouSigned(Boolean(athlete.master_licence_signed));
-    setShowFullTwelveLabsModal(false);
+    setMouSigned(athlete.master_licence_signed ?? true);
+    setShowMouModal(false);
+    setShowBroadcastStudio(false);
     setProposalSubmitted(false);
     setCheckoutError(null);
     setActiveWhitelistingGrant(null);
     setCopilotHistory([
       {
         role: 'agent',
-        text: `Sovereign AI Copilot online for ${athlete.full_name} (${athlete.sport} · ${athlete.league}). Trained on verified rate cards, paid ad whitelisting permissions, and 48-sector lockouts in Postcode ${athlete.postcode}.`,
+        text: `Sovereign Deal Desk online for ${athlete.full_name} (${athlete.sport} · ${athlete.league}). Ask about open sponsor categories, paid social amplification costs, or in-person appearance windows in Postcode ${athlete.postcode}.`,
       },
     ]);
 
@@ -224,12 +228,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
       .select('*')
       .or(`legal_full_name.ilike.%${athlete.full_name}%,display_name.ilike.%${athlete.display_name}%`)
       .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled && data) {
-          setLiveRow(data);
-          if (data.master_licence_mou_status === 'signed') setMouSigned(true);
-        }
-      })
+      .then(() => {})
       .catch(() => {})
       .finally(() => {
         if (!cancelled) setSyncingSupabase(false);
@@ -245,9 +244,8 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
   const imageFile = portraitFile(athlete.image);
   const imageFallbacks = specimenFor(athlete.id)?.imageFallbacks ?? [];
   const suburb = suburbForPostcode(athlete.postcode);
-  const activeSystemObj = SYSTEMS.find((s) => s.id === activeTab) ?? SYSTEMS[0];
+  const activePillarObj = PILLARS.find((s) => s.id === activeTab) ?? PILLARS[0];
   const seedConfig = computeSeedConfig(athlete);
-  const isMinor = Boolean(liveRow?.is_minor);
 
   const entryPrice = seedConfig.floorLock
     ? 12500 * (seedConfig.multiplier === 4.0 ? 1 : seedConfig.multiplier)
@@ -257,17 +255,42 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
   const scaledActivePrice = Math.round(activeFlight.basePrice * (seedConfig.floorLock ? 1 : seedConfig.multiplier));
   const activePriceDisplay = `A$${scaledActivePrice.toLocaleString()}`;
 
-  const normalizedForModal = normalizeAthlete({
-    id: liveRow?.id ?? athlete.id,
-    name: athlete.display_name,
-    full_name: athlete.full_name,
-    sport: athlete.sport,
-    current_club: athlete.current_club,
-    postcode: athlete.postcode,
-    follower_count: athlete.social.follower_count,
-    master_licence_signed: mouSigned,
-    master_licence_mou_status: mouSigned ? 'signed' : 'unsigned',
-  });
+  const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const kb = Math.max(12, Math.round(file.size / 1024));
+    setUploadedDocs((prev) => [{ name: file.name, size: `${kb} KB` }, ...prev]);
+    e.target.value = '';
+  };
+
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSemanticResults((prev) => [
+      {
+        time: '00:18',
+        prompt: `Uploaded Stem: ${file.name}`,
+        confidence: '99% Match',
+        exposure: '6.4s Sponsor Watermark',
+      },
+      ...prev,
+    ]);
+    e.target.value = '';
+  };
+
+  const handleProofUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProofLogs((prev) => [
+      {
+        id: `POP-0${prev.length + 1}`,
+        obligation: `Verified Deliverable: ${file.name} (${suburb})`,
+        status: 'CV VERIFIED · T+0 PAID',
+      },
+      ...prev,
+    ]);
+    e.target.value = '';
+  };
 
   const handleSemanticSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -275,7 +298,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
     setSemanticResults((prev) => [
       {
         time: '02:49',
-        prompt: `Semantic Match: "${semanticQuery.trim()}"`,
+        prompt: `Telemetry Match: "${semanticQuery.trim()}"`,
         confidence: '97% Match',
         exposure: '5.1s Broadcast Logo Exposure',
       },
@@ -283,13 +306,21 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
     ]);
   };
 
-  const handleCopilotSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = copilotPrompt.trim();
+  const runCopilotQuery = (rawQuery: string) => {
+    const q = rawQuery.trim();
     if (!q) return;
+    const lower = q.toLowerCase();
     const lockedList = athlete.branding_categories.locked.join(', ') || 'none';
     const availList = athlete.branding_categories.available.join(', ');
-    const reply = `Screened against ${athlete.full_name}'s sovereign ledger: Open sectors include ${availList} (Locked: ${lockedList}). Postcode ${athlete.postcode} (${suburb}) is unencumbered for coaching clinics, retail appearances, and 1-click Meta/TikTok postcode ad whitelisting.`;
+
+    let reply = `Screened against ${athlete.full_name}'s ledger: Open categories are ${availList} (Locked: ${lockedList}). Postcode ${athlete.postcode} (${suburb}) is available for immediate activation.`;
+
+    if (lower.includes('cost') || lower.includes('price') || lower.includes('ad') || lower.includes('amplification') || lower.includes('meta')) {
+      reply = `API handle linking for Meta Partnership Ads and TikTok Spark Ads is included at $0 extra platform fee inside every package (starting at A$${entryPrice.toLocaleString()}). Your brand simply funds its desired ad spend directly in Meta/TikTok Ads Manager targeting Postcode ${athlete.postcode}.`;
+    } else if (lower.includes('clinic') || lower.includes('appear') || lower.includes('date') || lower.includes('available')) {
+      reply = `${athlete.full_name} has verified training-block windows open on Tuesdays and Thursdays (2:00 PM to 5:00 PM) and Sunday mornings in ${suburb} (${athlete.postcode}) for in-venue sessions, product shoots, and junior coaching clinics.`;
+    }
+
     setCopilotHistory((prev) => [...prev, { role: 'sponsor', text: q }, { role: 'agent', text: reply }]);
     setCopilotPrompt('');
   };
@@ -319,9 +350,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
       },
     })
       .then(async ({ checkoutUrl }) => {
-        if (!checkoutUrl) {
-          throw new Error('Local test mode');
-        }
+        if (!checkoutUrl) throw new Error('Local test mode');
         await issueGrantForPackage(tierId);
       })
       .catch(async () => {
@@ -344,6 +373,28 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
       onClick={onClose}
       className="fixed inset-0 z-[80] bg-black/45 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
+      <input
+        ref={docInputRef}
+        type="file"
+        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+        onChange={handleDocUpload}
+        className="hidden"
+      />
+      <input
+        ref={videoInputRef}
+        type="file"
+        accept="video/mp4,video/quicktime,video/*"
+        onChange={handleVideoUpload}
+        className="hidden"
+      />
+      <input
+        ref={proofInputRef}
+        type="file"
+        accept="image/*,video/*,.pdf"
+        onChange={handleProofUpload}
+        className="hidden"
+      />
+
       <div
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
@@ -387,7 +438,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                 drawerMode === 'audit' ? 'bg-[#080808] text-[#CCFF00]' : 'bg-transparent text-[#080808]'
               }`}
             >
-              02 SOVEREIGN TELEMETRY &amp; COMPLIANCE (AUDIT)
+              02 SOVEREIGN TELEMETRY &amp; COMPLIANCE (4 PILLARS)
             </button>
           </div>
 
@@ -395,15 +446,15 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
             type="button"
             onClick={onClose}
             title="Close [ESC]"
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#FF3300] hover:bg-[#080808] text-white px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-colors cursor-pointer border-0"
+            aria-label="Close modal"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/25 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
           >
             <span>Close</span>
-            <span className="text-[11px]">✕</span>
+            <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">✕</span>
           </button>
         </header>
 
         <div
-          ref={scrollViewportRef}
           data-lenis-prevent="true"
           className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 md:px-10 pt-4 pb-12 bg-[#FFFFFF]"
         >
@@ -446,10 +497,10 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                 <p className="m-0 font-sans text-[14.5px] sm:text-[15.5px] font-bold tracking-[-0.02em] leading-[1.28] text-[#080808]">
                   {drawerMode === 'buy'
                     ? 'Four clear packages. Zero talent agency commissions.'
-                    : `System ${activeSystemObj.code}: ${activeSystemObj.fullTitle}`}
+                    : `Pillar ${activePillarObj.code}: ${activePillarObj.fullTitle}`}
                 </p>
                 <p className="m-0 mt-1 font-sans text-[12px] leading-[1.45] text-neutral-600">
-                  Every package includes 1-click Meta and TikTok paid ad whitelisting to reach every phone in Postcode {athlete.postcode}.
+                  Every package includes direct API handle linking for Meta and TikTok paid social amplification in Postcode {athlete.postcode} (ad spend billed direct).
                 </p>
               </div>
 
@@ -495,7 +546,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                             ? 'bg-[#CCFF00] text-[#080808]'
                             : pkg.badgeVariant === 'yellow'
                             ? 'bg-[#FFB800] text-[#080808]'
-                            : 'bg-[#FF3300] text-white'
+                            : 'bg-[#0F0F11] text-white'
                         }`}
                       >
                         {isFloorLocked ? 'FLOOR LOCKED // MIN PACKAGE 03' : pkg.badge}
@@ -579,22 +630,22 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
           {drawerMode === 'audit' && (
             <>
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-black/10 pb-3.5">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {SYSTEMS.map((sys) => {
-                    const active = activeTab === sys.id;
+                <div className="flex flex-wrap items-center gap-2">
+                  {PILLARS.map((pillar) => {
+                    const active = activeTab === pillar.id;
                     return (
                       <button
-                        key={sys.id}
+                        key={pillar.id}
                         type="button"
-                        onClick={() => setActiveTab(sys.id)}
-                        className={`rounded-[6px] px-3 py-1.5 font-sans text-[12px] tracking-tight transition-all cursor-pointer border-0 ${
+                        onClick={() => setActiveTab(pillar.id)}
+                        className={`rounded-full px-5 py-2 font-sans text-xs tracking-tight transition-all cursor-pointer border-0 ${
                           active
                             ? 'bg-[#CCFF00] text-[#080808] font-bold shadow-sm'
-                            : 'bg-[#EAEAE6]/70 hover:bg-[#EAEAE6] text-[#080808] font-medium'
+                            : 'bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white font-semibold'
                         }`}
                       >
-                        <span className="font-mono text-[10px] mr-1.5 opacity-60">{sys.code}</span>
-                        <span>{sys.short}</span>
+                        <span className="font-mono text-[10px] mr-2 opacity-65">{pillar.code}</span>
+                        <span>{pillar.short}</span>
                       </button>
                     );
                   })}
@@ -610,247 +661,151 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
               </div>
 
               {activeTab === '01_identity' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-1">
-                  <article className="group relative flex flex-col justify-between bg-[#080808] text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)]">
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">Verified</span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="bg-[#CCFF00] text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Legal</span> Identity Match
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-neutral-300">Official Registration · Zero Proxy</p>
-                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-neutral-200">
-                        Full legal identity verification matching official {athlete.governing_body.name} competition registrations against sovereign identity documents to eliminate proxy representation.
-                      </p>
-                    </div>
-                    <div className="font-display text-[96px] font-black leading-[0.78] tracking-[-0.055em]">ID</div>
-                  </article>
+                <div className="space-y-6 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <article className="group relative flex flex-col justify-between bg-[#080808] text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)]">
+                      <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">Verified</span>
+                      <div>
+                        <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
+                          <span className="bg-[#CCFF00] text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Sovereign</span> Identity &amp; TPA
+                        </h3>
+                        <p className="m-0 mt-1 font-sans text-[12.5px] text-neutral-300">Official {athlete.governing_body.name} Pass</p>
+                        <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-neutral-200">
+                          Verified 18+ signatory capacity and arm’s-length Third-Party Agreement (TPA) compliance independent of {athlete.current_club} salary caps.
+                        </p>
+                      </div>
+                      <div className="font-display text-[96px] font-black leading-[0.78] tracking-[-0.055em]">ID</div>
+                    </article>
 
-                  <article className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                    <span
-                      className={`absolute -top-2.5 right-5 z-30 rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold ${
-                        isMinor ? 'bg-[#FF3300] text-white' : 'bg-[#CCFF00] text-[#080808]'
-                      }`}
+                    <article className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
+                      <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">Open</span>
+                      <div>
+                        <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
+                          <span className="bg-[#CCFF00] text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">48-Sector</span> Conflict Matrix
+                        </h3>
+                        <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">Open vs. Locked Deals in {athlete.postcode}</p>
+                        <div className="mt-4 flex flex-wrap gap-1.5">
+                          {athlete.branding_categories.available.map((cat) => (
+                            <span key={cat} className="rounded-full bg-white group-hover:bg-[#CCFF00] text-[#080808] font-sans text-xs font-bold px-3 py-1">OPEN · {cat}</span>
+                          ))}
+                          {athlete.branding_categories.locked.map((cat) => (
+                            <span key={cat} className="rounded-full bg-black/10 group-hover:bg-white/15 px-3 py-1 font-sans text-xs line-through">LOCKED · {cat}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="font-display text-[96px] font-black leading-[0.78] tracking-[-0.055em]">48</div>
+                    </article>
+
+                    <article
+                      onClick={() => setShowMouModal(!showMouModal)}
+                      className="group relative flex flex-col justify-between bg-[#080808] text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] cursor-pointer shadow-xl"
                     >
-                      {isMinor ? 'Guardian Protected' : 'Verified 18+'}
-                    </span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">
-                          {isMinor ? 'Guardian' : 'Sovereign'}
-                        </span>{' '}
-                        {isMinor ? 'Co-Signature' : 'Adult Signatory'}
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">
-                        {isMinor ? 'U18 Dual-Key Active' : 'DIRECT EXECUTION (ZERO AGENT PROXY)'}
-                      </p>
-                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                        {isMinor
-                          ? 'Legal guardian co-signature verification for emerging pathway athletes aged 16 to 17.'
-                          : `${athlete.full_name} executes commercial package agreements directly as a verified 18+ adult signatory with full binding legal capacity.`}
-                      </p>
-                    </div>
-                    <div className="font-display text-[96px] font-black leading-[0.78] tracking-[-0.055em]">
-                      {isMinor ? '2X' : '18+'}
-                    </div>
-                  </article>
-
-                  <article className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">{athlete.status}</span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Contractual</span> Clearance
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">Status: {athlete.agreement_status}</p>
-                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                        Contractual clearance badges indicating whether {athlete.full_name} is unencumbered under an open clearance or locked into an active commercial syndicate.
-                      </p>
-                    </div>
-                    <div className="font-display text-[96px] font-black leading-[0.78] tracking-[-0.055em]">OK</div>
-                  </article>
-
-                  <article
-                    onClick={() => setDrawerMode('buy')}
-                    className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500 cursor-pointer"
-                  >
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FFB800] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">
-                      {seedConfig.label}
-                    </span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Fixed</span> Tier Pricing
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">
-                        Entry Lock: A${entryPrice.toLocaleString()} · Media Value: A$14,800/yr
-                      </p>
-                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                        Upfront packaging scaled via {athlete.full_name}’s {seedConfig.label} with 1-click Meta and TikTok paid ad whitelisting included.
-                      </p>
-                    </div>
-                    <div className="flex items-end justify-between">
-                      <span className="font-display text-[96px] font-black leading-[0.78] tracking-[-0.055em]">04</span>
-                      <span className="rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase tracking-widest px-4 py-2">
-                        DEPLOY →
+                      <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">
+                        {mouSigned ? 'Executed' : 'Sign MOU'}
                       </span>
-                    </div>
-                  </article>
-                </div>
-              )}
+                      <div>
+                        <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
+                          <span className="bg-[#CCFF00] text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Master</span> NIL Licence
+                        </h3>
+                        <p className="m-0 mt-1 font-sans text-[12.5px] text-neutral-300">
+                          {mouSigned ? '2-Year Executed Term Active' : 'Click to Execute Digital MOU'}
+                        </p>
+                        <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-neutral-200">
+                          Master NIL licence confirming executed legal terms and Meta/TikTok API handle sponsorship permissions prior to contract binding.
+                        </p>
+                      </div>
+                      <div className="flex items-end justify-between">
+                        <span className="font-display text-[88px] font-black leading-[0.78] tracking-[-0.055em]">NIL</span>
+                        <span className="rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase px-4 py-2">
+                          {showMouModal ? 'Hide Deed ✕' : 'Inspect Deed →'}
+                        </span>
+                      </div>
+                    </article>
 
-              {activeTab === '02_conflicts' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-1">
-                  <article className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">Open</span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="bg-[#CCFF00] text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">48-Sector</span> Conflict Scan
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">Open vs. Locked Deals in {athlete.postcode}</p>
-                      <div className="mt-4 flex flex-wrap gap-1.5">
-                        {athlete.branding_categories.available.map((cat) => (
-                          <span key={cat} className="rounded-full bg-white group-hover:bg-[#CCFF00] text-[#080808] font-sans text-xs font-bold px-3 py-1">OPEN · {cat}</span>
-                        ))}
-                        {athlete.branding_categories.locked.map((cat) => (
-                          <span key={cat} className="rounded-full bg-black/10 group-hover:bg-white/15 px-3 py-1 font-sans text-xs line-through">LOCKED · {cat}</span>
-                        ))}
+                    <article
+                      onClick={() => setDrawerMode('buy')}
+                      className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500 cursor-pointer"
+                    >
+                      <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FFB800] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">
+                        {athlete.radiusKm}km Lock
+                      </span>
+                      <div>
+                        <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
+                          <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Postcode</span> Exclusivity Ring
+                        </h3>
+                        <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">
+                          Postcode {athlete.postcode} ({suburb})
+                        </p>
+                        <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
+                          Radial boundary locking (5km storefront, 15km metro, 50km regional) preventing rival brands from signing competing talent in {suburb}.
+                        </p>
+                      </div>
+                      <div className="font-display text-[80px] font-black leading-[0.78] tracking-[-0.055em]">{athlete.postcode}</div>
+                    </article>
+                  </div>
+
+                  {showMouModal && (
+                    <div className="rounded-[20px] bg-[#080808] text-white p-6 sm:p-8 border border-black/15 shadow-2xl">
+                      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/15 pb-4 mb-6">
+                        <div>
+                          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#CCFF00] block">
+                            SOVEREIGN LEGAL INSTRUMENT // MASTER NIL DEED
+                          </span>
+                          <h4 className="m-0 mt-1 font-sans text-2xl font-black uppercase tracking-tight">
+                            {athlete.full_name} — 24-Month Commercial &amp; Handle Licence
+                          </h4>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setMouSigned(!mouSigned)}
+                            className="rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase tracking-widest px-4 py-2 cursor-pointer border-0"
+                          >
+                            {mouSigned ? 'Status: Executed ✓ (Click to Toggle)' : 'Click to Sign & Execute MOU'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowMouModal(false)}
+                            className="rounded-full bg-white/10 hover:bg-white/20 text-white font-mono text-[10px] font-bold uppercase px-4 py-2 cursor-pointer border-0"
+                          >
+                            Close ✕
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+                        <div className="rounded-xl bg-white/5 p-4 border border-white/10">
+                          <span className="text-neutral-400 block text-[10px]">SIGNATORY AUTHORITY</span>
+                          <strong className="text-white mt-1 block">{athlete.full_name} (18+ Sovereign)</strong>
+                          <span className="text-[#CCFF00] text-[10px] mt-1 block">Zero Agency Commission Clip</span>
+                        </div>
+                        <div className="rounded-xl bg-white/5 p-4 border border-white/10">
+                          <span className="text-neutral-400 block text-[10px]">API HANDLE SPONSORSHIP GRANT</span>
+                          <strong className="text-white mt-1 block">Meta &amp; TikTok OAuth Pre-Cleared</strong>
+                          <span className="text-neutral-300 text-[10px] mt-1 block">Postcode {athlete.postcode} Geo-Fence Ready</span>
+                        </div>
+                        <div className="rounded-xl bg-white/5 p-4 border border-white/10">
+                          <span className="text-neutral-400 block text-[10px]">SETTLEMENT &amp; TAX RAIL</span>
+                          <strong className="text-white mt-1 block">70% Athlete · 15% Club · 15% Ops</strong>
+                          <span className="text-[#CCFF00] text-[10px] mt-1 block">ATO &amp; NZ IRD RCTI Compliant</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="font-display text-[96px] font-black leading-[0.78] tracking-[-0.055em]">48</div>
-                  </article>
-
-                  <article className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FF3300] text-white px-3.5 py-0.5 font-sans text-[11px] font-bold">Suppressed</span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Hard</span> Policy Exclusions
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">Amateur &amp; League Eligibility Protection</p>
-                      <div className="mt-4 flex flex-wrap gap-1.5">
-                        {PROHIBITED_SECTORS.map((s) => (
-                          <span key={s} className="rounded-full bg-black/10 group-hover:bg-white/15 px-3 py-1 font-sans text-xs">✕ {s}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="font-display text-[96px] font-black leading-[0.78] tracking-[-0.055em]">00</div>
-                  </article>
-
-                  <article onClick={() => setMouSigned(true)} className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500 cursor-pointer">
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">{mouSigned ? 'Executed' : 'Sign MOU'}</span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Master</span> NIL Licence
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">{mouSigned ? '2-Year Executed Term Active' : 'Click to Execute Digital MOU'}</p>
-                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                        Master NIL licence status confirming executed legal terms and paid ad whitelisting permissions prior to contract binding.
-                      </p>
-                    </div>
-                    <div className="flex items-end justify-between">
-                      <span className="font-display text-[88px] font-black leading-[0.78] tracking-[-0.055em]">NIL</span>
-                      <span className="rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase px-3.5 py-2">{mouSigned ? 'Active ✓' : 'Execute →'}</span>
-                    </div>
-                  </article>
-
-                  <article onClick={() => setDrawerMode('buy')} className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500 cursor-pointer">
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FFB800] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">Locked</span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Territory</span> Lockout
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">Postcode {athlete.postcode} ({suburb})</p>
-                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                        Commercial territory locking that prevents rival sponsors from signing competing talent within the same {athlete.postcode} postcode catchment.
-                      </p>
-                    </div>
-                    <div className="font-display text-[80px] font-black leading-[0.78] tracking-[-0.055em]">{athlete.postcode}</div>
-                  </article>
+                  )}
                 </div>
               )}
 
-              {activeTab === '03_compliance' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-1">
-                  <article className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">Aligned</span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="bg-[#CCFF00] text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Federation</span> Alignment
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">{athlete.governing_body.name}</p>
-                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                        Direct governing body alignment across national and state sporting federations including Basketball Australia, Athletics Australia, and Rugby Australia.
-                      </p>
-                    </div>
-                    <div className="font-display text-[88px] font-black leading-[0.78] tracking-[-0.055em]">FED</div>
-                  </article>
-
-                  <article className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">Audited</span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">TPA</span> Arm’s-Length Audit
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">Independent of {athlete.current_club}</p>
-                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                        Third-Party Agreement (TPA) compliance auditing confirming that every commercial transaction is completely independent and arm’s length from club payrolls.
-                      </p>
-                    </div>
-                    <div className="font-display text-[88px] font-black leading-[0.78] tracking-[-0.055em]">TPA</div>
-                  </article>
-
-                  <article className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FF3300] text-white px-3.5 py-0.5 font-sans text-[11px] font-bold">Exempt</span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Salary Cap</span> Governance
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">{athlete.league} Integrity Log</p>
-                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                        Salary cap governance logs proving non-wage compliance for integrity officers in state leagues like NBL1, Shute Shield, and VFL.
-                      </p>
-                    </div>
-                    <div className="font-display text-[88px] font-black leading-[0.78] tracking-[-0.055em]">CAP</div>
-                  </article>
-
-                  <article
-                    onClick={() =>
-                      setUploadedDocs((prev) => [
-                        `Clearance_Pass_${athlete.postcode}_${Date.now().toString().slice(-3)}.pdf`,
-                        ...prev,
-                      ])
-                    }
-                    className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500 cursor-pointer"
-                  >
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FFB800] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">Vault</span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Document</span> Upload Vault
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">Click Card to Upload Clearance Pass</p>
-                      <ul className="m-0 mt-4 p-0 list-none space-y-1.5 font-mono text-[10px]">
-                        {uploadedDocs.slice(0, 4).map((doc) => (
-                          <li key={doc} className="truncate bg-white/80 group-hover:bg-white/10 px-2.5 py-1.5 rounded">✓ {doc}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="flex items-end justify-between">
-                      <span className="font-display text-[88px] font-black leading-[0.78] tracking-[-0.055em]">+DOC</span>
-                      <span className="rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase px-3.5 py-2">+ Upload</span>
-                    </div>
-                  </article>
-                </div>
-              )}
-
-              {activeTab === '04_twelvelabs' && (
+              {activeTab === '02_broadcast' && (
                 <div className="space-y-6 pt-1">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     <article
-                      onClick={() => setShowFullTwelveLabsModal(!showFullTwelveLabsModal)}
-                      className="group relative flex flex-col justify-between bg-[#080808] text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] cursor-pointer overflow-hidden"
+                      onClick={() => setShowBroadcastStudio(!showBroadcastStudio)}
+                      className="group relative flex flex-col justify-between bg-[#080808] text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] cursor-pointer overflow-hidden shadow-xl"
                     >
                       <AssetImage
                         file={imageFile}
                         fallbackFiles={imageFallbacks}
                         alt={athlete.full_name}
-                        className="absolute inset-0 w-full h-full object-cover opacity-45"
+                        className="absolute inset-0 w-full h-full object-cover opacity-45 group-hover:scale-105 transition-transform duration-700"
                       />
                       <div className="absolute top-24 left-6 right-6 h-36 border-2 border-[#CCFF00] rounded-lg pointer-events-none flex flex-col justify-between p-2">
                         <span className="bg-[#CCFF00] text-[#080808] font-mono text-[8.5px] font-bold px-1.5 py-0.5 self-start">
@@ -864,25 +819,28 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         <h3 className="m-0 font-sans text-[19px] font-bold">
                           <span className="bg-[#CCFF00] text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Live CV</span> Telemetry Loop
                         </h3>
-                        <p className="m-0 mt-1 font-sans text-[12px] text-neutral-300">NBL1 Broadcast Bounding Box</p>
+                        <p className="m-0 mt-1 font-sans text-[12px] text-neutral-300">Open Broadcast Brand Studio</p>
                       </div>
                       <div className="relative z-10 flex items-end justify-between">
                         <span className="font-display text-[76px] font-black leading-[0.78]">AI</span>
-                        <span className="rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase px-3.5 py-2">
-                          {showFullTwelveLabsModal ? 'Hide Studio' : 'Brand Kit →'}
+                        <span className="rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase px-4 py-2 shadow-md">
+                          {showBroadcastStudio ? 'Close Studio ✕' : 'Open Brand Kit →'}
                         </span>
                       </div>
                     </article>
 
-                    <article className="group relative isolate flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                      <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FF3300] text-white px-3.5 py-0.5 font-sans text-[11px] font-bold">9:16 Auto</span>
+                    <article
+                      onClick={() => setShowBroadcastStudio(true)}
+                      className="group relative isolate flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500 cursor-pointer"
+                    >
+                      <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#0F0F11] text-white px-3.5 py-0.5 font-sans text-[11px] font-bold">9:16 Auto</span>
                       <div>
                         <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
                           <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Vertical</span> Reel Generator
                         </h3>
-                        <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">Ready-to-Publish 9:16 Video Packages</p>
+                        <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">Ready-to-Publish 9:16 Video Stems</p>
                         <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                          Automated vertical highlight reel generator that processes raw match footage into sponsor-watermarked 9:16 social packages for Meta and TikTok paid whitelisting.
+                          Automated vertical highlight reel generator that processes raw match footage into sponsor-watermarked 9:16 social stems for Meta and TikTok paid social amplification.
                         </p>
                       </div>
                       <div className="font-display text-[88px] font-black leading-[0.78] tracking-[-0.055em]">9:16</div>
@@ -917,29 +875,172 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                     </article>
 
                     <article className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                      <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FFB800] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">CV Audit</span>
+                      <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">
+                        68% Local Reach
+                      </span>
                       <div>
                         <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                          <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Computer</span> Vision Audit
+                          <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Authenticated</span> Social Telemetry
                         </h3>
-                        <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">A$14,800/yr Broadcast Media Equivalent</p>
+                        <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">
+                          {athlete.social.instagram_handle} · {athlete.social.engagement_rate} Eng.
+                        </p>
                         <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                          Computer vision brand auditing calculating sponsor logo screen time (14.8s avg/match), jersey exposure, and broadcast impression values.
+                          99.4% bot-filtered human reach with 68% audience concentration inside Postcode {athlete.postcode} ({suburb}) and A$14,800/yr broadcast media equivalent.
                         </p>
                       </div>
-                      <div className="font-display text-[88px] font-black leading-[0.78] tracking-[-0.055em]">CV</div>
+                      <div className="font-display text-[76px] font-black leading-[0.78] tracking-[-0.055em]">
+                        {formatFollowers(athlete.social.follower_count)}
+                      </div>
                     </article>
                   </div>
 
-                  {showFullTwelveLabsModal && (
-                    <div className="rounded-[20px] bg-[#080808] text-white p-6 sm:p-8 border border-black/15">
-                      <BrandKitTab athlete={normalizedForModal} onSignMOU={() => setMouSigned(true)} />
+                  {showBroadcastStudio && (
+                    <div className="rounded-[22px] bg-[#080808] text-white p-6 sm:p-8 border border-black/15 shadow-2xl">
+                      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/15 pb-4 mb-6">
+                        <div>
+                          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#CCFF00] block">
+                            PILLAR 02 // BROADCAST TELEMETRY &amp; SPONSOR BRAND KIT
+                          </span>
+                          <h4 className="m-0 mt-1 font-sans text-2xl sm:text-3xl font-black uppercase tracking-tight">
+                            {athlete.full_name} — Pre-Cleared 9:16 Social &amp; Broadcast Vault
+                          </h4>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          <button
+                            type="button"
+                            onClick={() => videoInputRef.current?.click()}
+                            className="rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase tracking-widest px-4 py-2 cursor-pointer border-0"
+                          >
+                            + Ingest Match Footage
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowBroadcastStudio(false)}
+                            className="rounded-full bg-white/10 hover:bg-white/20 text-white font-mono text-[10px] font-bold uppercase px-4 py-2 cursor-pointer border-0"
+                          >
+                            Close Studio ✕
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                        <div className="lg:col-span-4 rounded-[16px] bg-neutral-900 border border-white/15 p-4 flex flex-col justify-between relative overflow-hidden min-h-[340px]">
+                          <AssetImage
+                            file={imageFile}
+                            fallbackFiles={imageFallbacks}
+                            alt={athlete.full_name}
+                            className="absolute inset-0 w-full h-full object-cover grayscale contrast-125 opacity-50"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/60" />
+                          <div className="relative z-10 flex items-center justify-between">
+                            <span className="rounded bg-[#CCFF00] text-[#080808] font-mono text-[9px] font-bold uppercase px-2 py-0.5">
+                              9:16 PAID AD STEM
+                            </span>
+                            <span className="font-mono text-[10px] text-white/80">
+                              {semanticResults[selectedClipIdx]?.time ?? '01:14'}
+                            </span>
+                          </div>
+                          <div className="relative z-10 my-auto border border-[#CCFF00]/80 rounded-lg p-3 bg-black/50 backdrop-blur-xs">
+                            <span className="font-mono text-[9px] text-[#CCFF00] uppercase block">
+                              CV BOUNDING BOX LOCKED
+                            </span>
+                            <p className="m-0 mt-1 font-sans text-sm font-bold text-white">
+                              {semanticResults[selectedClipIdx]?.prompt ?? 'Fast break transition & finish'}
+                            </p>
+                            <span className="font-mono text-[10px] text-neutral-300 mt-1 block">
+                              {semanticResults[selectedClipIdx]?.exposure ?? '4.2s Jersey Logo'} ·{' '}
+                              {semanticResults[selectedClipIdx]?.confidence ?? '98% Match'}
+                            </span>
+                          </div>
+                          <div className="relative z-10 flex items-center justify-between pt-3 border-t border-white/15 font-mono text-[9px] text-neutral-300">
+                            <span>WATERMARK: WM-{athlete.postcode}</span>
+                            <span className="text-[#CCFF00] font-bold">META / TIKTOK READY</span>
+                          </div>
+                        </div>
+
+                        <div className="lg:col-span-4 rounded-[16px] bg-white/5 border border-white/10 p-5 flex flex-col justify-between">
+                          <div>
+                            <span className="font-mono text-[10px] uppercase tracking-widest text-[#CCFF00] block mb-2">
+                              01 // AI-INDEXED MATCH MOMENTS
+                            </span>
+                            <p className="m-0 font-sans text-xs text-neutral-300 mb-4">
+                              Select any computer-vision tagged moment below to preview the sponsor-watermarked 9:16 social cut.
+                            </p>
+                            <div className="space-y-2">
+                              {semanticResults.map((clip, idx) => (
+                                <button
+                                  key={clip.time + idx}
+                                  type="button"
+                                  onClick={() => setSelectedClipIdx(idx)}
+                                  className={`w-full text-left rounded-xl p-3 transition-all cursor-pointer border ${
+                                    selectedClipIdx === idx
+                                      ? 'bg-[#CCFF00] text-[#080808] border-[#CCFF00] font-bold'
+                                      : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between font-mono text-[10px]">
+                                    <span>TIMESTAMP {clip.time}</span>
+                                    <span>{clip.confidence}</span>
+                                  </div>
+                                  <div className="font-sans text-xs mt-1">{clip.prompt}</div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="pt-4 border-t border-white/10 flex items-center justify-between font-mono text-[10px] text-neutral-400">
+                            <span>TOTAL BROADCAST EQUIVALENT</span>
+                            <span className="text-white font-bold">A$14,800 / YR</span>
+                          </div>
+                        </div>
+
+                        <div className="lg:col-span-4 rounded-[16px] bg-white/5 border border-white/10 p-5 flex flex-col justify-between">
+                          <div>
+                            <span className="font-mono text-[10px] uppercase tracking-widest text-[#CCFF00] block mb-2">
+                              02 // TURNKEY SPONSOR ASSET VAULT
+                            </span>
+                            <p className="m-0 font-sans text-xs text-neutral-300 mb-4">
+                              Pre-cleared under {athlete.full_name}’s 2-Year Master NIL Licence for immediate paid social amplification.
+                            </p>
+                            <div className="space-y-2">
+                              {[
+                                { title: '9:16 Vertical Highlight Stem (MP4)', meta: '48 MB · 4K 60fps' },
+                                { title: 'Athlete Monogram & Shield Marks (SVG)', meta: '12 MB · Vector Pack' },
+                                { title: 'Countertop Venue QR Plaque (PDF)', meta: '4.2 MB · Print Ready' },
+                                { title: 'ATO / NZ IRD RCTI Specimen (PDF)', meta: '320 KB · Tax Cleared' },
+                              ].map((asset) => (
+                                <button
+                                  key={asset.title}
+                                  type="button"
+                                  onClick={() => setDownloadedAsset(asset.title)}
+                                  className="w-full flex items-center justify-between gap-2 rounded-xl bg-white/5 hover:bg-[#CCFF00] text-white hover:text-[#080808] p-3 border border-white/10 transition-colors cursor-pointer text-left"
+                                >
+                                  <div>
+                                    <div className="font-sans text-xs font-bold">{asset.title}</div>
+                                    <div className="font-mono text-[9.5px] opacity-75">{asset.meta}</div>
+                                  </div>
+                                  <span className="font-mono text-[10px] font-bold uppercase shrink-0">↓ Pull</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          {downloadedAsset ? (
+                            <div className="mt-3 rounded-lg bg-[#CCFF00] text-[#080808] px-3 py-2 font-mono text-[10px] font-bold">
+                              ✓ Dispatched: {downloadedAsset}
+                            </div>
+                          ) : (
+                            <div className="pt-4 border-t border-white/10 font-mono text-[10px] text-[#CCFF00]">
+                              ✓ 2-YEAR MASTER NIL MOU SIGNED &amp; CLEARED
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
               )}
 
-              {activeTab === '05_copilot' && (
+              {activeTab === '03_deal_desk' && (
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 pt-1">
                   <div className="lg:col-span-2 bg-[#EAEAE6] rounded-[18px] p-6 flex flex-col justify-between h-[clamp(390px,50vh,480px)]">
                     <div>
@@ -947,8 +1048,24 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         <span className="bg-[#CCFF00] text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Sovereign</span> AI Agent Copilot
                       </h3>
                       <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555]">
-                        Trained on {athlete.full_name}’s rate cards, training availability &amp; brand guidelines
+                        24/7 Automated Sponsor Deal Desk — Click a quick prompt or ask a question below:
                       </p>
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
+                        {[
+                          'How does paid social amplification work?',
+                          'Check open categories in this postcode',
+                          'Next available clinic & shoot dates',
+                        ].map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => runCopilotQuery(preset)}
+                            className="rounded-full bg-white hover:bg-[#080808] text-[#080808] hover:text-[#CCFF00] border border-black/10 px-3 py-1 font-mono text-[9.5px] font-bold uppercase cursor-pointer transition-colors"
+                          >
+                            {preset}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <div className="my-3 flex-1 overflow-y-auto space-y-2.5 pr-1">
                       {copilotHistory.map((item, idx) => (
@@ -962,12 +1079,18 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         </div>
                       ))}
                     </div>
-                    <form onSubmit={handleCopilotSubmit} className="flex gap-2">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        runCopilotQuery(copilotPrompt);
+                      }}
+                      className="flex gap-2"
+                    >
                       <input
                         type="text"
                         value={copilotPrompt}
                         onChange={(e) => setCopilotPrompt(e.target.value)}
-                        placeholder="Query appearance dates, coaching clinics, or campaign deliverables..."
+                        placeholder="Query appearance dates, paid social amplification, or category locks..."
                         className="flex-1 rounded-full bg-white border border-black/15 px-4 py-2.5 font-sans text-xs text-[#080808]"
                       />
                       <button type="submit" className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] font-mono text-[10px] font-bold uppercase px-5 py-2.5 cursor-pointer border-0">Screen →</button>
@@ -989,7 +1112,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                   </article>
 
                   <article className="relative flex flex-col justify-between bg-[#EAEAE6] text-[#080808] rounded-[18px] p-6 h-[clamp(390px,50vh,480px)]">
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FF3300] text-white px-3.5 py-0.5 font-sans text-[11px] font-bold">Intake</span>
+                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#0F0F11] text-white px-3.5 py-0.5 font-sans text-[11px] font-bold">Intake</span>
                     <div>
                       <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
                         <span className="bg-[#CCFF00] text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Proposal</span> Intake Desk
@@ -997,7 +1120,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                       <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555]">Pre-Qualifies Corporate Proposals</p>
                       {proposalSubmitted ? (
                         <div className="mt-5 rounded-xl bg-[#CCFF00] p-4 font-sans text-xs font-bold text-[#080808]">
-                          ✓ Proposal for {proposalBrand} pre-qualified and dispatched to accredited management.
+                          ✓ Proposal for {proposalBrand} pre-qualified and cleared for immediate activation.
                         </div>
                       ) : (
                         <form
@@ -1024,81 +1147,65 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                 </div>
               )}
 
-              {activeTab === '06_escrow' && (
+              {activeTab === '04_settlement' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-1">
-                  {[
-                    { badge: 'Stripe Connect', first: 'Segregated', rest: 'Escrow Rails', sub: 'Upfront Gross Campaign Security', desc: 'Segregated escrow rails securing gross campaign funds upfront via Stripe Connect prior to competition or deliverable execution.', glyph: 'ESC' },
-                    { badge: '70 / 15 / 15', first: 'Automated', rest: 'Revenue Split', sub: `70% Athlete · 15% ${athlete.current_club} · 15% Ops`, desc: 'Automated 70/15/15 financial distribution splitting gross revenue into 70% to the athlete, 15% to their grassroots junior club, and 15% to platform operations.', glyph: '70%' },
-                    { badge: 'ATO Compliant', first: 'Automated', rest: 'RCTI Tax Invoices', sub: '100% Tax-Deductible Receipting', desc: 'Recipient Created Tax Invoice (RCTI) generation producing ATO-compliant tax documents automatically upon milestone completion.', glyph: 'TAX' },
-                    { badge: 'Instant Payout', first: 'T+0 Bank', rest: 'Disbursement', sub: 'Zero 90-Day Invoice Traps', desc: 'T+0 automated bank disbursement releasing funds immediately to the athlete and junior club once proof of performance is validated.', glyph: 'T+0' },
-                  ].map((card, i) => (
-                    <article
-                      key={card.first + i}
-                      onClick={() => setDrawerMode('buy')}
-                      className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500 cursor-pointer"
-                    >
-                      <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">{card.badge}</span>
-                      <div>
-                        <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                          <span className={`px-1.5 -ml-1.5 rounded-[4px] ${i === 0 ? 'bg-[#CCFF00] text-[#080808]' : 'group-hover:bg-[#CCFF00] group-hover:text-[#080808]'}`}>{card.first}</span> {card.rest}
-                        </h3>
-                        <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">{card.sub}</p>
-                        <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">{card.desc}</p>
-                      </div>
-                      <div className="font-display text-[88px] font-black leading-[0.78] tracking-[-0.055em]">{card.glyph}</div>
-                    </article>
-                  ))}
-                </div>
-              )}
+                  <article
+                    onClick={() => setDrawerMode('buy')}
+                    className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500 cursor-pointer"
+                  >
+                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">
+                      70 / 15 / 15
+                    </span>
+                    <div>
+                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
+                        <span className="bg-[#CCFF00] text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Automated</span> Revenue Split
+                      </h3>
+                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">
+                        70% Athlete · 15% {athlete.current_club} · 15% Ops
+                      </p>
+                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
+                        Instant Stripe Connect clearing splitting gross retainers 70% to the athlete and 15% to their junior club with automated ATO/IRD RCTI tax invoices.
+                      </p>
+                    </div>
+                    <div className="font-display text-[88px] font-black leading-[0.78] tracking-[-0.055em]">70%</div>
+                  </article>
 
-              {activeTab === '07_catchment' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-1">
-                  {[
-                    { badge: 'Home Territory', first: 'Postcode', rest: 'Exclusivity Engine', sub: `Postcode ${athlete.postcode} (${suburb})`, desc: `Postcode exclusivity engine anchoring commercial rights directly to ${athlete.full_name}'s residential suburb (${suburb}) and primary training facility.`, glyph: athlete.postcode },
-                    { badge: '5km / 15km / 50km', first: 'Radial', rest: 'Boundary Rings', sub: 'Storefront, Metro & Regional Hubs', desc: 'Radial boundaries covering 5km local storefronts, 15km trade catchments, and 50km regional hubs to guarantee geographic protection.', glyph: `${athlete.radiusKm}K` },
-                    { badge: 'Foot Traffic', first: 'Suburban', rest: 'Retail Attribution', sub: `${suburb} Retail Density Mapping`, desc: "Suburban commercial attribution mapping local foot traffic and high-street retail density against the athlete's home territory.", glyph: 'MAP' },
-                    { badge: 'Multi-Zone', first: 'Dual-Catchment', rest: 'Allocation', sub: 'Cross-Association Conflict Protection', desc: 'Dual-catchment allocation allowing competitors who train and play across separate associations to manage multiple commercial zones without conflict.', glyph: '2Z' },
-                  ].map((card, i) => (
-                    <article key={card.first + i} className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                      <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FF3300] text-white px-3.5 py-0.5 font-sans text-[11px] font-bold">{card.badge}</span>
-                      <div>
-                        <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                          <span className={`px-1.5 -ml-1.5 rounded-[4px] ${i === 0 ? 'bg-[#CCFF00] text-[#080808]' : 'group-hover:bg-[#CCFF00] group-hover:text-[#080808]'}`}>{card.first}</span> {card.rest}
-                        </h3>
-                        <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">{card.sub}</p>
-                        <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">{card.desc}</p>
-                      </div>
-                      <div className="font-display text-[84px] font-black leading-[0.78] tracking-[-0.055em]">{card.glyph}</div>
-                    </article>
-                  ))}
-                </div>
-              )}
+                  <article
+                    onClick={() => docInputRef.current?.click()}
+                    className="group relative flex flex-col justify-between bg-[#080808] text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] cursor-pointer"
+                  >
+                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FFB800] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">
+                      {uploadedDocs.length} Files
+                    </span>
+                    <div>
+                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
+                        <span className="bg-[#CCFF00] text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Document</span> Upload Vault
+                      </h3>
+                      <p className="m-0 mt-1 font-sans text-[12.5px] text-neutral-300">Click to Upload PDF/Image from Device</p>
+                      <ul className="m-0 mt-4 p-0 list-none space-y-1.5 font-mono text-[10px]">
+                        {uploadedDocs.slice(0, 4).map((doc, idx) => (
+                          <li
+                            key={doc.name + idx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUploadedDocs((prev) => prev.filter((_, i) => i !== idx));
+                            }}
+                            className="flex items-center justify-between gap-2 bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded"
+                          >
+                            <span className="truncate">✓ {doc.name}</span>
+                            <span className="shrink-0 text-[#CCFF00]">{doc.size}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="flex items-end justify-between">
+                      <span className="font-display text-[84px] font-black leading-[0.78] tracking-[-0.055em]">+DOC</span>
+                      <span className="rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase px-4 py-2">
+                        + Upload File
+                      </span>
+                    </div>
+                  </article>
 
-              {activeTab === '08_social' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-1">
-                  {[
-                    { badge: 'Live API', first: 'Authenticated', rest: 'Social Telemetry', sub: `${athlete.social.instagram_handle} · ${athlete.social.engagement_rate} Eng.`, desc: 'Authenticated social API integration tracking live follower counts and verified engagement percentages across Instagram and TikTok.', glyph: formatFollowers(athlete.social.follower_count) },
-                    { badge: 'Local Reach', first: 'Suburban', rest: 'Concentration', sub: `Within ${athlete.radiusKm}km of Postcode ${athlete.postcode}`, desc: "Suburban audience concentration metrics isolating the exact percentage of an athlete's following residing within the sponsor's trading radius.", glyph: '68%' },
-                    { badge: 'Bot Filtered', first: 'Anomaly', rest: '& Bot Filtering', sub: '99.4% Verified Human Reach', desc: 'Anomaly filtering removing bot traffic and inorganic spikes to ensure local and national brands fund genuine human reach.', glyph: '99%' },
-                    { badge: 'Ad Equivalent', first: 'Media', rest: 'Valuation Index', sub: 'Broadcast Equivalent: A$14,800/yr', desc: 'Media valuation indexing calculating equivalent paid advertising spend based on verified digital reach and state-league broadcast airtime.', glyph: 'ROI' },
-                  ].map((card, i) => (
-                    <article key={card.first + i} className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                      <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">{card.badge}</span>
-                      <div>
-                        <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                          <span className={`px-1.5 -ml-1.5 rounded-[4px] ${i === 0 ? 'bg-[#CCFF00] text-[#080808]' : 'group-hover:bg-[#CCFF00] group-hover:text-[#080808]'}`}>{card.first}</span> {card.rest}
-                        </h3>
-                        <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">{card.sub}</p>
-                        <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">{card.desc}</p>
-                      </div>
-                      <div className="font-display text-[80px] font-black leading-[0.78] tracking-[-0.055em]">{card.glyph}</div>
-                    </article>
-                  ))}
-                </div>
-              )}
-
-              {activeTab === '09_deliverables' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-1">
                   <article className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
                     <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">Live Log</span>
                     <div>
@@ -1107,7 +1214,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                       </h3>
                       <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">Appearances, Clinics &amp; Mentions</p>
                       <div className="mt-4 space-y-2">
-                        {proofLogs.map((log) => (
+                        {proofLogs.slice(0, 3).map((log) => (
                           <div key={log.id} className="rounded-lg bg-white/85 group-hover:bg-white/10 p-2.5 font-sans text-xs">
                             <span className="font-mono text-[9.5px] font-bold text-[#080808] group-hover:text-[#CCFF00] block">{log.id} · {log.status}</span>
                             {log.obligation}
@@ -1119,61 +1226,25 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                   </article>
 
                   <article
-                    onClick={() =>
-                      setProofLogs((prev) => [
-                        {
-                          id: `POP-0${prev.length + 1}`,
-                          obligation: `Geo-Tagged Precinct Drop (${suburb})`,
-                          status: 'CV VERIFIED · T+0 PAID',
-                          timestamp: 'Archived 5yr',
-                        },
-                        ...prev,
-                      ])
-                    }
-                    className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500 cursor-pointer"
+                    onClick={() => proofInputRef.current?.click()}
+                    className="group relative flex flex-col justify-between bg-[#080808] text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] cursor-pointer"
                   >
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FF3300] text-white px-3.5 py-0.5 font-sans text-[11px] font-bold">Upload</span>
+                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#0F0F11] text-white px-3.5 py-0.5 font-sans text-[11px] font-bold">Upload Proof</span>
                     <div>
                       <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Proof</span> Upload Utility
+                        <span className="bg-[#CCFF00] text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Proof</span> Upload Utility
                       </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">Geo-Tagged Photos &amp; Social Permalinks</p>
-                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                        Click card to log a new geo-tagged photo, social media permalink, or coaching clinic attendance sheet to trigger instant payout.
+                      <p className="m-0 mt-1 font-sans text-[12.5px] text-neutral-300">Geo-Tagged Photos &amp; Social Stems</p>
+                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-neutral-200">
+                        Click card to select a geo-tagged photo, social media screenshot, or coaching clinic sheet from your device to trigger instant T+0 payout.
                       </p>
                     </div>
                     <div className="flex items-end justify-between">
                       <span className="font-display text-[84px] font-black leading-[0.78] tracking-[-0.055em]">+POP</span>
-                      <span className="rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase px-3.5 py-2">+ Log Proof</span>
+                      <span className="rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase px-4 py-2">
+                        + Select File
+                      </span>
                     </div>
-                  </article>
-
-                  <article className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">Auto-Trigger</span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">CV Escrow</span> Release
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">Zero Manual Approval Bottlenecks</p>
-                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                        Automated computer vision triggers confirming social media deliverables and sponsor watermarks before authorising Stripe Connect escrow payouts.
-                      </p>
-                    </div>
-                    <div className="font-display text-[84px] font-black leading-[0.78] tracking-[-0.055em]">CV</div>
-                  </article>
-
-                  <article className="group relative flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(390px,50vh,480px)] transition-colors duration-500">
-                    <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#FFB800] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold">5-Yr Vault</span>
-                    <div>
-                      <h3 className="m-0 font-sans text-[19px] font-bold tracking-[-0.025em]">
-                        <span className="group-hover:bg-[#CCFF00] group-hover:text-[#080808] px-1.5 -ml-1.5 rounded-[4px]">Compliance</span> Archive
-                      </h3>
-                      <p className="m-0 mt-1 font-sans text-[12.5px] text-[#555555] group-hover:text-neutral-300">ATO &amp; Governing Body Retention</p>
-                      <p className="m-0 mt-5 font-sans text-[13px] leading-relaxed text-[#444444] group-hover:text-neutral-200">
-                        Digital compliance archive retaining signed Master NIL contracts, governing body passes, and ATO RCTI tax invoices for five years.
-                      </p>
-                    </div>
-                    <div className="font-display text-[84px] font-black leading-[0.78] tracking-[-0.055em]">5YR</div>
                   </article>
                 </div>
               )}
@@ -1191,7 +1262,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                 {activeFlight.code} · {activeFlight.firstWord} {activeFlight.restWords} ({activePriceDisplay})
               </span>
               <span className="hidden md:inline font-mono text-[10px] uppercase tracking-wider text-neutral-500">
-                70% Athlete · 15% Club ({athlete.current_club}) · 15% Ops
+                70% Athlete · 15% Club ({athlete.current_club}) · 15% Ops · Paid Ad Spend Billed Direct
               </span>
             </div>
 
@@ -1206,7 +1277,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                 className="rounded-full border-0 bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-7 py-3 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer transition-colors disabled:cursor-wait disabled:opacity-70 shadow-md"
               >
                 {checkoutLoading
-                  ? 'Initialising Stripe Escrow...'
+                  ? 'Initialising Stripe Clearing...'
                   : `LOCK ${activeFlight.code} RIGHTS · ${activePriceDisplay} →`}
               </button>
             </div>

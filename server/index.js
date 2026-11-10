@@ -3,8 +3,9 @@ import cors from 'cors';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import Stripe from 'stripe';
 
-// Load .env / .env.local (Vite doesn't inject env vars into a standalone Node process).
+// Load .env / .env.local
 const __dirname = dirname(fileURLToPath(import.meta.url));
 for (const name of ['.env', '.env.local']) {
   try {
@@ -24,24 +25,62 @@ const SUPABASE_ANON_KEY =
 
 const app = express();
 app.use(cors());
+
+/**
+ * 1. STRIPE WEBHOOK ENDPOINT
+ * Must use express.raw({ type: 'application/json' }) and sit BEFORE app.use(express.json()).
+ */
+app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+
+  if (!endpointSecret) {
+    return res.status(400).json({ error: 'STRIPE_WEBHOOK_SECRET is not configured in .env' });
+  }
+
+  try {
+    const stripe = new Stripe(stripeKey || 'sk_test_placeholder');
+    const event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+        const totalAud = (session.amount_total ?? 0) / 100;
+        const orderType = session.metadata?.orderType || 'sponsorship_tier';
+        const athleteCutCents = Number(session.metadata?.athleteCutCents || 0);
+        const clubCutCents = Number(session.metadata?.clubCutCents || 0);
+        const partnerCutCents = Number(session.metadata?.partnerCutCents || 0);
+
+        console.log(`[stripe webhook] ✓ Checkout Session Completed: ${session.id}`);
+        console.log(
+          `[stripe webhook]   Type: ${orderType} | Gross: A$${totalAud.toFixed(2)} | Athlete: A$${(athleteCutCents / 100).toFixed(2)} | Club: A$${(clubCutCents / 100).toFixed(2)} | Partner: A$${(partnerCutCents / 100).toFixed(2)}`,
+        );
+        break;
+      }
+      case 'charge.dispute.created': {
+        const dispute = event.data.object;
+        console.warn(`[stripe webhook] ! Charge dispute created: ${dispute.id}. Initiating transfer reversals.`);
+        break;
+      }
+      default:
+        console.log(`[stripe webhook] Unhandled event type ${event.type}`);
+    }
+
+    return res.json({ received: true });
+  } catch (err) {
+    console.error(`[stripe webhook] Verification Error: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+});
+
+// General JSON body parser for all other routes
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'sponsor-match-proxy' });
 });
 
-/**
- * Spatial sponsor-matching endpoint.
- *
- * GET /api/match-sponsors?athleteId=<uuid>
- *
- * Loads the athlete's geography point, then calls the
- * match_sponsors_for_athlete PostGIS RPC (ST_DWithin using each sponsor's own
- * target_radius_meters) and returns ranked matches, closest first.
- *
- * PostgREST doesn't expose ST_DWithin directly, so this proxy is the only
- * place the spatial query can run.
- */
 app.get('/api/match-sponsors', async (req, res) => {
   try {
     const athleteId = String(req.query.athleteId ?? '').trim();
@@ -72,12 +111,10 @@ app.get('/api/match-sponsors', async (req, res) => {
       matches: [],
     });
 
-    // PostgREST returns 400 if `id` is not a UUID — never forward that to the drawer.
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(athleteId)) {
       return res.status(200).json(emptyPayload(athleteId));
     }
 
-    // Step 1: fetch the athlete with select=* so missing optional columns never 400.
     const athleteRes = await fetch(
       `${supabaseRestUrl}/rest/v1/athletes?id=eq.${encodeURIComponent(athleteId)}&select=*`,
       {
@@ -86,7 +123,7 @@ app.get('/api/match-sponsors', async (req, res) => {
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
           Accept: 'application/json',
         },
-      }
+      },
     );
     if (!athleteRes.ok) {
       return res.status(200).json(emptyPayload(athleteId));
@@ -97,17 +134,18 @@ app.get('/api/match-sponsors', async (req, res) => {
     }
     const athlete = athleteRows[0] ?? {};
     if (!athlete.location && athlete.latitude == null && athlete.longitude == null) {
-      return res.status(200).json(emptyPayload(athlete.id ?? athleteId, {
-        name: athlete.name ?? athlete.full_name ?? null,
-        postcode: athlete.postcode ?? null,
-        follower_count: athlete.follower_count ?? null,
-        master_licence_signed: Boolean(athlete.master_licence_signed ?? athlete.ip_lock),
-        nrl_tpa_registered: Boolean(athlete.nrl_tpa_registered),
-        shute_shield_compliant: Boolean(athlete.shute_shield_compliant),
-      }));
+      return res.status(200).json(
+        emptyPayload(athlete.id ?? athleteId, {
+          name: athlete.name ?? athlete.full_name ?? null,
+          postcode: athlete.postcode ?? null,
+          follower_count: athlete.follower_count ?? null,
+          master_licence_signed: Boolean(athlete.master_licence_signed ?? athlete.ip_lock),
+          nrl_tpa_registered: Boolean(athlete.nrl_tpa_registered),
+          shute_shield_compliant: Boolean(athlete.shute_shield_compliant),
+        }),
+      );
     }
 
-    // Step 2: run the spatial match via the PostGIS RPC.
     const rpcRes = await fetch(`${supabaseRestUrl}/rest/v1/rpc/match_sponsors_for_athlete`, {
       method: 'POST',
       headers: {
@@ -130,8 +168,6 @@ app.get('/api/match-sponsors', async (req, res) => {
       return res.status(502).json({ error: 'Unexpected RPC response shape' });
     }
 
-    // The RPC now returns latitude/longitude/currency directly; strip the raw
-    // geography `location` field and use lat/lng for the frontend map.
     const matchesWithCoords = matches.map((m) => {
       const { location, ...rest } = m;
       return {
@@ -254,13 +290,14 @@ async function hydrateAthleteFromSupabase(athlete) {
     if (!row) return athlete;
     return {
       ...athlete,
-      full_name: athlete.full_name !== 'Verified athlete'
-        ? athlete.full_name
-        : (row.full_name || row.name || athlete.full_name),
+      full_name:
+        athlete.full_name !== 'Verified athlete'
+          ? athlete.full_name
+          : row.full_name || row.name || athlete.full_name,
       grassroots_club_name:
         athlete.grassroots_club_name !== 'Grassroots club'
           ? athlete.grassroots_club_name
-          : (row.current_club || row.club_name || athlete.grassroots_club_name),
+          : row.current_club || row.club_name || athlete.grassroots_club_name,
       image_url: athlete.image_url || row.image_url || row.image || '',
     };
   } catch {
@@ -270,15 +307,112 @@ async function hydrateAthleteFromSupabase(athlete) {
 
 /**
  * POST /api/checkout/create-session
- * Body: { athleteId, tierId, athlete? }
- * Returns { checkoutUrl } for Stripe Checkout, or a local confirmation URL in demo mode.
+ * Supports both:
+ *  A) Athlete Merch Capsule Bags: { capsuleItems: [{ id, title, athleteName, clubName, collabPartner, collabRoyaltyPct, priceAud, baseCostAud, qty, size, frontImageUrl }] }
+ *  B) Commercial Sponsorship Tiers: { athleteId, tierId, athlete? }
  */
 app.post('/api/checkout/create-session', async (req, res) => {
   try {
+    const origin = appBaseUrl(req);
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+
+    // BRANCH A: Athlete Merch Capsule Checkout from CartDrawer.tsx
+    if (Array.isArray(req.body?.capsuleItems) && req.body.capsuleItems.length > 0) {
+      const items = req.body.capsuleItems;
+      let grossCents = 0;
+      let athleteCutCents = 0;
+      let clubCutCents = 0;
+      let partnerCutCents = 0;
+
+      const body = new URLSearchParams();
+      body.set('mode', 'payment');
+
+      items.forEach((entry, idx) => {
+        const qty = Math.max(1, Number(entry.qty) || 1);
+        const unitAud = Math.max(1, Number(entry.priceAud) || 100);
+        const baseAud = Math.max(0, Number(entry.baseCostAud) || 0);
+        const netUnitCents = Math.max(0, Math.round((unitAud - baseAud) * 100));
+        const hasPartner = Number(entry.collabRoyaltyPct) > 0;
+        const athletePct = hasPartner ? 0.55 : 0.7;
+        const partnerPct = hasPartner ? Number(entry.collabRoyaltyPct) / 100 : 0;
+
+        grossCents += Math.round(unitAud * 100) * qty;
+        athleteCutCents += Math.round(netUnitCents * athletePct) * qty;
+        clubCutCents += Math.round(netUnitCents * 0.15) * qty;
+        partnerCutCents += Math.round(netUnitCents * partnerPct) * qty;
+
+        body.set(`line_items[${idx}][quantity]`, String(qty));
+        body.set(`line_items[${idx}][price_data][currency]`, 'aud');
+        body.set(`line_items[${idx}][price_data][unit_amount]`, String(Math.round(unitAud * 100)));
+        body.set(
+          `line_items[${idx}][price_data][product_data][name]`,
+          `tmrw/. ${entry.title} (${entry.size || 'L'})`,
+        );
+        body.set(
+          `line_items[${idx}][price_data][product_data][description]`,
+          `${Math.round(athletePct * 100)}% to ${entry.athleteName}${
+            hasPartner ? ` · 15% to ${entry.collabPartner}` : ''
+          } · 15% to ${entry.clubName}`,
+        );
+        const imgUrl = absoluteAssetUrl(entry.frontImageUrl, origin);
+        if (imgUrl) {
+          body.set(`line_items[${idx}][price_data][product_data][images][0]`, imgUrl);
+        }
+      });
+
+      const primary = items[0];
+      const successQuery = `capsule=1&athleteName=${encodeURIComponent(primary.athleteName || '')}`;
+      body.set('success_url', `${origin}/?capsule_checkout=success&session_id={CHECKOUT_SESSION_ID}&${successQuery}`);
+      body.set('cancel_url', `${origin}/?capsule_checkout=cancelled`);
+      body.set('metadata[orderType]', 'merch_capsule');
+      body.set('metadata[athleteName]', String(primary.athleteName || ''));
+      body.set('metadata[clubName]', String(primary.clubName || ''));
+      body.set('metadata[grossCents]', String(grossCents));
+      body.set('metadata[athleteCutCents]', String(athleteCutCents));
+      body.set('metadata[clubCutCents]', String(clubCutCents));
+      body.set('metadata[partnerCutCents]', String(partnerCutCents));
+
+      if (stripeKey) {
+        const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${stripeKey}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body,
+        });
+        const session = await stripeRes.json();
+        if (!stripeRes.ok || !session?.url) {
+          return res.status(502).json({
+            error: session?.error?.message ?? 'Stripe could not create a capsule checkout session.',
+          });
+        }
+        return res.json({
+          checkoutUrl: session.url,
+          mode: 'stripe_live',
+          sessionId: session.id,
+        });
+      }
+
+      // Sandbox Demo fallback when STRIPE_SECRET_KEY is not yet in .env
+      return res.json({
+        checkoutUrl: null,
+        mode: 'sandbox_demo',
+        sessionId: `cs_demo_capsule_${Date.now()}`,
+        splits: {
+          grossAud: grossCents / 100,
+          athleteAud: athleteCutCents / 100,
+          clubAud: clubCutCents / 100,
+          partnerAud: partnerCutCents / 100,
+        },
+      });
+    }
+
+    // BRANCH B: Commercial Sponsorship Tier Checkout
     const athleteId = String(req.body?.athleteId ?? '').trim();
     const tierId = String(req.body?.tierId ?? '').trim();
     if (!athleteId || !tierId) {
-      return res.status(400).json({ error: 'athleteId and tierId are required' });
+      return res.status(400).json({ error: 'athleteId and tierId (or capsuleItems) are required' });
     }
 
     const catalogue = { ...FALLBACK_COMMERCIAL_TIERS, ...loadCommercialTiers() };
@@ -287,24 +421,23 @@ app.post('/api/checkout/create-session', async (req, res) => {
       return res.status(400).json({ error: `Unknown commercial tier: ${tierId}` });
     }
 
-    const origin = appBaseUrl(req);
     const athlete = await hydrateAthleteFromSupabase(resolveCheckoutAthlete(athleteId, req.body));
     const successQuery = `athleteId=${encodeURIComponent(athleteId)}&tierId=${encodeURIComponent(tierId)}`;
     const successUrl = `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&${successQuery}`;
     const cancelUrl = athleteId
-      ? `${process.env.APP_BASE_URL}/#roster?athlete=${athleteId}&drawer=open`
-      : `${process.env.APP_BASE_URL}/#commercial-tiers`;
+      ? `${origin}/#roster?athlete=${athleteId}&drawer=open`
+      : `${origin}/#commercial-tiers`;
     const productImage = absoluteAssetUrl(athlete.image_url, origin);
 
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
     if (stripeKey) {
+      const unitCents = Math.round(pkg.price_aud * 100);
       const body = new URLSearchParams();
       body.set('mode', 'payment');
       body.set('success_url', successUrl);
       body.set('cancel_url', cancelUrl);
       body.set('line_items[0][quantity]', '1');
       body.set('line_items[0][price_data][currency]', 'aud');
-      body.set('line_items[0][price_data][unit_amount]', String(Math.round(pkg.price_aud * 100)));
+      body.set('line_items[0][price_data][unit_amount]', String(unitCents));
       body.set(
         'line_items[0][price_data][product_data][name]',
         `tmrw/. ${pkg.name} // ${athlete.full_name}`,
@@ -316,8 +449,11 @@ app.post('/api/checkout/create-session', async (req, res) => {
       if (productImage) {
         body.set('line_items[0][price_data][product_data][images][0]', productImage);
       }
+      body.set('metadata[orderType]', 'sponsorship_tier');
       body.set('metadata[athleteId]', athleteId);
       body.set('metadata[tierId]', tierId);
+      body.set('metadata[athleteCutCents]', String(Math.round(unitCents * 0.7)));
+      body.set('metadata[clubCutCents]', String(Math.round(unitCents * 0.15)));
 
       const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
         method: 'POST',
@@ -344,16 +480,13 @@ app.post('/api/checkout/create-session', async (req, res) => {
   }
 });
 
-// Serve the built React frontend from dist/ for any non-/api request.
-// In dev, Vite handles HMR on :5173 and proxies /api here; in production,
-// Express serves both the API and the SPA from a single unified port.
 const distDir = join(__dirname, '..', 'dist');
 if (existsSync(distDir)) {
   app.use(express.static(distDir));
   app.get('*', (req, res) => res.sendFile(join(distDir, 'index.html')));
 } else {
   app.get('*', (_req, res) =>
-    res.status(503).json({ error: 'Frontend build not found. Run `npm run build` first.' })
+    res.status(503).json({ error: 'Frontend build not found. Run `npm run build` first.' }),
   );
 }
 

@@ -103,7 +103,7 @@ export function AthleteCard<TAthlete>({
       ? 'bg-[#FFB800] text-black'
       : badgeVariant === 'green'
       ? 'bg-[#CCFF00] text-black'
-      : 'bg-[#FF3300] text-white';
+      : 'bg-[#0F0F11] text-white';
 
   return (
     <article
