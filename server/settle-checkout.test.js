@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import Stripe from 'stripe';
+import ts from 'typescript';
 import app from './index.js';
 
 async function fixture(run) {
@@ -67,7 +68,7 @@ async function fixture(run) {
 test('milestone settlement pays athlete T+0, queues club once and does not collide with escrow release', () => fixture(async ({ state, post }) => {
   const response = await post();
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { settled: true, athleteT0: { transferId: 'tr_1', amountCents: 26250, alreadyPaid: false }, club: { status: 'queued_quarterly', amountCents: 11250, cadence: 'quarterly_batch', scheduledFor: '2027-01-01T00:00:00.000Z' } });
+  assert.deepEqual(await response.json(), { settled: true, athleteT0: { transferId: 'tr_1', amountCents: 26250, alreadyPaid: false }, club: { status: 'queued_quarterly', amountCents: 11250, cadence: 'quarterly_batch', scheduledFor: new Date(2026, 11, 31).toISOString() } });
   const { body, headers } = state.creates[0];
   assert.equal(body.get('destination'), 'acct_athlete');
   assert.equal(body.get('source_transaction'), 'ch_order');
@@ -102,9 +103,39 @@ test('legacy paid orders without club cadence default to quarterly batching', ()
   delete state.metadata.clubCadence;
   const response = await post();
   assert.equal(response.status, 200);
-  assert.deepEqual((await response.json()).club, { status: 'queued_quarterly', amountCents: 11250, cadence: 'quarterly_batch', scheduledFor: '2027-01-01T00:00:00.000Z' });
+  assert.deepEqual((await response.json()).club, { status: 'queued_quarterly', amountCents: 11250, cadence: 'quarterly_batch', scheduledFor: new Date(2026, 11, 31).toISOString() });
   assert.equal(state.clubRows.get('ch_order').cadence, 'quarterly_batch');
   assert.equal(state.creates.length, 1);
+}));
+
+test('quarterly schedule matches client quarter-end labels including local-time boundaries', () => fixture(async ({ state, post }) => {
+  const source = readFileSync(new URL('../src/lib/checkout.ts', import.meta.url), 'utf8');
+  const compiled = ts.transpile(source.replace("import { currentAccessToken } from './sessionToken';", 'const currentAccessToken = async () => null;'), { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.ESNext });
+  const { getNextQuarterSweepLabel } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`);
+  const previousTZ = process.env.TZ;
+  try {
+    for (const zone of ['UTC', 'Australia/Sydney', 'America/Los_Angeles']) {
+      process.env.TZ = zone;
+      for (const [month, day] of [[1, 15], [3, 31], [4, 1], [6, 30], [7, 1], [9, 30], [10, 1], [12, 31], [1, 1]]) {
+        for (const hour of [0, 23]) {
+          const paidAt = new Date(2026, month - 1, day, hour, 59, 59);
+          state.charge.created = paidAt.getTime() / 1000;
+          state.clubRows.clear();
+          const response = await post();
+          assert.equal(response.status, 200);
+          const result = await response.json();
+          const scheduled = new Date(result.club.scheduledFor);
+          const labelDate = getNextQuarterSweepLabel(paidAt).split(' (')[0];
+          const date = `${scheduled.getDate()} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][scheduled.getMonth()]} ${scheduled.getFullYear()}`;
+          assert.equal(date, labelDate, `${zone}: ${paidAt.toISOString()}`);
+          assert.equal(scheduled.getHours(), 0);
+          assert.equal(state.clubRows.get('ch_order').scheduled_for, result.club.scheduledFor);
+        }
+      }
+    }
+  } finally {
+    if (previousTZ === undefined) delete process.env.TZ; else process.env.TZ = previousTZ;
+  }
 }));
 
 test('signature-verified webhook retrieves the paid order and retries failed club writes safely', () => fixture(async ({ state, webhook }) => {

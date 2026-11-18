@@ -683,7 +683,7 @@ export async function settleCheckoutSession(checkoutSessionId, authorize = async
     'metadata[payoutFor]': 'athlete_t0', 'metadata[payoutCharge]': charge.id, 'metadata[athleteId]': m.athleteId,
   }, 'POST', `tmrw_athlete_t0_${charge.id}`);
   if (!transfer.id) throw payoutError(502, 'Stripe did not confirm athlete payout');
-  const scheduledFor = clubCadence === 'quarterly_batch' ? new Date(Date.UTC(paidAt.getUTCFullYear(), (Math.floor(paidAt.getUTCMonth() / 3) + 1) * 3, 1)).toISOString() : null;
+  const scheduledFor = clubCadence === 'quarterly_batch' ? new Date(paidAt.getFullYear(), (Math.floor(paidAt.getMonth() / 3) + 1) * 3, 0).toISOString() : null;
   const status = clubCadence === 'quarterly_batch' ? 'queued_quarterly' : 'awaiting_club_connect_account';
   const { url, headers } = payoutConfig();
   const clubResponse = await fetch(`${url}/rest/v1/club_payouts?on_conflict=charge_id`, {
