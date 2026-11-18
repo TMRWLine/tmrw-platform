@@ -2,9 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import Stripe from 'stripe';
 import { randomBytes } from 'node:crypto';
+import { createTwelveLabsRouter } from './twelvelabs.js';
+import { catalogueItems } from './capsule-catalogue.js';
 
 // Load .env / .env.local
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -25,6 +27,7 @@ const SUPABASE_ANON_KEY =
   process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 const app = express();
+if (process.env.VERCEL) app.set('trust proxy', 1);
 app.use(cors());
 
 // Instagram Login entry only: it is not a Supabase authentication provider.
@@ -98,9 +101,10 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), a
 });
 
 // General JSON body parser for all other routes
+app.use('/api/twelvelabs', createTwelveLabsRouter());
 app.use(express.json());
 
-app.get('/health', (_req, res) => {
+app.get(['/health', '/api/health'], (_req, res) => {
   res.json({ ok: true, service: 'sponsor-match-proxy' });
 });
 
@@ -340,8 +344,13 @@ app.post('/api/checkout/create-session', async (req, res) => {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
 
     // BRANCH A: Athlete Merch Capsule Checkout from CartDrawer.tsx
-    if (Array.isArray(req.body?.capsuleItems) && req.body.capsuleItems.length > 0) {
-      const items = req.body.capsuleItems;
+    if (Object.hasOwn(req.body ?? {}, 'capsuleItems')) {
+      let items;
+      try {
+        items = catalogueItems(req.body.capsuleItems);
+      } catch (error) {
+        return res.status(400).json({ error: error.message });
+      }
       let grossCents = 0;
       let athleteCutCents = 0;
       let clubCutCents = 0;
@@ -351,9 +360,9 @@ app.post('/api/checkout/create-session', async (req, res) => {
       body.set('mode', 'payment');
 
       items.forEach((entry, idx) => {
-        const qty = Math.max(1, Number(entry.qty) || 1);
-        const unitAud = Math.max(1, Number(entry.priceAud) || 100);
-        const baseAud = Math.max(0, Number(entry.baseCostAud) || 0);
+        const qty = entry.qty;
+        const unitAud = entry.priceAud;
+        const baseAud = entry.baseCostAud;
         const netUnitCents = Math.max(0, Math.round((unitAud - baseAud) * 100));
         const hasPartner = Number(entry.collabRoyaltyPct) > 0;
         const athletePct = hasPartner ? 0.55 : 0.7;
@@ -433,7 +442,8 @@ app.post('/api/checkout/create-session', async (req, res) => {
 
     // BRANCH B: Commercial Sponsorship Tier Checkout
     const athleteId = String(req.body?.athleteId ?? '').trim();
-    const tierId = String(req.body?.tierId ?? '').trim();
+    const requestedTierId = String(req.body?.tierId ?? '').trim();
+    const tierId = requestedTierId === 'pathway_contender' ? 'pathway_flight' : requestedTierId;
     if (!athleteId || !tierId) {
       return res.status(400).json({ error: 'athleteId and tierId (or capsuleItems) are required' });
     }
@@ -504,6 +514,7 @@ app.post('/api/checkout/create-session', async (req, res) => {
 });
 
 const distDir = join(__dirname, '..', 'dist');
+app.use('/api', (_req, res) => res.status(404).json({ error: 'API route not found' }));
 if (existsSync(distDir)) {
   app.use(express.static(distDir));
   app.get('*', (req, res) => res.sendFile(join(distDir, 'index.html')));
@@ -513,6 +524,15 @@ if (existsSync(distDir)) {
   );
 }
 
-app.listen(PORT, () => {
-  console.log(`[proxy] sponsor-match unified server listening on http://localhost:${PORT}`);
+app.use((error, _req, res, _next) => {
+  const status = error?.type === 'entity.too.large' ? 413 : error?.status === 400 ? 400 : 500;
+  res.status(status).json({ error: status === 413 ? 'Request body too large' : status === 400 ? 'Invalid request body' : 'Request failed' });
 });
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  app.listen(PORT, () => {
+    console.log(`[proxy] sponsor-match unified server listening on http://localhost:${PORT}`);
+  });
+}
+
+export default app;

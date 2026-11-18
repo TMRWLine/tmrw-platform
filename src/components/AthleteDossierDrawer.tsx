@@ -31,6 +31,7 @@ export interface LiveAthleteOverride {
   full_name?: string;
   sport?: string;
   league?: string;
+  governing_body?: string;
   postcode?: string;
   suburb?: string;
   secondary_postcode?: string;
@@ -43,6 +44,15 @@ export interface LiveAthleteOverride {
   tiktok_handle?: string;
   availability_windows?: string;
   locked_categories?: string[];
+  open_categories?: string[];
+  follower_count?: number;
+  engagement_rate?: string;
+  local_concentration?: string;
+  portrait_image?: string;
+  gallery_slides?: { label: string; url: string }[];
+  reel_video_url?: string;
+  highlight_stem_file?: string;
+  monogram_svg_file?: string;
   mou_signed?: boolean;
   bio?: string;
   pull_quote?: string;

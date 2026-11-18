@@ -16,7 +16,6 @@ import {
   Info,
   ToggleLeft,
   ToggleRight,
-  Eye,
   DollarSign,
   Wallet,
   Landmark,
@@ -1986,17 +1985,8 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
   );
 }
 
-function computeConfidence(distanceKm: number, radiusM: number): number {
-  const radiusKm = radiusM / 1000;
-  if (radiusKm <= 0 || distanceKm >= radiusKm) return 0;
-  return Math.round((1 - distanceKm / radiusKm) * 100);
-}
-
 function ADMModal({
   athleteName,
-  matches,
-  manualOverride,
-  onToggleOverride,
   onClose,
 }: {
   athleteName: string;
