@@ -4,6 +4,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import Stripe from 'stripe';
+import { randomBytes } from 'node:crypto';
 import { createTwelveLabsRouter } from './twelvelabs.js';
 import { catalogueItems } from './capsule-catalogue.js';
 
@@ -28,6 +29,28 @@ const SUPABASE_ANON_KEY =
 const app = express();
 if (process.env.VERCEL) app.set('trust proxy', 1);
 app.use(cors());
+
+// Instagram Login entry only: it is not a Supabase authentication provider.
+app.get('/api/auth/instagram/start', (req, res) => {
+  const appId = process.env.INSTAGRAM_APP_ID;
+  const appSecret = process.env.INSTAGRAM_APP_SECRET;
+  if (!appId || !appSecret) {
+    return res.status(501).json({ error: 'Instagram Login is not configured. Please continue with Google.' });
+  }
+  const redirectUri = process.env.INSTAGRAM_REDIRECT_URI;
+  if (!redirectUri) {
+    return res.status(501).json({ error: 'Instagram callback is not configured. Please continue with Google.' });
+  }
+  const state = randomBytes(32).toString('hex');
+  res.cookie('tmrw_instagram_state', state, { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 600000, path: '/api/auth/instagram' });
+  const url = new URL('https://www.instagram.com/oauth/authorize');
+  url.searchParams.set('client_id', appId);
+  url.searchParams.set('redirect_uri', redirectUri);
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('scope', 'instagram_business_basic');
+  url.searchParams.set('state', state);
+  return res.json({ url: url.href });
+});
 
 /**
  * 1. STRIPE WEBHOOK ENDPOINT
