@@ -19,12 +19,12 @@
     box-shadow: 0 0 0 4px #080808;
   }
 
-  .syndicate-horizons { grid-template-columns: minmax(0, 1fr); }
-  .syndicate-horizons button { padding: 16px; }
-  .syndicate-contenders { flex-direction: column; min-height: 0; gap: 28px; }
-  .syndicate-contenders > article { flex: none !important; min-height: 320px; padding: 24px; }
-  .syndicate-contender-details { display: block; opacity: 1; }
-  .syndicate-contender-actions {
+  .syndicate-board .syndicate-horizons { grid-template-columns: minmax(0, 1fr); }
+  .syndicate-board .syndicate-horizons button { padding: 16px; }
+  .syndicate-board .syndicate-contenders { flex-direction: column; min-height: 0; gap: 28px; }
+  .syndicate-board .syndicate-contenders > article { flex: none !important; min-height: 320px; padding: 24px; }
+  .syndicate-board .syndicate-contender-details { display: block; opacity: 1; }
+  .syndicate-board .syndicate-contender-actions {
     position: relative;
     height: auto;
     padding: 8px;

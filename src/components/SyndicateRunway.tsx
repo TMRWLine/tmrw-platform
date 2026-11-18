@@ -668,6 +668,15 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
   const [lastPaidClubName, setLastPaidClubName] = useState<string>('Balmoral Cycling Club');
   const [unlockedGrant, setUnlockedGrant] = useState<WhitelistingGrant | null>(null);
 
+  useEffect(() => {
+    if (!isCertificateOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsCertificateOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isCertificateOpen]);
+
   const activeContender =
     CONTENDER_SPECIMENS.find((c) => c.id === selectedContenderId) ?? CONTENDER_SPECIMENS[0];
 

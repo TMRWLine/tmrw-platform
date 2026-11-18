@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { WhitelistingGrant } from '../lib/whitelisting';
 import {
@@ -30,6 +30,14 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const [tiktokSynced, setTiktokSynced] = useState(false);
   const [specExported, setSpecExported] = useState(false);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
   const [releasingEscrow, setReleasingEscrow] = useState(false);
   const [deliverablesApproved, setDeliverablesApproved] = useState(
     receipt?.escrowMode === 'upfront_100',
@@ -44,12 +52,14 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const safeAthleteId = grant.athleteId || 'marcus-thorne';
 
   const resolvedMetaToken =
+    grant.meta_partnership_token ||
     rawGrant.metaHandleToken ||
     rawGrant.metaToken ||
     rawGrant.instagramToken ||
     `IG-AUTH-${safePostcode}-9941`;
 
   const resolvedSparkCode =
+    grant.tiktok_spark_code ||
     rawGrant.tiktokSparkCode ||
     rawGrant.sparkCode ||
     rawGrant.tiktokToken ||
