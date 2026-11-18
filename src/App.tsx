@@ -613,6 +613,7 @@ export function MarketplaceApp() {
   useEffect(() => {
     const syncPath = () => {
       setProfileAthlete(null);
+      setShowSignModal(false);
       setView(viewFromLocation());
     };
     window.addEventListener('popstate', syncPath);
