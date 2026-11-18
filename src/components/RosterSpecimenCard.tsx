@@ -277,7 +277,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
           className={`font-display text-[128px] sm:text-[138px] xl:text-[148px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 ${
             mediaMode === 'video'
               ? 'opacity-0 translate-y-2 pointer-events-none'
-              : 'opacity-100 translate-y-0 group-hover:opacity-0 group-hover:translate-y-2 group-hover:pointer-events-none'
+              : 'opacity-100 translate-y-0 group-hover:opacity-0 group-hover:translate-y-2 group-hover:pointer-events-none group-focus-within:opacity-0 group-focus-within:translate-y-2 group-focus-within:pointer-events-none'
           }`}
         >
           {initials}
@@ -289,7 +289,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
           className={`absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#F7F7F6] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between transition-all duration-300 ${
             mediaMode === 'video'
               ? 'opacity-100 translate-y-0 pointer-events-auto'
-              : 'opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto'
+              : 'opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto'
           }`}
         >
           {/* Left Side: Crisp Hover-State Arrows + Active Frame/Clip Label */}

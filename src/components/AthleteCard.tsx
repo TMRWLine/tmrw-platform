@@ -207,7 +207,7 @@ export function AthleteCard<TAthlete>({
         </div>
 
         {/* Hover Controls: Highlight Video Trigger + Single-Line Fund Flight Pill */}
-        <div className="flex items-center gap-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pb-1 shrink-0">
+        <div className="flex items-center gap-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:translate-y-0 transition-all duration-300 pb-1 shrink-0">
           {onMediaStudio ? (
             <button
               type="button"
