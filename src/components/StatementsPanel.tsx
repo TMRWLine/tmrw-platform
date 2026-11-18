@@ -6,6 +6,9 @@ import type { CollabSplitTelemetry } from '../types';
 /** Sponsorship deals settle 70/15/15 (athlete / club / platform) of the Ex-GST amount. */
 const SPONSORSHIP_SPLIT = { athletePct: 70, sharePct: 15, shareLabel: 'Club Share', platformPct: 15 };
 
+const escapeHtml = (value: string): string =>
+  value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
 interface StatementRow {
   month: string;
   grossExGst: number;
@@ -101,7 +104,10 @@ export function StatementsPanel({
     if (!selected) return;
     const win = window.open('', '_blank');
     if (!win) return;
-    const html = `<!DOCTYPE html><html><head><title>RCTI - ${selected.month}</title>
+    const safeName = escapeHtml(athleteName);
+    const safeMonth = escapeHtml(selected.month);
+    const safeTerm = `${escapeHtml(startDate ?? '—')} to ${escapeHtml(endDate ?? '—')}`;
+    const html = `<!DOCTYPE html><html><head><title>RCTI - ${safeMonth}</title>
 <style>
 body{font-family:Inter,sans-serif;padding:40px;color:#000;max-width:600px;margin:auto;background:#FBFBF9}
 h1{font-size:20px;font-weight:800} table{width:100%;border-collapse:collapse;margin-top:20px}
@@ -109,11 +115,11 @@ td,th{padding:10px;border-bottom:1px solid #D0D0CE;text-align:left}
 th{background:#F5F5F3;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:0.06em} .total{font-weight:800}
 </style></head><body>
 <h1>Recipient Created Tax Invoice</h1>
-<p><strong>Athlete:</strong> ${athleteName}<br>
-<strong>Period:</strong> ${selected.month}<br>
-<strong>Agreement Term:</strong> ${startDate ?? '—'} to ${endDate ?? '—'}</p>
+<p><strong>Athlete:</strong> ${safeName}<br>
+<strong>Period:</strong> ${safeMonth}<br>
+<strong>Agreement Term:</strong> ${safeTerm}</p>
 <table>
-<tr><th>Field</th><th>Amount (${currency})</th></tr>
+<tr><th>Field</th><th>Amount (${escapeHtml(currency)})</th></tr>
 <tr><td>Gross Earnings (Ex. GST)</td><td>A$${Math.round(selected.grossExGst)}</td></tr>
 <tr><td>GST (10%)</td><td>A$${Math.round(selected.gst)}</td></tr>
 <tr class="total"><td>Total (Inc. GST)</td><td>A$${Math.round(selected.totalIncGst)}</td></tr>
