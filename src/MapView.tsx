@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
+import { addCartoTiles } from './lib/cartoTiles';
 import type { AthleteLocation, MatchedSponsor } from './types';
 import { displayName } from './lib/formatName';
 
@@ -56,11 +57,7 @@ export default function MapView({
       attributionControl: true,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19,
-    }).addTo(map);
+    addCartoTiles(map, 'dark_all');
 
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
