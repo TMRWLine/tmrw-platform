@@ -6,16 +6,17 @@ import { ROSTER_DATA, ROSTER_SPECIMENS, recordFor } from './roster';
 import { eligibleAthletesForPackage } from './mockDeliverables';
 
 test('scout intake has unique identities and matching SQL source evidence', () => {
-  const migration = readFileSync(new URL('../../supabase/migrations/20261119_daily_scout_intake.sql', import.meta.url), 'utf8');
+  const migration = readFileSync(new URL('../../supabase/migrations/20261119_daily_scout_intake.sql', import.meta.url), 'utf8')
+    .replace(/\s+/g, ' ');
   const scouts = DATABASE_ROSTER.filter((record) => record.intake_status === 'scouted');
-  assert.equal(scouts.length, 3);
+  assert.equal(scouts.length, 6);
   assert.equal(new Set(DATABASE_ROSTER.map((record) => record.id)).size, DATABASE_ROSTER.length);
   assert.equal(new Set(DATABASE_ROSTER.map((record) => record.full_name.toLowerCase())).size, DATABASE_ROSTER.length);
   for (const scout of scouts) {
     assert.equal(new URL(scout.verification_source_url).protocol, 'https:');
-    for (const value of [scout.id, scout.full_name, scout.current_club, scout.league, scout.verification_source_url]) {
-      assert.ok(migration.includes(value), value);
-    }
+    const sqlFields = [scout.full_name, scout.sport, scout.current_club, scout.league, scout.verification_source_url]
+      .map((value) => `'${value.replace(/'/g, "''")}'`);
+    assert.ok(migration.includes(`('${scout.id}'::uuid, ${sqlFields.join(', ')})`), scout.full_name);
     for (const value of [scout.postcode, scout.radiusKm, scout.image, scout.valuation, scout.tier,
       scout.legal_full_name, scout.agreement_status, scout.master_licence_signed, scout.branding_categories,
       ...Object.values(scout.social), scout.governing_body.sanctioned,

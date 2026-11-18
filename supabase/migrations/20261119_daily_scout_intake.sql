@@ -3,12 +3,18 @@ BEGIN;
 -- Public sporting identity only; commercial clearance remains pending.
 WITH intake (id, name, sport, current_club, league, verification_source_url) AS (
   VALUES
-    ('973302d2-bc62-47ce-9311-c1052fe13a01'::uuid, 'Onitoni Large', 'Rugby League', 'Manly-Warringah Sea Eagles', 'NSW Cup',
-     'https://www.nswrl.com.au/players/nsw-cup/manly-warringah-sea-eagles/onitoni-large/'),
-    ('973302d2-bc62-47ce-9311-c1052fe13a02'::uuid, 'Luke Aiken', 'Rugby Union', 'Western Force', 'Super Rugby Pacific Academy',
+    ('973302d2-bc62-47ce-9311-c1052fe13a01'::uuid, 'Onitoni Large', 'Rugby League', 'Manly-Warringah Sea Eagles', 'NRL',
+     'https://www.nrl.com/players/nrl-premiership/sea-eagles/onitoni-large/'),
+    ('973302d2-bc62-47ce-9311-c1052fe13a02'::uuid, 'Luke Aiken', 'Rugby Union', 'Western Force', 'Super Rugby Pacific',
      'https://www.rugby.com.au/news/emerging-academy-halfback-aiken-elevated-force-squad-2026824'),
     ('973302d2-bc62-47ce-9311-c1052fe13a03'::uuid, 'Erana Ngarimu', 'Netball', 'Pulse', 'ANZ Premiership',
-     'https://anzpremiership.co.nz/premiership/teams/pulse/erana-ngarimu.html')
+     'https://anzpremiership.co.nz/premiership/teams/pulse/erana-ngarimu.html'),
+    ('973302d2-bc62-47ce-9311-c1052fe13a04'::uuid, 'Brady Wright', 'Australian Rules Football', 'Werribee', 'VFL',
+     'https://www.afl.com.au/news/1533219/made-of-the-wright-stuff'),
+    ('973302d2-bc62-47ce-9311-c1052fe13a05'::uuid, 'Tayla Brazel', 'Basketball', 'Adelaide Lightning', 'WNBL',
+     'https://www.wnbl.com.au/player/tayla-brazel-703af4f7-45e3-11f0-a244-c5864f4b75a8'),
+    ('973302d2-bc62-47ce-9311-c1052fe13a06'::uuid, 'Max Middleby', 'Football', 'Valentine FC', 'NPL Men''s NNSW',
+     'https://northernnswfootball.com.au/news/npl-mens-nnsw-round-18-review-valentine-survives-fast-finishing-rams-claim-second-home-win')
 )
 INSERT INTO public.athletes (
   id, name, sport, current_club, agreement_status,
