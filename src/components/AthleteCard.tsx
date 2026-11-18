@@ -1,4 +1,3 @@
-import React from 'react';
 import { AssetImage } from './AssetImage';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
 

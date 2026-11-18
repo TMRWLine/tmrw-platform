@@ -2,8 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import Stripe from 'stripe';
+import { createTwelveLabsRouter } from './twelvelabs.js';
 
 // Load .env / .env.local
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -24,6 +25,7 @@ const SUPABASE_ANON_KEY =
   process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 const app = express();
+if (process.env.VERCEL) app.set('trust proxy', 1);
 app.use(cors());
 
 /**
@@ -75,9 +77,10 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), a
 });
 
 // General JSON body parser for all other routes
+app.use('/api/twelvelabs', createTwelveLabsRouter());
 app.use(express.json());
 
-app.get('/health', (_req, res) => {
+app.get(['/health', '/api/health'], (_req, res) => {
   res.json({ ok: true, service: 'sponsor-match-proxy' });
 });
 
@@ -416,7 +419,7 @@ app.post('/api/checkout/create-session', async (req, res) => {
     }
 
     const catalogue = { ...FALLBACK_COMMERCIAL_TIERS, ...loadCommercialTiers() };
-    const pkg = catalogue[tierId];
+    const pkg = catalogue[tierId === 'pathway_contender' ? 'pathway_flight' : tierId];
     if (!pkg || !Number.isFinite(pkg.price_aud) || pkg.price_aud <= 0) {
       return res.status(400).json({ error: `Unknown commercial tier: ${tierId}` });
     }
@@ -481,6 +484,7 @@ app.post('/api/checkout/create-session', async (req, res) => {
 });
 
 const distDir = join(__dirname, '..', 'dist');
+app.use('/api', (_req, res) => res.status(404).json({ error: 'API route not found' }));
 if (existsSync(distDir)) {
   app.use(express.static(distDir));
   app.get('*', (req, res) => res.sendFile(join(distDir, 'index.html')));
@@ -490,6 +494,15 @@ if (existsSync(distDir)) {
   );
 }
 
-app.listen(PORT, () => {
-  console.log(`[proxy] sponsor-match unified server listening on http://localhost:${PORT}`);
+app.use((error, _req, res, _next) => {
+  const status = error?.type === 'entity.too.large' ? 413 : error?.status === 400 ? 400 : 500;
+  res.status(status).json({ error: status === 413 ? 'Request body too large' : status === 400 ? 'Invalid request body' : 'Request failed' });
 });
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  app.listen(PORT, () => {
+    console.log(`[proxy] sponsor-match unified server listening on http://localhost:${PORT}`);
+  });
+}
+
+export default app;
