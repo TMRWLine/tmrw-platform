@@ -7,6 +7,7 @@ import Stripe from 'stripe';
 import { randomBytes } from 'node:crypto';
 import { createTwelveLabsRouter } from './twelvelabs.js';
 import { catalogueItems } from './capsule-catalogue.js';
+import { requireUser } from './auth.js';
 
 // Load .env / .env.local
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -338,7 +339,16 @@ async function hydrateAthleteFromSupabase(athlete) {
  *  A) Athlete Merch Capsule Bags: { capsuleItems: [{ id, title, athleteName, clubName, collabPartner, collabRoyaltyPct, priceAud, baseCostAud, qty, size, frontImageUrl }] }
  *  B) Commercial Sponsorship Tiers: { athleteId, tierId, athlete? }
  */
-app.post('/api/checkout/create-session', async (req, res) => {
+const transferGroupPattern = /^TG_[A-Za-z0-9_]{1,80}$/;
+const escrowHold = (grossCents) => {
+  const athleteCents = Math.round((grossCents * 7000) / 10000);
+  return athleteCents - Math.round(athleteCents * 0.5);
+};
+
+app.post('/api/checkout/create-session', (req, res, next) => {
+  if (!Object.hasOwn(req.body ?? {}, 'capsuleItems') && req.get('Authorization')) return requireUser(req, res, next);
+  next();
+}, async (req, res) => {
   try {
     const origin = appBaseUrl(req);
     const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -441,6 +451,10 @@ app.post('/api/checkout/create-session', async (req, res) => {
     }
 
     // BRANCH B: Commercial Sponsorship Tier Checkout
+    const escrowMode = req.body?.escrowMode ?? 'milestone_50_50';
+    if (!['milestone_50_50', 'upfront_100'].includes(escrowMode)) {
+      return res.status(400).json({ error: 'Invalid escrowMode' });
+    }
     const athleteId = String(req.body?.athleteId ?? '').trim();
     const requestedTierId = String(req.body?.tierId ?? '').trim();
     const tierId = requestedTierId === 'pathway_contender' ? 'pathway_flight' : requestedTierId;
@@ -487,6 +501,13 @@ app.post('/api/checkout/create-session', async (req, res) => {
       body.set('metadata[tierId]', tierId);
       body.set('metadata[athleteCutCents]', String(Math.round(unitCents * 0.7)));
       body.set('metadata[clubCutCents]', String(Math.round(unitCents * 0.15)));
+      body.set('metadata[escrowMode]', escrowMode);
+      body.set('metadata[athleteEscrowHoldCents]', String(escrowMode === 'milestone_50_50' ? escrowHold(unitCents) : 0));
+      if (req.authUser) body.set('metadata[sponsorUserId]', req.authUser.id);
+      body.set('payment_intent_data[transfer_group]', transferGroupPattern.test(req.body?.transferGroup) ? req.body.transferGroup : `TG_${randomBytes(16).toString('hex')}`);
+      for (const [key, value] of [...body]) {
+        if (key.startsWith('metadata[')) body.set(`payment_intent_data[metadata][${key.slice(9)}`, value);
+      }
 
       const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
         method: 'POST',
@@ -502,7 +523,7 @@ app.post('/api/checkout/create-session', async (req, res) => {
           error: session?.error?.message ?? 'Stripe could not create a checkout session.',
         });
       }
-      return res.json({ checkoutUrl: session.url });
+      return res.json({ checkoutUrl: session.url, sessionId: session.id });
     }
 
     return res.json({
@@ -510,6 +531,95 @@ app.post('/api/checkout/create-session', async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ error: err?.message ?? 'Unable to initialise checkout.' });
+  }
+});
+
+async function escrowStripe(path, params, method = 'GET', idempotencyKey) {
+  const query = new URLSearchParams(params);
+  const response = await fetch(`https://api.stripe.com/v1/${path}${method === 'GET' ? `?${query}` : ''}`, {
+    method,
+    headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded', ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) },
+    ...(method === 'POST' ? { body: query } : {}),
+    signal: AbortSignal.timeout(15000),
+  });
+  const data = await response.json();
+  if (!response.ok) throw Object.assign(new Error(data.error?.message || 'Stripe request failed'), { stripeStatus: response.status });
+  return data;
+}
+
+async function escrowList(path, transferGroup) {
+  const items = [];
+  let after;
+  do {
+    const page = await escrowStripe(path, { transfer_group: transferGroup, limit: '100', ...(after ? { starting_after: after } : {}) });
+    items.push(...page.data);
+    after = page.has_more ? page.data.at(-1)?.id : undefined;
+  } while (after);
+  return items;
+}
+
+app.post('/api/checkout/release-escrow', requireUser, async (req, res) => {
+  if (!process.env.STRIPE_SECRET_KEY) return res.status(503).json({ error: 'Stripe is not configured' });
+  const { transferGroup, athleteId, checkoutSessionId, escrowHoldCents } = req.body ?? {};
+  if (typeof transferGroup !== 'string' || !transferGroupPattern.test(transferGroup) || typeof athleteId !== 'string' || !athleteId ||
+      (checkoutSessionId !== undefined && (typeof checkoutSessionId !== 'string' || !/^cs_[A-Za-z0-9_]+$/.test(checkoutSessionId)))) {
+    return res.status(400).json({ error: 'Valid transferGroup, athleteId and optional checkoutSessionId are required' });
+  }
+  try {
+    let orders;
+    if (checkoutSessionId) {
+      let session;
+      try {
+        session = await escrowStripe(`checkout/sessions/${checkoutSessionId}`, { 'expand[]': 'payment_intent.latest_charge' });
+      } catch (error) {
+        if (error.stripeStatus === 404) return res.status(404).json({ error: 'Order not found' });
+        throw error;
+      }
+      if (session.metadata?.sponsorUserId !== req.authUser.id) return res.status(403).json({ error: 'Order access denied' });
+      const intent = session.payment_intent;
+      orders = [{ id: session.id, metadata: session.metadata, paid: session.payment_status === 'paid', group: intent?.transfer_group, charge: intent?.latest_charge }];
+    } else {
+      const charges = await escrowList('charges', transferGroup);
+      const owned = charges.filter((charge) => charge.metadata?.sponsorUserId === req.authUser.id);
+      if (charges.length && !owned.length) return res.status(403).json({ error: 'Order access denied' });
+      orders = owned.map((charge) => ({ id: charge.id, metadata: charge.metadata, paid: true, group: charge.transfer_group, charge }));
+    }
+    const catalogue = { ...FALLBACK_COMMERCIAL_TIERS, ...loadCommercialTiers() };
+    orders = orders.filter(({ metadata: m, paid, group, charge: c }) => paid && c?.status === 'succeeded' && c.paid === true && c.captured === true && !c.refunded && !c.amount_refunded && !c.disputed && !c.dispute && c.currency === 'aud' &&
+      m?.orderType === 'sponsorship_tier' && m.escrowMode === 'milestone_50_50' && m.athleteId === athleteId && group === transferGroup &&
+      Object.hasOwn(catalogue, m.tierId) && c.amount >= Math.round(catalogue[m.tierId].price_aud * 100));
+    if (!orders.length) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
+    const transfers = await escrowList('transfers', transferGroup);
+    const existingFor = (order) => transfers.find((t) => [order.id, order.charge.id].includes(t.metadata?.escrowReleaseFor));
+    if (!checkoutSessionId) {
+      const unreleased = orders.filter((order) => !existingFor(order));
+      if (unreleased.length > 1 || (!unreleased.length && orders.length > 1)) return res.status(409).json({ error: 'Specify checkoutSessionId to identify the order' });
+      orders = unreleased.length ? unreleased : orders;
+    }
+    const order = orders[0];
+    const amount = escrowHold(Math.round(catalogue[order.metadata.tierId].price_aud * 100));
+    if (escrowHoldCents !== undefined && escrowHoldCents !== amount) return res.status(409).json({ error: 'Escrow amount does not match the order' });
+    const existing = existingFor(order);
+    const success = (transfer, alreadyReleased) => res.json({ released: true, escrowTransferId: transfer.id, releasedAmountCents: transfer.amount, releasedAt: new Date(transfer.created * 1000).toISOString(), alreadyReleased });
+    if (existing) return success(existing, true);
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+    const response = await fetch(`${url}/rest/v1/athletes?${new URLSearchParams({ id: `eq.${athleteId}`, select: 'stripe_account_id' })}`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return res.status(502).json({ error: 'Unable to look up athlete payout account' });
+    const athletes = await response.json();
+    const destination = athletes[0]?.stripe_account_id;
+    if (typeof destination !== 'string' || !/^acct_[A-Za-z0-9]+$/.test(destination)) return res.status(409).json({ error: 'Athlete Connect account is not configured' });
+    // The charge identity is stable across both session and transfer-group lookups.
+    const orderId = order.charge.id;
+    const transfer = await escrowStripe('transfers', {
+      amount: String(amount), currency: 'aud', destination, transfer_group: transferGroup, source_transaction: orderId,
+      'metadata[escrowReleaseFor]': orderId, 'metadata[athleteId]': athleteId, 'metadata[sponsorUserId]': req.authUser.id,
+    }, 'POST', `tmrw_escrow_release_${orderId}`);
+    return success(transfer, false);
+  } catch (error) {
+    return res.status(502).json({ error: error.message || 'Unable to release escrow' });
   }
 });
 
