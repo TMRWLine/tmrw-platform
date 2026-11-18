@@ -37,7 +37,7 @@ test('Vercel keeps API paths out of the SPA rewrite and includes the runtime cat
   assert.ok(!pattern.test('/api'));
   assert.equal(config.buildCommand, 'npm run build');
   assert.equal(config.outputDirectory, 'dist');
-  const path = config.functions['api/[...path].js'].includeFiles;
+  const path = config.functions['api/**/*.js'].includeFiles;
   const catalogue = JSON.parse(readFileSync(new URL(`../${path}`, import.meta.url)));
   assert.ok(Array.isArray(catalogue.packages) && catalogue.packages.length > 0);
   assert.ok(catalogue.packages.every((entry) => typeof entry.tier_id === 'string' && Number.isFinite(entry.price_aud)));
