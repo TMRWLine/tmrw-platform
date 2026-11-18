@@ -1,5 +1,4 @@
 export interface AthleteRecord {
-  bio?: string;
   id: string; // uuid
   name: string; // display name e.g. "M. Thorne"
   display_name: string;
