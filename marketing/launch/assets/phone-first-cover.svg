@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" role="img" aria-labelledby="title desc">
+  <title id="title">TMRWLine phone-first cover guide</title>
+  <desc id="desc">Production template only. Replace the placeholder with a cleared real action photo and one headline. Remove the guides before export.</desc>
+  <defs>
+    <linearGradient id="shade" x2="0%" y2="100%">
+      <stop offset="0" stop-color="#080808" stop-opacity="0"/>
+      <stop offset="1" stop-color="#080808" stop-opacity=".90"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1920" fill="#080808"/>
+  <rect id="photo-placeholder" width="1080" height="1920" fill="#292929"/>
+  <image id="action-photo" x="0" y="0" width="1080" height="1920" preserveAspectRatio="xMidYMid slice"/>
+  <rect y="670" width="1080" height="900" fill="url(#shade)"/>
+  <text id="headline" x="104" y="1180" fill="#F7F7F6" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="92">One big headline</text>
+  <g id="remove-before-export" fill="#F7F7F6" font-family="monospace" font-size="27">
+    <rect x="82" y="500" width="850" height="920" fill="none" stroke="#B8FF00" stroke-width="3" stroke-dasharray="14 10"/>
+    <text x="104" y="565">HEADLINE AND ACTION SAFE AREA</text>
+    <text x="104" y="815">INSERT CLEARED REAL ACTION PHOTO</text>
+    <text x="104" y="1370">PRODUCTION GUIDE / NOT FOR POSTING</text>
+  </g>
+</svg>
