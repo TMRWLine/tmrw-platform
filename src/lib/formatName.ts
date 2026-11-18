@@ -8,7 +8,7 @@ export function athleteInitials(name?: string | null): string {
   const parts = nameParts(name);
   if (parts.length === 0) return '?';
   return parts
-    .map((p) => p[0])
+    .map((p) => Array.from(p)[0])
     .slice(0, 2)
     .join('')
     .toUpperCase();
