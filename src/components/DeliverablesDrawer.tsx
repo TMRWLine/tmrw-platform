@@ -220,14 +220,17 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
     void createCheckoutSession({
       athleteId: athlete.id,
       tierId: flight.tier_id,
+      postcode: athlete.postcode,
       athlete: {
         full_name: athlete.full_name,
         grassroots_club_name: athlete.grassroots_club.name,
         image_url: athlete.image_url,
       },
     })
-      .then(({ checkoutUrl }) => {
-        if (!checkoutUrl) throw new Error('Unable to initialise secure checkout.');
+      .then(({ checkoutUrl, sessionId }) => {
+        if (!checkoutUrl || !/^cs_(test|live)_[a-zA-Z0-9]+$/.test(sessionId)) {
+          throw new Error('Unable to initialise secure checkout.');
+        }
         window.location.assign(checkoutUrl);
       })
       .catch((error: unknown) => {

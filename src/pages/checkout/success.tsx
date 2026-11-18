@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrandLockup } from '../../components/BrandLockup';
 import {
   getCommercialPackage,
@@ -9,29 +9,30 @@ import {
 } from '../../data/mockDeliverables';
 import { CHECKOUT_SUCCESS_PATH } from '../../lib/checkout';
 import { formatAud } from '../../lib/formatMoney';
+import { fetchPaidWhitelistingGrant, type PaidWhitelistingGrant } from '../../lib/whitelisting';
 import { ROSTER_DATA } from '../../data/roster';
 
 export { CHECKOUT_SUCCESS_PATH };
 
 const MILESTONES = [
-  { id: 'escrow', label: 'Escrow Funded', detail: 'Stripe Connect is holding the flight in escrow.', done: true },
+  { id: 'payment', label: 'Payment confirmed', detail: 'Stripe confirmed payment for this checkout.', done: true },
   {
     id: 'integrity',
-    label: 'Sport Integrity Australia Cleared',
-    detail: 'Athlete pre-cleared against SIA guidelines and NSO bylaws.',
-    done: true,
+    label: 'Integrity clearance',
+    detail: 'Confirm the applicable integrity and governing body requirements before activation.',
+    done: false,
   },
   { id: 'content', label: 'Content Scheduled', detail: 'Production window locks after brand kit confirmation.', done: false },
   { id: 'release', label: 'Final Release', detail: '70/15/15 disbursement on verified delivery.', done: false },
 ] as const;
 
-function resolveAthlete(athleteId: string | null): CommercialAthlete {
+function resolveAthlete(athleteId: string): CommercialAthlete | null {
   if (athleteId && athleteId === mockDeliverables.athlete.id) {
     return mockDeliverables.athlete;
   }
   const roster = athleteId ? ROSTER_DATA.find((entry) => entry.id === athleteId) : undefined;
   if (roster) return toCommercialAthlete(roster.record);
-  return mockDeliverables.athlete;
+  return null;
 }
 
 function dealReference(sessionId: string | null, athleteId: string, tierId: string): string {
@@ -76,9 +77,9 @@ function downloadRcti(args: {
 </head>
 <body>
   <main>
-    <p class="meta">tmrw/. · Recipient Created Tax Invoice</p>
+    <p class="meta">tmrw/. · RCTI specimen</p>
     <h1>${reference}</h1>
-    <p>ATO Income Tax Assessment Act 1997 s 153-50. Recipient-created tax invoice issued by tmrw/. as the recipient of a taxable supply from the athlete supplier.</p>
+    <p>This specimen illustrates the planned settlement. It is not a tax invoice.</p>
     <dl>
       <div><dt>Issued</dt><dd>${issued}</dd></div>
       <div><dt>Supplier (athlete)</dt><dd>${athlete.full_name}</dd></div>
@@ -90,7 +91,7 @@ function downloadRcti(args: {
       <div><dt>Club 15%</dt><dd>${formatAud(pkg.split_breakdown.club_amount)}</dd></div>
       <div><dt>Platform 15%</dt><dd>${formatAud(pkg.split_breakdown.platform_amount)}</dd></div>
     </dl>
-    <p class="note">Escrow held on Stripe Connect. Disbursement follows verified delivery. This document is a specimen RCTI for the funded flight and should be retained for BAS and audit.</p>
+    <p class="note">Stripe payment confirmation does not confirm escrow or disbursements.</p>
   </main>
 </body>
 </html>`;
@@ -104,16 +105,32 @@ function downloadRcti(args: {
 }
 
 export const CheckoutSuccessPage: React.FC = () => {
-  const params = useMemo(() => new URLSearchParams(window.location.search), []);
-  const sessionId = params.get('session_id');
-  const athleteId = params.get('athleteId');
-  const tierId = params.get('tierId');
+  const sessionId = new URLSearchParams(window.location.search).get('session_id') ?? '';
+  const [paid, setPaid] = useState<PaidWhitelistingGrant | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
-  const athlete = resolveAthlete(athleteId);
-  const pkg = getCommercialPackage(tierId) ?? mockDeliverables.packages[0];
-  const split = pkg.split_breakdown;
-  const reference = dealReference(sessionId, athlete.id, pkg.tier_id);
-  const locality = [athlete.grassroots_club.suburb, athlete.grassroots_club.state]
+  useEffect(() => {
+    const controller = new AbortController();
+    setError(null);
+    setPaid(null);
+    void fetchPaidWhitelistingGrant(sessionId, controller.signal).then(
+      (result) => { if (!controller.signal.aborted) setPaid(result); },
+      (reason: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(reason instanceof Error ? reason.message : 'The receipt is temporarily unavailable.');
+        }
+      },
+    );
+    return () => controller.abort();
+  }, [sessionId, attempt]);
+
+  const grant = paid?.grant;
+  const athlete = grant ? resolveAthlete(grant.athleteId) : null;
+  const pkg = grant ? getCommercialPackage(grant.flightTierId) : null;
+  const split = pkg?.split_breakdown;
+  const reference = grant ? dealReference(sessionId, grant.athleteId, grant.flightTierId) : '';
+  const locality = [athlete?.grassroots_club.suburb ?? '', athlete?.grassroots_club.state ?? '']
     .filter((part) => part.trim().length > 0)
     .join(', ');
 
@@ -127,15 +144,22 @@ export const CheckoutSuccessPage: React.FC = () => {
 
       <main className="max-w-[960px] mx-auto px-4 md:px-8 py-12 md:py-16">
         <p className="m-0 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-[#666666]">
-          Escrow confirmation
+          Checkout receipt
         </p>
         <h1 className="m-0 mt-3 font-display font-extrabold text-4xl md:text-5xl tracking-tight text-[#0F0F11]">
-          Capital is in escrow. The flight is live.
+          {paid ? 'Stripe confirmed your payment.' : error ? 'Receipt not available yet.' : 'Checking your payment…'}
         </h1>
-        <p className="m-0 mt-4 max-w-2xl text-sm md:text-base leading-relaxed text-[#666666]">
-          Stripe has funded this deal. Sport Integrity Australia clearance is already on file.
-          Content scheduling and final 70/15/15 release follow verified delivery.
-        </p>
+        {!paid || !grant ? (
+          <div className="mt-4" role="status">
+            <p className="m-0 text-sm text-[#666666]">{error ?? 'Waiting for Stripe and the activation ledger.'}</p>
+            {error && /^cs_(test|live)_/.test(sessionId) && (
+              <button type="button" onClick={() => setAttempt((value) => value + 1)} className="mt-4 rounded-full bg-[#CCFF00] px-5 py-2 text-sm font-bold">
+                Check again
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
 
         <dl className="m-0 mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-6">
@@ -149,7 +173,7 @@ export const CheckoutSuccessPage: React.FC = () => {
               Flight
             </dt>
             <dd className="m-0 mt-2 font-display font-extrabold text-xl tracking-tight text-[#0F0F11]">
-              {pkg.name} · {pkg.price_display}
+              {pkg?.name ?? grant.flightTierId} · {formatAud(paid.amountPaidCents / 100)} paid
             </dd>
           </div>
           <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-6">
@@ -157,26 +181,45 @@ export const CheckoutSuccessPage: React.FC = () => {
               Athlete
             </dt>
             <dd className="m-0 mt-2 font-display font-extrabold text-xl tracking-tight text-[#0F0F11]">
-              {athlete.full_name}
+              {grant.athleteName}
             </dd>
-            <p className="m-0 mt-1 text-sm text-[#666666]">
-              {athlete.display_name} · {athlete.sport}
-            </p>
+            {athlete && <p className="m-0 mt-1 text-sm text-[#666666]">{athlete.display_name} · {athlete.sport}</p>}
           </div>
           <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-6">
             <dt className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#666666]">
               Grassroots club
             </dt>
             <dd className="m-0 mt-2 font-display font-extrabold text-xl tracking-tight text-[#0F0F11]">
-              {athlete.grassroots_club.name}
+              {athlete?.grassroots_club.name ?? 'Not listed'}
             </dd>
             {locality ? <p className="m-0 mt-1 text-sm text-[#666666]">{locality}</p> : null}
           </div>
         </dl>
 
+        <section className="mt-8 rounded-xl border border-neutral-200 bg-white p-6 md:p-8">
+          <h2 className="m-0 font-display text-2xl font-extrabold">Paid-media activation grant</h2>
+          <p className="mt-3 text-sm text-[#666666]">
+            Postcode {grant.postcode} · {grant.radiusKm} km · Expires {new Date(grant.expiresAt).toLocaleDateString('en-AU')}
+          </p>
+          <p className="text-sm text-[#666666]">
+            These tmrw/. references confirm your grant. Meta and TikTok authorisation must be arranged separately.
+          </p>
+          <dl className="m-0 grid gap-4 sm:grid-cols-2">
+            <div>
+              <dt className="text-sm font-bold">Meta grant reference</dt>
+              <dd className="m-0 break-all font-mono text-sm">{grant.meta_partnership_token}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-bold">TikTok grant reference</dt>
+              <dd className="m-0 break-all font-mono text-sm">{grant.tiktok_spark_code}</dd>
+            </div>
+          </dl>
+        </section>
+
+        {split && (
         <section className="mt-8 bg-white border border-neutral-200 shadow-sm rounded-xl p-6 md:p-8">
           <h2 className="m-0 font-display font-extrabold text-2xl tracking-tight text-[#0F0F11]">
-            70/15/15 distribution
+            Planned 70/15/15 distribution
           </h2>
           <div
             className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-neutral-200"
@@ -214,6 +257,7 @@ export const CheckoutSuccessPage: React.FC = () => {
             </div>
           </dl>
         </section>
+        )}
 
         <section className="mt-8 bg-white border border-neutral-200 shadow-sm rounded-xl p-6 md:p-8">
           <h2 className="m-0 font-display font-extrabold text-2xl tracking-tight text-[#0F0F11]">
@@ -239,25 +283,28 @@ export const CheckoutSuccessPage: React.FC = () => {
           </ol>
         </section>
 
+        {athlete && pkg && (
         <section className="mt-8 bg-white border border-neutral-200 shadow-sm rounded-xl p-6 md:p-8">
           <p className="m-0 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#666666]">
-            Tax invoice
+            Settlement specimen
           </p>
           <h2 className="m-0 mt-2 font-display font-extrabold text-2xl tracking-tight text-[#0F0F11]">
-            ATO Section 153-50 RCTI
+            RCTI specimen
           </h2>
           <p className="m-0 mt-3 text-sm leading-relaxed text-[#666666]">
-            Recipient Created Tax Invoice issued by tmrw/. for this escrowed flight. Compliant with
-            Income Tax Assessment Act 1997 s 153-50. Retain for BAS and audit.
+            Preview the planned settlement. This is not a tax invoice.
           </p>
           <button
             type="button"
             onClick={() => downloadRcti({ reference, athlete, pkg })}
             className="mt-6 rounded-full border-0 bg-[#CCFF00] px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-[#dfff66] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] focus-visible:ring-offset-2"
           >
-            Download RCTI receipt
+            Download RCTI specimen
           </button>
         </section>
+        )}
+          </>
+        )}
 
         <p className="m-0 mt-10">
           <a

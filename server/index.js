@@ -7,6 +7,15 @@ import Stripe from 'stripe';
 import { randomBytes } from 'node:crypto';
 import { createTwelveLabsRouter } from './twelvelabs.js';
 import { catalogueItems } from './capsule-catalogue.js';
+import {
+  checkGrantStorage,
+  createGrantAccess,
+  grantPath,
+  isGrantPostcode,
+  isStripeCheckoutId,
+  issuePaidWhitelistingGrant,
+  setGrantAccessCookie,
+} from './whitelisting.js';
 
 // Load .env / .env.local
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -103,6 +112,7 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), a
 // General JSON body parser for all other routes
 app.use('/api/twelvelabs', createTwelveLabsRouter());
 app.use(express.json());
+app.post(grantPath, issuePaidWhitelistingGrant);
 
 app.get(['/health', '/api/health'], (_req, res) => {
   res.json({ ok: true, service: 'sponsor-match-proxy' });
@@ -284,6 +294,7 @@ function resolveCheckoutAthlete(athleteId, reqBody) {
   const fromMock = mockAthlete?.id === athleteId ? mockAthlete : null;
   return {
     id: athleteId,
+    postcode: fromMock?.postcode,
     full_name: snapshot.full_name || fromMock?.full_name || 'Verified athlete',
     grassroots_club_name:
       snapshot.grassroots_club_name || fromMock?.grassroots_club?.name || 'Grassroots club',
@@ -463,6 +474,20 @@ app.post('/api/checkout/create-session', async (req, res) => {
     const productImage = absoluteAssetUrl(athlete.image_url, origin);
 
     if (stripeKey) {
+      const requestOrigin = req.get('Origin');
+      if (requestOrigin && requestOrigin !== origin) {
+        return res.status(400).json({ error: 'Start checkout from the main tmrw/. site.' });
+      }
+      const postcode = req.body?.postcode ?? athlete.postcode;
+      if (!isGrantPostcode(postcode)) {
+        return res.status(400).json({ error: 'A four-digit postcode is required for this sponsorship.' });
+      }
+      try {
+        await checkGrantStorage();
+      } catch {
+        return res.status(503).json({ error: 'Sponsorship checkout is temporarily unavailable.' });
+      }
+      const grantAccess = createGrantAccess();
       const unitCents = Math.round(pkg.price_aud * 100);
       const body = new URLSearchParams();
       body.set('mode', 'payment');
@@ -485,6 +510,9 @@ app.post('/api/checkout/create-session', async (req, res) => {
       body.set('metadata[orderType]', 'sponsorship_tier');
       body.set('metadata[athleteId]', athleteId);
       body.set('metadata[tierId]', tierId);
+      body.set('metadata[athleteName]', athlete.full_name.slice(0, 500));
+      body.set('metadata[postcode]', postcode);
+      body.set('metadata[grantAccessHash]', grantAccess.hash);
       body.set('metadata[athleteCutCents]', String(Math.round(unitCents * 0.7)));
       body.set('metadata[clubCutCents]', String(Math.round(unitCents * 0.15)));
 
@@ -497,12 +525,13 @@ app.post('/api/checkout/create-session', async (req, res) => {
         body,
       });
       const session = await stripeRes.json();
-      if (!stripeRes.ok || !session?.url) {
+      if (!stripeRes.ok || !session?.url || !isStripeCheckoutId(session.id)) {
         return res.status(502).json({
           error: session?.error?.message ?? 'Stripe could not create a checkout session.',
         });
       }
-      return res.json({ checkoutUrl: session.url });
+      setGrantAccessCookie(req, res, session.id, grantAccess.secret);
+      return res.json({ checkoutUrl: session.url, sessionId: session.id });
     }
 
     return res.json({
