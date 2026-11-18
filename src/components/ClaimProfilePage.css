@@ -1,12 +1,12 @@
-.claim-page { background: var(--canvas); color: var(--ink); min-height: 100vh; font-family: Arial, Helvetica, sans-serif; }
+.claim-page { --font-telemetry: 'JetBrains Mono', monospace; background: var(--canvas); color: var(--ink); min-height: 100vh; font-family: Arial, Helvetica, sans-serif; }
 .claim-page * { box-sizing: border-box; border-radius: 0 !important; }
 .claim-header { border-bottom: 1px solid var(--rule); padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .claim-header > a { font-size: 29px; font-weight: 950; letter-spacing: -2px; color: var(--ink); text-decoration: none; }
 .claim-header > a span { font-size: 12px; vertical-align: top; letter-spacing: 0; }
-.claim-meta { font: 10px/1.5 monospace; letter-spacing: 1px; text-transform: uppercase; }
+.claim-meta { font: 10px/1.5 var(--font-telemetry); letter-spacing: 1px; text-transform: uppercase; }
 .claim-header .claim-meta { max-width: 120px; text-align: right; }
 .claim-shell { max-width: 560px; margin: 0 auto; padding: 30px 22px 0; }
-.claim-kicker { display: flex; gap: 8px; align-items: center; font: 10px monospace; letter-spacing: 1px; margin-bottom: 32px; }
+.claim-kicker { display: flex; gap: 8px; align-items: center; font: 10px var(--font-telemetry); letter-spacing: 1px; margin-bottom: 32px; }
 .claim-dot { width: 8px; height: 8px; background: var(--signal); }
 .claim-page h1 { font-size: clamp(40px, 10vw, 60px); line-height: .98; letter-spacing: -2.7px; font-weight: 800; margin: 16px 0 22px; }
 .claim-page h1 em { font-style: normal; color: var(--ink); }
@@ -14,7 +14,7 @@
 .claim-page h2 { font-size: 21px; letter-spacing: -.6px; font-weight: 750; margin: 0 0 8px; }
 .claim-profile { border: 1px solid var(--rule); padding: 18px; margin: 26px 0 32px; background: var(--canvas); }
 .claim-profile-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.claim-badge { font: 9px monospace; border: 1px solid var(--rule); padding: 4px 7px; }
+.claim-badge { font: 9px var(--font-telemetry); border: 1px solid var(--rule); padding: 4px 7px; }
 .claim-monogram { width: 64px; height: 64px; background: var(--signal); font-size: 24px; font-weight: 800; display: grid; place-items: center; margin: 26px 0 18px; }
 .claim-profile p { font-size: 12px; margin: 6px 0; }
 .claim-profile h2 { font-size: 28px; }
@@ -23,7 +23,7 @@
 .claim-small { font-size: 11px; line-height: 1.6; color: var(--ink-muted); margin: 12px 0 18px; }
 .claim-sponsor { border-top: 1px solid var(--rule); padding: 13px 0; display: flex; flex-direction: column; gap: 5px; }
 .claim-sponsor strong { font-size: 14px; }
-.claim-sponsor span { font: 10px monospace; color: var(--ink-muted); }
+.claim-sponsor span { font: 10px var(--font-telemetry); color: var(--ink-muted); }
 .claim-primary, .claim-secondary { width: 100%; min-height: 54px; padding: 16px; border: 1px solid var(--ink); font-size: 13px; font-weight: 700; text-align: left; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: var(--ink); cursor: pointer; gap: 10px; }
 .claim-primary { background: var(--signal); margin: 26px 0 12px; }
 .claim-secondary { background: transparent; margin: 12px 0; }
@@ -34,13 +34,13 @@
 .claim-note a { text-decoration: underline; }
 .claim-footer { margin-top: 45px; padding: 22px 0; border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: 9px; }
 .claim-footer strong { color: var(--ink); font-size: 20px; letter-spacing: -1px; }
-.claim-footer span { font: 9px monospace; letter-spacing: .9px; color: var(--ink-muted); }
+.claim-footer span { font: 9px var(--font-telemetry); letter-spacing: .9px; color: var(--ink-muted); }
 .claim-error { padding: 16px; border: 1px solid var(--ink); background: var(--canvas); color: var(--ink); font-size: 13px; line-height: 1.5; margin-bottom: 24px; }
 .claim-field { border-top: 1px solid var(--rule); padding: 16px 0; }
 .claim-field-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 12px; }
 .claim-page label { font-size: 12px; font-weight: 600; }
 .claim-page input:not([type="checkbox"]) { display: block; border: 1px solid var(--rule); background: var(--canvas); padding: 13px 11px; width: 100%; margin: 8px 0 0; font-size: 15px; min-height: 48px; }
-.claim-toggle { border: 1px solid var(--ink-muted); padding: 7px 10px; font: 10px monospace; background: transparent; min-height: 32px; cursor: pointer; }
+.claim-toggle { border: 1px solid var(--ink-muted); padding: 7px 10px; font: 10px var(--font-telemetry); background: transparent; min-height: 32px; cursor: pointer; }
 .claim-toggle.is-public { background: var(--signal); border-color: var(--ink); }
 .claim-check { display: flex; gap: 12px; align-items: flex-start; margin: 20px 0; line-height: 1.6; }
 .claim-check input { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--ink); margin-top: 1px; }
