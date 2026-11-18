@@ -612,8 +612,7 @@ export function MarketplaceApp() {
 
   useEffect(() => {
     const syncPath = () => {
-      const next = viewFromLocation();
-      setView((current) => (current === 'sponsor' && next === 'landing' ? current : next));
+      setView(viewFromLocation());
     };
     window.addEventListener('popstate', syncPath);
     return () => window.removeEventListener('popstate', syncPath);
