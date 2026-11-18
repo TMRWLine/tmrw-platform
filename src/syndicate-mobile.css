@@ -2,8 +2,8 @@
    behaviour, unchanged. Short landscape applies only to coarse pointers. */
 @media (max-width: 767px), (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
   /* The board's global footer suppression must not hide modal actions. */
-  body:has(#tmrw-locked-runway-footer) .syndicate-application footer,
-  body:has(#tmrw-locked-runway-footer) .checkout-backdrop footer {
+  body:has(#tmrw-locked-runway-footer) .syndicate-application footer:not(#tmrw-locked-runway-footer),
+  body:has(#tmrw-locked-runway-footer) .checkout-backdrop footer:not(#tmrw-locked-runway-footer) {
     display: flex !important;
   }
 
