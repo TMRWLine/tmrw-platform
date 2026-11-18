@@ -147,6 +147,9 @@ export function ClaimProfilePage() {
         {step === 'consent' && <>
           <p className="claim-meta">03 / YOU SET THE BOUNDARIES</p><h1>Your details.<br /><em>Your decision.</em></h1>
           <p className="claim-intro">Correct anything below. Only fields marked Public will be visible to sponsors. Your birth date and guardian email always stay private.</p>
+          <button className="claim-link" onClick={() => setStep('preview')}>← Back to private preview</button>
+          <button className="claim-link" onClick={() => setStep('decline')}>Decline & delete my data</button>
+          <button className="claim-link" onClick={() => setStep('unsubscribe')}>Unsubscribe from outreach</button>
           <form onSubmit={event => { event.preventDefault(); void act(async () => {
             if (!consents.every(Boolean)) throw new Error('Please review and accept all three consent choices.');
             if (!dob || new Date(dob + 'T00:00:00') > today) throw new Error('Enter a valid date of birth.');
