@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
 import { FileText, Download, Receipt, Calendar } from 'lucide-react';
 import { formatCurrency } from '../api';
+import { calculateExactSplitLedger } from '../lib/checkout';
 
 interface StatementRow {
   month: string;
   grossExGst: number;
   gst: number;
   totalIncGst: number;
-  commission: number;
+  clubShare: number;
+  platformShare: number;
   netPayout: number;
 }
 
@@ -29,8 +31,10 @@ export function StatementsPanel({
   const statements = useMemo<StatementRow[]>(() => {
     const gst = Math.round(grossExGst * 0.1);
     const totalIncGst = grossExGst + gst;
-    const commission = Math.round(grossExGst * 0.2);
-    const netPayout = grossExGst - commission;
+    const split = calculateExactSplitLedger(grossExGst);
+    const clubShare = split.club15Cents / 100;
+    const platformShare = split.ops15Cents / 100;
+    const netPayout = split.athlete70Cents / 100;
 
     const months: StatementRow[] = [];
     const now = new Date();
@@ -41,7 +45,8 @@ export function StatementsPanel({
         grossExGst: i === 0 ? grossExGst : 0,
         gst: i === 0 ? gst : 0,
         totalIncGst: i === 0 ? totalIncGst : 0,
-        commission: i === 0 ? commission : 0,
+        clubShare: i === 0 ? clubShare : 0,
+        platformShare: i === 0 ? platformShare : 0,
         netPayout: i === 0 ? netPayout : 0,
       });
     }
@@ -58,8 +63,9 @@ export function StatementsPanel({
       ['Gross Earnings (Ex. GST)', String(selected.grossExGst)],
       ['GST (10%)', String(selected.gst)],
       ['Total (Inc. GST)', String(selected.totalIncGst)],
-      ['Platform Commission (20%)', String(selected.commission)],
-      ['Net Athlete Payout', String(selected.netPayout)],
+      ['Club Share (15%)', String(selected.clubShare)],
+      ['Platform Share (15%)', String(selected.platformShare)],
+      ['Net Athlete Payout (70%)', String(selected.netPayout)],
     ];
     const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -91,8 +97,9 @@ th{background:#F5F5F3;font-weight:700;text-transform:uppercase;font-size:11px;le
 <tr><td>Gross Earnings (Ex. GST)</td><td>A$${Math.round(selected.grossExGst)}</td></tr>
 <tr><td>GST (10%)</td><td>A$${Math.round(selected.gst)}</td></tr>
 <tr class="total"><td>Total (Inc. GST)</td><td>A$${Math.round(selected.totalIncGst)}</td></tr>
-<tr><td>Platform Commission (20%)</td><td>−A$${Math.round(selected.commission)}</td></tr>
-<tr class="total"><td>Net Athlete Payout</td><td>A$${Math.round(selected.netPayout)}</td></tr>
+<tr><td>Club Share (15%)</td><td>−A$${Math.round(selected.clubShare)}</td></tr>
+<tr><td>Platform Share (15%)</td><td>−A$${Math.round(selected.platformShare)}</td></tr>
+<tr class="total"><td>Net Athlete Payout (70%)</td><td>A$${Math.round(selected.netPayout)}</td></tr>
 </table>
 <p style="margin-top:30px;font-size:12px;color:#64748b">
 This RCTI is issued by tmrw/. on behalf of the athlete under ATO reciprocal agreement.
@@ -110,8 +117,8 @@ GST is reported by the recipient. Generated ${new Date().toLocaleString()}.</p>
         <h3>Statements &amp; Invoices (RCTI)</h3>
       </div>
       <p className="ledger-desc">
-        Monthly Recipient Created Tax Invoices showing gross earnings, GST, platform commission,
-        and net payout. Download as PDF or CSV for accounting.
+        Monthly Recipient Created Tax Invoices showing gross earnings, GST, the 15% club and 15% platform
+        shares, and the 70% net athlete payout. Download as PDF or CSV for accounting.
       </p>
 
       <div className="stmt-month-list">
@@ -148,12 +155,16 @@ GST is reported by the recipient. Generated ${new Date().toLocaleString()}.</p>
               <div className="ledger-row-value gross">{formatCurrency(selected.totalIncGst, currency)}</div>
             </div>
             <div className="ledger-row">
-              <div className="ledger-row-label">Platform Commission (20%)</div>
-              <div className="ledger-row-value commission">−{formatCurrency(selected.commission, currency)}</div>
+              <div className="ledger-row-label">Club Share (15%)</div>
+              <div className="ledger-row-value">−{formatCurrency(selected.clubShare, currency)}</div>
+            </div>
+            <div className="ledger-row">
+              <div className="ledger-row-label">Platform Share (15%)</div>
+              <div className="ledger-row-value commission">−{formatCurrency(selected.platformShare, currency)}</div>
             </div>
             <div className="ledger-divider" />
             <div className="ledger-row">
-              <div className="ledger-row-label">Net Athlete Payout</div>
+              <div className="ledger-row-label">Net Athlete Payout (70%)</div>
               <div className="ledger-row-value net">{formatCurrency(selected.netPayout, currency)}</div>
             </div>
           </div>
