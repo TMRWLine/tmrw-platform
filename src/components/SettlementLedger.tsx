@@ -100,17 +100,18 @@ export const SettlementLedger: React.FC = () => {
             <span className="absolute top-6 left-6 text-neutral-400 font-mono text-xs pointer-events-none z-10">+</span>
             <span className="absolute top-6 right-6 text-neutral-400 font-mono text-xs pointer-events-none z-10">+</span>
 
-            <div className="relative z-10 flex items-center justify-between">
+            <div data-video-unavailable={videoUnavailable} className="relative z-10 flex items-center justify-between">
               <span className="bg-[#CCFF00] text-black font-mono font-bold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider shadow-[0_0_10px_rgba(204,255,0,0.3)]">
                 CASE SPECIMEN · SURFING
               </span>
 
               {/* Mute / Unmute Toggle Button */}
               {videoUnavailable ? (
-                <span role="status" className="font-mono text-[10px] text-white bg-black/80 px-3 py-1 rounded-full">
+                <span role="status" className="ledger-video-unavailable hidden font-mono text-[10px] text-white bg-black/80 px-3 py-1 rounded-full">
                   VIDEO UNAVAILABLE
                 </span>
-              ) : <button
+              ) : null}
+              <button
                 type="button"
                 onClick={toggleMute}
                 aria-pressed={!isMuted}
@@ -118,7 +119,7 @@ export const SettlementLedger: React.FC = () => {
               >
                 <span className={`inline-block w-2 h-2 rounded-full ${!isMuted ? 'bg-[#CCFF00] animate-pulse' : 'bg-neutral-400'}`} />
                 {isMuted ? 'UNMUTE AUDIO' : 'MUTE AUDIO'}
-              </button>}
+              </button>
             </div>
 
             <div className="relative z-10 text-white">
