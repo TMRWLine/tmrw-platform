@@ -21,7 +21,10 @@ export const SettlementLedger: React.FC = () => {
     document.body.style.overflow = 'hidden';
     const preventBackgroundScroll = (event: Event) => {
       const panel = receiptRef.current;
-      if (event instanceof WheelEvent && event.ctrlKey) return;
+      const isZoomGesture =
+        (event.type === 'wheel' && (event as WheelEvent).ctrlKey) ||
+        (event.type === 'touchmove' && (event as TouchEvent).touches.length > 1);
+      if (isZoomGesture) return;
       if (!panel || !panel.contains(event.target as Node) || panel.scrollHeight <= panel.clientHeight) {
         event.preventDefault();
       }
