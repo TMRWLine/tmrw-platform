@@ -14,12 +14,14 @@ import {
 import { RosterSpecimenCard } from '../components/RosterSpecimenCard';
 import { AthleteDossierDrawer } from '../components/AthleteDossierDrawer';
 import { CapitalDeploymentDrawer } from '../components/CapitalDeploymentDrawer';
+import { DeliverablesDrawer } from '../components/DeliverablesDrawer';
 import {
   ringForPackage,
   type CatchmentRingId,
 } from '../components/RosterCatchmentMap';
 import {
   getCommercialPackage,
+  mockDeliverables,
   rosterFilterForPackage,
   rosterFlightPresentation,
   ROSTER_FILTER_TO_PACKAGE,
@@ -146,6 +148,9 @@ export const RosterPage: React.FC<RosterPageProps> = ({
   const [activeDossier, setActiveDossier] = useState<AthleteRecord | null>(null);
   const [dossierInitialMode, setDossierInitialMode] = useState<'audit' | 'buy'>('audit');
   const [deployAthlete, setDeployAthlete] = useState<AthleteRecord | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [activeAthlete] = useState(mockDeliverables.athlete);
+  const [drawerTierId] = useState(mockDeliverables.packages[0].tier_id);
   const [overrideTick, setOverrideTick] = useState(0);
 
   useEffect(() => {
@@ -731,6 +736,15 @@ export const RosterPage: React.FC<RosterPageProps> = ({
           setCapitalPackageId(athlete.tier);
         }}
       />
+      {isDrawerOpen ? (
+        <DeliverablesDrawer
+          key={`${activeAthlete.id}-${drawerTierId}`}
+          isOpen
+          athlete={activeAthlete}
+          initialTierId={drawerTierId}
+          onClose={() => setIsDrawerOpen(false)}
+        />
+      ) : null}
       <CapitalDeploymentDrawer
         key={capitalPackageId ?? 'closed'}
         isOpen={capitalPackageId !== null}

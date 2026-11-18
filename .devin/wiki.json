@@ -1,0 +1,17 @@
+{
+  "repo_notes": [
+    {
+      "content": "tmrw-platform is a full-stack athlete NIL and local sponsorship marketplace. src/ contains the Vite + React frontend, src/data/roster.ts holds static fallback contender data, and server/index.js runs the Express API handling Stripe Connect 70/15/15 escrow splits, Supabase PostGIS spatial queries, and TwelveLabs media modals."
+    }
+  ],
+  "pages": [
+    {
+      "title": "Frontend & Awwwards UI Architecture",
+      "purpose": "Document src/ components, AthleteDossierDrawer, SponsorDrawer, MapView, and strict #080808/#F7F7F6/#B8FF00 styling rules."
+    },
+    {
+      "title": "Backend API, Stripe Escrow & PostGIS Fallbacks",
+      "purpose": "Document server/index.js, src/api.ts, CommercialLedger 70/15/15 split and 10% GST/RCTI math, and static fallback behaviour when Supabase or TwelveLabs times out."
+    }
+  ]
+}

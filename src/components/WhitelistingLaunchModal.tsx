@@ -44,13 +44,13 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const safeAthleteId = grant.athleteId || 'marcus-thorne';
 
   const resolvedMetaToken =
-    grant.meta_partnership_token ||
+    rawGrant.metaHandleToken ||
     rawGrant.metaToken ||
     rawGrant.instagramToken ||
     `IG-AUTH-${safePostcode}-9941`;
 
   const resolvedSparkCode =
-    grant.tiktok_spark_code ||
+    rawGrant.tiktokSparkCode ||
     rawGrant.sparkCode ||
     rawGrant.tiktokToken ||
     `TT-SPARK-${safePostcode}-88219X`;
@@ -95,7 +95,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
       [
         `tmrw/. AUDITED ATO & NZ IRD 3-PART RECIPIENT CREATED TAX INVOICE (RCTI)\n`,
         `========================================================================\n`,
-        `Grant ID: ${grant.id || `GR-${safePostcode}-2026`}\n`,
+        `Grant ID: ${rawGrant.grantId || `GR-${safePostcode}-2026`}\n`,
         `Stripe Transfer Group: ${transferGroup}\n`,
         `Sponsor Entity: ${receipt?.legalName || 'Verified Corporate Partner'} (ABN: ${receipt?.abn || '51 824 753 556'})\n`,
         `Athlete / Contender: ${safeAthleteName}\n`,

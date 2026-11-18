@@ -31,6 +31,7 @@ export interface LiveAthleteOverride {
   full_name?: string;
   sport?: string;
   league?: string;
+  governing_body?: string;
   postcode?: string;
   suburb?: string;
   secondary_postcode?: string;
@@ -44,7 +45,6 @@ export interface LiveAthleteOverride {
   availability_windows?: string;
   locked_categories?: string[];
   open_categories?: string[];
-  governing_body?: string;
   follower_count?: number;
   engagement_rate?: string;
   local_concentration?: string;

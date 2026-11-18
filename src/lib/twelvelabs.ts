@@ -1,14 +1,15 @@
 /**
  * TwelveLabs video ingestion & indexing client.
- * Initializes the API client from VITE_TWELVELABS_API_KEY and exposes
+ * Uses the authenticated server proxy for private API credentials and exposes
  * utilities to upload match footage, create an index, and retrieve
  * structured timestamp payloads for detected key player events.
  */
 
 import type { Athlete } from '../types';
 import { lastName } from './formatName';
+import { currentAccessToken } from './sessionToken';
 
-const API_BASE = 'https://api.twelvelabs.io/v1.3';
+const API_BASE = '/api/twelvelabs';
 
 export interface TwelveLabsEvent {
   start: number;
@@ -32,24 +33,26 @@ export interface IngestionProgress {
   progress: number;
 }
 
-function getApiKey(): string {
-  const key = import.meta.env.VITE_TWELVELABS_API_KEY;
-  if (!key) throw new Error('VITE_TWELVELABS_API_KEY is not configured');
-  return key;
-}
-
-export function isTwelveLabsConfigured(): boolean {
-  return Boolean(import.meta.env.VITE_TWELVELABS_API_KEY);
+export async function isTwelveLabsConfigured(): Promise<boolean> {
+  try {
+    const response = await twelveLabsFetch('/status');
+    return response.ok && (await response.json()).configured === true;
+  } catch {
+    return false;
+  }
 }
 
 async function twelveLabsFetch(path: string, options: RequestInit = {}): Promise<Response> {
-  const key = getApiKey();
+  const signal = options.signal ?? AbortSignal.timeout(10000);
+  const token = await currentAccessToken(signal);
+  if (!token) return new Response(null, { status: 401 });
   return fetch(`${API_BASE}${path}`, {
     ...options,
+    signal,
     headers: {
-      'x-api-key': key,
       'Content-Type': 'application/json',
       ...(options.headers ?? {}),
+      Authorization: `Bearer ${token}`,
     },
   });
 }
@@ -88,17 +91,13 @@ export async function uploadVideo(
   file: File,
   onProgress?: (p: IngestionProgress) => void
 ): Promise<string> {
+  validateVideo(file);
   onProgress?.({ phase: 'uploading', message: `Uploading ${file.name}…`, progress: 10 });
 
-  const formData = new FormData();
-  formData.append('index_id', indexId);
-  formData.append('video_file', file);
-
-  const key = getApiKey();
-  const res = await fetch(`${API_BASE}/uploads`, {
+  const res = await twelveLabsFetch(`/uploads?index_id=${encodeURIComponent(indexId)}`, {
     method: 'POST',
-    headers: { 'x-api-key': key },
-    body: formData,
+    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    body: file,
   });
 
   if (!res.ok) {
@@ -225,6 +224,11 @@ function getSportSearchPrompts(sport: string): SportPrompt[] {
   ];
 }
 
+function validateVideo(file: File) {
+  const videoType = file.type.startsWith('video/') || (!file.type && /\.(mp4|mov|m4v|webm|mkv|avi)$/i.test(file.name));
+  if (!file.size || file.size > 4 * 1024 * 1024 || !videoType) throw new Error('Choose a video up to 4 MiB');
+}
+
 /**
  * Full ingestion pipeline: create index, upload video, wait for readiness,
  * detect key events, and return a structured result.
@@ -234,6 +238,7 @@ export async function ingestMatchFootage(
   athlete: Athlete,
   onProgress?: (p: IngestionProgress) => void
 ): Promise<TwelveLabsIndexResult> {
+  validateVideo(file);
   const indexName = `athlete-${athlete.id}-${Date.now()}`;
   const indexId = await createIndex(indexName);
   const videoId = await uploadVideo(indexId, file, onProgress);

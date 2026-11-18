@@ -80,6 +80,12 @@ function fallbackAthletes(): Athlete[] {
   return ROSTER_SPECIMENS.map((specimen) => normalizeAthlete(specimenToAthlete(specimen)));
 }
 
+/** Scouted intake rows stay out of sponsorable listings until commercially verified. */
+function isPendingScout(row: Record<string, unknown>): boolean {
+  const profile = row.profile_data as { intake_status?: unknown } | null | undefined;
+  return profile?.intake_status === 'scouted';
+}
+
 export async function fetchAthletes(): Promise<Athlete[]> {
   if (!isSupabaseConfigured || !supabase) return fallbackAthletes();
   try {
@@ -91,7 +97,9 @@ export async function fetchAthletes(): Promise<Athlete[]> {
       .abortSignal(signal);
     if (signal.aborted) throw new Error(`Athletes query timed out after ${SUPABASE_TIMEOUT_MS}ms`);
     if (error) throw new Error(`Failed to load athletes: ${error.message}`);
-    return (data ?? []).map((row) => normalizeAthlete(row as Record<string, unknown>));
+    return (data ?? [])
+      .filter((row) => !isPendingScout(row as Record<string, unknown>))
+      .map((row) => normalizeAthlete(row as Record<string, unknown>));
   } catch (e) {
     console.warn('fetchAthletes failed, using fallback athletes.', e);
     return fallbackAthletes();
