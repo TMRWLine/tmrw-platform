@@ -52,7 +52,7 @@ function sportActions(sport: string | null): { action: string; title: string }[]
   if (s.includes('basketball')) {
     return [
       { action: '3-Pointer', title: 'Downtown Three' },
-      { action: 'Slam Dunk', title: 'Posterizing Dunk' },
+      { action: 'Slam Dunk', title: 'Posterising Dunk' },
       { action: 'Fast Break', title: 'Coast-to-Coast Layup' },
     ];
   }
@@ -78,9 +78,9 @@ function sportActions(sport: string | null): { action: string; title: string }[]
 }
 
 const GRADIENTS = [
-  'linear-gradient(135deg, #0ea5e9, #6366f1)',
-  'linear-gradient(135deg, #f59e0b, #ef4444)',
-  'linear-gradient(135deg, #10b981, #06b6d4)',
+  'linear-gradient(135deg, #080808, #27272A)',
+  'linear-gradient(135deg, #27272A, #080808)',
+  'linear-gradient(135deg, #080808, #CCFF00)',
 ];
 
 /**
@@ -101,7 +101,7 @@ export async function generateAthleteHighlights(
     const duration = 12 + i * 3;
     return {
       id: `clip-${videoId}-${i}`,
-      title: `${a.title} — ${name}`,
+      title: `${a.title} · ${name}`,
       action: a.action,
       startSec: start,
       endSec: start + duration,

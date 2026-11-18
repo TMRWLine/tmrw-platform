@@ -264,30 +264,30 @@ export function generateMockEvents(athlete: Athlete): TwelveLabsEvent[] {
 
   if (sport.includes('rugby')) {
     return [
-      { start: 194, end: 210, text: `Big hit by ${name} — dominant tackle`, confidence: 0.92, type: 'tackle' },
-      { start: 462, end: 485, text: `Line break by ${name} — 30m run`, confidence: 0.88, type: 'linebreak' },
-      { start: 862, end: 890, text: `Line break and try at 14:22 — ${name} scores`, confidence: 0.95, type: 'try' },
-      { start: 1085, end: 1100, text: `Conversion kick — ${name} adds the extras`, confidence: 0.84, type: 'kick' },
-      { start: 1470, end: 1495, text: `Defensive read — ${name} intercepts pass`, confidence: 0.79, type: 'tackle' },
-      { start: 1878, end: 1910, text: `Second try — ${name} crashes over from 5m`, confidence: 0.93, type: 'try' },
+      { start: 194, end: 210, text: `Big hit by ${name} · dominant tackle`, confidence: 0.92, type: 'tackle' },
+      { start: 462, end: 485, text: `Line break by ${name} · 30m run`, confidence: 0.88, type: 'linebreak' },
+      { start: 862, end: 890, text: `Line break and try at 14:22 · ${name} scores`, confidence: 0.95, type: 'try' },
+      { start: 1085, end: 1100, text: `Conversion kick · ${name} adds the extras`, confidence: 0.84, type: 'kick' },
+      { start: 1470, end: 1495, text: `Defensive read · ${name} intercepts pass`, confidence: 0.79, type: 'tackle' },
+      { start: 1878, end: 1910, text: `Second try · ${name} crashes over from 5m`, confidence: 0.93, type: 'try' },
     ];
   }
 
   if (sport.includes('basketball')) {
     return [
-      { start: 138, end: 150, text: `Three-pointer — ${name} from downtown`, confidence: 0.91, type: 'kick' },
+      { start: 138, end: 150, text: `Three-pointer · ${name} from downtown`, confidence: 0.91, type: 'kick' },
       { start: 344, end: 365, text: `Fast break layup by ${name}`, confidence: 0.87, type: 'linebreak' },
-      { start: 552, end: 575, text: `Block by ${name} — rejected at the rim`, confidence: 0.85, type: 'tackle' },
+      { start: 552, end: 575, text: `Block by ${name} · rejected at the rim`, confidence: 0.85, type: 'tackle' },
       { start: 862, end: 890, text: `And-one! ${name} scores through contact`, confidence: 0.93, type: 'try' },
-      { start: 1290, end: 1320, text: `Steal and coast-to-coast — ${name} finishes`, confidence: 0.89, type: 'linebreak' },
+      { start: 1290, end: 1320, text: `Steal and coast-to-coast · ${name} finishes`, confidence: 0.89, type: 'linebreak' },
     ];
   }
 
   return [
-    { start: 252, end: 270, text: `Key moment — ${name} breaks through`, confidence: 0.82, type: 'linebreak' },
+    { start: 252, end: 270, text: `Key moment · ${name} breaks through`, confidence: 0.82, type: 'linebreak' },
     { start: 750, end: 780, text: `Score by ${name}`, confidence: 0.88, type: 'try' },
     { start: 1215, end: 1240, text: `Defensive play by ${name}`, confidence: 0.76, type: 'tackle' },
-    { start: 1720, end: 1745, text: `Precision strike — ${name} delivers`, confidence: 0.84, type: 'kick' },
+    { start: 1720, end: 1745, text: `Precision strike · ${name} delivers`, confidence: 0.84, type: 'kick' },
   ];
 }
 

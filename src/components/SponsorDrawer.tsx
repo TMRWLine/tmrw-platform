@@ -267,7 +267,7 @@ const SponsorDrawerContent: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
           )}
 
           {dealSuccess && (
-            <div className="p-4 bg-lime-950/30 border border-[#CCFF00]/40 text-center rounded font-mono space-y-2">
+            <div className="p-4 bg-[#080808]/30 border border-[#CCFF00]/40 text-center rounded font-mono space-y-2">
               <p className="text-xs text-[#CCFF00] font-bold uppercase tracking-widest">// ESCROW CAPITAL ALLOCATED</p>
               <p className="text-xs text-zinc-300">
                 Milestone contract created. Funds held in Stripe escrow pending verified matchday delivery.
@@ -436,7 +436,7 @@ const SponsorDrawerContent: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
             </p>
 
             {syndicateSuccess ? (
-              <div className="p-4 border border-[#CCFF00]/40 bg-lime-950/20 rounded text-center space-y-2">
+              <div className="p-4 border border-[#CCFF00]/40 bg-[#080808]/20 rounded text-center space-y-2">
                 <p className="text-xs text-[#CCFF00] font-bold uppercase">// APPLICATION SUBMITTED</p>
                 {syndicateBrief && (
                   <p className="text-xs text-white font-semibold">{syndicateBrief.portfolioName}</p>

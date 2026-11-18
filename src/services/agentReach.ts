@@ -1,5 +1,5 @@
 /**
- * Agent Reach — backend service worker shell (mock).
+ * Agent Reach · backend service worker shell (mock).
  *
  * Automates athlete handle discovery and profile enrichment across
  * Australasian league social accounts, plus nearby-merchant sponsor

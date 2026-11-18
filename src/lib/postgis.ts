@@ -19,7 +19,7 @@ function isHexString(value: string): boolean {
 }
 
 /**
- * Display string for athlete.location — PostGIS EWKB hex when the column is a
+ * Display string for athlete.location · PostGIS EWKB hex when the column is a
  * geography/geometry payload, otherwise the raw location text.
  */
 export function formatLocationHex(

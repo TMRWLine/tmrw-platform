@@ -1796,7 +1796,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
             </div>
           )}
           {!loadingDeals && agreements.length === 0 && (
-            <div className="ledger-warn" style={{ background: 'rgba(148,163,184,0.06)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+            <div className="ledger-warn" style={{ background: 'rgba(8,8,8,0.06)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
               No active agreement on file. Figures shown are the athlete's indicative market value.
             </div>
           )}

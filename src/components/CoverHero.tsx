@@ -94,7 +94,7 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
 
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_20%_40%,rgba(235,59,48,0.28)_0%,transparent_60%)]"
+          className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_20%_40%,rgba(204,255,0,0.28)_0%,transparent_60%)]"
         />
 
         <div
