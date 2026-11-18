@@ -146,7 +146,7 @@ export const GuardianVerify: React.FC = () => {
         )}
 
         {isSigned ? (
-          <div className="p-4 border border-[#CCFF00]/30 bg-lime-950/20 text-center rounded">
+          <div className="p-4 border border-[#CCFF00]/30 bg-[#080808]/20 text-center rounded">
             <p className="text-xs text-[#CCFF00] font-bold tracking-widest uppercase">// LEGAL CLEARANCE ACTIVE</p>
             <p className="text-xs text-zinc-400 mt-1">Agreement countersigned and archived on the platform audit ledger.</p>
           </div>

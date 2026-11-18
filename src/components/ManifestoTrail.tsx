@@ -140,7 +140,7 @@ export const ManifestoTrail: React.FC<ManifestoTrailProps> = () => {
           </div>
 
           {/* Box 2: Exact "Seeing in Colour" Gradient Background & Size */}
-          <div className="rounded-[28px] bg-gradient-to-br from-[#F7F7F6] via-[#CCFF00] to-[#F7F7F6] p-8 sm:p-12 text-[#080808] flex flex-col justify-center shadow-2xl border border-indigo-200/50 relative overflow-hidden min-h-[380px]">
+          <div className="rounded-[28px] bg-gradient-to-br from-[#F7F7F6] via-[#CCFF00] to-[#F7F7F6] p-8 sm:p-12 text-[#080808] flex flex-col justify-center shadow-2xl border border-black/15 relative overflow-hidden min-h-[380px]">
             <h3 className="m-0 font-sans text-4xl sm:text-5xl lg:text-[3.25rem] font-black uppercase tracking-tight text-[#080808] leading-[1.05]">
               Now own the upside<span className="text-[#CCFF00]">.</span>
             </h3>
