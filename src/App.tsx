@@ -45,6 +45,7 @@ import { getSportComplianceBadges, getUniversalComplianceBadges } from './types'
 import { BrandKitTab } from './components/AthleteProfileModal';
 import { MessageThread } from './components/MessageThread';
 import { StatementsPanel } from './components/StatementsPanel';
+import { sponsorshipLedger } from './lib/commercialLedger.js';
 import { Navigation, landingSectionElementId, type LandingSectionId } from './components/Navigation';
 import { SearchOverlay } from './components/SearchOverlay';
 import { MenuOverlay } from './components/MenuOverlay';
@@ -1733,19 +1734,21 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
   const activeDeal = agreements.find((a) => a.status === 'active');
   const fallbackGross =
     athlete.profile_data?.market_value_aud ?? athlete.profile_data?.market_value_nzd ?? 0;
-  const grossExGst = activeDeal?.deal_value != null ? Number(activeDeal.deal_value) : fallbackGross;
+  const indicativeGross = activeDeal?.deal_value != null ? Number(activeDeal.deal_value) : fallbackGross;
+  const grossExGst = Number.isFinite(indicativeGross) ? Math.max(0, indicativeGross) : 0;
   const currency = getAthleteCurrency(athlete);
-
-  const gstAmount = activeDeal?.gst_amount != null ? Number(activeDeal.gst_amount) : Math.round(grossExGst * 0.1);
-  const totalIncGst = activeDeal?.total_inc_gst != null ? Number(activeDeal.total_inc_gst) : grossExGst + gstAmount;
-
-  const commission = Math.round(grossExGst * 0.20);
-  const netPayout = grossExGst - commission;
-
-  const [settling, setSettling] = useState(false);
-  const [settled, setSettled] = useState(false);
+  const payees = useMemo(() => ({
+    ...athlete.tax_payees,
+    athlete: { abn: athlete.abn, gstRegistered: athlete.gst_registered === true, ...athlete.tax_payees?.athlete },
+  }), [athlete.abn, athlete.gst_registered, athlete.tax_payees]);
+  const ledger = sponsorshipLedger(Math.round(grossExGst * 100), payees);
+  const gstAmount = ledger.gstCents / 100;
+  const totalIncGst = ledger.totalPayableCents / 100;
+  const commission = ledger.ops15Cents / 100;
+  const clubPayout = ledger.club15Cents / 100;
+  const netPayout = ledger.rctiLines[0].grossCents / 100;
+  const [splitPreviewVisible, setSplitPreviewVisible] = useState(false);
   const [integrityConfirmed, setIntegrityConfirmed] = useState(false);
-  const [webhookLog, setWebhookLog] = useState<string | null>(null);
 
   const integrity = getIntegrityConfig(athlete.sport);
 
@@ -1762,19 +1765,6 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
 
   const withinRenewalWindow = daysToExpiry != null && daysToExpiry <= 30 && daysToExpiry >= 0;
 
-  async function handleSettle() {
-    if (!integrityConfirmed || settling || settled) return;
-    setSettling(true);
-    setWebhookLog(null);
-    await new Promise((r) => setTimeout(r, 1800));
-    const evtId = `evt_3Pq${Math.random().toString(36).slice(2, 10)}Z6J`;
-    setSettled(true);
-    setSettling(false);
-    setWebhookLog(
-      `Stripe webhook ${evtId} received · ${formatCurrency(netPayout, currency)} → athlete account · ${formatCurrency(commission, currency)} platform fee collected`
-    );
-  }
-
   return (
     <div className="ledger">
       <div className="ledger-section">
@@ -1784,9 +1774,9 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         </div>
         <p className="ledger-desc">
           Financial breakdown for the active sponsorship deal with{' '}
-          <strong>{athleteDisplayName(athlete)}</strong>. GST is calculated at 10% on the gross deal value.
-          The platform collects a 20% commission on the Ex-GST amount; the remaining 80% is
-          released to the athlete's connected account via Stripe Connect split payment.
+          <strong>{athleteDisplayName(athlete)}</strong>. Integer-cent allocations route 70% to the athlete,
+          15% to their grassroots club and 15% to platform operations. GST is added at 10% only
+          for payees confirmed as GST registered. Missing tax details require verification before payment.
         </p>
 
         <div className="ledger-breakdown">
@@ -1810,7 +1800,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
           </div>
           <div className="ledger-row">
             <div className="ledger-row-label">
-              <Receipt size={14} /> GST (10%)
+              <Receipt size={14} /> Applicable GST (10% for registered payees)
             </div>
             <div className="ledger-row-value">
               {formatCurrency(gstAmount, currency)}
@@ -1828,7 +1818,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
           <div className="ledger-divider" />
           <div className="ledger-row">
             <div className="ledger-row-label">
-              <Wallet size={14} /> Platform Commission (20% of Ex-GST)
+              <Wallet size={14} /> Platform Operations (15% of Ex-GST)
             </div>
             <div className="ledger-row-value commission">
               −{formatCurrency(commission, currency)}
@@ -1837,7 +1827,13 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
           <div className="ledger-divider" />
           <div className="ledger-row">
             <div className="ledger-row-label">
-              <Landmark size={14} /> Net Athlete Payout (80% of Ex-GST)
+              <Landmark size={14} /> Grassroots Club (15% of Ex-GST)
+            </div>
+            <div className="ledger-row-value">{formatCurrency(clubPayout, currency)}</div>
+          </div>
+          <div className="ledger-row">
+            <div className="ledger-row-label">
+              <Landmark size={14} /> Athlete Entitlement (70% plus applicable GST)
             </div>
             <div className="ledger-row-value net">
               {formatCurrency(netPayout, currency)}
@@ -1930,46 +1926,37 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
       <div className="ledger-section">
         <div className="ledger-head">
           <Zap size={16} />
-          <h3>Stripe Split Payment</h3>
+          <h3>Stripe Split Preview</h3>
         </div>
         <p className="ledger-desc">
-          Executing the split payment triggers a Stripe Connect webhook that releases the net
-          payout to the athlete's connected account and collects the 20% platform fee.
+          This legacy ledger previews allocations only. No payment or webhook is triggered here.
+          Use the secure sponsorship checkout to initiate payment; settlement requires Stripe confirmation.
         </p>
         <button
           className="btn btn-primary ledger-settle-btn"
-          onClick={handleSettle}
-          disabled={!integrityConfirmed || settling || settled}
+          onClick={() => setSplitPreviewVisible(true)}
+          disabled={!integrityConfirmed}
         >
-          {settling ? (
-            <>
-              <Loader2 size={14} className="spin" /> Triggering webhook…
-            </>
-          ) : settled ? (
-            <>
-              <CheckCircle2 size={14} /> Settlement Complete
-            </>
-          ) : (
-            <>
-              <Zap size={14} /> Execute Stripe Split Payment
-            </>
-          )}
+          <Zap size={14} /> Preview 70/15/15 Allocation
         </button>
-        {!integrityConfirmed && !settled && (
+        {!integrityConfirmed && (
           <div className="ledger-warn">
             {integrity.warningText}
           </div>
         )}
-        {webhookLog && (
-          <div className="ledger-webhook-log">
-            <CheckCircle2 size={14} />
-            <span>{webhookLog}</span>
+        {splitPreviewVisible && integrityConfirmed && (
+          <div className="ledger-webhook-log" role="status">
+            <Info size={14} />
+            <span>Preview only: athlete {formatCurrency(netPayout, currency)}, club {formatCurrency(clubPayout, currency)}, platform {formatCurrency(commission, currency)}. No funds moved.</span>
           </div>
         )}
       </div>
 
       <StatementsPanel
         grossExGst={grossExGst}
+        payees={payees}
+        athleteAbn={payees.athlete.abn ?? undefined}
+        athleteGstRegistered={payees.athlete.gstRegistered}
         currency={currency}
         athleteName={athleteDisplayName(athlete)}
         startDate={startDate}

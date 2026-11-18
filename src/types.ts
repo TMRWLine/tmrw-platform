@@ -180,6 +180,9 @@ export function getUniversalComplianceBadges(created_at: string): ComplianceBadg
 
 export interface Athlete {
   id: string;
+  abn?: string | null;
+  gst_registered?: boolean;
+  tax_payees?: Record<string, { abn?: string | null; gstRegistered?: boolean }>;
   name: string;
   full_name?: string | null;
   initials?: string | null;
