@@ -34,6 +34,10 @@
   .roster-filter-anchor { position: static; }
   .roster-filter-popup { left: 0; right: 0; width: 100%; padding: 16px; }
   .roster-filter-popup button { font-size: 12px; letter-spacing: 0; padding-inline: 8px; }
+  .roster-dossier-open { min-width: 44px; min-height: 44px; flex-shrink: 0; }
+
+  /* The receipt lives inside this stacking context, below the fixed header. */
+  .landing-scroll:has(#settlement-ledger .certificate-backdrop) { z-index: 60; }
 
   .mobile-overlay button:not([tabindex="-1"]),
   .site-menu a,
