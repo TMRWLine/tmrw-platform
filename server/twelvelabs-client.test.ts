@@ -88,3 +88,17 @@ test('missing session and proxy 401/503 preserve honest sample fallback', async 
     await assert.rejects(createIndex('test'), /sample/);
   }
 });
+
+test('unknown MIME accepts known video extensions but rejects unrelated files', async (t) => {
+  const mock = t.mock.method(globalThis, 'fetch', async (_url, options) => {
+    assert.equal(new Headers(options?.headers).get('Content-Type'), 'application/octet-stream');
+    return Response.json({ _id: 'uploaded' });
+  });
+  for (const extension of ['mp4', 'MOV', 'm4v', 'webm', 'mkv', 'avi']) {
+    assert.equal(await uploadVideo('i', new File(['video'], 'footage.' + extension)), 'uploaded');
+  }
+  for (const name of ['footage.txt', 'footage', 'footage.mp4.exe']) {
+    await assert.rejects(uploadVideo('i', new File(['video'], name)), /up to 4 MiB/);
+  }
+  assert.equal(mock.mock.calls.length, 6);
+});

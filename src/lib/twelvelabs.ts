@@ -76,7 +76,8 @@ export async function createIndex(indexName: string): Promise<string> {
  * Upload a small video to the proxy, which creates the upstream multipart body.
  */
 function validateVideo(file: File) {
-  if (!file.size || file.size > 4 * 1024 * 1024 || !file.type.startsWith('video/')) {
+  const videoType = file.type.startsWith('video/') || (!file.type && /\.(mp4|mov|m4v|webm|mkv|avi)$/i.test(file.name));
+  if (!file.size || file.size > 4 * 1024 * 1024 || !videoType) {
     throw new Error('Choose a video up to 4 MiB · larger footage uses sample analysis');
   }
 }
@@ -85,7 +86,7 @@ export async function uploadVideo(indexId: string, file: File, onProgress?: (p: 
   validateVideo(file);
   onProgress?.({ phase: 'uploading', message: 'Uploading footage…', progress: 10 });
   const res = await twelveLabsFetch(`/uploads?index_id=${encodeURIComponent(indexId)}`, {
-    method: 'POST', headers: { 'Content-Type': file.type }, body: file,
+    method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file,
   });
   if (!res.ok) throw new Error('Video upload unavailable · using sample data');
   return (await res.json())._id as string;
