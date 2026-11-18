@@ -166,7 +166,7 @@ export async function createCheckoutSession(
     });
 
     const data = (await response.json().catch(() => null)) as
-      | { checkoutUrl?: string; url?: string; sessionId?: string }
+      | { checkoutUrl?: string; url?: string; sessionId?: string; transferGroup?: string }
       | null;
 
     if (response.ok && (data?.checkoutUrl || data?.url)) {
@@ -174,7 +174,7 @@ export async function createCheckoutSession(
         checkoutUrl: data.checkoutUrl ?? data.url ?? null,
         sessionId: data.sessionId,
         idempotencyKey,
-        transferGroup: splitLedger.transferGroup,
+        transferGroup: data.transferGroup ?? splitLedger.transferGroup,
         chargeId,
         platformRetainedId,
         athleteTransferId,

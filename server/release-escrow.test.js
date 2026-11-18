@@ -129,7 +129,9 @@ test('release uses the paid historical order hold rather than current catalogue 
 test('checkout stamps verified sponsor and copies escrow metadata to the payment intent', () => fixture(async ({ state, post }) => {
   const response = await post({ athleteId: 'athlete', tierId: 'local_merchant', transferGroup: 'TG_fixture', sponsorUserId: 'forged', athleteEscrowHoldCents: 1 }, 'valid-token', 'create-session');
   assert.equal(response.status, 200);
-  assert.equal((await response.json()).sessionId, 'cs_created');
+  const result = await response.json();
+  assert.equal(result.sessionId, 'cs_created');
+  assert.equal(result.transferGroup, 'TG_fixture');
   const body = state.checkouts[0];
   assert.equal(body.get('payment_intent_data[transfer_group]'), 'TG_fixture');
   for (const [key, value] of Object.entries({ sponsorUserId: 'sponsor', escrowMode: 'milestone_50_50', athleteEscrowHoldCents: '26250', athleteId: 'athlete', tierId: 'local_merchant', orderType: 'sponsorship_tier' })) {
@@ -140,11 +142,14 @@ test('checkout stamps verified sponsor and copies escrow metadata to the payment
 
 test('checkout permits anonymous upfront orders, generates safe groups and rejects invalid auth/modes', () => fixture(async ({ state, post }) => {
   const order = { athleteId: 'athlete', tierId: 'local_merchant', escrowMode: 'upfront_100', transferGroup: '../unsafe' };
-  assert.equal((await post(order, null, 'create-session')).status, 200);
+  const response = await post(order, null, 'create-session');
+  assert.equal(response.status, 200);
+  const result = await response.json();
   const body = state.checkouts[0];
   assert.equal(body.get('metadata[athleteEscrowHoldCents]'), '0');
   assert.equal(body.get('metadata[sponsorUserId]'), null);
   assert.match(body.get('payment_intent_data[transfer_group]'), /^TG_[A-Za-z0-9_]{1,80}$/);
+  assert.equal(result.transferGroup, body.get('payment_intent_data[transfer_group]'));
   assert.equal((await post(order, 'invalid', 'create-session')).status, 401);
   assert.equal((await post({ ...order, escrowMode: 'invalid' }, null, 'create-session')).status, 400);
   assert.equal(state.checkouts.length, 1);

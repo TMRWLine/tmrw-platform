@@ -165,7 +165,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
       const receipt: StripeEscrowReceipt = {
         checkoutSessionId: sessionResult?.sessionId,
         txId,
-        transferGroup: split.transferGroup,
+        transferGroup: sessionResult?.transferGroup ?? split.transferGroup,
         chargeId: sessionResult?.chargeId ?? `py_${txId}`,
         platformRetainedId: sessionResult?.platformRetainedId ?? `fee_tmrw_t0_${txId}`,
         athleteTransferId: sessionResult?.athleteTransferId ?? `tr_ath_${txId}`,

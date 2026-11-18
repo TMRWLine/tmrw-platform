@@ -523,7 +523,7 @@ app.post('/api/checkout/create-session', (req, res, next) => {
           error: session?.error?.message ?? 'Stripe could not create a checkout session.',
         });
       }
-      return res.json({ checkoutUrl: session.url, sessionId: session.id });
+      return res.json({ checkoutUrl: session.url, sessionId: session.id, transferGroup: body.get('payment_intent_data[transfer_group]') });
     }
 
     return res.json({
