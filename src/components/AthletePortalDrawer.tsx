@@ -899,7 +899,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => setDrawerView('entry')}
-                    className="rounded-full bg-[#F2F2F0] hover:bg-[#080808] text-[#080808] hover:text-white px-3.5 py-1.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer transition-colors"
+                    className="athlete-portal-back rounded-full bg-[#F2F2F0] hover:bg-[#080808] text-[#080808] hover:text-white px-3.5 py-1.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer transition-colors"
                   >
                     ← Back
                   </button>

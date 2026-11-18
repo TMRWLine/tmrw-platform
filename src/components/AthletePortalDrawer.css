@@ -23,6 +23,16 @@
     padding: 1rem 1.25rem;
   }
 
+  .athlete-portal-header > .flex:first-child > .flex:first-child {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .athlete-portal button.athlete-portal-back {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
   .athlete-portal :where(.flex, .grid),
   .athlete-portal :where(.flex, .grid) > * {
     min-width: 0;
