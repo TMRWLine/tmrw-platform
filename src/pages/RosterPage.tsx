@@ -83,7 +83,7 @@ function athleteMatchesDiscipline(sport: string, filter: DisciplineFilter): bool
   if (filter === 'basketball') return value.includes('basketball');
   if (filter === 'combat') return value.includes('combat') || value.includes('wrestling');
   if (filter === 'swimming') return value.includes('swim');
-  if (filter === 'endurance') return /endurance|marathon|distance|cross.country|road running/.test(value);
+  if (filter === 'endurance') return /endurance|marathon|distance|cross.country|road running|triathlon|cycling/.test(value);
   if (filter === 'surfing') return value.includes('surf');
   if (filter === 'triathlon') return value.includes('triathlon');
   if (filter === 'rugby') return value.includes('rugby') || value.includes('league');
