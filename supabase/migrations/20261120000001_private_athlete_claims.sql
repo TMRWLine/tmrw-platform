@@ -80,6 +80,7 @@ BEGIN
         ELSE lead.athlete_details->>field END);
     END IF;
   END LOOP;
+  visible := jsonb_strip_nulls(visible);
   INSERT INTO public.athletes (id, name, sport, current_club, agreement_status, master_licence_signed, profile_data)
     VALUES (lead.id, coalesce(visible->>'full_name', 'Athlete'), visible->>'sport',
       visible->>'club', 'no_agreement', false, visible || '{"intake_status":"consented"}'::jsonb);
@@ -114,9 +115,9 @@ BEGIN
   IF NOT FOUND OR lead.status NOT IN ('private', 'previewed') THEN RAISE EXCEPTION 'Claim link is unavailable or already claimed'; END IF;
   UPDATE public.athlete_leads SET
     full_name = coalesce(nullif(trim(p_details->>'full_name'), ''), full_name),
-    sport = coalesce(nullif(trim(p_details->>'sport'), ''), sport),
-    league = coalesce(nullif(trim(p_details->>'league'), ''), league),
-    club = coalesce(nullif(trim(p_details->>'club'), ''), club),
+    sport = CASE WHEN p_details ? 'sport' THEN nullif(trim(p_details->>'sport'), '') ELSE sport END,
+    league = CASE WHEN p_details ? 'league' THEN nullif(trim(p_details->>'league'), '') ELSE league END,
+    club = CASE WHEN p_details ? 'club' THEN nullif(trim(p_details->>'club'), '') ELSE club END,
     athlete_details = jsonb_build_object('bio', p_details->>'bio', 'instagram', p_details->>'instagram'),
     claimed_by = auth.uid(), claimed_at = now(), data_consent_at = now(), public_consent_at = now(), contact_consent_at = now(),
     public_fields = p_public_fields, date_of_birth = p_dob, is_minor = minor,
