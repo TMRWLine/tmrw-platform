@@ -42,6 +42,7 @@ export interface StripeEscrowReceipt {
 
 interface StripeEscrowCheckoutModalProps {
   payload: StripeCheckoutPayload | null;
+  isSyndicateCheckout?: boolean;
   onClose: () => void;
   onSuccess: (receipt: StripeEscrowReceipt) => void;
 }
@@ -64,6 +65,7 @@ function sanitizeInput(raw: string): string {
 
 export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps> = ({
   payload,
+  isSyndicateCheckout = false,
   onClose,
   onSuccess,
 }) => {
@@ -594,7 +596,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
           )}
         </div>
 
-        <footer className="shrink-0 border-t border-black/10 bg-[#FFFFFF] px-5 py-4 sm:px-7">
+        <footer data-syndicate-checkout-actions={isSyndicateCheckout || undefined} className="shrink-0 border-t border-black/10 bg-[#FFFFFF] px-5 py-4 sm:px-7">
           <button
             type="button"
             disabled={!canAuthorise || clearingStage !== 'idle'}
