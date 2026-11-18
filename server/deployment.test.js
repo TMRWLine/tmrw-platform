@@ -43,7 +43,7 @@ test('Vercel keeps API paths out of the SPA rewrite and includes the runtime cat
   assert.ok(catalogue.packages.every((entry) => typeof entry.tier_id === 'string' && Number.isFinite(entry.price_aud)));
 });
 
-test('all four current Marcus packages initialise demo checkout without changing their UI identifiers', () => withServer(async (request) => {
+test('all four current Marcus packages initialise demo checkout with resolvable receipt identifiers', () => withServer(async (request) => {
   const names = ['STRIPE_SECRET_KEY', 'VITE_SUPABASE_URL', 'SUPABASE_URL'];
   const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
   for (const name of names) delete process.env[name];
@@ -56,7 +56,13 @@ test('all four current Marcus packages initialise demo checkout without changing
       assert.equal(response.status, 200, tierId);
       const body = await response.json();
       assert.match(body.checkoutUrl, /session_id=cs_demo_/);
-      assert.ok(body.checkoutUrl.includes(`tierId=${tierId}`));
+      const canonicalId = tierId === 'pathway_contender' ? 'pathway_flight' : tierId;
+      const receiptId = new URL(body.checkoutUrl, 'https://fixture.invalid').searchParams.get('tierId');
+      assert.equal(receiptId, canonicalId);
+      const catalogue = JSON.parse(readFileSync(new URL('../src/data/mockDeliverables.json', import.meta.url)));
+      const receiptPackage = catalogue.packages.find((entry) => entry.tier_id === receiptId);
+      assert.ok(receiptPackage);
+      if (tierId === 'pathway_contender') assert.equal(receiptPackage.price_aud, 3500);
     }
   } finally {
     for (const [name, value] of Object.entries(previous)) {

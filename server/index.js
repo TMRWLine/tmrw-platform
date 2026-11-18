@@ -413,13 +413,14 @@ app.post('/api/checkout/create-session', async (req, res) => {
 
     // BRANCH B: Commercial Sponsorship Tier Checkout
     const athleteId = String(req.body?.athleteId ?? '').trim();
-    const tierId = String(req.body?.tierId ?? '').trim();
+    const requestedTierId = String(req.body?.tierId ?? '').trim();
+    const tierId = requestedTierId === 'pathway_contender' ? 'pathway_flight' : requestedTierId;
     if (!athleteId || !tierId) {
       return res.status(400).json({ error: 'athleteId and tierId (or capsuleItems) are required' });
     }
 
     const catalogue = { ...FALLBACK_COMMERCIAL_TIERS, ...loadCommercialTiers() };
-    const pkg = catalogue[tierId === 'pathway_contender' ? 'pathway_flight' : tierId];
+    const pkg = catalogue[tierId];
     if (!pkg || !Number.isFinite(pkg.price_aud) || pkg.price_aud <= 0) {
       return res.status(400).json({ error: `Unknown commercial tier: ${tierId}` });
     }
