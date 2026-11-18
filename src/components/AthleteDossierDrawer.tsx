@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AssetImage } from './AssetImage';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
@@ -189,14 +189,49 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
   const [lastPaidPriceAud, setLastPaidPriceAud] = useState<number>(750);
   const [activeWhitelistingGrant, setActiveWhitelistingGrant] = useState<WhitelistingGrant | null>(null);
   const [liveOverride, setLiveOverride] = useState<LiveAthleteOverride | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const isOpen = Boolean(athlete);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialogRef.current?.querySelector<HTMLButtonElement>('.dossier-close button')?.focus({ preventScroll: true });
+    return () => {
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!athlete || stripePayload || activeWhitelistingGrant) return;
-    const handleEscape = (event: KeyboardEvent) => {
+    const panel = dialogRef.current;
+    if (!panel) return;
+    const focusable = () => Array.from(panel.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]',
+    )).filter((element) => element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden');
+    const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
+      if (event.key !== 'Tab') return;
+      const elements = focusable();
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (!first || !last) return;
+      if (!panel.contains(document.activeElement) ||
+          (event.shiftKey ? document.activeElement === first : document.activeElement === last)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus({ preventScroll: true });
+      }
     };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    const containFocus = (event: FocusEvent) => {
+      if (event.target instanceof Node && !panel.contains(event.target)) {
+        panel.querySelector<HTMLButtonElement>('.dossier-close button')?.focus({ preventScroll: true });
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    document.addEventListener('focusin', containFocus);
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+      document.removeEventListener('focusin', containFocus);
+    };
   }, [athlete, stripePayload, activeWhitelistingGrant, onClose]);
 
   const currentIndex = athlete
@@ -376,6 +411,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
       className="dossier-backdrop fixed inset-0 z-[80] bg-black/45 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={`${displayFullName} athlete dossier`}
