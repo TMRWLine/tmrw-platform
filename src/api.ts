@@ -126,15 +126,12 @@ export async function fetchAthletesNearby(
 
   const signal = timeoutSignal();
   const { data, error } = await supabase
-    .rpc('get_athletes_nearby', {
-      store_lat: lat,
-      store_lon: lng,
-      radius_meters: radiusKm * 1000,
-    })
+    .rpc('get_athletes_nearby', { lat, lng, radius_km: radiusKm })
     .abortSignal(signal);
 
   if (!error && !signal.aborted) {
-    return ((data ?? []) as Record<string, unknown>[]).map((row) => normalizeAthlete(row)).sort(byDistance);
+    const rows = ((data ?? []) as Record<string, unknown>[]).map((row) => normalizeAthlete(row));
+    return withDistance(rows, lat, lng).sort(byDistance);
   }
 
   return withinRadius(signal.aborted ? fallbackAthletes() : await fetchAthletes());
@@ -159,18 +156,15 @@ export async function fetchAthletesByTier(
 
   const signal = timeoutSignal();
   const { data, error } = await supabase
-    .rpc('get_athletes_by_tier', {
-      store_lat: lat,
-      store_lon: lng,
-      tier_code: tier.code,
-    })
+    .rpc('get_athletes_by_tier', { lat, lng, tier_code: tier.code })
     .abortSignal(signal);
 
   if (error || signal.aborted) {
     return withinTier(signal.aborted ? fallbackAthletes() : await fetchAthletes());
   }
 
-  return ((data ?? []) as Record<string, unknown>[]).map((row) => normalizeAthlete(row)).sort(byDistance);
+  const rows = ((data ?? []) as Record<string, unknown>[]).map((row) => normalizeAthlete(row));
+  return withDistance(rows, lat, lng).sort(byDistance);
 }
 
 /** Live "in range" totals for each catchment band, keyed by tier code. */
