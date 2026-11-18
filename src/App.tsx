@@ -76,6 +76,7 @@ import { HowItWorks } from './components/HowItWorks';
 import { ViewportFrame } from './components/ViewportFrame';
 import { ObsidianWipe } from './components/ObsidianWipe';
 import { CheckoutSuccessPage, CHECKOUT_SUCCESS_PATH } from './pages/checkout/success';
+import { calculateExactSplitLedger } from './lib/checkout';
 import { CANVAS_OBSIDIAN, CANVAS_WHITE, mixHex, syndicateProgress } from './lib/canvasTone';
 import { AthleteCommercialDashboard } from './components/AthleteCommercialDashboard';
 import { CartDrawer } from './components/CartDrawer.tsx';
@@ -1738,8 +1739,10 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
   const gstAmount = activeDeal?.gst_amount != null ? Number(activeDeal.gst_amount) : Math.round(grossExGst * 0.1);
   const totalIncGst = activeDeal?.total_inc_gst != null ? Number(activeDeal.total_inc_gst) : grossExGst + gstAmount;
 
-  const commission = Math.round(grossExGst * 0.20);
-  const netPayout = grossExGst - commission;
+  const split = calculateExactSplitLedger(grossExGst, athlete.postcode ?? undefined, athlete.id);
+  const athletePayout = split.athlete70Cents / 100;
+  const clubShare = split.club15Cents / 100;
+  const platformShare = split.ops15Cents / 100;
 
   const [settling, setSettling] = useState(false);
   const [settled, setSettled] = useState(false);
@@ -1770,7 +1773,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
     setSettled(true);
     setSettling(false);
     setWebhookLog(
-      `Stripe webhook ${evtId} received · ${formatCurrency(netPayout, currency)} → athlete account · ${formatCurrency(commission, currency)} platform fee collected`
+      `Stripe webhook ${evtId} received · ${formatCurrency(athletePayout, currency)} → athlete (70%) · ${formatCurrency(clubShare, currency)} → club (15%) · ${formatCurrency(platformShare, currency)} platform (15%) · RCTI issued`
     );
   }
 
@@ -1784,8 +1787,8 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         <p className="ledger-desc">
           Financial breakdown for the active sponsorship deal with{' '}
           <strong>{athleteDisplayName(athlete)}</strong>. GST is calculated at 10% on the gross deal value.
-          The platform collects a 20% commission on the Ex-GST amount; the remaining 80% is
-          released to the athlete's connected account via Stripe Connect split payment.
+          The Ex-GST amount settles 70/15/15 via Stripe Connect: 70% to the athlete's connected account,
+          15% to their club and 15% to the platform, with a Recipient-Created Tax Invoice (RCTI) issued on payout.
         </p>
 
         <div className="ledger-breakdown">
@@ -1827,19 +1830,26 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
           <div className="ledger-divider" />
           <div className="ledger-row">
             <div className="ledger-row-label">
-              <Wallet size={14} /> Platform Commission (20% of Ex-GST)
-            </div>
-            <div className="ledger-row-value commission">
-              −{formatCurrency(commission, currency)}
-            </div>
-          </div>
-          <div className="ledger-divider" />
-          <div className="ledger-row">
-            <div className="ledger-row-label">
-              <Landmark size={14} /> Net Athlete Payout (80% of Ex-GST)
+              <Landmark size={14} /> Athlete Payout (70% of Ex-GST)
             </div>
             <div className="ledger-row-value net">
-              {formatCurrency(netPayout, currency)}
+              {formatCurrency(athletePayout, currency)}
+            </div>
+          </div>
+          <div className="ledger-row">
+            <div className="ledger-row-label">
+              <Wallet size={14} /> Club Share (15% of Ex-GST)
+            </div>
+            <div className="ledger-row-value">
+              {formatCurrency(clubShare, currency)}
+            </div>
+          </div>
+          <div className="ledger-row">
+            <div className="ledger-row-label">
+              <Wallet size={14} /> Platform Share (15% of Ex-GST)
+            </div>
+            <div className="ledger-row-value commission">
+              {formatCurrency(platformShare, currency)}
             </div>
           </div>
         </div>
@@ -1933,7 +1943,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         </div>
         <p className="ledger-desc">
           Executing the split payment triggers a Stripe Connect webhook that releases the net
-          payout to the athlete's connected account and collects the 20% platform fee.
+          payout to the athlete's connected account, transfers the club's 15% and retains the 15% platform share.
         </p>
         <button
           className="btn btn-primary ledger-settle-btn"

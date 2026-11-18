@@ -19,6 +19,7 @@ import { COLLAB_SPLIT, HUNTER_BLIGH_COLLAB_DROPS, SPATIAL_TIERS } from './types'
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { parseEwkbPoint } from './lib/postgis';
 import { athleteDisplayName } from './lib/formatName';
+import { ROSTER_SPECIMENS, specimenToAthlete } from './data/roster';
 
 const API_BASE = '/api';
 
@@ -65,30 +66,30 @@ export function normalizeAthlete(row: Record<string, unknown> | Athlete | null |
   };
 }
 
-/**
- * Illustrative roster returned by `fetchAthletes` when the live query fails.
- * Sports, clubs, coordinates and follower counts are placeholders only.
- */
-const FALLBACK_ATHLETE_ROWS: Record<string, unknown>[] = [
-  { id: 'fallback-1', name: 'Liam Toole', sport: 'Rugby League', current_club: 'Harbourside Club', agreement_status: 'active', latitude: -33.8688, longitude: 151.2093, postcode: '2000', follower_count: 12000 },
-  { id: 'fallback-2', name: 'Lachlan Miller', sport: 'Rugby Union', current_club: 'Northside Club', agreement_status: 'pending', latitude: -33.7969, longitude: 151.1796, postcode: '2069', follower_count: 8500 },
-  { id: 'fallback-3', name: 'Mitchell Vance', sport: 'Basketball', current_club: 'Westside Club', agreement_status: 'no_agreement', latitude: -33.8151, longitude: 151.0011, postcode: '2150', follower_count: 6400 },
-  { id: 'fallback-4', name: 'Sam Sterling', sport: 'Soccer', current_club: 'Eastern Club', agreement_status: 'active', latitude: -33.8915, longitude: 151.2767, postcode: '2026', follower_count: 9800 },
-  { id: 'fallback-5', name: 'Kal Slater', sport: 'Surfing', current_club: 'Coastal Club', agreement_status: 'pending', latitude: -33.9173, longitude: 151.2313, postcode: '2034', follower_count: 15200 },
-  { id: 'fallback-6', name: 'Marco Rossi', sport: 'Soccer', current_club: 'Inner City Club', agreement_status: 'no_agreement', latitude: -33.8832, longitude: 151.2009, postcode: '2010', follower_count: 7100 },
-  { id: 'fallback-7', name: 'Hunter Bligh', sport: 'Cricket', current_club: 'Southern Club', agreement_status: 'active', latitude: -34.0, longitude: 151.1, postcode: '2229', follower_count: 5300 },
-  { id: 'fallback-8', name: 'Maya Lin', sport: 'Netball', current_club: 'Parkside Club', agreement_status: 'pending', latitude: -33.7506, longitude: 150.6919, postcode: '2750', follower_count: 6900 },
-].map((row) => ({ ...row, created_at: '2026-01-01T00:00:00.000Z' }));
+/** Supabase reads that take longer than this are abandoned in favour of the roster.ts fallback. */
+export const SUPABASE_TIMEOUT_MS = 8000;
 
-/** Fresh copies on every call, so callers can never mutate the shared fallback. */
+function timeoutSignal(ms: number = SUPABASE_TIMEOUT_MS): AbortSignal {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
+}
+
+/** Roster returned when Supabase is unavailable, errors or times out. Sourced from `src/data/roster.ts`. */
 function fallbackAthletes(): Athlete[] {
-  return FALLBACK_ATHLETE_ROWS.map((row) => normalizeAthlete(row));
+  return ROSTER_SPECIMENS.map((specimen) => normalizeAthlete(specimenToAthlete(specimen)));
 }
 
 export async function fetchAthletes(): Promise<Athlete[]> {
-  if (!isSupabaseConfigured || !supabase) return [];
+  if (!isSupabaseConfigured || !supabase) return fallbackAthletes();
   try {
-    const { data, error } = await supabase.from('athletes').select('*').order('created_at', { ascending: true });
+    const signal = timeoutSignal();
+    const { data, error } = await supabase
+      .from('athletes')
+      .select('*')
+      .order('created_at', { ascending: true })
+      .abortSignal(signal);
+    if (signal.aborted) throw new Error(`Athletes query timed out after ${SUPABASE_TIMEOUT_MS}ms`);
     if (error) throw new Error(`Failed to load athletes: ${error.message}`);
     return (data ?? []).map((row) => normalizeAthlete(row as Record<string, unknown>));
   } catch (e) {
@@ -119,20 +120,24 @@ export async function fetchAthletesNearby(
   lat: number = ROSTER_ORIGIN.lat,
   lng: number = ROSTER_ORIGIN.lng
 ): Promise<Athlete[]> {
-  if (!isSupabaseConfigured || !supabase) return [];
+  const withinRadius = (rows: Athlete[]) =>
+    withDistance(rows, lat, lng).filter((a) => (a.distance_km ?? Infinity) <= radiusKm);
+  if (!isSupabaseConfigured || !supabase) return withinRadius(fallbackAthletes());
 
-  const { data, error } = await supabase.rpc('get_athletes_nearby', {
-    store_lat: lat,
-    store_lon: lng,
-    radius_meters: radiusKm * 1000,
-  });
+  const signal = timeoutSignal();
+  const { data, error } = await supabase
+    .rpc('get_athletes_nearby', {
+      store_lat: lat,
+      store_lon: lng,
+      radius_meters: radiusKm * 1000,
+    })
+    .abortSignal(signal);
 
-  if (!error) {
+  if (!error && !signal.aborted) {
     return ((data ?? []) as Record<string, unknown>[]).map((row) => normalizeAthlete(row)).sort(byDistance);
   }
 
-  const all = await fetchAthletes();
-  return withDistance(all, lat, lng).filter((a) => (a.distance_km ?? Infinity) <= radiusKm);
+  return withinRadius(signal.aborted ? fallbackAthletes() : await fetchAthletes());
 }
 
 /**
@@ -144,20 +149,25 @@ export async function fetchAthletesByTier(
   lat: number = ROSTER_ORIGIN.lat,
   lng: number = ROSTER_ORIGIN.lng
 ): Promise<Athlete[]> {
-  if (!isSupabaseConfigured || !supabase) return [];
-
-  const { data, error } = await supabase.rpc('get_athletes_by_tier', {
-    store_lat: lat,
-    store_lon: lng,
-    tier_code: tier.code,
-  });
-
-  if (error) {
-    return withDistance(await fetchAthletes(), lat, lng).filter((a) => {
+  const withinTier = (rows: Athlete[]) =>
+    withDistance(rows, lat, lng).filter((a) => {
       const km = a.distance_km;
       if (km == null) return false;
       return km >= tier.minKm && (tier.maxKm == null || km <= tier.maxKm);
     });
+  if (!isSupabaseConfigured || !supabase) return withinTier(fallbackAthletes());
+
+  const signal = timeoutSignal();
+  const { data, error } = await supabase
+    .rpc('get_athletes_by_tier', {
+      store_lat: lat,
+      store_lon: lng,
+      tier_code: tier.code,
+    })
+    .abortSignal(signal);
+
+  if (error || signal.aborted) {
+    return withinTier(signal.aborted ? fallbackAthletes() : await fetchAthletes());
   }
 
   return ((data ?? []) as Record<string, unknown>[]).map((row) => normalizeAthlete(row)).sort(byDistance);
@@ -335,12 +345,12 @@ export async function fetchSponsors(): Promise<MatchedSponsor[]> {
 
 /**
  * Illustrative deals returned by `fetchAgreements` when the live query fails.
- * Tied to the fallback athlete and sponsor ids.
+ * Tied to roster.ts athlete ids (Liam Toole, Sam Sterling, Hunter Bligh) and the fallback sponsor ids.
  */
 const FALLBACK_AGREEMENTS: Agreement[] = [
   {
     id: 'fallback-agreement-1',
-    athlete_id: 'fallback-1',
+    athlete_id: '77777777-7777-7777-7777-777777777777',
     sponsor_id: 'fallback-sponsor-1',
     status: 'active',
     deal_value: 20000,
@@ -356,7 +366,7 @@ const FALLBACK_AGREEMENTS: Agreement[] = [
   },
   {
     id: 'fallback-agreement-2',
-    athlete_id: 'fallback-4',
+    athlete_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     sponsor_id: 'fallback-sponsor-3',
     status: 'pending',
     deal_value: 8000,
@@ -372,7 +382,7 @@ const FALLBACK_AGREEMENTS: Agreement[] = [
   },
   {
     id: 'fallback-agreement-3',
-    athlete_id: 'fallback-7',
+    athlete_id: '33333333-3333-3333-3333-333333333333',
     sponsor_id: 'fallback-sponsor-2',
     status: 'active',
     deal_value: 15000,
@@ -397,14 +407,16 @@ function fallbackAgreements(athleteId?: string): Agreement[] {
 }
 
 export async function fetchAgreements(athleteId?: string): Promise<Agreement[]> {
-  if (!isSupabaseConfigured || !supabase) return [];
+  if (!isSupabaseConfigured || !supabase) return fallbackAgreements(athleteId);
   try {
     let query = supabase
       .from('agreements')
       .select('*')
       .order('created_at', { ascending: false });
     if (athleteId) query = query.eq('athlete_id', athleteId);
-    const { data, error } = await query;
+    const signal = timeoutSignal();
+    const { data, error } = await query.abortSignal(signal);
+    if (signal.aborted) throw new Error(`Agreements query timed out after ${SUPABASE_TIMEOUT_MS}ms`);
     if (error) throw new Error(`Failed to load agreements: ${error.message}`);
     return (data ?? []) as Agreement[];
   } catch (e) {
