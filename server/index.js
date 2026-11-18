@@ -32,7 +32,9 @@ const SUPABASE_ANON_KEY =
   process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 export const app = express();
-app.set('trust proxy', 1);
+if (process.env.VERCEL || process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true') {
+  app.set('trust proxy', 1);
+}
 app.use(cors());
 
 /**
