@@ -64,6 +64,8 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
   let lookedUp = 0;
   let lookups = 0;
   let writes = 0;
+  const transfers = [];
+  const transferGroup = 'TG_fixture';
   globalThis.fetch = async (input, options) => {
     const url = new URL(input);
     if (url.href === stripeURL) {
@@ -74,17 +76,44 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
         const name = /^metadata\[(.+)\]$/.exec(key)?.[1];
         return name ? [[name, value]] : [];
       }));
+      const amount = Number(params.get('line_items[0][price_data][unit_amount]'));
+      assert.equal(params.get('payment_intent_data[transfer_group]'), transferGroup);
+      assert.equal(metadata.escrowMode, 'milestone_50_50');
       stripeSession = {
         id: sessionId, mode: 'payment', payment_status: 'unpaid', status: 'complete',
-        amount_total: Number(params.get('line_items[0][price_data][unit_amount]')),
+        amount_total: amount,
         currency: 'aud', metadata,
+        payment_intent: {
+          transfer_group: transferGroup,
+          latest_charge: { id: 'ch_fixture', status: 'succeeded', paid: true, captured: true, amount, currency: 'aud' },
+        },
       };
       return Response.json({ id: sessionId, url: checkoutURL });
     }
-    if (url.href === `${stripeURL}/${sessionId}`) {
+    if (url.origin + url.pathname === `${stripeURL}/${sessionId}`) {
       lookedUp++;
       assert.equal(options.headers.Authorization, 'Bearer fixture-stripe-key');
       return Response.json(stripeSession);
+    }
+    if (url.origin === 'https://api.stripe.com' && url.pathname === '/v1/transfers') {
+      if (options.method === 'GET') return Response.json({ data: transfers, has_more: false });
+      assert.equal(options.method, 'POST');
+      const body = new URLSearchParams(options.body);
+      assert.equal(body.get('source_transaction'), 'ch_fixture');
+      assert.equal(body.get('transfer_group'), transferGroup);
+      assert.equal(body.get('destination'), 'acct_fixture');
+      const transfer = {
+        id: 'tr_fixture', amount: Number(body.get('amount')), created: 1800000000,
+        metadata: { escrowReleaseFor: body.get('metadata[escrowReleaseFor]') },
+      };
+      transfers.push(transfer);
+      return Response.json(transfer);
+    }
+    if (url.origin === 'https://db.fixture.invalid' && url.pathname === '/rest/v1/athlete_profiles' &&
+        url.searchParams.get('select') === 'stripe_account_id') {
+      assert.equal(url.searchParams.get('id'), 'eq.chloe-vance');
+      assert.equal(options.headers.apikey, 'fixture-service-key');
+      return Response.json([{ stripe_account_id: 'acct_fixture' }]);
     }
     if (url.origin + url.pathname !== dbURL) throw new Error('Unexpected outbound request');
     assert.equal(options.headers.apikey, 'fixture-service-key');
@@ -120,6 +149,7 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
   });
   const start = () => request('/api/checkout/create-session', {
     athleteId: 'chloe-vance', tierId: 'pathway_contender', postcode: '0220',
+    escrowMode: 'milestone_50_50', transferGroup,
     athlete: { full_name: 'Chloe Vance' },
   });
 
@@ -129,7 +159,7 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
     storageUnavailable = false;
     const checkout = await start();
     assert.equal(checkout.status, 200);
-    assert.deepEqual(await checkout.json(), { checkoutUrl: checkoutURL, sessionId });
+    assert.deepEqual(await checkout.json(), { checkoutUrl: checkoutURL, sessionId, transferGroup });
     const setCookie = checkout.headers.get('Set-Cookie');
     assert.match(setCookie, /HttpOnly; SameSite=Lax|HttpOnly; Secure; SameSite=Lax/);
     assert.ok(setCookie.includes(`Path=${grantPath}`));
@@ -157,6 +187,8 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
     }
     const [issued, repeated] = await Promise.all(results.map(result => result.json()));
     assert.deepEqual(repeated, issued);
+    assert.equal(issued.checkoutSessionId, sessionId);
+    assert.equal(issued.milestoneReleaseAvailable, true);
     assert.equal(issued.amountPaidCents, 350000);
     assert.equal(issued.grant.athleteId, 'chloe-vance');
     assert.equal(issued.grant.athleteName, 'Chloe Vance');
@@ -179,6 +211,24 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
     };
     assert.deepEqual(await fetchPaidWhitelistingGrant(sessionId), issued);
     await assert.rejects(fetchPaidWhitelistingGrant('cs_demo_1'), /No Stripe payment was verified/);
+
+    const releasePath = '/api/checkout/release-escrow';
+    const approval = { checkoutSessionId: issued.checkoutSessionId, athleteId: issued.grant.athleteId };
+    const release = await request(releasePath, approval, cookie);
+    assert.equal(release.status, 200);
+    assert.deepEqual(await release.json(), {
+      released: true, escrowTransferId: 'tr_fixture', releasedAmountCents: 122500,
+      releasedAt: '2027-01-15T08:00:00.000Z', alreadyReleased: false,
+    });
+    const retry = await request(releasePath, approval, cookie);
+    assert.equal(retry.status, 200);
+    assert.equal((await retry.json()).alreadyReleased, true);
+    assert.equal(transfers.length, 1);
+
+    stripeSession.metadata.escrowMode = 'upfront_100';
+    const upfront = await request(grantPath, { sessionId }, cookie);
+    assert.equal(upfront.status, 200);
+    assert.equal((await upfront.json()).milestoneReleaseAvailable, false);
   } finally {
     globalThis.fetch = originalFetch;
     for (const [name, value] of Object.entries(previous)) {

@@ -12,6 +12,8 @@ export interface WhitelistingGrant {
 }
 
 export interface PaidWhitelistingGrant {
+  checkoutSessionId: string;
+  milestoneReleaseAvailable: boolean;
   grant: WhitelistingGrant;
   amountPaidCents: number;
 }
@@ -31,9 +33,15 @@ export async function fetchPaidWhitelistingGrant(
     signal,
   });
   const data = await response.json().catch(() => null);
-  if (!response.ok || !data?.grant?.id || !data.grant.tiktok_spark_code || !data.grant.meta_partnership_token ||
+  if (!response.ok || data?.checkoutSessionId !== sessionId || typeof data.milestoneReleaseAvailable !== 'boolean' ||
+      !data.grant?.id || !data.grant.athleteId || !data.grant.tiktok_spark_code || !data.grant.meta_partnership_token ||
       !Number.isSafeInteger(data.amountPaidCents) || data.amountPaidCents <= 0) {
     throw new Error(data?.error || 'The activation grant is temporarily unavailable.');
   }
-  return { grant: data.grant, amountPaidCents: data.amountPaidCents };
+  return {
+    checkoutSessionId: data.checkoutSessionId,
+    milestoneReleaseAvailable: data.milestoneReleaseAvailable,
+    grant: data.grant,
+    amountPaidCents: data.amountPaidCents,
+  };
 }

@@ -119,7 +119,11 @@ export async function issuePaidWhitelistingGrant(req, res) {
     }
     if (!grant) throw new Error('The activation grant was not persisted');
 
+    const holdCents = Number(metadata.athleteEscrowHoldCents);
     return res.json({
+      checkoutSessionId: session.id,
+      milestoneReleaseAvailable: metadata.escrowMode === 'milestone_50_50' &&
+        Number.isSafeInteger(holdCents) && holdCents > 0,
       grant: {
         id: grant.id,
         athleteId: grant.athlete_id,

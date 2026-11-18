@@ -7,7 +7,7 @@ import {
   type CommercialAthlete,
   type CommercialPackage,
 } from '../../data/mockDeliverables';
-import { CHECKOUT_SUCCESS_PATH } from '../../lib/checkout';
+import { CHECKOUT_SUCCESS_PATH, releaseEscrowMilestoneTranche } from '../../lib/checkout';
 import { formatAud } from '../../lib/formatMoney';
 import { fetchPaidWhitelistingGrant, type PaidWhitelistingGrant } from '../../lib/whitelisting';
 import { ROSTER_DATA } from '../../data/roster';
@@ -23,7 +23,7 @@ const MILESTONES = [
     done: false,
   },
   { id: 'content', label: 'Content Scheduled', detail: 'Production window locks after brand kit confirmation.', done: false },
-  { id: 'release', label: 'Final Release', detail: '70/15/15 disbursement on verified delivery.', done: false },
+  { id: 'release', label: 'Athlete milestone release', detail: 'Approve delivery before releasing the held athlete payment.', done: false },
 ] as const;
 
 function resolveAthlete(athleteId: string): CommercialAthlete | null {
@@ -104,6 +104,44 @@ function downloadRcti(args: {
   win.print();
 }
 
+function MilestoneRelease({ checkoutSessionId, athleteId }: { checkoutSessionId: string; athleteId: string }) {
+  const [pending, setPending] = useState(false);
+  const [released, setReleased] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function approveDelivery() {
+    if (pending || released !== null) return;
+    setPending(true);
+    setError(null);
+    try {
+      const result = await releaseEscrowMilestoneTranche({ checkoutSessionId, athleteId });
+      setReleased(result.releasedAmountCents);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Stripe did not confirm the release.');
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="mt-6">
+      {released === null ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => void approveDelivery()}
+          className="rounded-full border-0 bg-[#CCFF00] px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-[#dfff66] disabled:opacity-50"
+        >
+          {pending ? 'Confirming release…' : 'Approve deliverables & release'}
+        </button>
+      ) : (
+        <p role="status" className="m-0 text-sm font-semibold">Stripe confirmed {formatAud(released / 100)} released to the athlete.</p>
+      )}
+      {error && <p role="alert" className="mt-3 text-sm text-[#0F0F11]">{error}</p>}
+    </div>
+  );
+}
+
 export const CheckoutSuccessPage: React.FC = () => {
   const sessionId = new URLSearchParams(window.location.search).get('session_id') ?? '';
   const [paid, setPaid] = useState<PaidWhitelistingGrant | null>(null);
@@ -129,7 +167,7 @@ export const CheckoutSuccessPage: React.FC = () => {
   const athlete = grant ? resolveAthlete(grant.athleteId) : null;
   const pkg = grant ? getCommercialPackage(grant.flightTierId) : null;
   const split = pkg?.split_breakdown;
-  const reference = grant ? dealReference(sessionId, grant.athleteId, grant.flightTierId) : '';
+  const reference = paid ? dealReference(paid.checkoutSessionId, paid.grant.athleteId, paid.grant.flightTierId) : '';
   const locality = [athlete?.grassroots_club.suburb ?? '', athlete?.grassroots_club.state ?? '']
     .filter((part) => part.trim().length > 0)
     .join(', ');
@@ -264,7 +302,7 @@ export const CheckoutSuccessPage: React.FC = () => {
             Contract milestones
           </h2>
           <ol className="m-0 mt-6 p-0 list-none space-y-4">
-            {MILESTONES.map((item) => (
+            {MILESTONES.filter((item) => item.id !== 'release' || paid.milestoneReleaseAvailable).map((item) => (
               <li key={item.id} className="flex items-start gap-4">
                 <span
                   aria-hidden="true"
@@ -281,6 +319,9 @@ export const CheckoutSuccessPage: React.FC = () => {
               </li>
             ))}
           </ol>
+          {paid.milestoneReleaseAvailable && (
+            <MilestoneRelease key={paid.checkoutSessionId} checkoutSessionId={paid.checkoutSessionId} athleteId={grant.athleteId} />
+          )}
         </section>
 
         {athlete && pkg && (
