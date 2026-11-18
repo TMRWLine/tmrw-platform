@@ -58,10 +58,8 @@ import { CoverHero, PAGE_SHELL } from './components/CoverHero';
 import { ManifestoTrail } from './components/ManifestoTrail';
 import { BroadcastMatrix } from './components/BroadcastMatrix';
 import { RosterGrid } from './components/RosterGrid';
-import { AthleteCard } from './components/AthleteCard';
 import { SettlementLedger } from './components/SettlementLedger';
 import { SiteFooter } from './components/SiteFooter';
-import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDirectory } from './components/SponsorDirectory';
 import { AthleteAuthModal } from './components/AthleteAuthModal';
 import { AthletePortalDrawer } from './components/AthletePortalDrawer';
@@ -69,6 +67,7 @@ import { SyndicateEnquiryModal } from './components/SyndicateEnquiryModal';
 import { AthleteProfileManager } from './components/AthleteProfileManager';
 import { GuardianVerifyPage, GUARDIAN_VERIFY_PATH } from './components/GuardianVerifyPage';
 import { CommercialTiers } from './components/CommercialTiers';
+import { SponsorDiscoveryPage } from './pages/SponsorDiscoveryPage';
 import { SyndicateRunway } from './components/SyndicateRunway';
 import { HowItWorks } from './components/HowItWorks';
 import { ViewportFrame } from './components/ViewportFrame';
@@ -442,12 +441,6 @@ export function MarketplaceApp() {
     );
   }
 
-  function openProfile(athlete: Athlete) {
-    setProfileAthlete(athlete);
-    setProfileTab('overview');
-    setSignError(null);
-  }
-
   function openSponsorDrawer(athlete: Athlete | null) {
     setSelectedAthlete(athlete);
     setIsCartOpen(true);
@@ -492,28 +485,6 @@ export function MarketplaceApp() {
     if (path !== THE_ROSTER_PATH) window.history.pushState(null, '', THE_ROSTER_PATH);
     setView('the-roster');
   }
-
-  const catchment3000: AthleteLocation = {
-    id: 'postcode-3000',
-    name: 'Postcode 3000',
-    lat: -37.8136,
-    lng: 144.9631,
-    postcode: '3000',
-    follower_count: null,
-    master_licence_signed: true,
-    nrl_tpa_registered: false,
-    shute_shield_compliant: true,
-  };
-
-  const workspaceSponsors: MatchedSponsor[] = (sponsors ?? [])
-    .filter((s) => s.latitude != null && s.longitude != null)
-    .map((s) => ({
-      ...s,
-      lat: s.latitude,
-      lng: s.longitude,
-      distance_meters: 0,
-      distance_km: 0,
-    }));
 
   async function handleSignMOU(signatoryName: string) {
     if (!profileAthlete) return;
@@ -757,88 +728,23 @@ export function MarketplaceApp() {
           <SiteFooter onHome={() => setLandingSection('top')} tone={canvasProgress > 0.62 ? 'dark' : 'light'} />
         </div>
       ) : (
-      <main className="page sponsor-light bg-[#FFFFFF]">
-        <div
-          className="page-head flex flex-col gap-6 border-b border-[#EAEAEA] pb-6 lg:flex-row lg:items-end lg:justify-between"
-          id="athlete-roster"
-        >
-          <h1 className="m-0 font-display text-5xl sm:text-6xl xl:text-[74px] font-black tracking-[-0.04em] leading-[0.86] uppercase text-[#080808]">
-            SPONSOR DISCOVERY<span className="text-[#CCFF00]">.</span>
-          </h1>
-          <div className="max-w-[420px] border-l border-[#EAEAEA] pl-4">
-            <p className="m-0 font-sans text-[14.5px] font-bold tracking-[-0.02em] leading-[1.28] text-[#080808]">
-              Find talent inside your store&apos;s catchment.
-            </p>
-            <p className="m-0 mt-1 font-sans text-[12px] leading-[1.45] text-neutral-600">
-              Filter the roster by distance from postcode 3000, pick a sponsorship tier, and settle every deal on the{' '}
-              <span className="bg-[#CCFF00] text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">70/15/15 split</span>.
-            </p>
-          </div>
-        </div>
-
-        {listError && (
-          <div className="state">
-            <p style={{ color: 'var(--error)', marginBottom: 8 }}>{listError}</p>
-            <button className="btn" onClick={() => window.location.reload()}>
-              <RefreshCw size={14} /> Retry
-            </button>
-          </div>
-        )}
-
-        {!listError && (
-          <>
-            <SpatialCatchment
-              selected={catchmentTier}
-              counts={catchmentCounts}
-              onSelect={(code) => {
-                setCatchmentTier(code);
-                setRadiusFilter('all');
-              }}
-              onClear={() => setCatchmentTier(null)}
-            />
-            <div className="radius-filter">
-              <span className="radius-filter-label">Radius:</span>
-              <div className="radius-toggle">
-                <button
-                  className={catchmentTier === null && radiusFilter === '25km' ? 'active' : ''}
-                  onClick={() => { setCatchmentTier(null); setRadiusFilter('25km'); }}
-                >25km</button>
-                <button
-                  className={catchmentTier === null && radiusFilter === '50km' ? 'active' : ''}
-                  onClick={() => { setCatchmentTier(null); setRadiusFilter('50km'); }}
-                >50km</button>
-                <button
-                  className={catchmentTier === null && radiusFilter === 'all' ? 'active' : ''}
-                  onClick={() => { setCatchmentTier(null); setRadiusFilter('all'); }}
-                >All Postcodes</button>
-              </div>
-            </div>
-            <div className="relative isolate h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc">
-              <MapView
-                athlete={catchment3000}
-                sponsors={workspaceSponsors}
-                catchmentMeters={5000}
-                className="relative h-full w-full overflow-hidden"
-              />
-            </div>
-            {loadingList ? (
-              <div className="state">
-                <div className="spinner" />
-                Loading athletes…
-              </div>
-            ) : (
-              <div className="card-grid">
-                {athletes.filter(Boolean).map((a, i) => (
-                  <MarketplaceAthleteCard
-                    key={a.id ?? `athlete-${i}`}
-                    athlete={a}
-                    onFindNearby={() => openSponsorDrawer(a)}
-                    onProfile={() => openProfile(a)}
-                    onMediaStudio={() => { setMediaStudioAthlete(a); setMediaStudioOpen(true); }}
-                  />
-                ))}
-              </div>
-            )}
+      <div className="relative z-10 min-h-screen w-full bg-white pt-[74px]">
+        <SponsorDiscoveryPage
+          athletes={athletes}
+          loading={loadingList}
+          error={listError}
+          radiusFilter={radiusFilter}
+          catchmentTier={catchmentTier}
+          tierCounts={catchmentCounts}
+          onRadiusChange={setRadiusFilter}
+          onTierChange={(code) => {
+            setCatchmentTier(code);
+            if (code) setRadiusFilter('all');
+          }}
+          onRetry={() => window.location.reload()}
+        />
+        {sponsors.length > 0 ? (
+          <div className={`${PAGE_SHELL} pb-16`}>
             <SponsorDirectory
               sponsors={sponsors}
               athletes={athletes}
@@ -847,10 +753,11 @@ export function MarketplaceApp() {
                 setIsCartOpen(true);
               }}
             />
-          </>
-        )}
-
-      </main>
+          </div>
+        ) : null}
+        <CommercialTiers onNavigateSection={navigateSection} />
+        <SiteFooter onHome={() => navigateSection('top')} />
+      </div>
       )}
 
       <CartDrawer
@@ -1135,50 +1042,6 @@ function statusBadge(status?: string | null): { label: string; cls: string } {
   }
 }
 
-function MarketplaceAthleteCard({
-  athlete,
-  onFindNearby,
-  onProfile,
-  onMediaStudio,
-}: {
-  athlete: Athlete;
-  onFindNearby: () => void;
-  onProfile: () => void;
-  onMediaStudio: () => void;
-}) {
-  const st = statusBadge(athlete?.licence_status ?? athlete?.agreement_status);
-  const leagueTag = (athlete?.tier_tag || getLeagueTag(athlete?.sport))?.toLowerCase();
-  const ipLocked = athlete?.ip_lock === true || athlete?.master_licence_signed === true;
-  const name = athleteDisplayName(athlete);
-  const postcode = athlete?.postcode;
-
-  const catchmentTag = leagueTag
-    ? `${leagueTag} // Postcode ${postcode ?? '2026'}`
-    : postcode
-      ? `Postcode ${postcode}`
-      : 'Catchment 2026';
-
-  const tags: string[] = [];
-  if (st.label) tags.push(st.label);
-  if (ipLocked) tags.push('IP Lock');
-  if (athlete?.nrl_tpa_registered) tags.push('NRL TPA');
-  if (athlete?.shute_shield_compliant) tags.push('Shute Shield');
-
-  return (
-    <AthleteCard
-      name={name}
-      initials={athlete?.initials || initials(name)}
-      sportLeague={athlete?.sport ?? '\u2014'}
-      catchmentTag={catchmentTag}
-      tags={tags}
-      athlete={athlete}
-      onSponsor={onFindNearby}
-      onOpenDossier={onProfile}
-      onMediaStudio={onMediaStudio}
-    />
-  );
-}
-
 export default function App() {
   const path = window.location.pathname.replace(/\/+$/, '');
   const surface =
@@ -1190,20 +1053,6 @@ export default function App() {
       <MarketplaceApp />
     );
   return <div className="min-h-screen w-full bg-white">{surface}</div>;
-}
-
-function getLeagueTag(sport: string | null): string | null {
-  if (!sport) return null;
-  const s = sport.toLowerCase();
-  if (s.includes('basketball')) return '@nbl1';
-  if (s.includes('soccer') || s.includes('football')) return '@nplnsw';
-  if (s.includes('rugby') && s.includes('union')) return '@shuteshield';
-  if (s.includes('rugby') && s.includes('league')) return '@nrl';
-  if (s.includes('afl')) return '@vfl';
-  if (s.includes('netball')) return '@ssn';
-  if (s.includes('cricket')) return '@nswpremier';
-  if (s.includes('combat')) return '@csa';
-  return null;
 }
 
 function MatchCard({
