@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useDialogFocus } from '../lib/useDialogFocus';
 import type { WhitelistingGrant } from '../lib/whitelisting';
 import {
   calculateExactSplitLedger,
@@ -31,6 +32,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const [specExported, setSpecExported] = useState(false);
 
   const [releasingEscrow, setReleasingEscrow] = useState(false);
+  const dialogRef = useDialogFocus(true, () => { if (!releasingEscrow) onClose(); });
   const [deliverablesApproved, setDeliverablesApproved] = useState(
     receipt?.escrowMode === 'upfront_100',
   );
@@ -193,10 +195,11 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
     <div
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
-      onClick={onClose}
+      onClick={(event) => { event.stopPropagation(); if (!releasingEscrow) onClose(); }}
       className="fixed inset-0 z-[120] bg-[#080808]/70 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
       <div
+        ref={dialogRef} role="dialog" aria-modal="true" aria-label="Whitelisting launch" tabIndex={-1}
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
