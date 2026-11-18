@@ -10,6 +10,7 @@ import {
   type StripeCheckoutPayload,
   type StripeEscrowReceipt,
 } from './StripeEscrowCheckoutModal';
+import '../syndicate-mobile.css';
 
 interface SyndicateRunwayProps {
   onNavigateSection?: (id: LandingSectionId) => void;
@@ -199,7 +200,7 @@ function EditorialDiptych({
 
   return (
     <div className="flex h-full min-h-[64vh] w-full min-w-0 flex-col justify-between lg:min-h-0">
-      <div className="relative flex min-h-[35rem] flex-1 gap-4 overflow-visible">
+      <div className="syndicate-contenders relative flex min-h-[35rem] flex-1 gap-4 overflow-visible">
         {CONTENDER_SPECIMENS.map((specimen) => {
           const active = activeFocus === specimen.id;
           const otherSpecimen =
@@ -272,7 +273,7 @@ function EditorialDiptych({
                   </h3>
 
                   <div
-                    className={`transition-opacity duration-300 ${
+                    className={`syndicate-contender-details transition-opacity duration-300 ${
                       active ? 'opacity-100' : 'opacity-0 pointer-events-none hidden sm:block'
                     }`}
                   >
@@ -297,7 +298,7 @@ function EditorialDiptych({
 
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className={`absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.45)] px-2 flex items-center justify-between gap-2 transition-all duration-300 ${
+                  className={`syndicate-contender-actions absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.45)] px-2 flex items-center justify-between gap-2 transition-all duration-300 ${
                     active ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'
                   }`}
                 >
@@ -387,7 +388,7 @@ function SyndicateApplicationDrawer({
     <div
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-[90] flex justify-end"
+      className="mobile-overlay syndicate-application fixed inset-0 z-[90] flex justify-end"
     >
       <button
         type="button"
@@ -458,7 +459,16 @@ function SyndicateApplicationDrawer({
               return (
                 <li
                   key={index}
+                  role="button"
+                  tabIndex={0}
+                  aria-current={active ? 'step' : undefined}
                   onClick={() => setStep(index)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setStep(index);
+                    }
+                  }}
                   className={`rounded-xl border px-3 py-2 cursor-pointer transition-colors ${
                     active ? 'border-[#CCFF00] bg-[#CCFF00]/10 text-white' : 'border-white/10 bg-black/20 text-neutral-400'
                   }`}
@@ -778,7 +788,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
   };
 
   return (
-    <div data-runway-root="true" className="w-full bg-[#080808]">
+    <div data-runway-root="true" className="syndicate-board w-full bg-[#080808]">
       <style>{`
         #commercial-tiers [data-sovereign-board] {
           border-top: 0 !important;
@@ -835,7 +845,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
             </div>
 
             <div className="my-7 max-w-xl">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="syndicate-horizons grid grid-cols-3 gap-3">
                 {OLYMPIC_HORIZONS.map((horizon) => {
                   const active = selectedHorizon.id === horizon.id;
                   return (

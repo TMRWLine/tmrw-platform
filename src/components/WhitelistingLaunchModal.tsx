@@ -185,7 +185,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
       onClick={onClose}
-      className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
+      className="mobile-overlay whitelisting-backdrop fixed inset-0 z-[120] bg-black/70 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
       <div
         data-lenis-prevent="true"
