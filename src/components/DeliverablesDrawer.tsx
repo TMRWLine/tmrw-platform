@@ -39,7 +39,7 @@ const CANONICAL_FLIGHTS: readonly CanonicalFlight[] = [
   {
     tier_id: 'local_merchant',
     numeral: '01',
-    code: 'FLIGHT 01',
+    code: 'PACKAGE 01',
     badge: '5km Lock',
     badgeVariant: 'black',
     name: 'Precinct Contra & Micro',
@@ -52,93 +52,93 @@ const CANONICAL_FLIGHTS: readonly CanonicalFlight[] = [
     summary:
       "Own your immediate postcode. Built for local cafes, gyms, and recovery clinics backing an athlete's daily training block through cash and product seeding. Lock out direct local competitors within a 5km radius.",
     specs: [
-      { label: 'TERRITORY', value: '5KM POSTCODE LOCK' },
-      { label: 'ACTIVATION', value: '1X IN-VENUE SESSION + PRODUCT SEEDING' },
-      { label: 'DELIVERABLES', value: '2X GEO-VERIFIED SOCIAL TAGS' },
-      { label: 'CLEARING RAIL', value: 'PROOF-OF-WORK ESCROW + INSTANT RCTI' },
+      { label: 'TERRITORY', value: '5KM POSTCODE COMPETITOR LOCK' },
+      { label: 'ACTIVATION', value: '1X IN-VENUE SESSION + COUNTER QR PLAQUE' },
+      { label: 'DELIVERABLES', value: '2X AI-CUT 9:16 REELS (WATERMARKED)' },
+      { label: 'HANDLE SPONSORSHIP', value: 'API HANDLE LINKING (AD SPEND DIRECT)' },
     ],
     athlete_net: 'A$525',
     club_net: 'A$112.50',
     platform_net: 'A$112.50',
-    cta_label: 'LOCK FLIGHT 01 RIGHTS',
+    cta_label: 'LOCK PACKAGE 01',
   },
   {
     tier_id: 'pathway_contender',
     numeral: '02',
-    code: 'FLIGHT 02',
+    code: 'PACKAGE 02',
     badge: '15km Lock',
     badgeVariant: 'black',
     name: 'Pathway Contender',
     firstWord: 'Pathway',
     restWords: 'Contender',
     line1: '15km District Lock + Training Kit Logo',
-    line2: 'Annual Flight · A$2,450 Net to Athlete',
+    line2: 'Annual Backing · A$2,450 Net to Athlete',
     price_aud: 3500,
     price_display: 'A$3,500',
     summary:
-      'Mid-market corporate backing for 18-to-25 contenders dominating elite state leagues (NBL1, Shute Shield, VFL, WNBL). Underwrites competition travel while putting your brand on training kit and verified local feeds.',
+      'Mid-market corporate backing for 18-to-25 contenders dominating televised state leagues (NBL1, Shute Shield, VFL, WNBL). Underwrites competition travel while putting your brand on training kit and verified local feeds.',
     specs: [
-      { label: 'TERRITORY', value: '15KM SUBURBAN CLUSTER' },
-      { label: 'BRANDING', value: 'OFFICIAL TRAINING KIT PLACEMENT' },
-      { label: 'ACTIVATION', value: '4X QUARTERLY CONTENT SUITES' },
-      { label: 'APPEARANCES', value: '1X IN-PERSON CORPORATE SESSION' },
+      { label: 'TERRITORY', value: '15KM SUBURBAN CLUSTER EXCLUSIVITY' },
+      { label: 'BRANDING', value: 'OFFICIAL TRAINING KIT LOGO PLACEMENT' },
+      { label: 'ACTIVATION', value: '4X QUARTERLY 9:16 CONTENT DROPS' },
+      { label: 'HANDLE SPONSORSHIP', value: 'PAID SOCIAL AMPLIFICATION (15KM)' },
     ],
     athlete_net: 'A$2,450',
     club_net: 'A$525',
     platform_net: 'A$525',
-    cta_label: 'LOCK FLIGHT 02 RIGHTS',
+    cta_label: 'LOCK PACKAGE 02',
   },
   {
     tier_id: 'national_challenger',
     numeral: '03',
-    code: 'FLIGHT 03',
+    code: 'PACKAGE 03',
     badge: 'Popular',
     badgeVariant: 'green',
     name: 'National Challenger',
     firstWord: 'National',
     restWords: 'Challenger',
-    line1: '48-Code Category Lockout + Media Suite',
-    line2: 'Annual Flight · A$8,750 Net to Athlete',
+    line1: 'State-Wide Category Lockout + 4K Media Vault',
+    line2: 'Annual Backing · A$8,750 Net to Athlete',
     price_aud: 12500,
     price_display: 'A$12,500',
     summary:
-      'Complete category lockout for national Olympic and Paralympic challengers on the LA 2028 and Brisbane 2032 runway. High-performance funding paired with broadcast-cleared media assets and executive keynotes.',
+      'Complete state-wide category lockout for national-level contenders. Block every rival brand across your sector, unlock pre-shot 4K broadcast and 9:16 social video stems, and book an executive keynote.',
     specs: [
-      { label: 'TERRITORY', value: 'STATE-WIDE CATEGORY LOCK' },
-      { label: 'EXCLUSIVITY', value: '48-CODE COMPETITOR LOCKOUT' },
-      { label: 'MEDIA RIGHTS', value: 'BROADCAST-CLEARED CAMPAIGN ASSETS' },
-      { label: 'APPEARANCES', value: '1X EXECUTIVE KEYNOTE SESSION' },
+      { label: 'TERRITORY', value: 'STATE-WIDE 48-SECTOR CATEGORY LOCK' },
+      { label: 'MEDIA RIGHTS', value: 'PRE-SHOT 4K BROADCAST & AD STEM VAULT' },
+      { label: 'APPEARANCES', value: '1X EXECUTIVE KEYNOTE OR CLINIC' },
+      { label: 'HANDLE SPONSORSHIP', value: 'STATE-WIDE API HANDLE LINKING' },
     ],
     athlete_net: 'A$8,750',
     club_net: 'A$1,875',
     platform_net: 'A$1,875',
-    cta_label: 'LOCK FLIGHT 03 RIGHTS',
+    cta_label: 'LOCK PACKAGE 03',
   },
   {
     tier_id: 'world_class',
     numeral: '04',
-    code: 'FLIGHT 04',
+    code: 'PACKAGE 04',
     badge: 'AU & NZ',
     badgeVariant: 'yellow',
-    name: 'World-Class Benchmark',
-    firstWord: 'World-Class',
-    restWords: 'Benchmark',
+    name: 'Trans-Tasman Headline',
+    firstWord: 'Trans-Tasman',
+    restWords: 'Headline',
     line1: 'Pan-Pacific Licence (AU & NZ) + Keynote',
-    line2: 'Campaign Flight · A$17,500 Net to Athlete',
+    line2: 'Headline Partner · A$17,500 Net to Athlete',
     price_aud: 25000,
     price_display: 'A$25,000',
     summary:
-      'Enterprise association with world championship, Olympic, and Paralympic podium contenders. Full Pan-Pacific digital licensing, staff town hall keynotes, and Rule 40 pre-cleared ambassador campaigns across AU & NZ.',
+      'Headline single-athlete commercial partnership across Australia and New Zealand. Full trans-Tasman digital likeness licensing, direct handle sponsorship, co-branded merch rights, and internal staff town halls.',
     specs: [
-      { label: 'TERRITORY', value: 'PAN-PACIFIC LICENCE (AU & NZ)' },
-      { label: 'KEYNOTE', value: 'INTERNAL STAFF TOWN HALL' },
-      { label: 'COMMERCIAL', value: 'FULL AMBASSADOR & IP RIGHTS' },
-      { label: 'COMPLIANCE', value: 'RULE 40, TPA & SIA CLEARED' },
+      { label: 'TERRITORY', value: 'TRANS-TASMAN EXCLUSIVITY (AU & NZ)' },
+      { label: 'COMMERCIAL', value: 'HEADLINE AMBASSADOR, IP & MERCH CAPSULE' },
+      { label: 'KEYNOTE', value: 'INTERNAL STAFF TOWN HALL + VIP ACCESS' },
+      { label: 'HANDLE SPONSORSHIP', value: 'AU & NZ PAID SOCIAL AMPLIFICATION' },
     ],
     athlete_net: 'A$17,500',
     club_net: 'A$3,750',
     platform_net: 'A$3,750',
-    cta_label: 'LOCK FLIGHT 04 RIGHTS',
+    cta_label: 'LOCK PACKAGE 04',
   },
 ] as const;
 
@@ -151,7 +151,7 @@ function resolveCanonicalTier(rawTierId: string | undefined): CanonicalFlight {
   if (normalized.includes('challenger') || normalized.includes('national') || normalized === '03') {
     return CANONICAL_FLIGHTS[2];
   }
-  if (normalized.includes('world') || normalized.includes('benchmark') || normalized === '04' || normalized === 'regional') {
+  if (normalized.includes('world') || normalized.includes('benchmark') || normalized.includes('headline') || normalized === '04' || normalized === 'regional') {
     return CANONICAL_FLIGHTS[3];
   }
   return CANONICAL_FLIGHTS[0];
@@ -252,56 +252,27 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-[1840px] h-[94dvh] rounded-[24px] bg-[#FFFFFF] text-[#080808] shadow-[0_30px_90px_rgba(0,0,0,0.28)] border border-black/10 flex flex-col overflow-hidden"
       >
-        {/* Top Bar with Luxury Obsidian Black Close Button */}
-        <header className="shrink-0 z-30 grid grid-cols-3 items-center px-4 sm:px-6 md:px-10 py-3.5 bg-[#FFFFFF]/95 backdrop-blur-md border-b border-black/10">
-          <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#080808]">
-            <span className="inline-block h-2 w-2 rounded-full bg-[#CCFF00] ring-1 ring-black/20" />
-            <span>COMMERCIAL FLIGHT LICENSING · DIRECT CHECKOUT</span>
-          </div>
-
-          <div className="flex items-center justify-center">
-            <button
-              ref={closeRef}
-              type="button"
-              onClick={onClose}
-              title="Close [ESC]"
-              aria-label="Close modal"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/25 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
-            >
-              <span>Close</span>
-              <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">✕</span>
-            </button>
-          </div>
-
-          <div className="flex items-center justify-end font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500">
-            <span>ZERO TALENT AGENCY COMMISSIONS</span>
-          </div>
+        <header className="shrink-0 z-30 flex items-center justify-end px-4 sm:px-6 md:px-10 py-3.5 bg-[#FFFFFF]/95 backdrop-blur-md border-b border-black/10">
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            title="Close [ESC]"
+            aria-label="Close modal"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/25 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
+          >
+            <span>Close</span>
+            <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">✕</span>
+          </button>
         </header>
 
-        {/* Scrollable Gallery Body */}
         <div
           data-lenis-prevent="true"
           className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 md:px-10 pt-4 pb-10 bg-[#FFFFFF]"
         >
           <div className="mb-4 border-b border-black/10 pb-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-5 pb-3 mb-3 border-b border-black/5 font-mono text-[9.5px] uppercase tracking-[0.18em] text-neutral-500">
-              <div className="flex items-center gap-2 text-[#080808] font-bold">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#CCFF00] ring-1 ring-black/20" />
-                <span>INDEX 02 · COMMERCIAL FLIGHT SELECTION</span>
-              </div>
-              <div>
-                {athlete.sport} · {athlete.integrity_status}
-              </div>
-              <div className="hidden md:block">
-                15% JUNIOR CLUB BENEFICIARY · {athlete.grassroots_club.name.toUpperCase()}
-              </div>
-              <div className="text-right text-[#080808] font-bold">
-                POSTCODE {athlete.postcode} EXCLUSIVITY
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-5 items-center">
-              <div className="lg:col-span-2 flex items-center gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 items-center">
+              <div className="lg:col-span-1 flex items-center gap-4">
                 <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 rounded-[14px] bg-[#EAEAE6] overflow-hidden border border-black/10">
                   <AssetImage
                     file={imageFile}
@@ -321,22 +292,23 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
 
               <div className="lg:border-l lg:border-black/10 lg:pl-5">
                 <p className="m-0 font-sans text-[14.5px] sm:text-[15.5px] font-bold tracking-[-0.02em] leading-[1.28] text-[#080808]">
-                  Four clear flights. Zero talent agency commissions.
+                  Four clear packages. Zero talent agency commissions.
                 </p>
                 <p className="m-0 mt-1 font-sans text-[12px] leading-[1.45] text-neutral-600">
-                  Select a commercial flight below to lock exclusive category and postcode rights with{' '}
-                  <strong className="text-[#080808]">{athlete.full_name}</strong>.
+                  Every package includes automated <strong className="text-[#080808]">API handle linking</strong> so your brand can run geo-fenced Meta and TikTok ads straight through{' '}
+                  <strong className="text-[#080808]">{athlete.full_name}&apos;s</strong> verified handle.
                 </p>
               </div>
 
               <div className="lg:border-l lg:border-black/10 lg:pl-5">
                 <p className="m-0 font-sans text-[12px] leading-[1.45] text-neutral-600">
-                  Every package triggers an instant{' '}
+                  Hardwired{' '}
                   <span className="bg-[#CCFF00] text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">
                     70/15/15 split
                   </span>{' '}
-                  benefiting <strong className="text-[#080808]">{athlete.grassroots_club.name}</strong>
-                  {locality ? ` (${locality})` : ''} via ATO-compliant RCTI escrow.
+                  backing <strong className="text-[#080808]">{athlete.full_name}</strong> and{' '}
+                  <strong className="text-[#080808]">{athlete.grassroots_club.name}</strong>
+                  {locality ? ` (${locality})` : ''} via instant ATO/IRD tax-deductible RCTI escrow.
                 </p>
               </div>
             </div>
@@ -345,12 +317,12 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-4 items-center mb-5 gap-5">
             <div>
               <span className="font-sans font-bold text-[14px] text-[#080808] tracking-tight">
-                Select commercial flight
+                Select commercial package
               </span>
             </div>
             <div>
               <span className="font-sans text-[12.5px] font-normal text-[#080808] tracking-tight">
-                Showing 4 of 4 standard flights
+                4 pre-cleared packages · Direct handle sponsorship included
               </span>
             </div>
             <div className="md:col-span-2 flex items-center justify-end gap-3 font-sans text-[12.5px]">
@@ -498,17 +470,16 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
           </ul>
         </div>
 
-        {/* Sticky Bottom Checkout Action Bar */}
         <footer className="shrink-0 z-30 border-t border-black/10 bg-[#FFFFFF] px-4 sm:px-6 md:px-10 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500">
-              SELECTED FLIGHT:
+              SELECTED PACKAGE:
             </span>
             <span className="font-display text-lg font-black text-[#080808]">
               {activeFlight.code} · {activeFlight.name} ({activeFlight.price_display})
             </span>
             <span className="hidden md:inline font-mono text-[10px] uppercase tracking-wider text-neutral-500">
-              70% Athlete ({activeFlight.athlete_net}) · 15% Club ({activeFlight.club_net}) · 15% Ops ({activeFlight.platform_net})
+              70% Athlete ({activeFlight.athlete_net}) · 15% Club ({activeFlight.club_net}) · 15% Ops ({activeFlight.platform_net}) · Direct Handle Sponsorship
             </span>
           </div>
 
@@ -523,7 +494,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
               className="rounded-full border-0 bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-7 py-3 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer transition-colors disabled:cursor-wait disabled:opacity-70 shadow-md"
             >
               {checkoutLoading
-                ? 'Initialising Stripe Escrow...'
+                ? 'Initialising Stripe Clearing...'
                 : `${activeFlight.cta_label} · ${activeFlight.price_display} →`}
             </button>
           </div>

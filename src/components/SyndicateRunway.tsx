@@ -1,9 +1,15 @@
 import React, { useEffect, useId, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import type { LandingSectionId } from './Navigation';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
-import { ABN_ERROR_MESSAGE, isValidAbn, stripNonDigits } from '../lib/validation';
+import { issuePostcodeWhitelistingGrant, type WhitelistingGrant } from '../lib/whitelisting';
+import { WhitelistingLaunchModal } from './WhitelistingLaunchModal';
+import {
+  StripeEscrowCheckoutModal,
+  type StripeCheckoutPayload,
+  type StripeEscrowReceipt,
+} from './StripeEscrowCheckoutModal';
 
 interface SyndicateRunwayProps {
   onNavigateSection?: (id: LandingSectionId) => void;
@@ -11,228 +17,314 @@ interface SyndicateRunwayProps {
 }
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
-const DIPTYCH_EASE = [0.22, 1, 0.36, 1] as const;
 const DIPTYCH_EASE_CSS = 'cubic-bezier(0.22, 1, 0.36, 1)';
-const CONTENDER_IMAGE = '/syndicate/image_9d87cf0b.jpg';
-const VELODROME_IMAGE = '/syndicate/velodrome.jpg';
-const CONTENDER_GRADE =
-  'absolute inset-0 h-full w-full object-cover grayscale contrast-[1.14] brightness-[0.96] saturate-0 select-none';
-const VELODROME_GRADE =
-  'absolute inset-0 h-full w-full object-cover grayscale contrast-[1.55] brightness-[0.76] saturate-0 select-none';
 
-const TELEMETRY = [
-  '3500+ PRE-CLEARED OLYMPIC & PARALYMPIC PATHWAY ATHLETES',
-  '100% SPORT INTEGRITY AUSTRALIA, TPA & RULE 40 COMPLIANT',
-  'AUTOMATED STRIPE ESCROW & INSTANT 100% TAX-DEDUCTIBLE ATO RCTIs',
+const VELODROME_IMAGE = '/syndicate/velodrome.jpg';
+const CARBON_BLADE_CLOSEUP_IMAGE = '/syndicate/image_9d87cf0b.jpg';
+
+const VELODROME_WARM_GRADE =
+  'absolute inset-0 h-full w-full object-cover contrast-[1.14] brightness-[0.92] saturate-[0.88] select-none transition-transform duration-1000 ease-out';
+
+const CARBON_BLADE_WARM_CROP =
+  'absolute inset-0 h-full w-full object-cover contrast-[1.24] brightness-[0.92] sepia-[0.28] hue-rotate-[-10deg] saturate-[1.4] select-none transition-transform duration-1000 ease-out origin-bottom';
+
+export const LIT_OBSIDIAN_BTN =
+  'bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-white/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.45),0_0_15px_rgba(204,255,0,0.18)] hover:bg-neutral-900 hover:border-[#CCFF00]/60 hover:text-[#CCFF00] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.6),0_0_28px_rgba(204,255,0,0.35)] active:translate-y-[1px]';
+
+export interface OlympicHorizonSpec {
+  id: '1yr' | '2yr' | '4yr';
+  tierId: string;
+  numeral: '01' | '02' | '03';
+  horizonTag: string;
+  label: string;
+  priceAud: number;
+  priceFormatted: string;
+  annualRate: string;
+  athleteNet: number;
+  clubNet: number;
+  opsNet: number;
+  exclusivitySummary: string;
+  txId: string;
+}
+
+const OLYMPIC_HORIZONS: readonly OlympicHorizonSpec[] = [
+  {
+    id: '1yr',
+    tierId: 'olympic_1yr_50k',
+    numeral: '01',
+    horizonTag: '1-Year LA28 Qualifier',
+    label: 'LA 2028 Qualifier Partnership',
+    priceAud: 50000,
+    priceFormatted: 'A$50,000',
+    annualRate: '1 Athlete · 12-Month Category Lock',
+    athleteNet: 35000,
+    clubNet: 7500,
+    opsNet: 7500,
+    exclusivitySummary:
+      '1-Year exclusive category rights (strictly one brand per industry sector) on a marquee contender + 60-day First Right of Refusal to extend into Brisbane 2032.',
+    txId: 'TX-2026-OLYMPIC-1YR-050K',
+  },
+  {
+    id: '2yr',
+    tierId: 'olympic_2yr_110k',
+    numeral: '02',
+    label: 'LA 2028 Games Partnership',
+    horizonTag: '2-Year LA28 Games Lock',
+    priceAud: 110000,
+    priceFormatted: 'A$110,000',
+    annualRate: '1 Athlete · 24-Month Category Lock',
+    athleteNet: 77000,
+    clubNet: 16500,
+    opsNet: 16500,
+    exclusivitySummary:
+      'Locks your industry category through the LA 2028 Games window with Rule 40 pre-cleared campaign stems, global paid social OAuth, and protected 2032 renewal terms.',
+    txId: 'TX-2026-OLYMPIC-2YR-110K',
+  },
+  {
+    id: '4yr',
+    tierId: 'olympic_4yr_250k',
+    numeral: '03',
+    label: 'Brisbane 2032 Home Games Quadrennial',
+    horizonTag: '4-Year Brisbane 32 Lock',
+    priceAud: 250000,
+    priceFormatted: 'A$250,000',
+    annualRate: '1 Athlete · 48-Month Quadrennial Lock',
+    athleteNet: 175000,
+    clubNet: 37500,
+    opsNet: 37500,
+    exclusivitySummary:
+      'Full quadrennial category exclusivity across Australia & New Zealand into the Brisbane 2032 Home Games. Blocks every direct competitor for 4 years on a single tax-deductible RCTI.',
+    txId: 'TX-2026-OLYMPIC-4YR-250K',
+  },
 ] as const;
 
 const INDUSTRIES = [
-  { id: 'banking', name: 'Banking & Wealth', lock: 'Institutional banking, wealth, and superannuation lockout' },
-  { id: 'telco', name: 'Telco & Tech', lock: 'Carrier, cloud, and connectivity monopoly' },
-  { id: 'energy', name: 'Energy & Transition', lock: 'Generation, fuels, and net-zero transition lockout' },
-  { id: 'aviation', name: 'Aviation & Logistics', lock: 'Airline, freight, and supply-chain monopoly' },
-  { id: 'health', name: 'Healthcare & Biotech', lock: 'Clinical, recovery, and biotech lockout' },
-  { id: 'retail', name: 'Retail & Consumer Staples', lock: 'National retail and staple brand lockout' },
+  { id: 'banking', name: 'Banking & Wealth', slot: '1 of 1 AU/NZ Slot Open', lock: 'Locks out all rival retail, private & institutional banks' },
+  { id: 'telco', name: 'Telco & Technology', slot: '1 of 1 AU/NZ Slot Open', lock: 'Locks out all rival mobile carriers, cloud & enterprise tech' },
+  { id: 'energy', name: 'Energy & Resources', slot: '1 of 1 AU/NZ Slot Open', lock: 'Locks out all rival power, renewables & resource leaders' },
+  { id: 'aviation', name: 'Aviation & Automotive', slot: '1 of 1 AU/NZ Slot Open', lock: 'Locks out all rival airlines, EV & automotive marques' },
+  { id: 'health', name: 'Insurance & Healthcare', slot: '1 of 1 AU/NZ Slot Open', lock: 'Locks out all rival health, life & general insurers' },
+  { id: 'retail', name: 'National Retail & Luxury', slot: '1 of 1 AU/NZ Slot Open', lock: 'Locks out all rival national retail, apparel & FMCG leaders' },
 ] as const;
 
-const PORTFOLIOS = [
+const BESPOKE_PILLARS = [
   {
-    id: 'mixed',
-    name: 'Olympic & Paralympic Mixed',
-    kicker: 'Default allocation',
+    id: 'rule40_media',
+    name: 'Rule 40 Broadcast & Paid Social Whitelisting (OAuth)',
+    kicker: '0% agency markup · Ad spend billed direct to your Meta/TikTok',
     summary:
-      'Five-athlete mixed programme across swimming, triathlon, athletics, rowing, and Para Athletics T54, paired with five grassroots junior clubs.',
+      'Pre-cleared 4K campaign stems registered prior to the AOC/IPC Rule 40 blackout window, plus direct Meta Partnership & TikTok Spark handle linking.',
   },
   {
-    id: 'paralympic',
-    name: 'Paralympic Classification First',
-    kicker: 'Adaptive priority',
+    id: 'executive_esg',
+    name: 'Boardroom Keynotes & ASX/NZX ESG Attribution',
+    kicker: 'Tailored to corporate calendar',
     summary:
-      'Prioritising adaptive equipment, classification support, and Paralympic qualifier travel across a five-athlete, five-club allocation.',
+      'Executive town halls, leadership offsites, and audited quarterly ESG & disability inclusion impact reporting across the athlete and their junior club.',
   },
   {
-    id: 'women',
-    name: 'Women on the Runway',
-    kicker: 'LA 2028 corridor',
+    id: 'grassroots_rd',
+    name: 'Grassroots Club Precinct & Product Co-Creation',
+    kicker: '15% club dividend activation',
     summary:
-      'Female pathway programme to LA 2028 and Brisbane 2032, with net backing weighted to emerging Olympic and Paralympic contenders.',
+      'Branded junior development clinics at the athlete’s home club plus custom product seeding, adaptive equipment R&D, and VIP trials hospitality.',
   },
 ] as const;
 
-type IndustryId = (typeof INDUSTRIES)[number]['id'];
-type PortfolioId = (typeof PORTFOLIOS)[number]['id'];
-type ApplicationStep = 1 | 2 | 3;
-
-const FIELD_LABEL = 'font-mono text-[9px] tracking-[0.2em] text-white/40 uppercase block mb-2';
-const FIELD_INPUT =
-  'w-full bg-[#0B0B0D] border border-white/10 rounded-xl px-4 py-3 text-sm text-neutral-200 placeholder-white/30 outline-none focus:border-[#CCFF00] caret-[#CCFF00]';
-
-function formatAbn(raw: string): string {
-  const digits = stripNonDigits(raw).slice(0, 11);
-  const parts = [digits.slice(0, 2), digits.slice(2, 5), digits.slice(5, 8), digits.slice(8, 11)].filter(Boolean);
-  return parts.join(' ');
-}
-
-function PhotographicPlate({
-  src,
-  alt,
-  grade,
-  position = 'center',
-}: {
-  src: string;
-  alt: string;
-  grade: string;
-  position?: string;
-}) {
-  return (
-    <>
-      <img src={src} alt={alt} draggable={false} className={grade} style={{ objectPosition: position }} />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/72" />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-black/30 via-transparent to-white/20 mix-blend-soft-light" />
-      <FilmGrainOverlay intensity="heavy" />
-    </>
-  );
-}
-
-type DiptychFocus = 'reality' | 'syndicate';
-
-const DIPTYCH_PANELS: readonly {
-  id: DiptychFocus;
-  tab: string;
-  kicker: string;
-  kickerClass: string;
-  src: string;
-  alt: string;
-  grade: string;
-  position: string;
-  copy: string;
-}[] = [
+const CONTENDER_SPECIMENS = [
   {
-    id: 'reality',
-    tab: 'UNBACKED REALITY',
-    kicker: 'UNBACKED CONTENDER REALITY',
-    kickerClass: 'text-[#FF4444]',
-    src: CONTENDER_IMAGE,
-    alt: 'Paralympic athlete fastening a carbon running blade on a night track',
-    grade: CONTENDER_GRADE,
-    position: 'center 42%',
-    copy: 'Average dAIS Government Grant: $14000/year. Result: $28000 annual personal deficit across coaching, adaptive Paralympic equipment, kit, and international qualifiers.',
-  },
-  {
-    id: 'syndicate',
-    tab: 'SOVEREIGN SYNDICATE',
-    kicker: '$250000 AUD SOVEREIGN SYNDICATE',
-    kickerClass: 'text-[#CCFF00]',
+    id: 'vance' as const,
+    athleteId: 'chloe-vance',
+    postcode: '4171',
+    initials: 'CV',
+    firstInitial: 'C.',
+    surname: 'Vance',
+    fullName: 'Chloe Vance',
+    sport: 'Olympic Track Cycling · Velodrome Sprint',
+    club: 'Balmoral Cycling Club (Postcode 4171)',
+    pathway: 'LA 2028 & Brisbane 2032 Olympic Contender',
+    badge: '1 Telco & 1 Bank Slot Open',
+    badgeTone: 'green' as const,
     src: VELODROME_IMAGE,
-    alt: 'Track cyclist holding an aerodynamic line on a velodrome',
-    grade: VELODROME_GRADE,
+    fallbackSrc: '/portraits/sienna_blake.jpg',
+    grade: VELODROME_WARM_GRADE,
     position: 'center 28%',
-    copy: '$175000 net backing directly to your premier Olympic & Paralympic roster + $37500 direct to their grassroots junior clubs. Backed by quarterly board ESG telemetry and national PR distribution.',
+    activeScale: 'scale-100',
+    inactiveScale: 'scale-105',
   },
-];
+  {
+    id: 'mercer' as const,
+    athleteId: 'lara-mercer',
+    postcode: '2006',
+    initials: 'LM',
+    firstInitial: 'L.',
+    surname: 'Mercer',
+    fullName: 'Lara Mercer',
+    sport: 'Paralympic 100m Sprint · Carbon Blade (T64)',
+    club: 'Sydney University Para Athletics (Postcode 2006)',
+    pathway: 'LA 2028 & Brisbane 2032 Paralympic Contender',
+    badge: 'Rule 40 Pre-Cleared',
+    badgeTone: 'yellow' as const,
+    src: CARBON_BLADE_CLOSEUP_IMAGE,
+    fallbackSrc: '/portraits/marcus_thorne.jpg',
+    grade: CARBON_BLADE_WARM_CROP,
+    position: 'center 92%',
+    activeScale: 'scale-[1.45]',
+    inactiveScale: 'scale-[1.52]',
+  },
+] as const;
 
-function EditorialDiptych() {
+type ContenderId = (typeof CONTENDER_SPECIMENS)[number]['id'];
+type IndustryId = (typeof INDUSTRIES)[number]['id'];
+
+const FIELD_LABEL = 'font-mono text-[9px] tracking-[0.2em] text-white/45 uppercase block mb-1.5';
+const FIELD_INPUT =
+  'w-full bg-[#0B0B0D] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/30 outline-none focus:border-[#CCFF00] caret-[#CCFF00]';
+
+function EditorialDiptych({
+  activeHorizon,
+  focus,
+  onSelectFocus,
+  onDirectStripeLock,
+}: {
+  activeHorizon: OlympicHorizonSpec;
+  focus: ContenderId;
+  onSelectFocus: (next: ContenderId) => void;
+  onDirectStripeLock: (contenderId: ContenderId) => void;
+}) {
   const reduced = useReducedMotion();
-  const [locked, setLocked] = useState<DiptychFocus>('reality');
-  const [hovered, setHovered] = useState<DiptychFocus | null>(null);
-  const focus = hovered ?? locked;
+  const [hovered, setHovered] = useState<ContenderId | null>(null);
+  const activeFocus = hovered ?? focus;
   const duration = reduced ? '0.01s' : '0.85s';
-  const activePanel = DIPTYCH_PANELS.find((panel) => panel.id === focus) ?? DIPTYCH_PANELS[0];
 
   return (
-    <div className="flex h-full min-h-[70vh] w-full min-w-0 flex-col lg:min-h-0">
-      <div
-        role="tablist"
-        aria-label="Compare unbacked contender reality with the Sovereign Syndicate"
-        className="mb-4 flex shrink-0 gap-2"
-      >
-        {DIPTYCH_PANELS.map((panel) => {
-          const active = focus === panel.id;
-          return (
-            <button
-              key={panel.id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setLocked(panel.id)}
-              className={`flex-1 cursor-pointer rounded-full border px-4 py-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.18em] transition-colors ${
-                active
-                  ? 'border-[#CCFF00] bg-[#CCFF00] text-[#0B0B0D]'
-                  : 'border-white/15 bg-white/[0.04] text-white/70 hover:border-white/40 hover:text-white'
-              }`}
-            >
-              {panel.tab}
-            </button>
-          );
-        })}
-      </div>
+    <div className="flex h-full min-h-[64vh] w-full min-w-0 flex-col justify-between lg:min-h-0">
+      <div className="relative flex min-h-[35rem] flex-1 gap-4 overflow-visible">
+        {CONTENDER_SPECIMENS.map((specimen) => {
+          const active = activeFocus === specimen.id;
+          const otherSpecimen =
+            CONTENDER_SPECIMENS.find((s) => s.id !== specimen.id) ?? CONTENDER_SPECIMENS[0];
 
-      <div className="relative flex min-h-[28rem] flex-1 gap-3 overflow-visible">
-        {DIPTYCH_PANELS.map((panel) => {
-          const active = focus === panel.id;
           return (
             <article
-              key={panel.id}
+              key={specimen.id}
               onPointerEnter={(event) => {
-                if (event.pointerType === 'mouse') setHovered(panel.id);
+                if (event.pointerType === 'mouse') setHovered(specimen.id);
               }}
               onPointerLeave={(event) => {
                 if (event.pointerType === 'mouse') setHovered(null);
               }}
-              onClick={() => setLocked(panel.id)}
-              className="relative min-w-0 cursor-pointer overflow-hidden rounded-[28px] border border-white/10 bg-[#0F0F11] shadow-2xl"
+              onClick={() => onSelectFocus(specimen.id)}
+              className="group relative min-w-0 cursor-pointer overflow-visible rounded-[18px] bg-[#141416] p-7 xl:p-8 flex flex-col justify-between select-none"
               style={{
-                flexGrow: active ? 1.72 : 0.68,
+                flexGrow: active ? 2.45 : 0.68,
                 flexShrink: 1,
                 flexBasis: 0,
                 transition: `flex-grow ${duration} ${DIPTYCH_EASE_CSS}`,
               }}
             >
+              <span
+                className={`absolute -top-2.5 right-5 z-30 inline-flex items-center rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs ${
+                  specimen.badgeTone === 'green'
+                    ? 'bg-[#CCFF00] text-[#080808]'
+                    : 'bg-[#F5B800] text-[#080808]'
+                }`}
+              >
+                {specimen.badge}
+              </span>
+
               <div
-                className="absolute inset-0"
+                className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[18px]"
                 style={{
-                  opacity: active ? 1 : 0.34,
-                  transform: active && !reduced ? 'scale(1.07)' : 'scale(1.015)',
-                  transition: `opacity ${duration} ${DIPTYCH_EASE_CSS}, transform ${duration} ${DIPTYCH_EASE_CSS}`,
+                  opacity: active ? 1 : 0.48,
+                  transition: `opacity ${duration} ${DIPTYCH_EASE_CSS}`,
                 }}
               >
-                <PhotographicPlate
-                  src={panel.src}
-                  alt={panel.alt}
-                  grade={panel.grade}
-                  position={panel.position}
+                <img
+                  src={specimen.src}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.endsWith(specimen.fallbackSrc)) {
+                      target.src = specimen.fallbackSrc;
+                    }
+                  }}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className={`${specimen.grade} ${active ? specimen.activeScale : specimen.inactiveScale}`}
+                  style={{ objectPosition: specimen.position }}
                 />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-amber-950/15 to-black/80" />
+                <FilmGrainOverlay intensity="fine" />
               </div>
-              <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-5">
-                <span
-                  className={`inline-block rounded-full px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.18em] ${
-                    active ? 'bg-[#CCFF00] text-[#0B0B0D]' : 'bg-black/70 text-white/80'
+
+              <div className="relative z-20 flex items-start justify-between gap-4">
+                <div className="space-y-0.5">
+                  <h3 className="m-0 font-sans text-[18px] xl:text-[19px] font-bold tracking-[-0.025em] leading-[1.25] text-white whitespace-nowrap">
+                    <span
+                      className={`inline-block rounded-[4px] px-1.5 -ml-1.5 mr-1 transition-colors duration-200 ${
+                        active ? 'bg-[#CCFF00] text-[#080808]' : 'bg-transparent text-white'
+                      }`}
+                    >
+                      {specimen.firstInitial}
+                    </span>
+                    <span>{specimen.surname}</span>
+                  </h3>
+
+                  <div
+                    className={`transition-opacity duration-300 ${
+                      active ? 'opacity-100' : 'opacity-0 pointer-events-none hidden sm:block'
+                    }`}
+                  >
+                    <p className="m-0 pt-0.5 font-sans text-[12.5px] font-normal tracking-[-0.01em] leading-[1.38] text-neutral-200">
+                      {specimen.sport}
+                    </p>
+                    <p className="m-0 font-sans text-[12.5px] font-normal tracking-[-0.01em] leading-[1.38] text-neutral-300">
+                      {activeHorizon.horizonTag} · {activeHorizon.priceFormatted}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative z-20 mt-auto pt-6">
+                <div
+                  className={`font-display text-[120px] xl:text-[138px] font-black leading-[0.8] tracking-[-0.055em] -ml-1 text-white transition-all duration-300 ${
+                    active ? 'opacity-0 translate-y-2 pointer-events-none' : 'opacity-100 translate-y-0'
                   }`}
                 >
-                  {panel.tab}
-                </span>
+                  {specimen.initials}
+                </div>
+
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className={`absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.45)] px-2 flex items-center justify-between gap-2 transition-all duration-300 ${
+                    active ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => onSelectFocus(otherSpecimen.id)}
+                    className="h-7 rounded-full bg-transparent hover:bg-black/10 text-[#080808] px-2.5 font-sans text-[11.5px] font-semibold tracking-tight flex items-center gap-1.5 cursor-pointer border-0 transition-colors truncate"
+                  >
+                    <span>‹›</span>
+                    <span className="truncate">
+                      {specimen.fullName} · 70% (A${activeHorizon.athleteNet.toLocaleString()})
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onDirectStripeLock(specimen.id)}
+                    className="h-7 rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-3.5 font-sans text-[11.5px] font-bold tracking-tight flex items-center gap-1.5 shrink-0 cursor-pointer border-0 transition-colors"
+                  >
+                    <span>Lock {activeHorizon.priceFormatted}</span>
+                    <span className="text-[10px]">→</span>
+                  </button>
+                </div>
               </div>
             </article>
           );
         })}
-      </div>
-
-      <div className="mt-4 shrink-0 overflow-visible">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={activePanel.id}
-            initial={reduced ? false : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
-            transition={{ duration: reduced ? 0.01 : 0.55, ease: DIPTYCH_EASE }}
-            className="rounded-2xl border border-white/10 bg-black/90 p-5 font-sans text-xs leading-relaxed text-neutral-200 shadow-2xl"
-          >
-            <strong className={`${activePanel.kickerClass} mb-1 block font-mono uppercase tracking-wider`}>
-              {activePanel.kicker}
-            </strong>
-            {activePanel.copy}
-          </motion.div>
-        </AnimatePresence>
       </div>
     </div>
   );
@@ -241,40 +333,32 @@ function EditorialDiptych() {
 function SyndicateApplicationDrawer({
   isOpen,
   onClose,
+  selectedHorizon,
+  onSelectHorizon,
+  selectedContenderId,
+  onSelectContenderId,
+  onLaunchStripeModal,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  selectedHorizon: OlympicHorizonSpec;
+  onSelectHorizon: (t: OlympicHorizonSpec) => void;
+  selectedContenderId: ContenderId;
+  onSelectContenderId: (id: ContenderId) => void;
+  onLaunchStripeModal: (sectorLabel: string) => void;
 }) {
   const titleId = useId();
-  const [step, setStep] = useState<ApplicationStep>(1);
-  const [industryId, setIndustryId] = useState<IndustryId | null>(null);
-  const [portfolioId, setPortfolioId] = useState<PortfolioId | null>(null);
-  const [legalName, setLegalName] = useState('');
-  const [abn, setAbn] = useState('');
-  const [contactName, setContactName] = useState('');
-  const [contactEmail, setContactEmail] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1);
+  const [industryId, setIndustryId] = useState<IndustryId | null>('telco');
+  const [customSector, setCustomSector] = useState('');
+  const [selectedPillars, setSelectedPillars] = useState<string[]>(['rule40_media', 'executive_esg']);
+  const [customBrief, setCustomBrief] = useState('');
 
-  const industry = INDUSTRIES.find((item) => item.id === industryId) ?? null;
-  const portfolio = PORTFOLIOS.find((item) => item.id === portfolioId) ?? null;
-  const abnDigits = stripNonDigits(abn);
-  const abnReady = isValidAbn(abn);
-  const abnTouched = abnDigits.length > 0;
-  const canSubmit =
-    legalName.trim().length > 1 && abnReady && contactName.trim().length > 1 && contactEmail.includes('@');
+  const industry = INDUSTRIES.find((item) => item.id === industryId) ?? INDUSTRIES[0];
+  const activeSectorLabel = customSector.trim() || industry.name;
 
   useEffect(() => {
-    if (isOpen) return;
-    setStep(1);
-    setIndustryId(null);
-    setPortfolioId(null);
-    setLegalName('');
-    setAbn('');
-    setContactName('');
-    setContactEmail('');
-    setSubmitting(false);
-    setSubmitted(false);
+    if (isOpen) setStep(1);
   }, [isOpen]);
 
   useEffect(() => {
@@ -291,288 +375,316 @@ function SyndicateApplicationDrawer({
     };
   }, [isOpen, onClose]);
 
-  const submit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!canSubmit || submitting) return;
-    setSubmitting(true);
-    window.setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
-    }, 520);
+  const togglePillar = (id: string) => {
+    setSelectedPillars((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    );
   };
 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[90]">
-          <button
-            type="button"
-            aria-label="Close syndicate application"
-            tabIndex={-1}
-            onClick={onClose}
-            className="absolute inset-0 cursor-default border-0 bg-black/55 p-0 backdrop-blur-md"
-          />
-          <aside
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            className="absolute top-0 right-0 z-10 flex h-full w-full max-w-[520px] flex-col overflow-y-auto border-l border-white/10 bg-[#0F0F11] text-white shadow-2xl"
-          >
-            <div className="sticky top-0 z-20 flex items-start justify-between gap-4 border-b border-white/10 bg-[#0F0F11]/95 px-6 pt-5 pb-5 backdrop-blur-md sm:px-8 md:px-12">
-              <div className="min-w-0 pr-3">
-                <p className="m-0 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-[#CCFF00]">
-                  Corporate application · 250K tier
-                </p>
-                <h2 id={titleId} className="m-0 mt-2 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                  SOVEREIGN 250K ALLOCATION PORTAL · LA 28 & BRISBANE 32
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close portal"
-                className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-[#CCFF00] px-4 py-2.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#0B0B0D] shadow-[0_0_24px_rgba(204,255,0,0.38)] transition-colors hover:bg-white"
-              >
-                ✕ CLOSE PORTAL
-              </button>
+    <div
+      data-lenis-prevent="true"
+      onWheel={(e) => e.stopPropagation()}
+      className="fixed inset-0 z-[90] flex justify-end"
+    >
+      <button
+        type="button"
+        aria-label="Close partnership application"
+        tabIndex={-1}
+        onClick={onClose}
+        className="absolute inset-0 cursor-default border-0 bg-black/65 p-0 backdrop-blur-md"
+      />
+
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        data-lenis-prevent="true"
+        onWheel={(e) => e.stopPropagation()}
+        className="relative z-10 flex h-dvh w-full max-w-[580px] flex-col border-l border-white/15 bg-[#0F0F11] text-white shadow-2xl overflow-hidden"
+      >
+        <header className="shrink-0 z-20 border-b border-white/10 bg-[#0F0F11] px-6 py-4 sm:px-8">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h2 id={titleId} className="m-0 font-display text-2xl font-bold tracking-tight text-white uppercase">
+                {selectedHorizon.priceFormatted} · {selectedHorizon.horizonTag}<span className="text-[#CCFF00]">.</span>
+              </h2>
             </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close portal"
+              className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-white/10 hover:bg-white text-white hover:text-[#080808] px-4 py-1.5 font-sans text-xs font-bold transition-colors border-0"
+            >
+              Close ✕
+            </button>
+          </div>
 
-            <div className="px-8 pb-20 pt-8 md:px-12 md:pb-24">
+          <div className="mt-3.5 grid grid-cols-3 gap-2">
+            {OLYMPIC_HORIZONS.map((t) => {
+              const isSelected = t.id === selectedHorizon.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => onSelectHorizon(t)}
+                  className={`rounded-xl border p-2.5 text-left cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-[#CCFF00] bg-white/[0.08] text-white'
+                      : 'border-white/10 bg-black/30 text-neutral-400 hover:border-white/25'
+                  }`}
+                >
+                  <div className="font-display text-base font-black leading-none text-white">
+                    {t.priceFormatted}
+                  </div>
+                  <div className="font-sans text-[10.5px] mt-1 text-neutral-300 truncate">
+                    {t.horizonTag}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
 
-            <ol className="mb-8 grid list-none grid-cols-3 gap-2 p-0">
-              {(
-                [
-                  [1, 'Enterprise category'],
-                  [2, 'Podium roster'],
-                  [3, 'Board application'],
-                ] as const
-              ).map(([index, label]) => {
-                const active = step === index;
-                const complete = step > index || submitted;
-                return (
-                  <li
-                    key={index}
-                    className={`rounded-xl border px-3 py-2.5 ${
-                      active ? 'border-[#CCFF00]/60 bg-[#CCFF00]/10' : 'border-white/10 bg-black/20'
-                    }`}
-                  >
-                    <span
-                      className={`block font-mono text-[9px] uppercase tracking-[0.18em] ${
-                        active || complete ? 'text-[#CCFF00]' : 'text-white/35'
+          <ol className="mt-2.5 mb-0 grid list-none grid-cols-2 gap-2 p-0">
+            {(
+              [
+                [1, '01. Category Exclusivity'],
+                [2, '02. Bespoke Charter'],
+              ] as const
+            ).map(([index, label]) => {
+              const active = step === index;
+              return (
+                <li
+                  key={index}
+                  onClick={() => setStep(index)}
+                  className={`rounded-xl border px-3 py-2 cursor-pointer transition-colors ${
+                    active ? 'border-[#CCFF00] bg-[#CCFF00]/10 text-white' : 'border-white/10 bg-black/20 text-neutral-400'
+                  }`}
+                >
+                  <span className="block font-sans text-xs font-bold truncate">{label}</span>
+                </li>
+              );
+            })}
+          </ol>
+        </header>
+
+        <div
+          data-lenis-prevent="true"
+          onWheel={(e) => e.stopPropagation()}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 py-5 sm:px-8 space-y-4"
+        >
+          {step === 1 ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {INDUSTRIES.map((item) => {
+                  const active = industryId === item.id && !customSector.trim();
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setIndustryId(item.id);
+                        setCustomSector('');
+                      }}
+                      className={`cursor-pointer rounded-2xl border p-3.5 text-left transition-colors ${
+                        active
+                          ? 'border-[#CCFF00] bg-white/[0.06]'
+                          : 'border-white/10 bg-black/25 hover:border-white/25'
                       }`}
                     >
-                      Step 0{index}
-                    </span>
-                    <span className="mt-1 block font-mono text-[10px] uppercase tracking-wide text-neutral-200">
-                      {label}
-                    </span>
-                  </li>
-                );
-              })}
-            </ol>
-
-            {submitted ? (
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-6">
-                <p className="m-0 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#CCFF00]">
-                  Application received
-                </p>
-                <p className="m-0 mt-3 text-sm leading-relaxed text-neutral-200">
-                  {legalName.trim()} is queued for Sovereign 250K governance review in {industry?.name ?? 'category'}{' '}
-                  across the {portfolio?.name ?? 'runway'} programme. A partnerships lead will reply within one
-                  business day with ESG telemetry protocol and licence terms.
-                </p>
+                      <span className="block font-mono text-[9px] uppercase text-[#CCFF00]">
+                        {item.slot}
+                      </span>
+                      <span className="mt-1 block font-sans text-sm font-bold text-white">
+                        {item.name}
+                      </span>
+                      <span className="mt-1 block font-sans text-xs text-neutral-400">
+                        {item.lock}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-            ) : (
-              <form onSubmit={submit} className="flex flex-col">
-                {step === 1 ? (
-                  <div>
-                    <p className="m-0 mb-4 font-mono text-[10px] uppercase tracking-[0.18em] text-white/45">
-                      Step 01. Select your enterprise category
-                    </p>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      {INDUSTRIES.map((item) => {
-                        const active = industryId === item.id;
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => setIndustryId(item.id)}
-                            className={`cursor-pointer rounded-2xl border p-4 text-left transition-colors ${
-                              active
-                                ? 'border-[#CCFF00] bg-[#CCFF00]/10'
-                                : 'border-white/10 bg-black/25 hover:border-white/25'
-                            }`}
-                          >
-                            <span className="block font-mono text-[11px] font-bold uppercase tracking-wide text-white">
-                              {item.name}
-                            </span>
-                            <span className="mt-1 block font-mono text-[10px] uppercase tracking-wide text-white/45">
-                              {item.lock}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : null}
 
-                {step === 2 ? (
-                  <div>
-                    <p className="m-0 mb-4 font-mono text-[10px] uppercase tracking-[0.18em] text-white/45">
-                      Step 02. Curate your Olympic & Paralympic podium roster
-                    </p>
-                    <div className="space-y-2">
-                      {PORTFOLIOS.map((item) => {
-                        const active = portfolioId === item.id;
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => setPortfolioId(item.id)}
-                            className={`w-full cursor-pointer rounded-2xl border p-5 text-left transition-colors ${
-                              active
-                                ? 'border-[#CCFF00] bg-[#CCFF00]/10'
-                                : 'border-white/10 bg-black/25 hover:border-white/25'
-                            }`}
-                          >
-                            <span className="block font-mono text-[9px] uppercase tracking-[0.18em] text-[#CCFF00]">
-                              {item.kicker}
-                            </span>
-                            <span className="mt-1 block font-display text-xl font-bold tracking-tight text-white">
-                              {item.name}
-                            </span>
-                            <span className="mt-2 block text-xs leading-relaxed text-neutral-200">{item.summary}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="m-0 mt-4 font-mono text-[10px] uppercase tracking-wide text-white/40">
-                      $175000 net to the 5-athlete roster. $37500 to 5 junior clubs. $250000 annual Sovereign allocation.
-                    </p>
-                  </div>
-                ) : null}
-
-                {step === 3 ? (
-                  <div className="space-y-4">
-                    <p className="m-0 mb-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/45">
-                      Step 03. Submit board application & ABN
-                    </p>
-                    <div>
-                      <label htmlFor={`${titleId}-legal`} className={FIELD_LABEL}>
-                        Legal entity
-                      </label>
-                      <input
-                        id={`${titleId}-legal`}
-                        required
-                        type="text"
-                        value={legalName}
-                        onChange={(event) => setLegalName(event.target.value)}
-                        placeholder="Peninsula Motor Group Pty Ltd"
-                        className={FIELD_INPUT}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor={`${titleId}-abn`} className={FIELD_LABEL}>
-                        Australian Business Number
-                      </label>
-                      <input
-                        id={`${titleId}-abn`}
-                        required
-                        inputMode="numeric"
-                        autoComplete="off"
-                        value={abn}
-                        onChange={(event) => setAbn(formatAbn(event.target.value))}
-                        placeholder="51 824 753 556"
-                        className={FIELD_INPUT}
-                      />
-                      {abnTouched && !abnReady ? (
-                        <p className="m-0 mt-2 font-mono text-[10px] uppercase tracking-wide text-[#FF4444]">
-                          {ABN_ERROR_MESSAGE}
-                        </p>
-                      ) : null}
-                    </div>
-                    <div>
-                      <label htmlFor={`${titleId}-director`} className={FIELD_LABEL}>
-                        Partnership director
-                      </label>
-                      <input
-                        id={`${titleId}-director`}
-                        required
-                        type="text"
-                        value={contactName}
-                        onChange={(event) => setContactName(event.target.value)}
-                        placeholder="Alexandra Crowe"
-                        className={FIELD_INPUT}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor={`${titleId}-email`} className={FIELD_LABEL}>
-                        Executive email
-                      </label>
-                      <input
-                        id={`${titleId}-email`}
-                        required
-                        type="email"
-                        value={contactEmail}
-                        onChange={(event) => setContactEmail(event.target.value)}
-                        placeholder="name@company.com"
-                        className={FIELD_INPUT}
-                      />
-                    </div>
-                  </div>
-                ) : null}
-
-                <div className="mt-8 flex gap-3 pt-2">
-                  {step > 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => setStep((current) => (current === 1 ? 1 : ((current - 1) as ApplicationStep)))}
-                      className="cursor-pointer rounded-full border border-white/10 bg-transparent px-5 py-3.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-white/70 hover:text-white"
-                    >
-                      {'<- BACK'}
-                    </button>
-                  ) : null}
-                  {step < 3 ? (
-                    <button
-                      type="button"
-                      disabled={step === 1 ? !industryId : !portfolioId}
-                      onClick={() => setStep((current) => (current === 3 ? 3 : ((current + 1) as ApplicationStep)))}
-                      className="flex-1 cursor-pointer rounded-full border-0 bg-[#CCFF00] px-5 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-black disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      CONTINUE {'->'}
-                    </button>
-                  ) : (
-                    <button
-                      type="submit"
-                      disabled={!canSubmit || submitting}
-                      className="flex-1 cursor-pointer rounded-full border-0 bg-[#CCFF00] px-5 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-black disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      {submitting ? 'Initialising review' : 'INITIALISE SOVEREIGN GOVERNANCE REVIEW ->'}
-                    </button>
-                  )}
-                </div>
-              </form>
-            )}
+              <div>
+                <label className={FIELD_LABEL}>
+                  Or nominate another major enterprise category (48-Sector Ledger)
+                </label>
+                <input
+                  type="text"
+                  value={customSector}
+                  onChange={(e) => setCustomSector(e.target.value)}
+                  placeholder="e.g. Luxury Watchmaking, Logistics, Enterprise SaaS, Agribusiness..."
+                  className={FIELD_INPUT}
+                />
+              </div>
             </div>
-          </aside>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <span className={FIELD_LABEL}>Select Marquee Contender</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {CONTENDER_SPECIMENS.map((item) => {
+                    const active = selectedContenderId === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => onSelectContenderId(item.id)}
+                        className={`cursor-pointer rounded-2xl border p-3.5 text-left transition-colors ${
+                          active
+                            ? 'border-[#CCFF00] bg-white/[0.06]'
+                            : 'border-white/10 bg-black/25 hover:border-white/25'
+                        }`}
+                      >
+                        <span className="block font-mono text-[9px] uppercase text-[#CCFF00]">
+                          {item.initials} · {item.badge}
+                        </span>
+                        <span className="mt-1 block font-sans text-sm font-bold text-white">
+                          {item.fullName}
+                        </span>
+                        <span className="mt-0.5 block font-sans text-xs text-neutral-400">
+                          {item.sport}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <span className={FIELD_LABEL}>
+                  Tailor Bespoke Sponsor & Athlete Deliverables (Included in {selectedHorizon.priceFormatted})
+                </span>
+                <div className="space-y-2">
+                  {BESPOKE_PILLARS.map((pillar) => {
+                    const active = selectedPillars.includes(pillar.id);
+                    return (
+                      <button
+                        key={pillar.id}
+                        type="button"
+                        onClick={() => togglePillar(pillar.id)}
+                        className={`w-full cursor-pointer rounded-2xl border p-3.5 text-left transition-colors ${
+                          active
+                            ? 'border-[#CCFF00] bg-white/[0.06]'
+                            : 'border-white/10 bg-black/25 hover:border-white/25'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#CCFF00]">
+                            {pillar.kicker}
+                          </span>
+                          <span className="font-mono text-[10px] text-white">
+                            {active ? '✓ INCLUDED' : '+ ADD'}
+                          </span>
+                        </div>
+                        <span className="mt-1 block font-sans text-sm font-bold text-white">
+                          {pillar.name}
+                        </span>
+                        <span className="mt-1 block text-xs leading-relaxed text-neutral-300">
+                          {pillar.summary}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className={FIELD_LABEL}>
+                  Custom Campaign Objectives or Key Dates (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={customBrief}
+                  onChange={(e) => setCustomBrief(e.target.value)}
+                  placeholder="e.g. Q3 national TVC shoot, Brisbane AGM keynote, adaptive R&D lab..."
+                  className={FIELD_INPUT}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <footer className="shrink-0 z-20 border-t border-white/10 bg-[#0F0F11] px-6 py-4 sm:px-8 flex items-center gap-3">
+          {step === 2 ? (
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="cursor-pointer rounded-xl border border-white/15 bg-transparent px-5 py-3.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-white/70 hover:text-white"
+            >
+              ← Back
+            </button>
+          ) : null}
+
+          {step === 1 ? (
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className={`flex-1 ${LIT_OBSIDIAN_BTN}`}
+            >
+              Continue to Bespoke Charter →
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onLaunchStripeModal(activeSectorLabel);
+              }}
+              className={`flex-1 ${LIT_OBSIDIAN_BTN}`}
+            >
+              Proceed to Stripe Escrow & Apple Pay ({selectedHorizon.priceFormatted}) →
+            </button>
+          )}
+        </footer>
+      </aside>
     </div>,
     document.body,
   );
 }
 
-/**
- * Sovereign 250K split-screen master block.
- * Sits inside the commercial broadsheet, and also stands alone on the runway route.
- */
 export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boolean }) {
   const reduced = useReducedMotion();
-  const [isApplicationOpen, setIsApplicationOpen] = useState(false);
-  const copyClass = embedded
-    ? 'flex flex-col justify-center bg-[#0B0B0D] py-12 lg:sticky lg:top-[74px] lg:h-[calc(100vh-74px)] lg:overflow-y-auto lg:py-8 lg:pr-8'
-    : 'flex flex-col justify-center bg-[#0B0B0D] px-5 py-16 md:px-10 lg:sticky lg:top-[74px] lg:h-[calc(100vh-74px)] lg:overflow-y-auto lg:px-12 lg:py-10 xl:px-16';
-  const plateClass = embedded
-    ? 'relative bg-[#0B0B0D] py-12 lg:sticky lg:top-[74px] lg:h-[calc(100vh-74px)] lg:py-8 lg:pl-3'
-    : 'relative bg-[#0B0B0D] p-4 md:p-6 lg:sticky lg:top-[74px] lg:h-[calc(100vh-74px)] lg:p-8';
+  const [selectedHorizon, setSelectedHorizon] = useState<OlympicHorizonSpec>(OLYMPIC_HORIZONS[0]);
+  const [selectedContenderId, setSelectedContenderId] = useState<ContenderId>('vance');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isCertificateOpen, setIsCertificateOpen] = useState(false);
+  const [stripePayload, setStripePayload] = useState<StripeCheckoutPayload | null>(null);
+  const [lastReceipt, setLastReceipt] = useState<StripeEscrowReceipt | null>(null);
+  const [lastPaidPriceAud, setLastPaidPriceAud] = useState<number>(50000);
+  const [lastPaidClubName, setLastPaidClubName] = useState<string>('Balmoral Cycling Club');
+  const [unlockedGrant, setUnlockedGrant] = useState<WhitelistingGrant | null>(null);
+
+  const activeContender =
+    CONTENDER_SPECIMENS.find((c) => c.id === selectedContenderId) ?? CONTENDER_SPECIMENS[0];
+
+  const wrapperPadding = embedded ? 'pt-12 pb-6' : 'px-4 sm:px-6 md:px-10 pt-10 pb-8 max-w-[1840px] mx-auto';
+
+  const openStripeCheckoutForContender = (
+    contenderId: ContenderId,
+    horizon: OlympicHorizonSpec,
+    sectorLabel = 'Telco & Technology',
+  ) => {
+    const c = CONTENDER_SPECIMENS.find((item) => item.id === contenderId) ?? CONTENDER_SPECIMENS[0];
+    setLastPaidPriceAud(horizon.priceAud);
+    setLastPaidClubName(c.club);
+    setStripePayload({
+      athleteId: c.athleteId,
+      athleteName: `${c.fullName} (${sectorLabel})`,
+      athleteSport: c.sport,
+      athleteImage: c.src,
+      clubName: c.club,
+      postcode: c.postcode,
+      tierId: horizon.tierId,
+      packageCode: `HORIZON ${horizon.numeral}`,
+      packageName: horizon.horizonTag,
+      priceAud: horizon.priceAud,
+      sectorLabel,
+    });
+  };
 
   useLayoutEffect(() => {
     const host = document.querySelector<HTMLElement>('#commercial-tiers [data-sovereign-board]');
@@ -586,10 +698,87 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
       headerRow.classList.remove('border-b', 'border-white/10');
       headerRow.style.borderBottom = '0';
     }
+
+    const tierPrices: Record<string, { price: number; name: string; tierId: string }> = {
+      '01': { price: 750, name: 'Precinct Contra & Micro', tierId: 'local_merchant' },
+      '02': { price: 3500, name: 'Pathway Contender', tierId: 'pathway_contender' },
+      '03': { price: 12500, name: 'National Challenger', tierId: 'national_challenger' },
+      '04': { price: 25000, name: 'Trans-Tasman Headline', tierId: 'world_class' },
+    };
+
+    document
+      .querySelectorAll<HTMLElement>(
+        '#commercial-tiers span, #commercial-tiers p, #commercial-tiers div, #commercial-tiers h3, #commercial-tiers button',
+      )
+      .forEach((el) => {
+        if (el.closest('[data-runway-root="true"]')) return;
+        const text = (el.textContent || '').trim();
+
+        if (el.tagName === 'BUTTON') {
+          const matchPkg = text.match(/PACKAGE\s*0([1-4])/i);
+          if (matchPkg) {
+            const num = `0${matchPkg[1]}`;
+            const spec = tierPrices[num];
+            if (spec && !el.dataset.stripeBound) {
+              el.dataset.stripeBound = 'true';
+              el.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                setLastPaidPriceAud(spec.price);
+                setLastPaidClubName('Bankstown Bruins');
+                setStripePayload({
+                  athleteId: 'marcus-thorne',
+                  athleteName: 'Marcus Thorne',
+                  athleteSport: 'Basketball · NBL1 East',
+                  athleteImage: '/portraits/marcus_thorne.jpg',
+                  clubName: 'Bankstown Bruins',
+                  postcode: '2200',
+                  tierId: spec.tierId,
+                  packageCode: `PACKAGE ${num}`,
+                  packageName: spec.name,
+                  priceAud: spec.price,
+                });
+              });
+            }
+          } else if (text.includes('50K') && !el.dataset.stripeBound) {
+            el.dataset.stripeBound = 'true';
+            el.textContent = 'LOCK A$50,000–A$250,000 CATEGORY RIGHTS →';
+            el.addEventListener('click', (ev) => {
+              ev.stopPropagation();
+              openStripeCheckoutForContender('vance', OLYMPIC_HORIZONS[0]);
+            });
+          }
+        }
+      });
   }, [embedded]);
 
+  const downloadTermSheet = () => {
+    const blob = new Blob(
+      [
+        `tmrw/. OLYMPIC & PARALYMPIC CATEGORY EXCLUSIVITY TERM SHEET // ${selectedHorizon.priceFormatted} AUD\n`,
+        `============================================================================\n`,
+        `Transaction ID: ${selectedHorizon.txId}\n`,
+        `Selected Contender: ${activeContender.fullName} (${activeContender.sport})\n`,
+        `Contract Horizon: ${selectedHorizon.horizonTag} (${selectedHorizon.annualRate})\n`,
+        `Category Exclusivity: Strictly one category leader per enterprise sector across Australia & New Zealand\n`,
+        `Brisbane 2032 Option: Includes 60-Day First Right of Refusal (ROFR) to roll into 4-Year Brisbane 2032 Quadrennial\n`,
+        `70% Athlete Payout: A$${selectedHorizon.athleteNet.toLocaleString()}.00 AUD (50% T+0 / 50% Deliverable Sign-Off Escrow)\n`,
+        `15% Junior Club Dividend: A$${selectedHorizon.clubNet.toLocaleString()}.00 AUD (${activeContender.club})\n`,
+        `15% Clearinghouse & Rule 40 Ops: A$${selectedHorizon.opsNet.toLocaleString()}.00 AUD\n`,
+      ],
+      { type: 'text/plain;charset=utf-8' },
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tmrw_${activeContender.fullName.replace(/\s+/g, '_')}_${selectedHorizon.id}_Olympic_Term_Sheet.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <>
+    <div data-runway-root="true" className="w-full bg-[#080808]">
       <style>{`
         #commercial-tiers [data-sovereign-board] {
           border-top: 0 !important;
@@ -598,78 +787,300 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
         #commercial-tiers .grid:has(#commercial-tiers-heading) {
           border-bottom: 0 !important;
         }
+        #commercial-tiers button {
+          background-color: #0F0F11 !important;
+          color: #FFFFFF !important;
+          border: 1px solid rgba(255, 255, 255, 0.15) !important;
+          border-radius: 12px !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -2px 0 rgba(0, 0, 0, 0.8), 0 10px 25px rgba(0, 0, 0, 0.45), 0 0 15px rgba(204, 255, 0, 0.18) !important;
+          transition: all 0.25s ease !important;
+        }
+        #commercial-tiers button:hover {
+          border-color: rgba(204, 255, 0, 0.65) !important;
+          color: #CCFF00 !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.9), 0 15px 30px rgba(0, 0, 0, 0.6), 0 0 28px rgba(204, 255, 0, 0.35) !important;
+        }
+        body:has(#tmrw-locked-runway-footer) footer:not(#tmrw-locked-runway-footer) {
+          display: none !important;
+        }
       `}</style>
-      <div className="relative z-10 grid w-full grid-cols-1 border-0 lg:min-h-[calc(100vh-74px)] lg:grid-cols-[minmax(0,45%)_minmax(0,55%)]">
-        <div className={`${copyClass} min-w-0 border-0`}>
-          <span className="bg-[#CCFF00] text-black font-mono font-bold text-[10px] px-3.5 py-1 rounded-full uppercase tracking-wider">
-            LA 2028 & BRISBANE 2032 RUNWAY // SOVEREIGN 250K SYNDICATE
-          </span>
 
-          <h2
-            id="syndicate-heading"
-            className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight uppercase text-white leading-[0.98] mt-6 mb-8"
-          >
-            The podium is funded. The preparation is not<span className="text-[#CCFF00]">.</span>
-          </h2>
-
-          <motion.p
-            className="text-sm md:text-base text-neutral-300 leading-relaxed font-sans max-w-xl mb-8"
-            initial={reduced ? false : { opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.8, delay: 0.12, ease: EASE_OUT }}
-          >
-            Australia and New Zealand do not lack world-class Olympic and Paralympic talent. They lack the
-            institutional commercial rails to sustain contenders between the 5 AM training block and the stadium
-            tunnel. Government grants arrive only after a medal is won. Our $250000 AUD Sovereign Syndicate routes
-            institutional brand, ESG, and disability inclusion capital directly into a premier portfolio of Olympic and
-            Paralympic podium contenders and grassroots junior clubs on a single tax-deductible ATO RCTI rail.
-          </motion.p>
-
-          <ul className="m-0 mb-8 list-none space-y-3 p-0">
-            {TELEMETRY.map((line, index) => (
-              <motion.li
-                key={line}
-                className="flex items-center gap-3 font-mono text-[11px] font-medium uppercase tracking-[0.04em] text-white"
-                initial={reduced ? false : { opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.5 }}
-                transition={{ duration: 0.55, delay: 0.16 + index * 0.08, ease: EASE_OUT }}
+      <div className={`relative z-10 w-full bg-[#080808] ${wrapperPadding}`}>
+        <div className="grid w-full grid-cols-1 gap-10 lg:grid-cols-[minmax(0,44%)_minmax(0,56%)] items-stretch">
+          <div className="flex flex-col justify-between min-w-0">
+            <div>
+              <h2
+                id="syndicate-heading"
+                className="font-display text-4xl sm:text-6xl xl:text-[68px] font-black tracking-[-0.04em] uppercase text-white leading-[0.88] m-0"
               >
-                <span
-                  aria-hidden="true"
-                  className="inline-block h-1.5 w-1.5 animate-telemetry-ping rounded-full bg-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.8)]"
-                />
-                {line}
-              </motion.li>
-            ))}
-          </ul>
+                The podium is funded<span className="text-[#CCFF00]">.</span> The preparation is not<span className="text-[#CCFF00]">.</span>
+              </h2>
 
-          <div className="mt-2">
-            <button
-              type="button"
-              onClick={() => setIsApplicationOpen(true)}
-              className="w-full sm:w-auto bg-[#CCFF00] hover:bg-[#b8e600] text-[#0F0F11] font-mono font-bold text-xs py-4 px-8 rounded-xl transition-all uppercase tracking-wider cursor-pointer shadow-2xl"
-            >
-              APPLY FOR SOVEREIGN 250K ALLOCATION {'->'}
-            </button>
+              <motion.p
+                className="text-sm sm:text-[15px] text-neutral-300 leading-[1.6] font-sans max-w-xl mt-6 mb-0"
+                initial={reduced ? false : { opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.7, ease: EASE_OUT }}
+              >
+                Only one bank, one telco, one airline, one insurer, and one best-in-class category leader across each
+                major enterprise sector in Australia and New Zealand can own a marquee contender's commercial
+                rights on the road to LA 2028 and Brisbane 2032. Lock in a{' '}
+                <strong className="text-white">1-Year LA28 Qualifier (A$50,000)</strong> or{' '}
+                <strong className="text-white">2-Year LA28 Games Partnership (A$110,000)</strong> today, and secure
+                contractual <strong className="text-[#CCFF00]">First Right of Refusal</strong> to roll into the{' '}
+                <strong className="text-white">4-Year Brisbane 2032 Home Games Quadrennial (A$250,000)</strong> before
+                your competitors can bid.
+              </motion.p>
+            </div>
+
+            <div className="my-7 max-w-xl">
+              <div className="grid grid-cols-3 gap-3">
+                {OLYMPIC_HORIZONS.map((horizon) => {
+                  const active = selectedHorizon.id === horizon.id;
+                  return (
+                    <button
+                      key={horizon.id}
+                      type="button"
+                      onClick={() => setSelectedHorizon(horizon)}
+                      className={`rounded-2xl border p-4 text-left cursor-pointer transition-all ${
+                        active
+                          ? 'border-[#CCFF00]/60 bg-[#141418] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_14px_34px_rgba(0,0,0,0.5),0_0_20px_rgba(204,255,0,0.14)]'
+                          : 'border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/25 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span
+                          className={`font-sans text-[11px] font-bold px-1.5 py-0.5 rounded-[4px] ${
+                            active ? 'bg-[#CCFF00] text-[#080808]' : 'text-neutral-500'
+                          }`}
+                        >
+                          {horizon.numeral}.
+                        </span>
+                      </div>
+                      <div className="font-display text-xl sm:text-2xl font-black tracking-tight text-white">
+                        {horizon.priceFormatted}
+                      </div>
+                      <div className="font-sans text-[11.5px] leading-snug text-neutral-300 mt-1.5">
+                        <span className="block font-semibold text-white">{horizon.horizonTag}</span>
+                        <span className="block text-neutral-400">1 Athlete · 1 Sector Lock</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-white/10 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 font-sans text-xs text-neutral-300">
+                  <span>
+                    70% Athlete ({activeContender.fullName}):{' '}
+                    <strong className="text-white">A${selectedHorizon.athleteNet.toLocaleString()}</strong>
+                  </span>
+                  <span>
+                    15% Junior club: <strong className="text-[#CCFF00]">A${selectedHorizon.clubNet.toLocaleString()}</strong>
+                  </span>
+                  <span className="text-neutral-400">15% Ops: A${selectedHorizon.opsNet.toLocaleString()}</span>
+                </div>
+                <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden flex">
+                  <div className="w-[70%] bg-white h-full" />
+                  <div className="w-[15%] bg-[#CCFF00] h-full" />
+                  <div className="w-[15%] bg-white/25 h-full" />
+                </div>
+                <p className="m-0 font-sans text-[12.5px] text-neutral-300 leading-relaxed">
+                  {selectedHorizon.exclusivitySummary}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-xl">
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                className={`flex-1 ${LIT_OBSIDIAN_BTN}`}
+              >
+                LOCK {selectedHorizon.priceFormatted} CATEGORY RIGHTS →
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsCertificateOpen(true)}
+                className={LIT_OBSIDIAN_BTN}
+              >
+                INSPECT RCTI SPECIMEN →
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className={`${plateClass} min-w-0 overflow-visible`}>
-          <EditorialDiptych />
+          <div className="relative min-w-0 overflow-visible">
+            <EditorialDiptych
+              activeHorizon={selectedHorizon}
+              focus={selectedContenderId}
+              onSelectFocus={setSelectedContenderId}
+              onDirectStripeLock={(cId) => {
+                setSelectedContenderId(cId);
+                openStripeCheckoutForContender(cId, selectedHorizon);
+              }}
+            />
+          </div>
         </div>
       </div>
 
-      <SyndicateApplicationDrawer isOpen={isApplicationOpen} onClose={() => setIsApplicationOpen(false)} />
-    </>
+      <footer
+        id="tmrw-locked-runway-footer"
+        className="w-full bg-[#080808] text-white border-t border-white/10 mt-6"
+      >
+        <div className="max-w-[1840px] mx-auto px-4 sm:px-6 md:px-10 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <a
+            href="#top"
+            className="no-underline inline-flex flex-col select-none group cursor-pointer"
+          >
+            <span className="font-display text-2xl font-black tracking-[-0.04em] leading-none text-white">
+              tmrw
+              <span className="transition-colors duration-300 group-hover:text-[#CCFF00]">/</span>
+              <span className="text-[#CCFF00]">.</span>
+            </span>
+            <span className="font-mono text-[8px] uppercase tracking-[0.22em] text-neutral-400 mt-1 transition-colors duration-300 group-hover:text-white">
+              LINE UP YOUR FUTURE
+            </span>
+          </a>
+
+          <p className="m-0 font-sans text-xs text-neutral-400 sm:text-right">
+            © 2026{' '}
+            <span className="inline-block font-semibold text-white group cursor-pointer">
+              tmrw
+              <span className="transition-colors duration-300 hover:text-[#CCFF00]">/</span>
+              <span className="text-[#CCFF00]">.</span>
+            </span>{' '}
+            All rights reserved. Sovereign sports commercialisation infrastructure for Australia and New Zealand.
+          </p>
+        </div>
+      </footer>
+
+      {isCertificateOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[95] flex items-center justify-center p-4"
+            onClick={() => setIsCertificateOpen(false)}
+          >
+            <div
+              className="bg-white border-2 border-black max-w-xl w-full p-8 md:p-10 shadow-[8px_8px_0px_0px_rgba(204,255,0,1)] relative z-10 text-black"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-start mb-8 pb-4 border-b-2 border-black">
+                <h3 className="font-mono font-bold text-base sm:text-lg uppercase tracking-tight text-black m-0">
+                  OLYMPIC CATEGORY CERTIFICATE // {activeContender.fullName.toUpperCase()}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setIsCertificateOpen(false)}
+                  className="font-mono font-bold text-xs uppercase tracking-wider text-black hover:text-neutral-600 bg-transparent border-0 cursor-pointer"
+                >
+                  [CLOSE]
+                </button>
+              </div>
+
+              <div className="space-y-4 font-mono text-xs">
+                <div className="grid grid-cols-[165px_1fr] gap-4 pb-3 border-b border-neutral-300">
+                  <span className="uppercase tracking-wider text-neutral-500 font-medium">TRANSACTION ID</span>
+                  <span className="font-bold text-black">{selectedHorizon.txId}</span>
+                </div>
+                <div className="grid grid-cols-[165px_1fr] gap-4 pb-3 border-b border-neutral-300">
+                  <span className="uppercase tracking-wider text-neutral-500 font-medium">MARQUEE CONTENDER</span>
+                  <span className="font-bold text-black">
+                    {activeContender.fullName.toUpperCase()} ({activeContender.sport.toUpperCase()})
+                  </span>
+                </div>
+                <div className="grid grid-cols-[165px_1fr] gap-4 pb-3 border-b border-neutral-300">
+                  <span className="uppercase tracking-wider text-neutral-500 font-medium">SECTOR EXCLUSIVITY</span>
+                  <span className="font-bold text-black">1-OF-1 SECTOR EXCLUSIVITY + BRISBANE 2032 ROFR</span>
+                </div>
+                <div className="grid grid-cols-[165px_1fr] gap-4 pb-3 border-b border-neutral-300">
+                  <span className="uppercase tracking-wider text-neutral-500 font-medium">70% ATHLETE PAYOUT</span>
+                  <span className="font-bold text-black">
+                    A${selectedHorizon.athleteNet.toLocaleString()}.00 AUD (50% T+0 / 50% SIGN-OFF ORACLE)
+                  </span>
+                </div>
+                <div className="grid grid-cols-[165px_1fr] gap-4 pb-3 border-b border-neutral-300">
+                  <span className="uppercase tracking-wider text-neutral-500 font-medium">15% CLUB DIVIDEND</span>
+                  <span className="font-bold text-black">
+                    A${selectedHorizon.clubNet.toLocaleString()}.00 AUD TO {activeContender.club.toUpperCase()}
+                  </span>
+                </div>
+                <div className="grid grid-cols-[165px_1fr] gap-4 pb-3 border-b border-neutral-300">
+                  <span className="uppercase tracking-wider text-neutral-500 font-medium">PAID WHITELISTING</span>
+                  <span className="font-bold text-black">META & TIKTOK OAUTH INCLUDED (0% AD SPEND MARKUP)</span>
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={downloadTermSheet}
+                  className="rounded-xl border border-black bg-white hover:bg-neutral-100 text-black font-mono text-xs font-bold uppercase px-5 py-4 cursor-pointer transition-colors"
+                >
+                  ↓ Pull ROFR Term Sheet
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCertificateOpen(false);
+                    openStripeCheckoutForContender(selectedContenderId, selectedHorizon);
+                  }}
+                  className={`flex-1 ${LIT_OBSIDIAN_BTN}`}
+                >
+                  PROCEED TO STRIPE ESCROW & APPLE PAY →
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      <SyndicateApplicationDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        selectedHorizon={selectedHorizon}
+        onSelectHorizon={setSelectedHorizon}
+        selectedContenderId={selectedContenderId}
+        onSelectContenderId={setSelectedContenderId}
+        onLaunchStripeModal={(sectorLabel) => {
+          openStripeCheckoutForContender(selectedContenderId, selectedHorizon, sectorLabel);
+        }}
+      />
+
+      <StripeEscrowCheckoutModal
+        payload={stripePayload}
+        onClose={() => setStripePayload(null)}
+        onSuccess={async (receipt) => {
+          if (!stripePayload) return;
+          const currentPayload = stripePayload;
+          setLastReceipt(receipt);
+          setLastPaidPriceAud(currentPayload.priceAud);
+          setLastPaidClubName(currentPayload.clubName);
+          setStripePayload(null);
+          const grant = await issuePostcodeWhitelistingGrant({
+            athleteId: currentPayload.athleteId,
+            athleteName: currentPayload.athleteName,
+            flightTierId: currentPayload.tierId,
+            postcode: currentPayload.postcode,
+          });
+          setUnlockedGrant(grant);
+        }}
+      />
+
+      {unlockedGrant && (
+        <WhitelistingLaunchModal
+          grant={unlockedGrant}
+          receipt={lastReceipt}
+          priceAud={lastPaidPriceAud}
+          clubName={lastPaidClubName}
+          onClose={() => setUnlockedGrant(null)}
+        />
+      )}
+    </div>
   );
 }
 
-/**
- * Standalone runway route. On the landing broadsheet the same block is housed
- * inside Commercial Tiers, so this section steps aside rather than repeating it.
- */
 export const SyndicateRunway: React.FC<SyndicateRunwayProps> = () => {
   const [suppressed, setSuppressed] = useState(false);
 
@@ -685,7 +1096,7 @@ export const SyndicateRunway: React.FC<SyndicateRunwayProps> = () => {
     <section
       id="brisbane-2032-runway"
       aria-labelledby="syndicate-heading"
-      className="relative w-full overflow-x-hidden bg-[#0B0B0D] text-white"
+      className="relative w-full overflow-x-hidden bg-[#080808] text-white"
     >
       <SovereignSyndicateBoard />
     </section>

@@ -3,17 +3,15 @@ import { fetchAthletes } from '../api';
 import type { Athlete as DbAthlete } from '../types';
 import {
   disciplineLockup,
-  rosterHeadline,
   ROSTER_DATA,
   ROSTER_SPECIMENS,
   specimenFor,
   specimenToAthlete,
   suburbForPostcode,
-  targetHorizon,
   type Athlete,
   type AthleteRecord,
 } from '../data/roster';
-import { AthleteCard } from '../components/AthleteCard';
+import { RosterSpecimenCard } from '../components/RosterSpecimenCard';
 import { AthleteDossierDrawer } from '../components/AthleteDossierDrawer';
 import { CapitalDeploymentDrawer } from '../components/CapitalDeploymentDrawer';
 import { DeliverablesDrawer } from '../components/DeliverablesDrawer';
@@ -30,14 +28,32 @@ import {
   ROSTER_FILTER_TO_PACKAGE,
   toCommercialAthlete,
 } from '../data/mockDeliverables';
-import { clearRosterFilter, FILTER_ROSTER_TIER_EVENT, peekRosterFilter, type RosterFilterDetail } from '../lib/overlayEvents';
+import {
+  clearRosterFilter,
+  FILTER_ROSTER_TIER_EVENT,
+  peekRosterFilter,
+  type RosterFilterDetail,
+} from '../lib/overlayEvents';
 
 export type { Athlete };
 export { ROSTER_DATA };
 
 type ViewMode = 'grid' | 'directory' | 'map';
 type TierFilter = 'all' | Athlete['tier'] | 'national';
-type DisciplineFilter = 'all' | 'track' | 'rowing' | 'basketball' | 'combat' | 'swimming' | 'endurance' | 'surfing' | 'triathlon' | 'rugby' | 'soccer' | 'boxing' | 'crossfit';
+type DisciplineFilter =
+  | 'all'
+  | 'track'
+  | 'rowing'
+  | 'basketball'
+  | 'combat'
+  | 'swimming'
+  | 'endurance'
+  | 'surfing'
+  | 'triathlon'
+  | 'rugby'
+  | 'soccer'
+  | 'boxing'
+  | 'crossfit';
 
 const DISCIPLINES: readonly { id: DisciplineFilter; label: string }[] = [
   { id: 'all', label: 'All Sports' },
@@ -88,11 +104,14 @@ function athleteIdFromLocation(): string | null {
   return new URLSearchParams(window.location.search).get('athlete');
 }
 
-const normalise = (s: string | null | undefined) => (s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
+const normalise = (s: string | null | undefined) =>
+  (s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
 
 function matchLive(name: string, athletes: readonly DbAthlete[]): DbAthlete | null {
   const target = normalise(name);
-  return athletes.find((a) => normalise(a.full_name) === target || normalise(a.name) === target) ?? null;
+  return (
+    athletes.find((a) => normalise(a.full_name) === target || normalise(a.name) === target) ?? null
+  );
 }
 
 interface RosterPageProps {
@@ -105,7 +124,6 @@ interface RosterPageProps {
 }
 
 export const RosterPage: React.FC<RosterPageProps> = ({
-  onOpenMediaStudio,
   focusAthleteId = null,
   onFocusAthlete,
   requestedPackage = null,
@@ -120,20 +138,28 @@ export const RosterPage: React.FC<RosterPageProps> = ({
   const [tempDiscipline, setTempDiscipline] = useState<DisciplineFilter>('all');
   const [preferredPackageId, setPreferredPackageId] = useState<string | null>(null);
   const [tierNotice, setTierNotice] = useState<string | null>(null);
-  
+
   const [activeDropdown, setActiveDropdown] = useState<'filters' | 'sort' | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [activeSort, setActiveSort] = useState<'recent' | 'popular' | 'az' | 'za'>('recent');
   const [tempSort, setTempSort] = useState<'recent' | 'popular' | 'az' | 'za'>('recent');
 
-  const [highlightedCardId, setHighlightedCardId] = useState<string>(ROSTER_DATA[0]?.id ?? '');
+  const [, setHighlightedCardId] = useState<string>(ROSTER_DATA[0]?.id ?? '');
 
   const [activeDossier, setActiveDossier] = useState<AthleteRecord | null>(null);
+  const [dossierInitialMode, setDossierInitialMode] = useState<'audit' | 'buy'>('audit');
   const [deployAthlete, setDeployAthlete] = useState<AthleteRecord | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [activeAthlete, setActiveAthlete] = useState(mockDeliverables.athlete);
   const [drawerTierId, setDrawerTierId] = useState(mockDeliverables.packages[0].tier_id);
+  const [overrideTick, setOverrideTick] = useState(0);
+
+  useEffect(() => {
+    const onAthleteUpdated = () => setOverrideTick((t) => t + 1);
+    window.addEventListener('tmrw:athlete-updated', onAthleteUpdated);
+    return () => window.removeEventListener('tmrw:athlete-updated', onAthleteUpdated);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -164,15 +190,22 @@ export const RosterPage: React.FC<RosterPageProps> = ({
         const liveAthlete = matchLive(athlete.name, live);
         const liveValue = liveAthlete?.profile_data?.market_value_aud;
         const baseline = specimen?.valuation ?? 0;
+        let hasLocalOverride = false;
+        try {
+          hasLocalOverride = Boolean(localStorage.getItem(`tmrw_override_${athlete.id}`));
+        } catch {
+          hasLocalOverride = false;
+        }
         return {
           athlete,
           specimen,
           liveAthlete,
+          hasLocalOverride,
           record: liveAthlete ?? (specimen ? specimenToAthlete(specimen) : null),
           valuation: typeof liveValue === 'number' && liveValue > 0 ? liveValue : baseline,
         };
       }).filter((card) => card.specimen && card.record),
-    [live],
+    [live, overrideTick],
   );
 
   const matchedCards = useMemo(() => {
@@ -191,12 +224,17 @@ export const RosterPage: React.FC<RosterPageProps> = ({
       copy.sort((a, b) => b.athlete.name.localeCompare(a.athlete.name));
     } else if (activeSort === 'popular') {
       copy.sort((a, b) => b.valuation - a.valuation);
+    } else if (activeSort === 'recent') {
+      copy.sort((a, b) => Number(b.hasLocalOverride) - Number(a.hasLocalOverride));
     }
     return copy;
   }, [matchedCards, activeSort]);
 
   const visibleCards = useMemo(
-    () => (focusAthleteId ? sortedCards.filter((card) => card.athlete.id === focusAthleteId) : sortedCards),
+    () =>
+      focusAthleteId
+        ? sortedCards.filter((card) => card.athlete.id === focusAthleteId)
+        : sortedCards,
     [focusAthleteId, sortedCards],
   );
 
@@ -238,14 +276,11 @@ export const RosterPage: React.FC<RosterPageProps> = ({
     const openFromLocation = () => {
       const athleteId = athleteIdFromLocation();
       if (!athleteId) return;
-      if (athleteId === mockDeliverables.athlete.id) {
-        setActiveAthlete(mockDeliverables.athlete);
-        setDrawerTierId(preferredPackageId ?? mockDeliverables.packages[0].tier_id);
-        setIsDrawerOpen(true);
-        return;
-      }
       const match = ROSTER_DATA.find((entry) => entry.id === athleteId);
-      if (match) openCommercialDrawer(match.record);
+      if (match) {
+        setDossierInitialMode('audit');
+        setActiveDossier(match.record);
+      }
     };
     openFromLocation();
     window.addEventListener('hashchange', openFromLocation);
@@ -261,52 +296,41 @@ export const RosterPage: React.FC<RosterPageProps> = ({
     onPackageHandled?.();
   }, [requestedPackage, onPackageHandled]);
 
-  const onOpenDossier = (athlete: AthleteRecord) => setActiveDossier(athlete);
+  const onOpenDossier = (athlete: AthleteRecord, mode: 'audit' | 'buy' = 'audit') => {
+    setDossierInitialMode(mode);
+    setActiveDossier(athlete);
+  };
 
   const focusedName = focusAthleteId ? specimenFor(focusAthleteId)?.name : null;
-  const catalogueCount = focusAthleteId || tier !== 'all' || discipline !== 'all' ? visibleCards.length : ROSTER_DATA.length;
+  const catalogueCount =
+    focusAthleteId || tier !== 'all' || discipline !== 'all'
+      ? visibleCards.length
+      : ROSTER_DATA.length;
 
   type RosterCard = (typeof visibleCards)[number];
   const renderSpecimen = (card: RosterCard, index: number) => {
-    const { athlete, specimen, liveAthlete, record } = card;
+    const { athlete, specimen, record, hasLocalOverride } = card;
     if (!specimen || !record) return null;
-    const flight = rosterFlightPresentation(athlete.tier, tier, athlete.league);
 
-    const badge =
-      index === 0 || index === 1 || index === 2 || index === 4 || index === 5
-        ? 'New'
-        : index === 3
-        ? 'Update'
-        : undefined;
-    const badgeVariant = index === 3 ? 'yellow' : 'red';
+    const isUpdatedCard = hasLocalOverride || index === 3 || index === 7;
+    const badge = isUpdatedCard
+      ? 'Updated'
+      : index === 0 || index === 1 || index === 2 || index === 4 || index === 5
+      ? 'New'
+      : '';
+    const badgeVariant: 'green' | 'yellow' | 'black' | 'outline' = isUpdatedCard
+      ? 'yellow'
+      : 'green';
 
     return (
-      <AthleteCard
-        layout="card"
-        name={athlete.name}
-        initials={athlete.initials}
-        sportLeague={athlete.sport}
-        catchmentTag={disciplineLockup(athlete.league, athlete.postcode)}
-        headline={rosterHeadline(athlete)}
-        milestone={targetHorizon(athlete)}
-        tierLockup={flight.lockup}
-        tierTag={flight.tag}
-        splitLine={flight.split}
-        statusLabel={athlete.status}
-        isHighlighted={highlightedCardId === athlete.id}
-        onActivate={() => setHighlightedCardId(athlete.id)}
-        image={{
-          file: specimen.image,
-          fallbackFiles: specimen.imageFallbacks,
-          alt: specimen.imageAlt,
-        }}
-        badge={badge}
-        badgeVariant={badgeVariant}
+      <RosterSpecimenCard
         athlete={athlete.record}
-        onSelect={() => onOpenDossier(athlete.record)}
-        onSponsor={() => openCommercialDrawer(athlete.record, flight.tierId)}
-        onOpenDossier={onOpenDossier}
-        onMediaStudio={() => onOpenMediaStudio?.(liveAthlete ?? specimenToAthlete(specimen))}
+        badgeText={badge}
+        badgeVariant={badgeVariant}
+        onOpenDossier={(selectedRecord, mode) => {
+          setHighlightedCardId(athlete.id);
+          onOpenDossier(selectedRecord, mode ?? 'audit');
+        }}
       />
     );
   };
@@ -318,29 +342,13 @@ export const RosterPage: React.FC<RosterPageProps> = ({
         aria-labelledby="roster-heading"
         className="w-full bg-[#FFFFFF] text-[#080808] pt-2 pb-16 scroll-mt-[64px]"
       >
-        {/* Anchor target for #the-roster and #roster */}
         <div id="the-roster" className="scroll-mt-[64px]" />
         <div
           id="roster"
           className="mx-auto max-w-[1840px] px-4 sm:px-6 md:px-10 w-full bg-[#FFFFFF] scroll-mt-[64px]"
         >
-          
-          {/* Calibrated Single-Viewport Magazine Masthead (Fits Masthead + Toolbar + Full Row 1 in 100vh) */}
-          <div className="mb-4 border-t border-b border-black/10 py-3.5 md:py-4">
-            {/* Top Editorial Meta Strip aligned to 4-Column Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-5 pb-3 mb-3 border-b border-black/5 font-mono text-[9.5px] uppercase tracking-[0.18em] text-neutral-500">
-              <div className="flex items-center gap-2 text-[#080808] font-bold">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#CCFF00] ring-1 ring-black/20" />
-                <span>INDEX 01 · VERIFIED NIL ROSTER</span>
-              </div>
-              <div>SEASON 26/27 · LA28 &amp; BRISBANE 32 RUNWAY</div>
-              <div className="hidden md:block">SETTLEMENT · 70% ATHLETE · 15% CLUB · 15% OPS</div>
-              <div className="text-right text-[#080808] font-bold">PRE-CLEARED FOR IMMEDIATE DEPLOYMENT</div>
-            </div>
-
-            {/* 4-Column Editorial Grid Aligned Directly to the 4 Athlete Cards Below */}
+          <div className="mb-4 border-b border-black/10 py-3.5 md:py-4">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-5 items-center">
-              {/* Col 1 & 2: Monumental Masthead Title */}
               <div className="lg:col-span-2">
                 <h2
                   id="roster-heading"
@@ -350,7 +358,6 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 </h2>
               </div>
 
-              {/* Col 3: Primary Lead Deck */}
               <div className="lg:border-l lg:border-black/10 lg:pl-5">
                 <p className="m-0 font-sans text-[14.5px] sm:text-[15.5px] font-bold tracking-[-0.02em] leading-[1.28] text-[#080808]">
                   Algorithms don’t win premierships. Followers don’t fund the runway.
@@ -360,10 +367,13 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 </p>
               </div>
 
-              {/* Col 4: Commercial Mechanics & Partner Trust */}
               <div className="lg:border-l lg:border-black/10 lg:pl-5">
                 <p className="m-0 font-sans text-[12px] leading-[1.45] text-neutral-600">
-                  No ninety-day invoice traps or agency middlemen. Every package locks exclusive postcode rights for partners and triggers an instant <span className="bg-[#CCFF00] text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">70/15/15 split</span> between the athlete, their junior club, and clearinghouse operations.
+                  No ninety-day invoice traps or agency middlemen. Every package locks exclusive postcode rights for partners and triggers an instant{' '}
+                  <span className="bg-[#CCFF00] text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">
+                    70/15/15 split
+                  </span>{' '}
+                  between the athlete, their junior club, and clearinghouse operations.
                 </p>
               </div>
             </div>
@@ -384,24 +394,19 @@ export const RosterPage: React.FC<RosterPageProps> = ({
             </div>
           ) : null}
 
-          {/* Exact Pangram 4-Column Spread Toolbar */}
           <div ref={dropdownRef} className="relative grid grid-cols-1 md:grid-cols-4 items-center mb-4 gap-5">
-            
-            {/* Col 1: Our athlete library */}
             <div>
               <span className="font-sans font-bold text-[14px] text-[#080808] tracking-tight">
                 Our athlete library
               </span>
             </div>
 
-            {/* Col 2: Showing count */}
             <div>
               <span className="font-sans text-[12.5px] font-normal text-[#080808] tracking-tight">
                 Showing {catalogueCount} of {ROSTER_DATA.length} athletes
               </span>
             </div>
 
-            {/* Col 3: Card view & List view */}
             <div className="flex items-center gap-7 font-sans text-[12.5px] font-medium tracking-tight">
               <button
                 type="button"
@@ -440,7 +445,14 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                   viewMode === 'directory' ? 'text-[#080808] font-bold' : 'text-[#080808] hover:text-neutral-600'
                 }`}
               >
-                <svg className="w-5 h-5 text-[#080808] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <svg
+                  className="w-5 h-5 text-[#080808] shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                >
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <line x1="3" y1="12" x2="21" y2="12" />
                   <line x1="3" y1="18" x2="21" y2="18" />
@@ -457,7 +469,6 @@ export const RosterPage: React.FC<RosterPageProps> = ({
               </button>
             </div>
 
-            {/* Col 4: Filters & Recent first */}
             <div className="flex items-center justify-end gap-8 font-sans text-[12.5px] font-normal">
               <div className="relative">
                 <button
@@ -469,7 +480,15 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                   className="flex items-center gap-2 text-[#080808] hover:text-neutral-600 cursor-pointer border-0 bg-transparent p-0"
                 >
                   <span>Filters</span>
-                  <svg className="w-4 h-4 text-[#080808]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    className="w-4 h-4 text-[#080808]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <line x1="3" y1="8" x2="21" y2="8"></line>
                     <line x1="3" y1="16" x2="21" y2="16"></line>
                     <circle cx="9" cy="8" r="2.5" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.8"></circle>
@@ -521,8 +540,24 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                   }}
                   className="flex items-center gap-2 text-[#080808] hover:text-neutral-600 cursor-pointer border-0 bg-transparent p-0"
                 >
-                  <span>{activeSort === 'recent' ? 'Recent first' : activeSort === 'popular' ? 'Most popular first' : activeSort === 'az' ? 'Alphabetical A-Z' : 'Alphabetical Z-A'}</span>
-                  <svg className="w-4 h-4 text-[#080808]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <span>
+                    {activeSort === 'recent'
+                      ? 'Recent first'
+                      : activeSort === 'popular'
+                      ? 'Most popular first'
+                      : activeSort === 'az'
+                      ? 'Alphabetical A-Z'
+                      : 'Alphabetical Z-A'}
+                  </span>
+                  <svg
+                    className="w-4 h-4 text-[#080808]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M7 4v16m0 0l-3.5-3.5M7 20l3.5-3.5"></path>
                     <path d="M17 20V4m0 0l-3.5 3.5M17 4l3.5 3.5"></path>
                   </svg>
@@ -541,9 +576,11 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                         <button
                           key={sortOption.id}
                           type="button"
-                          onClick={() => setTempSort(sortOption.id as any)}
+                          onClick={() => setTempSort(sortOption.id as 'recent' | 'popular' | 'az' | 'za')}
                           className={`w-full text-left rounded-xl px-4 py-2.5 font-mono text-xs tracking-wider transition-colors cursor-pointer border-0 ${
-                            isSelected ? 'bg-black text-white font-bold' : 'bg-transparent text-neutral-700 hover:bg-neutral-100'
+                            isSelected
+                              ? 'bg-black text-white font-bold'
+                              : 'bg-transparent text-neutral-700 hover:bg-neutral-100'
                           }`}
                         >
                           {sortOption.label}
@@ -600,16 +637,21 @@ export const RosterPage: React.FC<RosterPageProps> = ({
             ) : viewMode === 'directory' ? (
               <div className="border-t border-neutral-200">
                 <div className="hidden border-b border-neutral-200 py-3 md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.1fr)_minmax(0,1.15fr)_minmax(0,0.95fr)_auto] md:items-center md:gap-4">
-                  {['Specimen / Name', 'Discipline', 'League / Level', 'Postcode Catchment', 'Tier Status', 'Action CTA'].map(
-                    (heading) => (
-                      <span
-                        key={heading}
-                        className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-500"
-                      >
-                        {heading}
-                      </span>
-                    ),
-                  )}
+                  {[
+                    'Specimen / Name',
+                    'Discipline',
+                    'League / Level',
+                    'Postcode Catchment',
+                    'Tier Status',
+                    'Action CTA',
+                  ].map((heading) => (
+                    <span
+                      key={heading}
+                      className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-500"
+                    >
+                      {heading}
+                    </span>
+                  ))}
                 </div>
                 <ul className="m-0 list-none p-0">
                   {visibleCards.map(({ athlete, specimen }) =>
@@ -625,7 +667,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                           <div className="min-w-0">
                             <button
                               type="button"
-                              onClick={() => onOpenDossier(athlete.record)}
+                              onClick={() => onOpenDossier(athlete.record, 'audit')}
                               className="m-0 border-0 bg-transparent p-0 text-left font-display text-2xl font-extrabold tracking-tight text-[#080808] cursor-pointer hover:text-black"
                             >
                               {athlete.name}
@@ -635,7 +677,9 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                             </p>
                           </div>
                         </div>
-                        <p className="m-0 font-display text-base tracking-tight text-[#080808]">{athlete.sport}</p>
+                        <p className="m-0 font-display text-base tracking-tight text-[#080808]">
+                          {athlete.sport}
+                        </p>
                         <div>
                           <p className="m-0 text-sm text-[#080808]">{athlete.league}</p>
                           <p className="m-0 mt-0.5 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
@@ -663,15 +707,10 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                         </div>
                         <button
                           type="button"
-                          onClick={() =>
-                            openCommercialDrawer(
-                              athlete.record,
-                              rosterFlightPresentation(athlete.tier, tier, athlete.league).tierId,
-                            )
-                          }
+                          onClick={() => onOpenDossier(athlete.record, 'audit')}
                           className="justify-self-start rounded-full border-0 bg-[#0F0F11] px-4 py-2 font-mono text-[10px] font-medium uppercase tracking-widest text-white transition-colors hover:bg-[#CCFF00] hover:text-black cursor-pointer md:justify-self-end"
                         >
-                          View commercial deliverables
+                          Open Athlete Dossier →
                         </button>
                       </li>
                     ) : null,
@@ -679,7 +718,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 </ul>
               </div>
             ) : (
-              <ul className="m-0 grid list-none grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch gap-x-5 gap-y-6 p-0 pt-2">
+              <ul className="m-0 grid list-none grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch gap-x-5 gap-y-7 p-0 pt-3">
                 {visibleCards.map((card, index) => (
                   <li key={card.athlete.id} className="m-0 flex min-w-0 flex-col p-0">
                     {renderSpecimen(card, index)}
@@ -693,6 +732,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
 
       <AthleteDossierDrawer
         athlete={activeDossier}
+        initialMode={dossierInitialMode}
         onClose={() => setActiveDossier(null)}
         onSelectAthlete={(athlete) => {
           setHighlightedCardId(athlete.id);

@@ -41,13 +41,13 @@ const FLIGHTS: readonly FlightTier[] = [
     narrative:
       "Own your immediate postcode. Built for local cafes, gyms, and recovery clinics backing an athlete's daily training block through cash and product seeding. Lock out direct local competitors within a 5km radius.",
     specs: [
-      { label: 'TERRITORY', value: '5KM POSTCODE LOCK' },
-      { label: 'ACTIVATION', value: '1X IN-VENUE SESSION + PRODUCT SEEDING' },
-      { label: 'DELIVERABLES', value: '2X GEO-VERIFIED SOCIAL TAGS' },
-      { label: 'CLEARING RAIL', value: 'PROOF-OF-WORK ESCROW + INSTANT RCTI' },
+      { label: 'TERRITORY', value: '5KM POSTCODE COMPETITOR LOCK' },
+      { label: 'ACTIVATION', value: '1X IN-VENUE SESSION + COUNTER QR PLAQUE' },
+      { label: 'DELIVERABLES', value: '2X AI-CUT 9:16 REELS (WATERMARKED)' },
+      { label: 'HANDLE SPONSORSHIP', value: 'API HANDLE LINKING (5KM PAID ADS)' },
     ],
     settlement: { athlete: '$525', club: '$112.50' },
-    cta: 'LOCK FLIGHT 01 RIGHTS',
+    cta: 'LOCK PACKAGE 01 RIGHTS',
   },
   {
     tier_id: 'pathway_flight',
@@ -55,17 +55,17 @@ const FLIGHTS: readonly FlightTier[] = [
     badge: '15KM DISTRICT LOCK',
     name: 'Pathway Contender',
     investment: '$3500 AUD',
-    cycle: 'ANNUAL FLIGHT ($2450 NET TO ATHLETE)',
+    cycle: 'ANNUAL BACKING ($2450 NET TO ATHLETE)',
     narrative:
-      'Mid-market corporate backing for 18-to-25 contenders dominating elite state leagues (NBL1, Shute Shield, VFL, WNBL). Underwrites competition travel while putting your brand on training kit and verified local feeds.',
+      'Mid-market corporate backing for 18-to-25 contenders dominating televised state leagues (NBL1, Shute Shield, VFL, WNBL, Sal’s NBL). Underwrites competition travel while putting your brand on training kit and local feeds.',
     specs: [
-      { label: 'TERRITORY', value: '15KM SUBURBAN CLUSTER' },
-      { label: 'BRANDING', value: 'OFFICIAL TRAINING KIT PLACEMENT' },
-      { label: 'ACTIVATION', value: '4X QUARTERLY CONTENT SUITES' },
-      { label: 'APPEARANCES', value: '1X IN-PERSON CORPORATE SESSION' },
+      { label: 'TERRITORY', value: '15KM SUBURBAN CLUSTER EXCLUSIVITY' },
+      { label: 'BRANDING', value: 'OFFICIAL TRAINING KIT LOGO PLACEMENT' },
+      { label: 'ACTIVATION', value: '4X QUARTERLY 9:16 CONTENT DROPS + 1X APPEARANCE' },
+      { label: 'HANDLE SPONSORSHIP', value: 'PAID SOCIAL AMPLIFICATION (15KM)' },
     ],
     settlement: { athlete: '$2450', club: '$525' },
-    cta: 'LOCK FLIGHT 02 RIGHTS',
+    cta: 'LOCK PACKAGE 02 RIGHTS',
   },
   {
     tier_id: 'national_challenger',
@@ -73,35 +73,35 @@ const FLIGHTS: readonly FlightTier[] = [
     badge: 'CATEGORY EXCLUSIVITY',
     name: 'National Challenger',
     investment: '$12500 AUD',
-    cycle: 'ANNUAL FLIGHT ($8750 NET TO ATHLETE)',
+    cycle: 'ANNUAL BACKING ($8750 NET TO ATHLETE)',
     narrative:
-      'Complete category lockout for national Olympic and Paralympic challengers on the LA 2028 and Brisbane 2032 runway. High-performance funding paired with broadcast-cleared media assets and executive keynotes.',
+      'Complete state-wide category lockout for national-level contenders. Block every rival brand across your industry sector, unlock pre-shot 4K broadcast and 9:16 social video stems, and book an executive keynote.',
     specs: [
-      { label: 'TERRITORY', value: 'STATE-WIDE CATEGORY LOCK' },
-      { label: 'EXCLUSIVITY', value: '48-CODE COMPETITOR LOCKOUT' },
-      { label: 'MEDIA RIGHTS', value: 'BROADCAST-CLEARED CAMPAIGN ASSETS' },
-      { label: 'APPEARANCES', value: '1X EXECUTIVE KEYNOTE SESSION' },
+      { label: 'TERRITORY', value: 'STATE-WIDE 48-SECTOR CATEGORY LOCK' },
+      { label: 'MEDIA VAULT', value: 'PRE-SHOT 4K BROADCAST & 9:16 AD STEMS' },
+      { label: 'APPEARANCES', value: '1X EXECUTIVE KEYNOTE OR CLINIC SESSION' },
+      { label: 'HANDLE SPONSORSHIP', value: 'STATE-WIDE API HANDLE LINKING' },
     ],
     settlement: { athlete: '$8750', club: '$1875' },
-    cta: 'LOCK FLIGHT 03 RIGHTS',
+    cta: 'LOCK PACKAGE 03 RIGHTS',
   },
   {
     tier_id: 'world_class',
     flight: '04',
-    badge: 'PAN-PACIFIC RIGHTS',
-    name: 'World-Class Benchmark',
+    badge: 'AU & NZ LICENCE',
+    name: 'Trans-Tasman Headline',
     investment: '$25000 AUD',
-    cycle: 'CAMPAIGN FLIGHT ($17500 NET TO ATHLETE)',
+    cycle: 'HEADLINE PARTNER ($17500 NET TO ATHLETE)',
     narrative:
-      'Enterprise association with world championship, Olympic, and Paralympic podium contenders. Full Pan-Pacific digital licensing, staff town hall keynotes, and Rule 40 pre-cleared ambassador campaigns across AU & NZ.',
+      'Headline single-athlete commercial partnership across Australia and New Zealand. Full trans-Tasman digital likeness licensing, direct handle sponsorship, co-branded merch rights, and internal staff town halls.',
     specs: [
-      { label: 'TERRITORY', value: 'PAN-PACIFIC LICENCE (AU & NZ)' },
-      { label: 'KEYNOTE', value: 'INTERNAL STAFF TOWN HALL' },
-      { label: 'COMMERCIAL', value: 'FULL AMBASSADOR & IP RIGHTS' },
-      { label: 'COMPLIANCE', value: 'RULE 40, TPA & SIA CLEARED' },
+      { label: 'TERRITORY', value: 'TRANS-TASMAN EXCLUSIVITY (AU & NZ)' },
+      { label: 'COMMERCIAL', value: 'HEADLINE AMBASSADOR, IP & MERCH CAPSULE' },
+      { label: 'KEYNOTE', value: 'INTERNAL STAFF TOWN HALL + VIP ACCESS' },
+      { label: 'HANDLE SPONSORSHIP', value: 'AU & NZ PAID SOCIAL AMPLIFICATION' },
     ],
     settlement: { athlete: '$17500', club: '$3750' },
-    cta: 'LOCK FLIGHT 04 RIGHTS',
+    cta: 'LOCK PACKAGE 04 RIGHTS',
   },
 ];
 
@@ -126,10 +126,6 @@ function ClearingProtocolBar({ athlete, club }: FlightSettlement) {
   );
 }
 
-/**
- * Section five. One nocturnal broadsheet: four commercial flights, the $50000 National
- * Syndicate, then the $250000 Sovereign Syndicate master block.
- */
 export const CommercialTiers: React.FC<CommercialTiersProps> = ({ onNavigateSection }) => {
   const selectFlight = (tier: FlightTier) => {
     stashRosterFilter(tier.tier_id, tier.name);
@@ -162,16 +158,15 @@ export const CommercialTiers: React.FC<CommercialTiersProps> = ({ onNavigateSect
               id="commercial-tiers-heading"
               className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight uppercase text-white leading-[0.98]"
             >
-              FOUR CLEAN FLIGHTS. ZERO TALENT AGENCY COMMISSIONS<span className="text-[#CCFF00]">.</span>
+              FOUR CLEAR PACKAGES. ZERO TALENT AGENCY COMMISSIONS<span className="text-[#CCFF00]">.</span>
             </h2>
           </div>
           <div className="lg:col-span-5">
             <p className="text-sm md:text-base text-neutral-300 leading-relaxed font-sans">
-              Standardised commercial flight agreements engineered for the Olympic and Paralympic runway to LA 2028 and
-              Brisbane 2032. Every deal is pre-cleared across 48 sporting codes for governing body TPA compliance,
-              locked in automated Stripe Connect escrow, and settled instantly via 100% tax-deductible ATO Recipient
-              Created Tax Invoices (RCTIs). Real local ROI for brands. Direct 70/15/15 cash flow for contenders and the
-              grassroots clubs that built them.
+              Followers don&apos;t pay rent. Every package locks in pre-cleared governing body TPA compliance, automated
+              API handle linking for geo-fenced Meta and TikTok paid social amplification, and instant 100% tax-deductible
+              ATO/IRD Recipient Created Tax Invoices (RCTIs). Real local ROI for brands. Direct 70/15/15 cash flow for
+              contenders and the grassroots junior clubs that built them.
             </p>
           </div>
         </div>
@@ -184,7 +179,7 @@ export const CommercialTiers: React.FC<CommercialTiersProps> = ({ onNavigateSect
             >
               <div>
                 <div className="flex justify-between items-center text-[10px] font-mono uppercase pb-3 border-b border-white/10">
-                  <span className="text-neutral-300 font-mono font-bold">FLIGHT {tier.flight}</span>
+                  <span className="text-neutral-300 font-mono font-bold">PACKAGE {tier.flight}</span>
                   <span className="bg-[#CCFF00] text-black font-bold px-2.5 py-0.5 rounded-full">{tier.badge}</span>
                 </div>
 
@@ -225,29 +220,30 @@ export const CommercialTiers: React.FC<CommercialTiersProps> = ({ onNavigateSect
         <div className="w-full bg-[#0F0F11] text-white rounded-[28px] p-8 md:p-12 border border-white/10">
           <div className="flex flex-wrap justify-between items-center gap-4 pb-6 border-b border-white/10 mb-8">
             <span className="font-mono text-xs uppercase tracking-widest text-neutral-400">
-              ENTERPRISE FLAGSHIP · BY CORPORATE APPLICATION ONLY
+              MULTI-ATHLETE ENTERPRISE PORTFOLIO · LA 2028 &amp; BRISBANE 2032 RUNWAY
             </span>
             <span className="bg-[#CCFF00] text-[#0F0F11] font-mono font-bold text-xs px-3.5 py-1 rounded-full uppercase tracking-wider">
-              LA 2028 & BRISBANE 2032 RUNWAY
+              RULE 40 AI GUARDRAILS · SINGLE RCTI INVOICE
             </span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-7 space-y-6">
               <h3 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight uppercase text-white leading-[1.02]">
-                OLYMPIC & PARALYMPIC CORPORATE SYNDICATE
+                OLYMPIC &amp; PARALYMPIC CORPORATE SYNDICATE
               </h3>
               <div>
                 <span className="text-4xl sm:text-5xl font-bold tracking-tighter text-[#CCFF00] block">$50000+ AUD</span>
                 <span className="text-xs font-mono text-neutral-400 uppercase tracking-widest mt-1 block font-medium">
-                  ANNUAL PORTFOLIO ($35000 TO ATHLETES · $7500 TO GRASSROOTS CLUBS)
+                  ANNUAL 5-ATHLETE PORTFOLIO ($35000 TO ATHLETES · $7500 TO GRASSROOTS CLUBS)
                 </span>
               </div>
               <p className="text-sm text-neutral-300 leading-relaxed font-sans max-w-2xl">
-                Engineered for national enterprises deploying brand, ESG, and disability inclusion capital ahead of LA
+                Built for national enterprises deploying brand, ESG, and disability inclusion capital on the road to LA
                 2028 and Brisbane 2032. Simultaneously underwrite five Olympic and Paralympic hopefuls and five
-                grassroots junior clubs on a single ATO-compliant RCTI tax invoice, complete with quarterly board-ready
-                ESG and social impact reporting.
+                grassroots junior clubs on a single ATO/IRD RCTI tax invoice. Includes multi-category national lockout,
+                Rule 40 pre-cleared campaign stems, direct handle sponsorship across all five athletes, and quarterly
+                board-ready ESG impact reporting.
               </p>
             </div>
 
@@ -255,19 +251,19 @@ export const CommercialTiers: React.FC<CommercialTiersProps> = ({ onNavigateSect
               <div className="space-y-3 font-mono text-xs uppercase text-neutral-300">
                 <div className="flex justify-between pb-2 border-b border-white/10">
                   <span className="text-neutral-400">PORTFOLIO</span>
-                  <span className="font-bold text-white text-right">5X OLYMPIC & PARALYMPIC CONTENDERS + 5X CLUBS</span>
+                  <span className="font-bold text-white text-right">5X OLYMPIC &amp; PARALYMPIC CONTENDERS + 5X CLUBS</span>
                 </div>
                 <div className="flex justify-between pb-2 border-b border-white/10">
-                  <span className="text-neutral-400">EXCLUSIVITY</span>
-                  <span className="font-bold text-white text-right">MULTI-CATEGORY NATIONAL LOCKOUT</span>
+                  <span className="text-neutral-400">PROCUREMENT</span>
+                  <span className="font-bold text-white text-right">SINGLE VENDOR ONBOARDING · 1X ATO/IRD RCTI</span>
                 </div>
                 <div className="flex justify-between pb-2 border-b border-white/10">
-                  <span className="text-neutral-400">DELIVERABLES</span>
-                  <span className="font-bold text-white text-right">NATIONAL CAMPAIGN RIGHTS & BOARD KEYNOTES</span>
+                  <span className="text-neutral-400">HANDLE SPONSORSHIP</span>
+                  <span className="font-bold text-white text-right">5X VERIFIED HANDLES · PAID SOCIAL AMPLIFICATION</span>
                 </div>
                 <div className="flex justify-between pb-2 border-b border-white/10">
                   <span className="text-neutral-400">GOVERNANCE</span>
-                  <span className="font-bold text-[#CCFF00] text-right">AUDITED ESG, DEI & SPORT INTEGRITY REPORTING</span>
+                  <span className="font-bold text-[#CCFF00] text-right">RULE 40 BLACKOUT CLEARED · ESG &amp; DEI REPORT</span>
                 </div>
               </div>
 
