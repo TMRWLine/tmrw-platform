@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useDialogFocus } from '../lib/useDialogFocus';
 import { ABN_ERROR_MESSAGE, isValidAbn, stripNonDigits } from '../lib/validation';
 import {
   calculateExactSplitLedger,
@@ -85,6 +86,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
   const [payToId, setPayToId] = useState('treasury@corporatepartner.com.au');
 
   const [clearingStage, setClearingStage] = useState<ClearingStage>('idle');
+  const dialogRef = useDialogFocus(Boolean(payload), () => { if (clearingStage === 'idle') onClose(); });
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -98,20 +100,6 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
       setMethod('apple_pay');
     }
   }, [payload]);
-
-  useEffect(() => {
-    if (!payload) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && clearingStage === 'idle') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [payload, clearingStage, onClose]);
 
   if (!payload) return null;
 
@@ -208,10 +196,11 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
     <div
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
-      onClick={() => clearingStage === 'idle' && onClose()}
+      onClick={(event) => { event.stopPropagation(); if (clearingStage === 'idle') onClose(); }}
       className="fixed inset-0 z-[110] bg-[#080808]/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
       <div
+        ref={dialogRef} role="dialog" aria-modal="true" aria-label="Secure sponsorship checkout" tabIndex={-1}
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
