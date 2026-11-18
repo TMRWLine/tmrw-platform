@@ -165,8 +165,15 @@ export const RosterPage: React.FC<RosterPageProps> = ({
         setActiveDropdown(null);
       }
     };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveDropdown(null);
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, []);
 
   useEffect(() => {
@@ -627,7 +634,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 No verified athletes match this filter.
               </p>
             ) : viewMode === 'directory' ? (
-              <div className="border-t border-neutral-200">
+              <div className="roster-directory border-t border-neutral-200">
                 <div className="hidden border-b border-neutral-200 py-3 md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.1fr)_minmax(0,1.15fr)_minmax(0,0.95fr)_auto] md:items-center md:gap-4">
                   {[
                     'Specimen / Name',

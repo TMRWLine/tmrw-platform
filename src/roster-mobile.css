@@ -1,0 +1,63 @@
+/* Search, roster and dossier additions to mobile.css. No desktop overrides. */
+@media (max-width: 767px), (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+  .search-overlay { overscroll-behavior: contain; }
+  .search-overlay input { min-width: 0; }
+  .search-overlay :is(p, h3, dd) { overflow-wrap: anywhere; }
+  .search-athlete-result {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .search-athlete-result .truncate { white-space: normal; }
+  .search-athlete-result button { grid-column: 1 / -1; justify-self: stretch; font-size: 12px; }
+  .search-athlete-result .font-mono { font-size: 12px; letter-spacing: 0.04em; }
+  .search-overlay dl > div { min-width: 0; }
+
+  #roster-heading { font-size: clamp(2.5rem, 11vw, 3.75rem); }
+  #roster :is(button, a) { min-height: 44px; min-width: 44px; }
+  #roster :is(button, p) { overflow-wrap: anywhere; }
+  .roster-toolbar > div { min-width: 0; }
+  .roster-filter-popup {
+    max-height: calc(100dvh - 100px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .roster-filter-popup > div { max-height: none; overflow: visible; }
+  .roster-view > ul {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  }
+  .roster-specimen { padding: 24px 20px; aspect-ratio: auto !important; }
+  .roster-specimen > div:nth-of-type(2) > div:first-child { min-width: 0; }
+  .roster-specimen p { font-size: 14px; }
+  .roster-initials { font-size: 100px; }
+  .roster-media-controls {
+    position: relative;
+    height: auto;
+    margin-top: 16px;
+    padding: 6px;
+    gap: 4px;
+    flex-wrap: wrap;
+    border-radius: 20px;
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+  .roster-media-controls > div { flex-wrap: wrap; max-width: 100%; }
+  .roster-media-controls span { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+  .roster-directory .truncate { white-space: normal; }
+  .roster-directory .font-mono { font-size: 12px; letter-spacing: 0.04em; }
+
+  .dossier-panel { min-width: 0; }
+  .dossier-header { max-height: 45%; overflow-y: auto; }
+  .dossier-content { overflow-wrap: anywhere; }
+  .dossier-content > div:first-child .flex > div:last-child { min-width: 0; }
+  .dossier-card .divide-y > div > :last-child { max-width: 100%; }
+  .dossier-card .divide-y button { white-space: normal; }
+  .dossier-card-actions { overflow-wrap: anywhere; }
+  .dossier-footer { max-height: 35%; overflow-y: auto; }
+
+  :is(.search-overlay, #roster, .dossier-panel) :is(button, a, input):focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+  }
+}

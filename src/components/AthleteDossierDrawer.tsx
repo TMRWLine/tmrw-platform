@@ -190,6 +190,15 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
   const [activeWhitelistingGrant, setActiveWhitelistingGrant] = useState<WhitelistingGrant | null>(null);
   const [liveOverride, setLiveOverride] = useState<LiveAthleteOverride | null>(null);
 
+  useEffect(() => {
+    if (!athlete || stripePayload || activeWhitelistingGrant) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [athlete, stripePayload, activeWhitelistingGrant, onClose]);
+
   const currentIndex = athlete
     ? ROSTER_DATA.findIndex(
         (entry) => entry.id === athlete.id || entry.record.full_name === athlete.full_name,
@@ -367,6 +376,9 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
       className="dossier-backdrop fixed inset-0 z-[80] bg-black/45 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${displayFullName} athlete dossier`}
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}

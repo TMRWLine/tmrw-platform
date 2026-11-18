@@ -287,7 +287,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, o
                     const value = valuationOf(a);
                     return (
                       <li key={a.id || name} className="m-0 p-0">
-                        <article className="flex items-center gap-4 rounded-2xl bg-white border border-[#EAEAEA] p-4">
+                        <article className="search-athlete-result flex items-center gap-4 rounded-2xl bg-white border border-[#EAEAEA] p-4">
                           <div
                             aria-hidden="true"
                             className="shrink-0 w-12 h-12 rounded-full bg-[#080808] text-white flex items-center justify-center font-display font-extrabold text-sm"

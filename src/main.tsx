@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import './mobile.css';
+import './roster-mobile.css';
 import { registerSW } from 'virtual:pwa-register';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
