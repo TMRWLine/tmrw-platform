@@ -250,25 +250,25 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[1840px] h-[94dvh] rounded-[24px] bg-[#FFFFFF] text-[#080808] shadow-[0_30px_90px_rgba(0,0,0,0.28)] border border-black/10 flex flex-col overflow-hidden"
+        className="relative w-full max-w-[1840px] h-[94dvh] rounded-[24px] bg-[#F7F7F6] text-[#080808] shadow-[0_30px_90px_rgba(0,0,0,0.28)] border border-black/10 flex flex-col overflow-hidden"
       >
-        <header className="shrink-0 z-30 flex items-center justify-end px-4 sm:px-6 md:px-10 py-3.5 bg-[#FFFFFF]/95 backdrop-blur-md border-b border-black/10">
+        <header className="shrink-0 z-30 flex items-center justify-end px-4 sm:px-6 md:px-10 py-3.5 bg-[#F7F7F6]/95 backdrop-blur-md border-b border-black/10">
           <button
             ref={closeRef}
             type="button"
             onClick={onClose}
             title="Close [ESC]"
             aria-label="Close modal"
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/25 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#080808] hover:bg-white text-white hover:text-[#080808] border border-transparent hover:border-black/25 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
           >
             <span>Close</span>
-            <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">✕</span>
+            <span className="text-[11px] text-[#CCFF00] group-hover:text-[#080808] transition-colors">✕</span>
           </button>
         </header>
 
         <div
           data-lenis-prevent="true"
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 md:px-10 pt-4 pb-10 bg-[#FFFFFF]"
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 md:px-10 pt-4 pb-10 bg-[#F7F7F6]"
         >
           <div className="mb-4 border-b border-black/10 pb-4">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 items-center">
@@ -338,10 +338,10 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
               const isSelected = flight.tier_id === activeFlight.tier_id;
               const badgeColorClass =
                 flight.badgeVariant === 'yellow'
-                  ? 'bg-[#FFB800] text-black'
+                  ? 'bg-[#CCFF00] text-black'
                   : flight.badgeVariant === 'green'
                   ? 'bg-[#CCFF00] text-black'
-                  : 'bg-[#0F0F11] text-white';
+                  : 'bg-[#080808] text-white';
 
               return (
                 <li key={flight.tier_id} className="m-0 flex min-w-0 flex-col p-0">
@@ -470,7 +470,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
           </ul>
         </div>
 
-        <footer className="shrink-0 z-30 border-t border-black/10 bg-[#FFFFFF] px-4 sm:px-6 md:px-10 py-3.5 flex flex-wrap items-center justify-between gap-4">
+        <footer className="shrink-0 z-30 border-t border-black/10 bg-[#F7F7F6] px-4 sm:px-6 md:px-10 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500">
               SELECTED PACKAGE:
@@ -485,7 +485,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
 
           <div className="flex items-center gap-3">
             {checkoutError ? (
-              <span className="font-sans text-xs font-medium text-[#FF3300]">{checkoutError}</span>
+              <span className="font-sans text-xs font-medium text-[#CCFF00]">{checkoutError}</span>
             ) : null}
             <button
               type="button"

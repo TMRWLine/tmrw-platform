@@ -100,13 +100,22 @@ export function AthleteCard<TAthlete>({
 
   const badgeColorClass =
     badgeVariant === 'yellow'
-      ? 'bg-[#FFB800] text-black'
+      ? 'bg-[#CCFF00] text-black'
       : badgeVariant === 'green'
       ? 'bg-[#CCFF00] text-black'
-      : 'bg-[#0F0F11] text-white';
+      : 'bg-[#080808] text-white';
 
   return (
     <article
+      role="button"
+      tabIndex={0}
+      aria-label={`Open ${name} athlete dossier`}
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          handleCardClick();
+        }
+      }}
       onMouseEnter={() => onActivate?.()}
       onClick={handleCardClick}
       className="group relative isolate flex flex-col justify-between bg-[#EAEAE6] hover:bg-[#080808] text-[#080808] hover:text-white rounded-[18px] p-6 h-[clamp(400px,53vh,495px)] transition-colors duration-500 cursor-pointer overflow-visible select-none"

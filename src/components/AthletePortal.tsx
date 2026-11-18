@@ -24,7 +24,7 @@ export function AthletePortal({
       <header className="athlete-portal-head border border-white/10 bg-white/[0.02] backdrop-blur-md p-6">
         <div className="athlete-avatar">{athlete?.initials || athleteInitials(name)}</div>
         <div>
-          <p className="font-mono text-[11px] tracking-widest uppercase text-[#D2FF00] mb-2">
+          <p className="font-mono text-[11px] tracking-widest uppercase text-[#CCFF00] mb-2">
             // ATHLETE NIL PORTAL
           </p>
           <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-white mt-0">{name}</h1>
@@ -39,13 +39,13 @@ export function AthletePortal({
 
       {focus !== 'drops' && (
         <div className="flex flex-wrap gap-3">
-          <span className="border border-white/10 bg-white/[0.02] font-mono text-xs text-[#D2FF00] px-4 py-2">
+          <span className="border border-white/10 bg-white/[0.02] font-mono text-xs text-[#CCFF00] px-4 py-2">
             {formatCurrency(pending, 'AUD')} PENDING PAYOUT
           </span>
-          <span className="border border-white/10 bg-white/[0.02] font-mono text-xs text-[#D2FF00] px-4 py-2">
+          <span className="border border-white/10 bg-white/[0.02] font-mono text-xs text-[#CCFF00] px-4 py-2">
             {drops.length} COLLAB DROPS
           </span>
-          <span className="border border-white/10 bg-white/[0.02] font-mono text-xs text-[#D2FF00] px-4 py-2">
+          <span className="border border-white/10 bg-white/[0.02] font-mono text-xs text-[#CCFF00] px-4 py-2">
             70/20/10 SPLIT RAIL
           </span>
         </div>
@@ -72,7 +72,7 @@ export function AthletePortal({
                 {athlete?.nrl_tpa_registered || athlete?.shute_shield_compliant ? 'Cleared' : 'Under review'}
               </strong>
               <p className="text-zinc-400">
-                Name, image and likeness usage is scoped to postcode catchments — no club marks in generated media.
+                Name, image and likeness usage is scoped to postcode catchments · no club marks in generated media.
               </p>
             </article>
             <article className="nil-status-card border border-white/10 bg-white/[0.02] backdrop-blur-md">
@@ -102,7 +102,7 @@ export function AthletePortal({
           {focus !== 'drops' && onOpenDrops && (
             <button
               type="button"
-              className="border border-white/10 bg-white/[0.02] font-mono text-xs text-[#D2FF00] px-4 py-2 cursor-pointer"
+              className="border border-white/10 bg-white/[0.02] font-mono text-xs text-[#CCFF00] px-4 py-2 cursor-pointer"
               onClick={onOpenDrops}
             >
               OPEN STORE

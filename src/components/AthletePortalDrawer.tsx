@@ -170,14 +170,14 @@ const ALL_SECTORS = [
 const FIELD_LABEL =
   'font-mono text-[9.5px] tracking-[0.18em] text-neutral-500 uppercase block mb-1.5 font-bold';
 const FIELD_SHELL =
-  'bg-[#EAEAE6] border border-black/10 rounded-xl px-4 py-3 text-sm font-mono text-[#0F0F11] placeholder-neutral-400 outline-none focus-within:border-[#0F0F11] transition-colors w-full flex items-center';
+  'bg-[#EAEAE6] border border-black/10 rounded-xl px-4 py-3 text-sm font-mono text-[#080808] placeholder-neutral-400 outline-none focus-within:border-[#080808] transition-colors w-full flex items-center';
 const FIELD_INPUT =
-  'bg-transparent text-base sm:text-sm font-mono font-bold text-[#0F0F11] placeholder-neutral-400 outline-none w-full select-text border-0 p-0';
+  'bg-transparent text-base sm:text-sm font-mono font-bold text-[#080808] placeholder-neutral-400 outline-none w-full select-text border-0 p-0';
 const WIZARD_INPUT =
   'w-full rounded-xl bg-[#F2F2F0] border border-black/10 px-3.5 py-2.5 font-sans text-base sm:text-xs font-semibold text-[#080808] placeholder-neutral-400 focus:bg-white focus:border-[#080808] outline-none transition-colors';
 
 const LIT_OBSIDIAN_BTN =
-  'bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-black/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.25),0_0_15px_rgba(204,255,0,0.18)] hover:bg-[#080808] hover:border-[#CCFF00] hover:text-[#CCFF00] active:translate-y-[1px]';
+  'bg-[#080808] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-black/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.25),0_0_15px_rgba(204,255,0,0.18)] hover:bg-[#080808] hover:border-[#CCFF00] hover:text-[#CCFF00] active:translate-y-[1px]';
 
 const PROTOCOL_ROWS: ReadonlyArray<{ label: string; value: string }> = [
   { label: 'Identity & Auth', value: 'SMS OTP & League ID Verified' },
@@ -596,7 +596,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
     <div
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-[105] selection:bg-[#CCFF00] selection:text-[#0F0F11]"
+      className="fixed inset-0 z-[105] selection:bg-[#CCFF00] selection:text-[#080808]"
     >
       <button
         type="button"
@@ -614,7 +614,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
         onWheel={(e) => e.stopPropagation()}
         className={`absolute top-0 right-0 h-dvh w-full ${
           drawerView === 'wizard' ? 'max-w-[1040px]' : 'max-w-[500px]'
-        } bg-[#FFFFFF] border-l border-black/10 z-10 flex flex-col justify-between shadow-2xl transition-all duration-500 select-none overflow-hidden`}
+        } bg-[#F7F7F6] border-l border-black/10 z-10 flex flex-col justify-between shadow-2xl transition-all duration-500 select-none overflow-hidden`}
       >
         {drawerView === 'entry' && (
           <div
@@ -630,10 +630,10 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                   onClick={onClose}
                   title="Close [ESC]"
                   aria-label="Close portal"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/25 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#080808] hover:bg-white text-white hover:text-[#080808] border border-transparent hover:border-black/25 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
                 >
                   <span>Close</span>
-                  <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">
+                  <span className="text-[11px] text-[#CCFF00] group-hover:text-[#080808] transition-colors">
                     ✕
                   </span>
                 </button>
@@ -658,8 +658,8 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                       }}
                       className={`py-2.5 text-[10px] font-mono font-bold tracking-[0.18em] uppercase rounded-full transition-all duration-200 cursor-pointer border-0 ${
                         active
-                          ? 'bg-[#0F0F11] text-[#CCFF00] shadow-sm'
-                          : 'bg-transparent text-neutral-600 hover:text-[#0F0F11]'
+                          ? 'bg-[#080808] text-[#CCFF00] shadow-sm'
+                          : 'bg-transparent text-neutral-600 hover:text-[#080808]'
                       }`}
                     >
                       {tab.label}
@@ -668,7 +668,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                 })}
               </div>
 
-              <div className="mb-6 rounded-[24px] bg-[#0F0F11] text-white p-6 sm:p-7 space-y-4 shadow-xl">
+              <div className="mb-6 rounded-[24px] bg-[#080808] text-white p-6 sm:p-7 space-y-4 shadow-xl">
                 <h2 className="m-0 font-sans font-black text-3xl sm:text-4xl uppercase tracking-[-0.03em] text-white leading-[1.02]">
                   Your career<span className="text-[#CCFF00]">.</span>
                   <br />
@@ -676,7 +676,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                 </h2>
                 <p className="m-0 font-sans text-xs text-neutral-300 leading-relaxed">
                   Zero agency commissions. Lock your postcode, back your junior club with a hardwired{' '}
-                  <span className="bg-[#CCFF00] text-[#0F0F11] font-bold px-1.5 py-0.5 rounded-[3px]">
+                  <span className="bg-[#CCFF00] text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">
                     70/15/15 split
                   </span>
                   , and access your AI Highlight Cutter.
@@ -689,7 +689,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                       setStep(1);
                       setDrawerView('wizard');
                     }}
-                    className="w-full rounded-full bg-[#CCFF00] hover:bg-white text-[#0F0F11] font-mono text-[10px] font-bold uppercase tracking-widest py-3 border-0 cursor-pointer transition-colors shadow-sm"
+                    className="w-full rounded-full bg-[#CCFF00] hover:bg-white text-[#080808] font-mono text-[10px] font-bold uppercase tracking-widest py-3 border-0 cursor-pointer transition-colors shadow-sm"
                   >
                     Bypass → Open 5-Tab Athlete Studio
                   </button>
@@ -756,9 +756,9 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                 )}
 
                 {otpChallengeSent && (
-                  <div className="rounded-2xl border-2 border-[#0F0F11] bg-[#F2F2F0] p-4 space-y-2 animate-fadeIn">
+                  <div className="rounded-2xl border-2 border-[#080808] bg-[#F2F2F0] p-4 space-y-2 animate-fadeIn">
                     <div className="flex items-center justify-between font-mono text-[9.5px] uppercase">
-                      <span className="font-bold text-[#0F0F11]">
+                      <span className="font-bold text-[#080808]">
                         ● 6-DIGIT SMS SECURITY CODE DISPATCHED
                       </span>
                       <span className="bg-[#CCFF00] text-[#080808] px-2 py-0.5 rounded font-bold">
@@ -783,11 +783,11 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                   <span className="font-mono text-[9.5px] font-bold uppercase tracking-widest text-neutral-600">
                     ATHLETE COMMERCE STUDIO
                   </span>
-                  <span className="rounded-full bg-[#0F0F11] text-[#CCFF00] px-2 py-0.5 font-mono text-[9px] font-bold">
+                  <span className="rounded-full bg-[#080808] text-[#CCFF00] px-2 py-0.5 font-mono text-[9px] font-bold">
                     ZERO-INVENTORY
                   </span>
                 </div>
-                <h4 className="m-0 font-sans text-sm font-black uppercase text-[#0F0F11]">
+                <h4 className="m-0 font-sans text-sm font-black uppercase text-[#080808]">
                   Publish Co-Branded Streetwear
                 </h4>
                 <p className="m-0 font-sans text-xs text-neutral-600 leading-relaxed">
@@ -804,7 +804,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                       postcode: postcode || '2200',
                     });
                   }}
-                  className="w-full rounded-full bg-[#0F0F11] hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] font-mono text-[10px] font-bold uppercase tracking-widest py-3 transition-colors cursor-pointer border-0 shadow-xs"
+                  className="w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] font-mono text-[10px] font-bold uppercase tracking-widest py-3 transition-colors cursor-pointer border-0 shadow-xs"
                 >
                   + Launch Merch Capsule Studio →
                 </button>
@@ -814,7 +814,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                 {PROTOCOL_ROWS.map((row) => (
                   <div key={row.label} className="flex items-center justify-between gap-4 font-mono text-[10px]">
                     <span className="text-neutral-500 uppercase tracking-wider">{row.label}</span>
-                    <span className="text-[#0F0F11] font-bold text-right">{row.value}</span>
+                    <span className="text-[#080808] font-bold text-right">{row.value}</span>
                   </div>
                 ))}
               </div>
@@ -825,7 +825,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                 type="button"
                 disabled={authLoading}
                 onClick={handleTriggerOtpOrVerify}
-                className="w-full rounded-full bg-[#0F0F11] hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] font-mono font-bold text-xs uppercase tracking-widest py-4 transition-colors duration-200 cursor-pointer shadow-md border-0 disabled:opacity-50"
+                className="w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] font-mono font-bold text-xs uppercase tracking-widest py-4 transition-colors duration-200 cursor-pointer shadow-md border-0 disabled:opacity-50"
               >
                 {authLoading
                   ? 'Verifying Sovereign Token...'
@@ -841,7 +841,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
 
         {drawerView === 'wizard' && (
           <>
-            <header className="shrink-0 border-b border-black/10 bg-[#FFFFFF] px-5 py-4 sm:px-8 sm:py-5">
+            <header className="shrink-0 border-b border-black/10 bg-[#F7F7F6] px-5 py-4 sm:px-8 sm:py-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <button
@@ -976,7 +976,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
             <div
               data-lenis-prevent="true"
               onWheel={(e) => e.stopPropagation()}
-              className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-5 sm:px-8 space-y-4 bg-[#FFFFFF]"
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-5 sm:px-8 space-y-4 bg-[#F7F7F6]"
             >
               {savedBanner && (
                 <div className="rounded-2xl bg-[#080808] text-[#CCFF00] p-4 font-mono text-xs font-bold flex items-center justify-between gap-4">
@@ -1762,7 +1762,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
               )}
             </div>
 
-            <footer className="shrink-0 border-t border-black/10 bg-[#FFFFFF] px-5 py-4 sm:px-8 flex flex-wrap items-center justify-between gap-3">
+            <footer className="shrink-0 border-t border-black/10 bg-[#F7F7F6] px-5 py-4 sm:px-8 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 {step > 1 && (
                   <button

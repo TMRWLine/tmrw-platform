@@ -16,7 +16,7 @@ export function SpatialCatchment({
     <section className="catchment-section">
       <div className="catchment-header">
         <div>
-          <span className="catchment-eyebrow">02 —— SPONSORSHIP TIERS</span>
+          <span className="catchment-eyebrow">02 · SPONSORSHIP TIERS</span>
           <h2>Buy reach by radius.</h2>
           <p>
             Select a spatial tier to live-filter the roster below by proximity to your store
@@ -60,7 +60,7 @@ export function SpatialCatchment({
 
               <div className="catchment-card-foot">
                 <span className="catchment-card-range">
-                  In range <strong>{counts?.[tier.code] ?? '—'}</strong>
+                  In range <strong>{counts?.[tier.code] ?? '·'}</strong>
                 </span>
                 <span className="catchment-card-cta">
                   {isSelected ? (

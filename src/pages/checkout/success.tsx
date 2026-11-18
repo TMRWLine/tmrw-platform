@@ -64,7 +64,7 @@ function downloadRcti(args: {
   <meta charset="utf-8" />
   <title>RCTI ${reference}</title>
   <style>
-    body { font-family: Inter, Helvetica, Arial, sans-serif; color: #0F0F11; background: #F8F9FA; padding: 48px; }
+    body { font-family: Inter, Helvetica, Arial, sans-serif; color: #080808; background: #F8F9FA; padding: 48px; }
     main { max-width: 640px; margin: 0 auto; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 40px; }
     h1 { font-size: 22px; margin: 0 0 8px; }
     p, dt, dd { font-size: 13px; line-height: 1.5; }
@@ -118,7 +118,7 @@ export const CheckoutSuccessPage: React.FC = () => {
     .join(', ');
 
   return (
-    <div className="min-h-screen w-full bg-[#F8F9FA] text-[#0F0F11] font-sans">
+    <div className="min-h-screen w-full bg-[#F8F9FA] text-[#080808] font-sans">
       <header className="border-b border-[#EAEAEA] bg-[#F8F9FA]">
         <div className="max-w-[960px] mx-auto px-4 md:px-8 h-[74px] flex items-center">
           <BrandLockup tone="light" onClick={() => window.location.assign('/')} />
@@ -129,7 +129,7 @@ export const CheckoutSuccessPage: React.FC = () => {
         <p className="m-0 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-[#666666]">
           Escrow confirmation
         </p>
-        <h1 className="m-0 mt-3 font-display font-extrabold text-4xl md:text-5xl tracking-tight text-[#0F0F11]">
+        <h1 className="m-0 mt-3 font-display font-extrabold text-4xl md:text-5xl tracking-tight text-[#080808]">
           Capital is in escrow. The flight is live.
         </h1>
         <p className="m-0 mt-4 max-w-2xl text-sm md:text-base leading-relaxed text-[#666666]">
@@ -142,13 +142,13 @@ export const CheckoutSuccessPage: React.FC = () => {
             <dt className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#666666]">
               Deal reference
             </dt>
-            <dd className="m-0 mt-2 font-mono text-sm font-bold tracking-wide text-[#0F0F11]">{reference}</dd>
+            <dd className="m-0 mt-2 font-mono text-sm font-bold tracking-wide text-[#080808]">{reference}</dd>
           </div>
           <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-6">
             <dt className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#666666]">
               Flight
             </dt>
-            <dd className="m-0 mt-2 font-display font-extrabold text-xl tracking-tight text-[#0F0F11]">
+            <dd className="m-0 mt-2 font-display font-extrabold text-xl tracking-tight text-[#080808]">
               {pkg.name} · {pkg.price_display}
             </dd>
           </div>
@@ -156,7 +156,7 @@ export const CheckoutSuccessPage: React.FC = () => {
             <dt className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#666666]">
               Athlete
             </dt>
-            <dd className="m-0 mt-2 font-display font-extrabold text-xl tracking-tight text-[#0F0F11]">
+            <dd className="m-0 mt-2 font-display font-extrabold text-xl tracking-tight text-[#080808]">
               {athlete.full_name}
             </dd>
             <p className="m-0 mt-1 text-sm text-[#666666]">
@@ -167,7 +167,7 @@ export const CheckoutSuccessPage: React.FC = () => {
             <dt className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#666666]">
               Grassroots club
             </dt>
-            <dd className="m-0 mt-2 font-display font-extrabold text-xl tracking-tight text-[#0F0F11]">
+            <dd className="m-0 mt-2 font-display font-extrabold text-xl tracking-tight text-[#080808]">
               {athlete.grassroots_club.name}
             </dd>
             {locality ? <p className="m-0 mt-1 text-sm text-[#666666]">{locality}</p> : null}
@@ -175,7 +175,7 @@ export const CheckoutSuccessPage: React.FC = () => {
         </dl>
 
         <section className="mt-8 bg-white border border-neutral-200 shadow-sm rounded-xl p-6 md:p-8">
-          <h2 className="m-0 font-display font-extrabold text-2xl tracking-tight text-[#0F0F11]">
+          <h2 className="m-0 font-display font-extrabold text-2xl tracking-tight text-[#080808]">
             70/15/15 distribution
           </h2>
           <div
@@ -183,7 +183,7 @@ export const CheckoutSuccessPage: React.FC = () => {
             role="img"
             aria-label={`Athlete ${split.athlete_percent} percent, junior club ${split.club_percent} percent, platform ${split.platform_percent} percent`}
           >
-            <span className="h-full bg-[#0F0F11]" style={{ width: `${split.athlete_percent}%` }} />
+            <span className="h-full bg-[#080808]" style={{ width: `${split.athlete_percent}%` }} />
             <span className="h-full bg-[#666666]" style={{ width: `${split.club_percent}%` }} />
             <span className="h-full bg-neutral-300" style={{ width: `${split.platform_percent}%` }} />
           </div>
@@ -192,7 +192,7 @@ export const CheckoutSuccessPage: React.FC = () => {
               <dt className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#666666]">
                 Athlete {split.athlete_percent}%
               </dt>
-              <dd className="m-0 mt-1 font-display font-extrabold text-2xl tabular-nums text-[#0F0F11]">
+              <dd className="m-0 mt-1 font-display font-extrabold text-2xl tabular-nums text-[#080808]">
                 {formatAud(split.athlete_amount)}
               </dd>
             </div>
@@ -200,7 +200,7 @@ export const CheckoutSuccessPage: React.FC = () => {
               <dt className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#666666]">
                 Club {split.club_percent}%
               </dt>
-              <dd className="m-0 mt-1 font-display font-extrabold text-2xl tabular-nums text-[#0F0F11]">
+              <dd className="m-0 mt-1 font-display font-extrabold text-2xl tabular-nums text-[#080808]">
                 {formatAud(split.club_amount)}
               </dd>
             </div>
@@ -208,7 +208,7 @@ export const CheckoutSuccessPage: React.FC = () => {
               <dt className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#666666]">
                 Platform {split.platform_percent}%
               </dt>
-              <dd className="m-0 mt-1 font-display font-extrabold text-2xl tabular-nums text-[#0F0F11]">
+              <dd className="m-0 mt-1 font-display font-extrabold text-2xl tabular-nums text-[#080808]">
                 {formatAud(split.platform_amount)}
               </dd>
             </div>
@@ -216,7 +216,7 @@ export const CheckoutSuccessPage: React.FC = () => {
         </section>
 
         <section className="mt-8 bg-white border border-neutral-200 shadow-sm rounded-xl p-6 md:p-8">
-          <h2 className="m-0 font-display font-extrabold text-2xl tracking-tight text-[#0F0F11]">
+          <h2 className="m-0 font-display font-extrabold text-2xl tracking-tight text-[#080808]">
             Contract milestones
           </h2>
           <ol className="m-0 mt-6 p-0 list-none space-y-4">
@@ -225,13 +225,13 @@ export const CheckoutSuccessPage: React.FC = () => {
                 <span
                   aria-hidden="true"
                   className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold ${
-                    item.done ? 'bg-[#CCFF00] text-[#0F0F11]' : 'border border-neutral-200 text-[#666666]'
+                    item.done ? 'bg-[#CCFF00] text-[#080808]' : 'border border-neutral-200 text-[#666666]'
                   }`}
                 >
                   {item.done ? '✓' : ''}
                 </span>
                 <div>
-                  <p className="m-0 font-semibold text-[#0F0F11]">{item.label}</p>
+                  <p className="m-0 font-semibold text-[#080808]">{item.label}</p>
                   <p className="m-0 mt-1 text-sm text-[#666666]">{item.detail}</p>
                 </div>
               </li>
@@ -243,7 +243,7 @@ export const CheckoutSuccessPage: React.FC = () => {
           <p className="m-0 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#666666]">
             Tax invoice
           </p>
-          <h2 className="m-0 mt-2 font-display font-extrabold text-2xl tracking-tight text-[#0F0F11]">
+          <h2 className="m-0 mt-2 font-display font-extrabold text-2xl tracking-tight text-[#080808]">
             ATO Section 153-50 RCTI
           </h2>
           <p className="m-0 mt-3 text-sm leading-relaxed text-[#666666]">
@@ -253,7 +253,7 @@ export const CheckoutSuccessPage: React.FC = () => {
           <button
             type="button"
             onClick={() => downloadRcti({ reference, athlete, pkg })}
-            className="mt-6 rounded-full border-0 bg-[#CCFF00] px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-[#dfff66] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] focus-visible:ring-offset-2"
+            className="mt-6 rounded-full border-0 bg-[#CCFF00] px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#080808] cursor-pointer hover:bg-[#CCFF00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] focus-visible:ring-offset-2"
           >
             Download RCTI receipt
           </button>
@@ -262,7 +262,7 @@ export const CheckoutSuccessPage: React.FC = () => {
         <p className="m-0 mt-10">
           <a
             href="/#roster"
-            className="inline-flex items-center font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] no-underline hover:text-[#666666]"
+            className="inline-flex items-center font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#080808] no-underline hover:text-[#666666]"
           >
             Return to the athlete roster →
           </a>

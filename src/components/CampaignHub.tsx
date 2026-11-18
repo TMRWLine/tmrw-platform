@@ -139,7 +139,7 @@ export function CampaignHub({
         </div>
       )}
 
-      <div className="card-grid">
+      <div className="card-grid campaign-grid">
         {campaigns.filter(Boolean).map((c) => {
           const sponsor = sponsors.find((s) => s.id === c.sponsor_id);
           const campaignApps = apps[c.id] ?? [];

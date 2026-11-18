@@ -20,8 +20,8 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
   };
 }
 
-export const CANVAS_WHITE = '#FFFFFF';
-export const CANVAS_OBSIDIAN = '#0A0A0A';
+export const CANVAS_WHITE = '#F7F7F6';
+export const CANVAS_OBSIDIAN = '#080808';
 
 /** How far the syndicate section has claimed the viewport. 0 is white, 1 is obsidian. */
 export function syndicateProgress(section: HTMLElement, viewportHeight: number): number {

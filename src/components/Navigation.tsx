@@ -138,13 +138,13 @@ export const Navigation: React.FC<NavigationProps> = ({
   };
 
   const headerClass = dark
-    ? 'fixed top-0 left-0 right-0 z-50 h-[74px] bg-[#0A0A0A]/92 backdrop-blur-md border-b border-white/10'
+    ? 'fixed top-0 left-0 right-0 z-50 h-[74px] bg-[#080808]/92 backdrop-blur-md border-b border-white/10'
     : 'fixed top-0 left-0 right-0 z-50 h-[74px] bg-[#F7F7F6]/95 backdrop-blur-md border-b border-[#EAEAEA]';
   const linkClass = dark
     ? 'group relative inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold tracking-tight text-white transition-colors duration-150 cursor-pointer select-none bg-transparent border-0'
     : LINK_CLASS;
   const focusRing = dark
-    ? 'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]'
+    ? 'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080808]'
     : FOCUS_RING;
   const iconButton = dark
     ? 'inline-flex items-center justify-center p-2 rounded-full bg-transparent border-0 text-white hover:bg-white/10 transition-all duration-150 cursor-pointer'

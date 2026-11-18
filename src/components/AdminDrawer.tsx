@@ -24,7 +24,7 @@ interface LogEntry {
 
 const LEVEL_META: Record<LogLevel, { color: string; tag: string }> = {
   info: { color: '#E0E0E0', tag: 'Agent Reach' },
-  success: { color: '#FFFFFF', tag: 'Success' },
+  success: { color: '#F7F7F6', tag: 'Success' },
   warn: { color: '#999', tag: 'Warning' },
   error: { color: '#CCC', tag: 'Error' },
 };
@@ -52,7 +52,7 @@ export function AdminDrawer({ open, onClose }: { open: boolean; onClose: () => v
   async function runScraping() {
     if (running) return;
     if (!/^\d{4}$/.test(postcode)) {
-      pushLog('error', `Invalid postcode "${postcode}" — expected 4 digits`);
+      pushLog('error', `Invalid postcode "${postcode}" · expected 4 digits`);
       return;
     }
     setRunning(true);
@@ -77,7 +77,7 @@ export function AdminDrawer({ open, onClose }: { open: boolean; onClose: () => v
       for (const s of sponsors) {
         pushLog('info', `  → ${s.businessName} [${s.category}] · ${s.suburb} ${s.postcode}`);
       }
-      pushLog('success', `Agent Reach run complete — ${athletes.length} athletes, ${sponsors.length} sponsors`);
+      pushLog('success', `Agent Reach run complete · ${athletes.length} athletes, ${sponsors.length} sponsors`);
     } catch (e) {
       pushLog('error', e instanceof Error ? e.message : 'Scraping failed');
     } finally {

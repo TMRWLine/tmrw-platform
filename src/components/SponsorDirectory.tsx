@@ -410,7 +410,7 @@ export function SponsorDirectory({
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div className="detail-athlete-name">{displayName(athlete?.name)}</div>
                           <div className="detail-athlete-sub">
-                            {athlete.sport ?? '—'}
+                            {athlete.sport ?? '·'}
                             {athlete.current_club ? ` · ${athlete.current_club}` : ''}
                           </div>
                         </div>
@@ -507,7 +507,7 @@ export function SponsorDirectory({
                   <option value="">Choose an athlete…</option>
                   {athletes.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {displayName(a?.name)} — {a.sport ?? 'athlete'}
+                      {displayName(a?.name)} · {a.sport ?? 'athlete'}
                       {a.current_club ? ` (${a.current_club})` : ''}
                     </option>
                   ))}
@@ -522,7 +522,7 @@ export function SponsorDirectory({
                   <div style={{ flex: 1 }}>
                     <strong>{displayName(selectedAthlete?.name)}</strong>
                     <div className="sub" style={{ fontSize: 12 }}>
-                      {selectedAthlete.sport ?? '—'}
+                      {selectedAthlete.sport ?? '·'}
                       {selectedAthlete.current_club ? ` · ${selectedAthlete.current_club}` : ''}
                       {selectedAthlete.follower_count != null
                         ? ` / ${String(Math.trunc(selectedAthlete.follower_count))} followers`

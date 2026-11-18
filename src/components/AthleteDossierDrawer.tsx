@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useDialogFocus } from '../lib/useDialogFocus';
 import { AssetImage } from './AssetImage';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
 import { supabase } from '../lib/supabaseClient';
@@ -158,12 +160,20 @@ function computeSeedConfig(athlete: AthleteRecord | null) {
   return { multiplier: 1.0, label: '1.0x Base Contender Seed', floorLock: false };
 }
 
-export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
+export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = (props) => (
+  <AnimatePresence>
+    {props.athlete && <AthleteDossierContent {...props} />}
+  </AnimatePresence>
+);
+
+const AthleteDossierContent: React.FC<AthleteDossierDrawerProps> = ({
   athlete,
   onClose,
   onSelectAthlete,
   initialMode = 'audit',
 }) => {
+  const dialogRef = useDialogFocus(Boolean(athlete), onClose);
+  const reducedMotion = useReducedMotion();
   const [drawerMode, setDrawerMode] = useState<'buy' | 'audit'>(initialMode === 'buy' ? 'audit' : initialMode);
   const [selectedTierId, setSelectedTierId] = useState<string>('local_merchant');
   const [selectedDossierPillar, setSelectedDossierPillar] = useState<'01' | '02' | '03' | '04'>('01');
@@ -351,18 +361,31 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
   };
 
   return createPortal(
-    <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: reducedMotion ? 0 : 0.18 }}
       data-lenis-prevent="true"
       onClick={onClose}
-      className="fixed inset-0 z-[80] bg-black/45 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
+      className="fixed inset-0 z-[80] bg-black/45 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808]"
     >
-      <div
+      <motion.div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${displayFullName} athlete dossier`}
+        tabIndex={-1}
+        initial={{ opacity: 0, y: reducedMotion ? 0 : 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: reducedMotion ? 0 : 16 }}
+        transition={{ duration: reducedMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[1840px] h-[94dvh] rounded-[24px] bg-[#FFFFFF] text-[#080808] shadow-[0_30px_90px_rgba(0,0,0,0.28)] border border-black/10 flex flex-col overflow-hidden"
+        className="relative w-full max-w-[1840px] h-[94dvh] rounded-[24px] bg-[#F7F7F6] text-[#080808] shadow-[0_30px_90px_rgba(0,0,0,0.28)] border border-black/10 flex flex-col overflow-hidden"
       >
-        <header className="shrink-0 z-30 grid grid-cols-3 items-center px-4 sm:px-6 md:px-10 py-3.5 bg-[#FFFFFF]/95 backdrop-blur-md border-b border-black/10">
+        <header className="shrink-0 z-30 grid grid-cols-3 items-center px-4 sm:px-6 md:px-10 py-3.5 bg-[#F7F7F6]/95 backdrop-blur-md border-b border-black/10">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -459,7 +482,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
 
         <div
           data-lenis-prevent="true"
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 md:px-10 pt-5 pb-10 bg-[#FFFFFF]"
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 md:px-10 pt-5 pb-10 bg-[#F7F7F6]"
         >
           <div className="mb-5 border-b border-black/10 pb-4">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-5 items-center">
@@ -545,8 +568,8 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                             : pkg.badgeVariant === 'green'
                             ? 'bg-[#CCFF00] text-[#080808]'
                             : pkg.badgeVariant === 'yellow'
-                            ? 'bg-[#F5B800] text-[#080808]'
-                            : 'bg-[#0F0F11] text-white'
+                            ? 'bg-[#CCFF00] text-[#080808]'
+                            : 'bg-[#080808] text-white'
                         }`}
                       >
                         {isFloorLocked ? 'Floor Locked' : pkg.badge}
@@ -652,7 +675,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                               e.stopPropagation();
                               triggerCheckout(pkg.tier_id);
                             }}
-                            className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
+                            className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#F7F7F6] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                           >
                             <span className="font-sans text-[11.5px] font-semibold tracking-tight text-[#080808] pl-2.5 truncate">
                               {pkg.shortCode} · {pkg.badge}
@@ -687,7 +710,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                     className={`absolute -top-2.5 right-5 z-30 rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs ${
                       auditedPillars['01']
                         ? 'bg-[#CCFF00] text-[#080808]'
-                        : 'bg-[#0F0F11] text-white'
+                        : 'bg-[#080808] text-white'
                     }`}
                   >
                     {auditedPillars['01'] ? '✓ Specs Audited' : 'Verified Pedigree'}
@@ -808,7 +831,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                     </div>
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
+                      className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#F7F7F6] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                     >
                       <div className="flex items-center gap-0.5 pl-1">
                         {(['specs', 'honours', 'schedule'] as const).map((lens) => (
@@ -964,7 +987,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         e.stopPropagation();
                         triggerCheckout(selectedTierId);
                       }}
-                      className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
+                      className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#F7F7F6] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                     >
                       <span className="font-sans text-[11.5px] font-semibold tracking-tight text-[#080808] pl-2.5 truncate">
                         {downloadedAsset ? `✓ Pulled ${downloadedAsset}` : `OAuth · ${displayIgHandle}`}
@@ -992,7 +1015,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                     className={`absolute -top-2.5 right-5 z-30 rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs ${
                       auditedPillars['03']
                         ? 'bg-[#CCFF00] text-[#080808]'
-                        : 'bg-[#0F0F11] text-white'
+                        : 'bg-[#080808] text-white'
                     }`}
                   >
                     {catchmentRing} Turf Lock
@@ -1098,7 +1121,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                     </div>
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
+                      className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#F7F7F6] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                     >
                       <div className="flex items-center gap-0.5 pl-1">
                         {(['5km', '15km', '50km'] as const).map((ring) => (
@@ -1146,7 +1169,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                     className={`absolute -top-2.5 right-5 z-30 rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs ${
                       auditedPillars['04']
                         ? 'bg-[#CCFF00] text-[#080808]'
-                        : 'bg-[#F5B800] text-[#080808]'
+                        : 'bg-[#CCFF00] text-[#080808]'
                     }`}
                   >
                     {auditedPillars['04']
@@ -1279,7 +1302,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         markAudited('04');
                         triggerCheckout(selectedTierId);
                       }}
-                      className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
+                      className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#F7F7F6] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                     >
                       <span className="font-sans text-[11.5px] font-semibold tracking-tight text-[#080808] pl-2.5 truncate">
                         ✓ {auditedSector || availableCategories[0]} Cleared
@@ -1296,7 +1319,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
           )}
         </div>
 
-        <footer className="shrink-0 z-30 border-t border-black/10 bg-[#FFFFFF] px-4 sm:px-6 md:px-10 py-3.5 flex flex-wrap items-center justify-between gap-4">
+        <footer className="shrink-0 z-30 border-t border-black/10 bg-[#F7F7F6] px-4 sm:px-6 md:px-10 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500">
               SELECTED PACKAGE:
@@ -1329,7 +1352,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
             )}
           </div>
         </footer>
-      </div>
+      </motion.div>
 
       <StripeEscrowCheckoutModal
         payload={stripePayload}
@@ -1360,7 +1383,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
           onClose={() => setActiveWhitelistingGrant(null)}
         />
       )}
-    </div>,
+    </motion.div>,
     document.body,
   );
 };

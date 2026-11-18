@@ -71,12 +71,12 @@ function pinCardHtml(specimen: RosterSpecimen): string {
   const record = ROSTER_DATA.find((entry) => entry.id === specimen.id);
   const club = record?.record.current_club ?? 'Club pending';
   return `<div style="min-width:180px;max-width:240px">
-    <p style="margin:0;font-weight:800;font-size:14px;letter-spacing:-0.03em;color:#0F0F11">${escapeHtml(specimen.name)}</p>
+    <p style="margin:0;font-weight:800;font-size:14px;letter-spacing:-0.03em;color:#080808">${escapeHtml(specimen.name)}</p>
     <p style="margin:6px 0 0;font-family:ui-monospace,monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#3A3A3C">${escapeHtml(specimen.sportLeague)}</p>
     <p style="margin:4px 0 0;font-family:ui-monospace,monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#737373">${escapeHtml(suburbForPostcode(specimen.postcode))} · ${escapeHtml(specimen.postcode)}</p>
     <p style="margin:8px 0 0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#A3A3A3">Junior club</p>
-    <p style="margin:0;font-size:12px;line-height:1.35;color:#0F0F11">${escapeHtml(club)}</p>
-    <p style="margin:8px 0 0;font-family:ui-monospace,monospace;font-size:10px;letter-spacing:0.12em;color:#0F0F11">Packages from ${plainAud(TIER_ENTRY_AUD[specimen.tier])}</p>
+    <p style="margin:0;font-size:12px;line-height:1.35;color:#080808">${escapeHtml(club)}</p>
+    <p style="margin:8px 0 0;font-family:ui-monospace,monospace;font-size:10px;letter-spacing:0.12em;color:#080808">Packages from ${plainAud(TIER_ENTRY_AUD[specimen.tier])}</p>
   </div>`;
 }
 
@@ -173,9 +173,9 @@ export const RosterCatchmentMap: React.FC<RosterCatchmentMapProps> = ({
 
     circleRef.current = L.circle(ANCHOR, {
       radius: opening.radiusKm * 1000,
-      color: '#0F0F11',
+      color: '#080808',
       weight: 1,
-      fillColor: '#0F0F11',
+      fillColor: '#080808',
       fillOpacity: 0.04,
       className: 'roster-catchment-ring',
       interactive: false,
@@ -275,7 +275,7 @@ export const RosterCatchmentMap: React.FC<RosterCatchmentMapProps> = ({
               type="button"
               onClick={() => onChangeRing(item.id)}
               aria-pressed={active}
-              className={`rounded-full px-4 py-1.5 text-xs font-mono font-medium shadow-sm transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F0F11] focus-visible:ring-offset-2 ${
+              className={`rounded-full px-4 py-1.5 text-xs font-mono font-medium shadow-sm transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#080808] focus-visible:ring-offset-2 ${
                 active
                   ? 'border border-[#CCFF00] bg-[#CCFF00] text-black'
                   : 'border border-neutral-200 bg-white text-neutral-700 hover:border-black'
@@ -296,7 +296,7 @@ export const RosterCatchmentMap: React.FC<RosterCatchmentMapProps> = ({
           type="button"
           onClick={() => zoomBy(1)}
           aria-label="Zoom in"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white font-mono text-lg leading-none text-[#0F0F11] shadow-sm transition-colors hover:border-black cursor-pointer"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white font-mono text-lg leading-none text-[#080808] shadow-sm transition-colors hover:border-black cursor-pointer"
         >
           +
         </button>
@@ -304,7 +304,7 @@ export const RosterCatchmentMap: React.FC<RosterCatchmentMapProps> = ({
           type="button"
           onClick={() => zoomBy(-1)}
           aria-label="Zoom out"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white font-mono text-lg leading-none text-[#0F0F11] shadow-sm transition-colors hover:border-black cursor-pointer"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white font-mono text-lg leading-none text-[#080808] shadow-sm transition-colors hover:border-black cursor-pointer"
         >
           −
         </button>

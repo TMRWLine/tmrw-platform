@@ -149,9 +149,9 @@ export const CommercialTiers: React.FC<CommercialTiersProps> = ({ onNavigateSect
     <section
       id="commercial-tiers"
       aria-labelledby="commercial-tiers-heading"
-      className="relative w-full bg-[#0B0B0D] text-white scroll-mt-[74px]"
+      className="relative w-full bg-[#080808] text-white scroll-mt-[74px]"
     >
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full pt-20 pb-16 bg-[#0B0B0D]">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full pt-20 pb-16 bg-[#080808]">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end pb-8 border-b border-white/10 mb-10">
           <div className="lg:col-span-7">
             <h2
@@ -175,7 +175,7 @@ export const CommercialTiers: React.FC<CommercialTiersProps> = ({ onNavigateSect
           {FLIGHTS.map((tier) => (
             <article
               key={tier.tier_id}
-              className="bg-[#0F0F11] rounded-[24px] border border-white/10 p-6 flex flex-col justify-between hover:border-white/25 transition-all"
+              className="bg-[#080808] rounded-[24px] border border-white/10 p-6 flex flex-col justify-between hover:border-white/25 transition-all"
             >
               <div>
                 <div className="flex justify-between items-center text-[10px] font-mono uppercase pb-3 border-b border-white/10">
@@ -217,12 +217,12 @@ export const CommercialTiers: React.FC<CommercialTiersProps> = ({ onNavigateSect
           ))}
         </div>
 
-        <div className="w-full bg-[#0F0F11] text-white rounded-[28px] p-8 md:p-12 border border-white/10">
+        <div className="w-full bg-[#080808] text-white rounded-[28px] p-8 md:p-12 border border-white/10">
           <div className="flex flex-wrap justify-between items-center gap-4 pb-6 border-b border-white/10 mb-8">
             <span className="font-mono text-xs uppercase tracking-widest text-neutral-400">
               MULTI-ATHLETE ENTERPRISE PORTFOLIO · LA 2028 &amp; BRISBANE 2032 RUNWAY
             </span>
-            <span className="bg-[#CCFF00] text-[#0F0F11] font-mono font-bold text-xs px-3.5 py-1 rounded-full uppercase tracking-wider">
+            <span className="bg-[#CCFF00] text-[#080808] font-mono font-bold text-xs px-3.5 py-1 rounded-full uppercase tracking-wider">
               RULE 40 AI GUARDRAILS · SINGLE RCTI INVOICE
             </span>
           </div>
@@ -281,7 +281,7 @@ export const CommercialTiers: React.FC<CommercialTiersProps> = ({ onNavigateSect
                 <button
                   type="button"
                   onClick={openSyndicate}
-                  className="w-full bg-[#CCFF00] hover:bg-[#b8e600] text-[#0F0F11] font-mono font-bold text-xs py-4 px-6 rounded-xl transition-all uppercase tracking-wider text-center cursor-pointer shadow-xl"
+                  className="w-full bg-[#CCFF00] hover:bg-[#B8FF00] text-[#080808] font-mono font-bold text-xs py-4 px-6 rounded-xl transition-all uppercase tracking-wider text-center cursor-pointer shadow-xl"
                 >
                   APPLY FOR $50K SYNDICATE ALLOCATION →
                 </button>

@@ -99,8 +99,8 @@ export const GuardianVerify: React.FC = () => {
   if (errorMessage && !data) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 font-mono">
-        <div className="max-w-md w-full border border-red-900 bg-red-950/20 p-6 rounded text-center">
-          <p className="text-xs uppercase tracking-widest text-red-500 mb-2">// ACCESS RESTRICTED</p>
+        <div className="max-w-md w-full border border-neutral-900 bg-neutral-950/20 p-6 rounded text-center">
+          <p className="text-xs uppercase tracking-widest text-neutral-500 mb-2">// ACCESS RESTRICTED</p>
           <p className="text-sm text-zinc-300 mb-6">{errorMessage}</p>
           <a href="/" className="text-xs text-zinc-400 hover:text-white underline">RETURN TO HOME</a>
         </div>
@@ -112,7 +112,7 @@ export const GuardianVerify: React.FC = () => {
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 font-mono">
       <div className="max-w-lg w-full border border-zinc-800 bg-zinc-950 p-8 rounded-lg shadow-2xl">
         <div className="mb-6">
-          <p className="text-xs text-lime-400 uppercase tracking-widest mb-1">// GUARDIAN VERIFICATION</p>
+          <p className="text-xs text-[#CCFF00] uppercase tracking-widest mb-1">// GUARDIAN VERIFICATION</p>
           <h1 className="text-xl font-bold uppercase tracking-tight">Parental Countersignature</h1>
         </div>
 
@@ -140,14 +140,14 @@ export const GuardianVerify: React.FC = () => {
         </div>
 
         {errorMessage && (
-          <div className="mb-4 p-3 bg-red-950/40 border border-red-900 text-red-400 text-xs rounded text-center">
+          <div className="mb-4 p-3 bg-neutral-950/40 border border-neutral-900 text-neutral-400 text-xs rounded text-center">
             {errorMessage}
           </div>
         )}
 
         {isSigned ? (
-          <div className="p-4 border border-lime-500/30 bg-lime-950/20 text-center rounded">
-            <p className="text-xs text-lime-400 font-bold tracking-widest uppercase">// LEGAL CLEARANCE ACTIVE</p>
+          <div className="p-4 border border-[#CCFF00]/30 bg-lime-950/20 text-center rounded">
+            <p className="text-xs text-[#CCFF00] font-bold tracking-widest uppercase">// LEGAL CLEARANCE ACTIVE</p>
             <p className="text-xs text-zinc-400 mt-1">Agreement countersigned and archived on the platform audit ledger.</p>
           </div>
         ) : (

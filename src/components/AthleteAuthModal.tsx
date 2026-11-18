@@ -36,8 +36,8 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
 }) => {
   const [stage, setStage] = useState<StudioStage>('auth');
   const [isSignUp, setIsSignUp] = useState(true);
-  const [email, setEmail] = useState('kaneblightest@gmail.com');
-  const [password, setPassword] = useState('tmrw-contender-2026');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const [fullName, setFullName] = useState('Marcus Thorne');
   const [sport, setSport] = useState('Basketball');
@@ -256,7 +256,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
     <div
       data-lenis-prevent="true"
       onClick={onClose}
-      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 backdrop-blur-md p-3 sm:p-6 selection:bg-[#CCFF00] selection:text-[#0F0F11] animate-fadeIn"
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 backdrop-blur-md p-3 sm:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
       <input
         ref={avatarInputRef}
@@ -325,12 +325,12 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[1320px] max-h-[92dvh] rounded-[28px] bg-[#FFFFFF] text-[#0F0F11] shadow-[0_35px_100px_rgba(0,0,0,0.55)] border border-black/10 flex flex-col overflow-hidden"
+        className="w-full max-w-[1320px] max-h-[92dvh] rounded-[28px] bg-[#F7F7F6] text-[#080808] shadow-[0_35px_100px_rgba(0,0,0,0.55)] border border-black/10 flex flex-col overflow-hidden"
       >
-        <header className="shrink-0 flex flex-wrap items-center justify-between gap-3 px-6 sm:px-10 py-4 bg-[#0F0F11] text-white">
+        <header className="shrink-0 flex flex-wrap items-center justify-between gap-3 px-6 sm:px-10 py-4 bg-[#080808] text-white">
           <div className="flex items-center gap-3">
             <span className="font-sans text-xl font-black tracking-tight text-white">
-              tmrw<span className="text-[#CCFF00]">.</span>
+              tmrw<span className="text-[#CCFF00]">/.</span>
             </span>
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#CCFF00] font-bold">
               ATHLETE ONBOARDING, AI MEDIA STUDIO & COMPLIANCE CONSOLE
@@ -343,7 +343,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
               onClick={() => setStage('step1_profile')}
               className={`rounded-full px-3.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider cursor-pointer border-0 transition-colors ${
                 stage !== 'auth' && stage !== 'step4_ai_media' && stage !== 'step5_console'
-                  ? 'bg-[#CCFF00] text-[#0F0F11]'
+                  ? 'bg-[#CCFF00] text-[#080808]'
                   : 'bg-white/10 hover:bg-white/20 text-white'
               }`}
             >
@@ -354,7 +354,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
               onClick={() => setStage('step4_ai_media')}
               className={`rounded-full px-3.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider cursor-pointer border-0 transition-colors ${
                 stage === 'step4_ai_media'
-                  ? 'bg-[#CCFF00] text-[#0F0F11]'
+                  ? 'bg-[#CCFF00] text-[#080808]'
                   : 'bg-white/10 hover:bg-white/20 text-white'
               }`}
             >
@@ -365,7 +365,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
               onClick={() => setStage('step5_console')}
               className={`rounded-full px-3.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider cursor-pointer border-0 transition-colors ${
                 stage === 'step5_console'
-                  ? 'bg-[#CCFF00] text-[#0F0F11]'
+                  ? 'bg-[#CCFF00] text-[#080808]'
                   : 'bg-white/10 hover:bg-white/20 text-white'
               }`}
             >
@@ -376,10 +376,10 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
               onClick={onClose}
               title="Close [ESC]"
               aria-label="Close modal"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-white/20 px-5 py-1.5 font-sans text-xs font-bold tracking-tight transition-all cursor-pointer group"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#080808] hover:bg-white text-white hover:text-[#080808] border border-white/20 px-5 py-1.5 font-sans text-xs font-bold tracking-tight transition-all cursor-pointer group"
             >
               <span>Close</span>
-              <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11]">✕</span>
+              <span className="text-[11px] text-[#CCFF00] group-hover:text-[#080808]">✕</span>
             </button>
           </div>
         </header>
@@ -400,8 +400,8 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                   onClick={() => setStage(tab.id)}
                   className={`rounded-full px-3.5 py-1.5 font-mono text-[9.5px] font-bold uppercase tracking-wider cursor-pointer border-0 transition-all ${
                     stage === tab.id
-                      ? 'bg-[#0F0F11] text-[#CCFF00] shadow-sm'
-                      : 'bg-white text-[#0F0F11] hover:bg-black/5'
+                      ? 'bg-[#080808] text-[#CCFF00] shadow-sm'
+                      : 'bg-white text-[#080808] hover:bg-black/5'
                   }`}
                 >
                   {tab.label}
@@ -417,14 +417,14 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
         <div className="flex-1 overflow-y-auto p-6 sm:p-10">
           {stage === 'auth' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              <div className="lg:col-span-5 rounded-[28px] bg-[#0F0F11] text-white p-8 sm:p-10 flex flex-col justify-between min-h-[420px]">
+              <div className="lg:col-span-5 rounded-[28px] bg-[#080808] text-white p-8 sm:p-10 flex flex-col justify-between min-h-[420px]">
                 <div>
                   <h2 className="m-0 font-sans text-4xl sm:text-5xl font-black uppercase tracking-[-0.03em] leading-[1.02]">
                     Claim your backing<span className="text-[#CCFF00]">.</span>
                   </h2>
                   <p className="m-0 mt-4 font-sans text-sm text-neutral-300 leading-relaxed">
                     Verify your league registration, configure your{' '}
-                    <span className="bg-[#CCFF00] text-[#0F0F11] font-bold px-1.5 py-0.5 rounded-[3px]">
+                    <span className="bg-[#CCFF00] text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">
                       70/15/15 split
                     </span>
                     , generate 9:16 reels in the TwelveLabs AI Media Studio, and manage T+0 escrow payouts.
@@ -433,7 +433,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setStage('step1_profile')}
-                  className="w-full rounded-full bg-[#CCFF00] text-[#0F0F11] py-3.5 font-mono text-[10px] font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md"
+                  className="w-full rounded-full bg-[#CCFF00] text-[#080808] py-3.5 font-mono text-[10px] font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md"
                 >
                   Instant Bypass → Open 5-Step Athlete Studio
                 </button>
@@ -445,14 +445,14 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="m-0 font-sans text-2xl sm:text-3xl font-black uppercase tracking-tight text-[#0F0F11]">
+                    <h3 className="m-0 font-sans text-2xl sm:text-3xl font-black uppercase tracking-tight text-[#080808]">
                       {isSignUp ? 'Create Athlete Account' : 'Enter Talent Terminal'}
                       <span className="text-[#CCFF00]">.</span>
                     </h3>
                     <button
                       type="button"
                       onClick={() => setIsSignUp(!isSignUp)}
-                      className="rounded-full bg-white px-4 py-1.5 font-mono text-[10px] font-bold uppercase text-[#0F0F11] cursor-pointer border border-black/10"
+                      className="rounded-full bg-white px-4 py-1.5 font-mono text-[10px] font-bold uppercase text-[#080808] cursor-pointer border border-black/10"
                     >
                       {isSignUp ? 'Have an account? Sign In' : 'New Contender? Sign Up'}
                     </button>
@@ -468,7 +468,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                         required
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="w-full rounded-xl bg-white border border-black/15 px-4 py-3 font-sans text-sm font-bold text-[#0F0F11]"
+                        className="w-full rounded-xl bg-white border border-black/15 px-4 py-3 font-sans text-sm font-bold text-[#080808]"
                       />
                     </div>
                   )}
@@ -482,7 +482,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-xl bg-white border border-black/15 px-4 py-3 font-mono text-sm text-[#0F0F11]"
+                      className="w-full rounded-xl bg-white border border-black/15 px-4 py-3 font-mono text-sm text-[#080808]"
                     />
                   </div>
 
@@ -495,7 +495,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-xl bg-white border border-black/15 px-4 py-3 font-mono text-sm text-[#0F0F11]"
+                      className="w-full rounded-xl bg-white border border-black/15 px-4 py-3 font-mono text-sm text-[#080808]"
                     />
                   </div>
                 </div>
@@ -504,7 +504,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full rounded-full bg-[#0F0F11] hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] font-mono text-xs font-bold uppercase tracking-widest py-4 transition-colors cursor-pointer border-0 shadow-md"
+                    className="w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] font-mono text-xs font-bold uppercase tracking-widest py-4 transition-colors cursor-pointer border-0 shadow-md"
                   >
                     {loading ? 'Launching Studio...' : 'Enter Athlete Studio →'}
                   </button>
@@ -515,7 +515,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
 
           {stage === 'step1_profile' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              <div className="lg:col-span-4 rounded-[28px] bg-[#0F0F11] text-white p-8 flex flex-col justify-between">
+              <div className="lg:col-span-4 rounded-[28px] bg-[#080808] text-white p-8 flex flex-col justify-between">
                 <div>
                   <span className="font-mono text-[10px] uppercase tracking-widest text-[#CCFF00] block mb-2">
                     PILLARS 01, 03 & 07 // IDENTITY & CATCHMENT
@@ -553,7 +553,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                   <button
                     type="button"
                     onClick={() => avatarInputRef.current?.click()}
-                    className="w-full rounded-xl bg-white/10 hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] p-3.5 font-mono text-[10px] font-bold uppercase flex items-center justify-between cursor-pointer border-0 transition-colors"
+                    className="w-full rounded-xl bg-white/10 hover:bg-[#CCFF00] text-white hover:text-[#080808] p-3.5 font-mono text-[10px] font-bold uppercase flex items-center justify-between cursor-pointer border-0 transition-colors"
                   >
                     <span className="truncate">Portrait: {avatarName}</span>
                     <span className="shrink-0 ml-2">+ Upload</span>
@@ -561,7 +561,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                   <button
                     type="button"
                     onClick={() => docInputRef.current?.click()}
-                    className="w-full rounded-xl bg-white/10 hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] p-3.5 font-mono text-[10px] font-bold uppercase flex items-center justify-between cursor-pointer border-0 transition-colors"
+                    className="w-full rounded-xl bg-white/10 hover:bg-[#CCFF00] text-white hover:text-[#080808] p-3.5 font-mono text-[10px] font-bold uppercase flex items-center justify-between cursor-pointer border-0 transition-colors"
                   >
                     <span className="truncate">League Pass: {clearanceDoc}</span>
                     <span className="shrink-0 ml-2">+ Upload</span>
@@ -634,7 +634,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                       saveToLocalStorage();
                       setStage('step2_club');
                     }}
-                    className="rounded-full bg-[#0F0F11] hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] px-8 py-3.5 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md"
+                    className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-8 py-3.5 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md"
                   >
                     Save & Next: 70/15/15 Split & Tax →
                   </button>
@@ -645,16 +645,16 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
 
           {stage === 'step2_club' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              <div className="lg:col-span-4 rounded-[28px] bg-gradient-to-br from-[#93C5FD] via-[#818CF8] to-[#C084FC] text-[#0F0F11] p-8 flex flex-col justify-between min-h-[380px]">
+              <div className="lg:col-span-4 rounded-[28px] bg-gradient-to-br from-[#F7F7F6] via-[#CCFF00] to-[#F7F7F6] text-[#080808] p-8 flex flex-col justify-between min-h-[380px]">
                 <div>
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0F0F11]/75 block mb-2">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#080808]/75 block mb-2">
                     PILLAR 06 // ESCROW & RCTI RAILS
                   </span>
                   <h3 className="m-0 font-sans text-3xl sm:text-4xl font-black uppercase tracking-tight leading-[1.05]">
                     70/15/15 Direct Split<span className="text-[#CCFF00]">.</span>
                   </h3>
                 </div>
-                <p className="m-0 font-sans text-xs font-semibold text-[#0F0F11]/85 leading-relaxed">
+                <p className="m-0 font-sans text-xs font-semibold text-[#080808]/85 leading-relaxed">
                   Every sponsorship package automatically routes 70% to your bank account, 15% to your grassroots junior club, and 15% to platform operations with automated ATO/IRD Recipient Created Tax Invoices (RCTIs).
                 </p>
               </div>
@@ -710,7 +710,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                       saveToLocalStorage();
                       setStage('step3_oauth');
                     }}
-                    className="rounded-full bg-[#0F0F11] hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] px-8 py-3.5 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md"
+                    className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-8 py-3.5 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md"
                   >
                     Save & Next: OAuth & Conflict Matrix →
                   </button>
@@ -721,7 +721,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
 
           {stage === 'step3_oauth' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              <div className="lg:col-span-4 rounded-[28px] bg-[#0F0F11] text-white p-8 flex flex-col justify-between min-h-[380px]">
+              <div className="lg:col-span-4 rounded-[28px] bg-[#080808] text-white p-8 flex flex-col justify-between min-h-[380px]">
                 <div>
                   <span className="font-mono text-[10px] uppercase tracking-widest text-[#CCFF00] block mb-2">
                     PILLARS 02, 05 & 08 // OAUTH & CONFLICTS
@@ -752,7 +752,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                         type="button"
                         onClick={() => setIgConnected(!igConnected)}
                         className={`mt-2.5 w-full rounded-full py-2 font-mono text-[10px] font-bold uppercase cursor-pointer border-0 ${
-                          igConnected ? 'bg-[#CCFF00] text-[#0F0F11]' : 'bg-[#0F0F11] text-white'
+                          igConnected ? 'bg-[#CCFF00] text-[#080808]' : 'bg-[#080808] text-white'
                         }`}
                       >
                         {igConnected ? '✓ Meta OAuth Active' : 'Connect Instagram →'}
@@ -773,7 +773,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                         type="button"
                         onClick={() => setTtConnected(!ttConnected)}
                         className={`mt-2.5 w-full rounded-full py-2 font-mono text-[10px] font-bold uppercase cursor-pointer border-0 ${
-                          ttConnected ? 'bg-[#CCFF00] text-[#0F0F11]' : 'bg-[#0F0F11] text-white'
+                          ttConnected ? 'bg-[#CCFF00] text-[#080808]' : 'bg-[#080808] text-white'
                         }`}
                       >
                         {ttConnected ? '✓ TikTok Spark Active' : 'Connect TikTok →'}
@@ -795,8 +795,8 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                             onClick={() => toggleCategoryLock(sec)}
                             className={`rounded-full px-3 py-1.5 font-mono text-[10px] font-bold uppercase cursor-pointer border transition-colors ${
                               isLocked
-                                ? 'bg-[#0F0F11] text-[#FFB800] border-[#0F0F11]'
-                                : 'bg-white text-[#0F0F11] border-black/10 hover:bg-[#CCFF00]'
+                                ? 'bg-[#080808] text-[#CCFF00] border-[#080808]'
+                                : 'bg-white text-[#080808] border-black/10 hover:bg-[#CCFF00]'
                             }`}
                           >
                             {isLocked ? `LOCKED · ${sec}` : `OPEN · ${sec}`}
@@ -833,7 +833,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                       saveToLocalStorage();
                       setStage('step4_ai_media');
                     }}
-                    className="rounded-full bg-[#0F0F11] hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] px-8 py-3.5 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md"
+                    className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-8 py-3.5 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md"
                   >
                     Save & Next: AI Media Studio →
                   </button>
@@ -844,7 +844,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
 
           {stage === 'step4_ai_media' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              <div className="lg:col-span-4 rounded-[28px] bg-[#0F0F11] text-white p-8 flex flex-col justify-between min-h-[400px]">
+              <div className="lg:col-span-4 rounded-[28px] bg-[#080808] text-white p-8 flex flex-col justify-between min-h-[400px]">
                 <div>
                   <span className="font-mono text-[10px] uppercase tracking-widest text-[#CCFF00] block mb-2">
                     PILLAR 04 // TWELVELABS VIDEO INTELLIGENCE
@@ -861,7 +861,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                   <button
                     type="button"
                     onClick={() => videoInputRef.current?.click()}
-                    className="w-full rounded-xl bg-white/10 hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] p-3.5 font-mono text-[10px] font-bold uppercase flex items-center justify-between cursor-pointer border-0 transition-colors"
+                    className="w-full rounded-xl bg-white/10 hover:bg-[#CCFF00] text-white hover:text-[#080808] p-3.5 font-mono text-[10px] font-bold uppercase flex items-center justify-between cursor-pointer border-0 transition-colors"
                   >
                     <span>+ Upload Raw Match Footage (MP4)</span>
                     <span>↑</span>
@@ -870,7 +870,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                     type="button"
                     onClick={handleGenerateAiReels}
                     disabled={generatingReels}
-                    className="w-full rounded-full bg-[#CCFF00] text-[#0F0F11] py-3.5 font-mono text-[10px] font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md"
+                    className="w-full rounded-full bg-[#CCFF00] text-[#080808] py-3.5 font-mono text-[10px] font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md"
                   >
                     {generatingReels ? 'Generating 9:16 AI Reels...' : '▷ Generate AI 9:16 Reels'}
                   </button>
@@ -957,7 +957,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                       saveToLocalStorage();
                       setStage('step5_console');
                     }}
-                    className="rounded-full bg-[#CCFF00] text-[#0F0F11] px-8 py-3.5 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md"
+                    className="rounded-full bg-[#CCFF00] text-[#080808] px-8 py-3.5 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md"
                   >
                     Publish Reels & Open Live Console →
                   </button>
@@ -969,7 +969,7 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
           {stage === 'step5_console' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="rounded-[28px] bg-[#0F0F11] text-white p-8 flex flex-col justify-between min-h-[250px]">
+                <div className="rounded-[28px] bg-[#080808] text-white p-8 flex flex-col justify-between min-h-[250px]">
                   <span className="font-mono text-[10px] uppercase tracking-widest text-[#CCFF00]">
                     LIVE CONTENDER PROFILE
                   </span>
@@ -987,24 +987,24 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                   </span>
                 </div>
 
-                <div className="rounded-[28px] bg-gradient-to-br from-[#93C5FD] via-[#818CF8] to-[#C084FC] text-[#0F0F11] p-8 flex flex-col justify-between min-h-[250px]">
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0F0F11]/75">
+                <div className="rounded-[28px] bg-gradient-to-br from-[#F7F7F6] via-[#CCFF00] to-[#F7F7F6] text-[#080808] p-8 flex flex-col justify-between min-h-[250px]">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#080808]/75">
                     70% NET ATHLETE EARNINGS + 15% CLUB
                   </span>
                   <div>
-                    <p className="m-0 font-sans text-4xl font-black tracking-tight text-[#0F0F11]">
+                    <p className="m-0 font-sans text-4xl font-black tracking-tight text-[#080808]">
                       A$4,900 Cleared<span className="text-[#CCFF00]">.</span>
                     </p>
-                    <p className="m-0 mt-1 font-sans text-xs font-bold text-[#0F0F11]/85">
+                    <p className="m-0 mt-1 font-sans text-xs font-bold text-[#080808]/85">
                       A$1,050 Dividend Paid to {juniorClub}
                     </p>
                   </div>
-                  <span className="font-mono text-[10px] font-bold uppercase text-[#0F0F11]/80">
+                  <span className="font-mono text-[10px] font-bold uppercase text-[#080808]/80">
                     SETTLED TO {bsb}
                   </span>
                 </div>
 
-                <div className="rounded-[28px] bg-[#EAEAE6] text-[#0F0F11] p-8 flex flex-col justify-between min-h-[250px]">
+                <div className="rounded-[28px] bg-[#EAEAE6] text-[#080808] p-8 flex flex-col justify-between min-h-[250px]">
                   <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
                     PILLAR 09 // PROOF OF PERFORMANCE (+POP)
                   </span>
@@ -1020,14 +1020,14 @@ export const AthleteAuthModal: React.FC<AthleteAuthModalProps> = ({
                     <button
                       type="button"
                       onClick={() => proofInputRef.current?.click()}
-                      className="rounded-full bg-white text-[#0F0F11] px-4 py-2 font-mono text-[10px] font-bold uppercase cursor-pointer border border-black/10"
+                      className="rounded-full bg-white text-[#080808] px-4 py-2 font-mono text-[10px] font-bold uppercase cursor-pointer border border-black/10"
                     >
                       + Upload Proof (T+0)
                     </button>
                     <button
                       type="button"
                       onClick={handleCompleteAndReturn}
-                      className="rounded-full bg-[#0F0F11] text-[#CCFF00] px-5 py-2 font-mono text-[10px] font-bold uppercase cursor-pointer border-0 shadow-md"
+                      className="rounded-full bg-[#080808] text-[#CCFF00] px-5 py-2 font-mono text-[10px] font-bold uppercase cursor-pointer border-0 shadow-md"
                     >
                       Save & Return to Site →
                     </button>

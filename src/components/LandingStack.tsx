@@ -55,7 +55,7 @@ export function BrandLockup({
     size === 'header'
       ? 'font-black text-3xl md:text-4xl tracking-tight leading-none'
       : 'font-black text-2xl tracking-tight leading-none';
-  const voltClass = `${wordClass} text-[#D2FF00] drop-shadow-[0_0_10px_rgba(210,255,0,0.6)]`;
+  const voltClass = `${wordClass} text-[#CCFF00] drop-shadow-[0_0_10px_rgba(204, 255, 0,0.6)]`;
 
   return (
     <button
@@ -78,7 +78,7 @@ export function BrandLockup({
         <span className={`brand-volt-mark ${voltClass}`}>.</span>
       </div>
       <span className="block text-[10px] font-mono tracking-[0.35em] text-zinc-400 mt-1 uppercase leading-none !bg-transparent">
-        LINE UP YOUR FUTURE
+        LINE UP YOUR FUTURE<span className="text-[#B8FF00]">.</span>
       </span>
     </button>
   );

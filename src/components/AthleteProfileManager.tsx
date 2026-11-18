@@ -216,7 +216,7 @@ const describeSupabaseError = (error: Pick<PostgrestError, 'code' | 'message' | 
 };
 
 const inputClass =
-  'w-full bg-[#0E1015] border border-white/20 px-4 py-3 font-mono text-sm text-white focus:outline-none focus:border-[#D2FF00] transition-colors disabled:opacity-60';
+  'w-full bg-[#080808] border border-white/20 px-4 py-3 font-mono text-sm text-white focus:outline-none focus:border-[#CCFF00] transition-colors disabled:opacity-60';
 const labelClass = 'block font-mono text-[9px] uppercase tracking-[0.2em] text-white/60 mb-2';
 
 interface AthleteProfileManagerProps {
@@ -443,11 +443,11 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
         type="button"
         onClick={onExit}
         data-testid="terminal-back-to-roster"
-        className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#D2FF00] hover:text-[#D2FF00] transition-colors"
+        className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors"
       >
         ← Back to Roster [ESC]
       </button>
-      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#D2FF00]">
+      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#CCFF00]">
         TALENT OPERATIONAL CONSOLE
       </span>
     </div>
@@ -455,7 +455,7 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#060709] text-white">
+      <div className="min-h-screen bg-[#080808] text-white">
         {exitBar}
         <div className="flex items-center justify-center py-32 font-mono text-[11px] tracking-[0.2em]">
           INITIALISING TALENT PROFILE...
@@ -481,16 +481,16 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
       ? 'PROFILE ACTIVE'
       : 'PENDING COMPLIANCE';
   const badgeClass =
-    isCleared || profileSaved ? 'border-[#D2FF00] text-[#D2FF00]' : 'border-amber-400 text-amber-400';
+    isCleared || profileSaved ? 'border-[#CCFF00] text-[#CCFF00]' : 'border-neutral-400 text-neutral-400';
 
   return (
-    <div className="min-h-screen bg-[#060709] text-white selection:bg-[#D2FF00] selection:text-black">
+    <div className="min-h-screen bg-[#080808] text-white selection:bg-[#CCFF00] selection:text-black">
       {exitBar}
       <div className="px-6 py-12 lg:px-16">
         <div className="max-w-4xl mx-auto border border-white/15 bg-black/40 backdrop-blur-md p-8 md:p-12 relative">
           <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-6 mb-8 gap-4">
             <div>
-              <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-[#D2FF00] font-semibold">
+              <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-[#CCFF00] font-semibold">
                 // ATHLETE OPERATIONAL PROFILE
               </span>
               <h1 className="text-3xl font-extrabold uppercase tracking-tight mt-1">
@@ -514,14 +514,14 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
             <div
               role="status"
               data-testid="terminal-signin-prompt"
-              className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-amber-400/50 bg-amber-400/10 px-4 py-3 font-mono text-[11px] tracking-[0.08em] text-amber-200"
+              className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-neutral-400/50 bg-neutral-400/10 px-4 py-3 font-mono text-[11px] tracking-[0.08em] text-neutral-200"
             >
               <span>You are not signed in. Sign in to save your athlete profile.</span>
               {onRequestSignIn && (
                 <button
                   type="button"
                   onClick={onRequestSignIn}
-                  className="px-4 py-2 border border-amber-400 text-amber-300 hover:bg-amber-400 hover:text-black uppercase tracking-[0.16em] text-[10px] transition-colors"
+                  className="px-4 py-2 border border-neutral-400 text-neutral-300 hover:bg-neutral-400 hover:text-black uppercase tracking-[0.16em] text-[10px] transition-colors"
                 >
                   Sign in
                 </button>
@@ -692,7 +692,7 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
 
               {/* 1-CLICK PAID AD WHITELISTING SOCIAL HANDLES SECTION */}
               <div className="border-t border-white/10 pt-6">
-                <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-[#D2FF00] font-semibold mb-2 block">
+                <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-[#CCFF00] font-semibold mb-2 block">
                   // 1-CLICK PAID AD WHITELISTING (META & TIKTOK)
                 </span>
                 <p className="font-sans text-xs text-white/60 mb-4">
@@ -736,7 +736,7 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
                       name="whitelisting_opt_in"
                       checked={formData.whitelisting_opt_in}
                       onChange={handleChange}
-                      className="h-4 w-4 accent-[#D2FF00]"
+                      className="h-4 w-4 accent-[#CCFF00]"
                     />
                     Enable automatic 90-day postcode ad token minting upon deal settlement
                   </label>
@@ -755,7 +755,7 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
                       name="is_minor"
                       checked={formData.is_minor}
                       onChange={handleChange}
-                      className="h-4 w-4 accent-[#D2FF00]"
+                      className="h-4 w-4 accent-[#CCFF00]"
                     />
                     Athlete is under 18 (minor)
                   </label>
@@ -769,7 +769,7 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
                       name="amateur_eligibility_maintained"
                       checked={formData.amateur_eligibility_maintained}
                       onChange={handleChange}
-                      className="h-4 w-4 accent-[#D2FF00]"
+                      className="h-4 w-4 accent-[#CCFF00]"
                     />
                     Amateur eligibility maintained
                   </label>
@@ -792,14 +792,14 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
                         <p
                           role="status"
                           data-testid="guardian-signed-status"
-                          className="mt-2 font-mono text-[10px] tracking-[0.08em] text-emerald-300"
+                          className="mt-2 font-mono text-[10px] tracking-[0.08em] text-neutral-300"
                         >
                           Guardian countersigned {new Date(guardian.signedAt).toLocaleDateString('en-AU')}.
                         </p>
                       ) : guardianLink ? (
                         <div className="mt-2 space-y-1" data-testid="guardian-link-block">
                           <span className="block font-mono text-[9px] uppercase tracking-[0.16em] text-white/60">
-                            Guardian signing link — send to your guardian
+                            Guardian signing link · send to your guardian
                           </span>
                           <input
                             type="text"
@@ -825,7 +825,7 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
                       {formData.abn_verified && (
                         <span
                           data-testid="abn-verified-badge"
-                          className="mb-2 inline-flex items-center gap-1 rounded-full border border-emerald-400/60 bg-emerald-400/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.16em] text-emerald-300"
+                          className="mb-2 inline-flex items-center gap-1 rounded-full border border-neutral-400/60 bg-neutral-400/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.16em] text-neutral-300"
                         >
                           <span aria-hidden="true">✓</span> ABN Verified
                         </span>
@@ -845,9 +845,9 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
                       aria-describedby={abnInvalid ? 'abn-error' : undefined}
                       className={`${inputClass} ${
                         formData.abn_verified
-                          ? 'border-emerald-400/60'
+                          ? 'border-neutral-400/60'
                           : abnInvalid
-                            ? 'border-amber-400/70'
+                            ? 'border-neutral-400/70'
                             : ''
                       }`}
                     />
@@ -856,7 +856,7 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
                         id="abn-error"
                         role="alert"
                         data-testid="abn-invalid-warning"
-                        className="mt-2 font-mono text-[10px] tracking-[0.08em] text-amber-300"
+                        className="mt-2 font-mono text-[10px] tracking-[0.08em] text-neutral-300"
                       >
                         {ABN_ERROR_MESSAGE}
                       </p>
@@ -866,7 +866,7 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
               </div>
             </fieldset>
 
-            <div className="border border-white/10 p-4 bg-[#0A0C10] flex items-center justify-between">
+            <div className="border border-white/10 p-4 bg-[#080808] flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/60">
                   Stripe Express Payout Rail
@@ -888,7 +888,7 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
                 <div
                   role="alert"
                   data-testid="profile-save-error"
-                  className="border border-red-500/50 bg-red-500/10 px-4 py-3 font-mono text-[11px] tracking-[0.08em] text-red-300"
+                  className="border border-neutral-500/50 bg-neutral-500/10 px-4 py-3 font-mono text-[11px] tracking-[0.08em] text-neutral-300"
                 >
                   {saveError}
                 </div>
@@ -897,7 +897,7 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
                 {justSaved ? (
                   <span
                     role="status"
-                    className="font-mono text-[10px] tracking-[0.2em] text-[#D2FF00] uppercase font-semibold"
+                    className="font-mono text-[10px] tracking-[0.2em] text-[#CCFF00] uppercase font-semibold"
                   >
                     PROFILE SAVED
                   </span>
@@ -909,7 +909,7 @@ export const AthleteProfileManager: React.FC<AthleteProfileManagerProps> = ({
                   disabled={submitDisabled}
                   aria-disabled={submitDisabled}
                   title={guardianMissing ? 'A valid guardian email is required for athletes under 18.' : undefined}
-                  className="bg-white text-black font-mono text-[11px] uppercase tracking-[0.16em] px-8 py-3.5 rounded-full hover:bg-[#D2FF00] transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white inline-flex items-center gap-2"
+                  className="bg-white text-black font-mono text-[11px] uppercase tracking-[0.16em] px-8 py-3.5 rounded-full hover:bg-[#CCFF00] transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white inline-flex items-center gap-2"
                 >
                   {saving && (
                     <span

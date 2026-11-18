@@ -340,12 +340,12 @@ export const RosterPage: React.FC<RosterPageProps> = ({
       <section
         id="athletes"
         aria-labelledby="roster-heading"
-        className="w-full bg-[#FFFFFF] text-[#080808] pt-2 pb-16 scroll-mt-[64px]"
+        className="w-full bg-[#F7F7F6] text-[#080808] pt-2 pb-16 scroll-mt-[64px]"
       >
         <div id="the-roster" className="scroll-mt-[64px]" />
         <div
           id="roster"
-          className="mx-auto max-w-[1840px] px-4 sm:px-6 md:px-10 w-full bg-[#FFFFFF] scroll-mt-[64px]"
+          className="mx-auto max-w-[1840px] px-4 sm:px-6 md:px-10 w-full bg-[#F7F7F6] scroll-mt-[64px]"
         >
           <div className="mb-4 border-b border-black/10 py-3.5 md:py-4">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-5 items-center">
@@ -363,7 +363,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                   Algorithms don’t win premierships. Followers don’t fund the runway.
                 </p>
                 <p className="m-0 mt-1 font-sans text-[12px] leading-[1.45] text-neutral-600">
-                  <strong className="text-[#080808] font-semibold">tmrw/.</strong> backs the next generation of icons with direct commercial capital from local businesses and major brands before the whistle blows.
+                  <strong className="text-[#080808] font-semibold">tmrw<span className="text-[#B8FF00]">/.</span></strong> backs the next generation of icons with direct commercial capital from local businesses and major brands before the whistle blows.
                 </p>
               </div>
 
@@ -491,8 +491,8 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                   >
                     <line x1="3" y1="8" x2="21" y2="8"></line>
                     <line x1="3" y1="16" x2="21" y2="16"></line>
-                    <circle cx="9" cy="8" r="2.5" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.8"></circle>
-                    <circle cx="15" cy="16" r="2.5" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.8"></circle>
+                    <circle cx="9" cy="8" r="2.5" fill="#F7F7F6" stroke="currentColor" strokeWidth="1.8"></circle>
+                    <circle cx="15" cy="16" r="2.5" fill="#F7F7F6" stroke="currentColor" strokeWidth="1.8"></circle>
                   </svg>
                 </button>
 
@@ -628,7 +628,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
             role="tabpanel"
             aria-labelledby={`roster-tab-${viewMode}`}
             key={viewMode}
-            className="roster-view bg-[#FFFFFF]"
+            className="roster-view bg-[#F7F7F6]"
           >
             {visibleCards.length === 0 ? (
               <p className="m-0 font-mono text-xs uppercase tracking-widest text-[#666666]">
@@ -687,7 +687,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                           </p>
                         </div>
                         <div>
-                          <p className="m-0 font-mono text-xs uppercase tracking-wider text-[#0F0F11]">
+                          <p className="m-0 font-mono text-xs uppercase tracking-wider text-[#080808]">
                             {disciplineLockup(athlete.league, athlete.postcode).replace(/\/\//g, '·')}
                           </p>
                           <p className="m-0 mt-0.5 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
@@ -695,7 +695,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                           </p>
                         </div>
                         <div>
-                          <p className="m-0 font-mono text-[10px] font-bold uppercase tracking-wider text-[#0F0F11]">
+                          <p className="m-0 font-mono text-[10px] font-bold uppercase tracking-wider text-[#080808]">
                             {rosterFlightPresentation(athlete.tier, tier, athlete.league).lockup}
                           </p>
                           <p className="m-0 mt-1 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
@@ -708,7 +708,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenDossier(athlete.record, 'audit')}
-                          className="justify-self-start rounded-full border-0 bg-[#0F0F11] px-4 py-2 font-mono text-[10px] font-medium uppercase tracking-widest text-white transition-colors hover:bg-[#CCFF00] hover:text-black cursor-pointer md:justify-self-end"
+                          className="justify-self-start rounded-full border-0 bg-[#080808] px-4 py-2 font-mono text-[10px] font-medium uppercase tracking-widest text-white transition-colors hover:bg-[#CCFF00] hover:text-black cursor-pointer md:justify-self-end"
                         >
                           Open Athlete Dossier →
                         </button>

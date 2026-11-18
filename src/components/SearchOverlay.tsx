@@ -299,7 +299,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, o
                               {name}
                             </h3>
                             <p className="m-0 mt-0.5 text-sm text-[#666666] truncate">
-                              {[a.sport, a.current_club].filter(Boolean).join(' · ') || '—'}
+                              {[a.sport, a.current_club].filter(Boolean).join(' · ') || '·'}
                             </p>
                             <p className="m-0 mt-1 font-mono text-[10px] font-bold uppercase tracking-widest text-[#666666]">
                               {a.postcode ? `PC ${a.postcode}` : 'No postcode'}

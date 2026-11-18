@@ -133,15 +133,15 @@ export const ManifestoTrail: React.FC<ManifestoTrailProps> = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           
           {/* Box 1: Carbon Black with White Text & Green Full Stop */}
-          <div className="rounded-[28px] bg-[#0F0F11] p-8 sm:p-12 text-white flex flex-col justify-center shadow-2xl border border-neutral-800 relative overflow-hidden min-h-[380px]">
+          <div className="rounded-[28px] bg-[#080808] p-8 sm:p-12 text-white flex flex-col justify-center shadow-2xl border border-neutral-800 relative overflow-hidden min-h-[380px]">
             <h3 className="m-0 font-sans text-4xl sm:text-5xl lg:text-[3.25rem] font-black uppercase tracking-[-0.03em] leading-[1.05] text-white">
               You fill the broadcast slots<span className="text-[#CCFF00]">.</span>
             </h3>
           </div>
 
           {/* Box 2: Exact "Seeing in Colour" Gradient Background & Size */}
-          <div className="rounded-[28px] bg-gradient-to-br from-[#93C5FD] via-[#818CF8] to-[#C084FC] p-8 sm:p-12 text-[#0F0F11] flex flex-col justify-center shadow-2xl border border-indigo-200/50 relative overflow-hidden min-h-[380px]">
-            <h3 className="m-0 font-sans text-4xl sm:text-5xl lg:text-[3.25rem] font-black uppercase tracking-tight text-[#0F0F11] leading-[1.05]">
+          <div className="rounded-[28px] bg-gradient-to-br from-[#F7F7F6] via-[#CCFF00] to-[#F7F7F6] p-8 sm:p-12 text-[#080808] flex flex-col justify-center shadow-2xl border border-indigo-200/50 relative overflow-hidden min-h-[380px]">
+            <h3 className="m-0 font-sans text-4xl sm:text-5xl lg:text-[3.25rem] font-black uppercase tracking-tight text-[#080808] leading-[1.05]">
               Now own the upside<span className="text-[#CCFF00]">.</span>
             </h3>
           </div>
@@ -159,7 +159,7 @@ export const ManifestoTrail: React.FC<ManifestoTrailProps> = () => {
               <p className="m-0 font-sans text-sm sm:text-base font-medium leading-[1.45] text-white tracking-[-0.01em]">
                 Networks bank the broadcast ratings while you fund the runway. tmrw
                 <span className="text-[#CCFF00] font-black">/.</span> cuts out the middleman, locking in direct brand cash, direct handle sponsorship, and a hardwired{' '}
-                <span className="bg-[#CCFF00] text-[#0F0F11] font-bold px-1 py-0.5 rounded-[2px]">
+                <span className="bg-[#CCFF00] text-[#080808] font-bold px-1 py-0.5 rounded-[2px]">
                   70/15/15 split
                 </span>{' '}
                 straight to your bank and junior club.

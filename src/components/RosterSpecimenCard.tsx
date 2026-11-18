@@ -135,6 +135,15 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
 
   return (
     <article
+      role="button"
+      tabIndex={0}
+      aria-label={`Open ${displayFullName} athlete dossier`}
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          onOpenDossier(athlete, 'audit');
+        }
+      }}
       onClick={() => onOpenDossier(athlete, 'audit')}
       style={{
         borderRadius: '16px',
@@ -143,12 +152,12 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
       }}
       className="group relative isolate flex w-full flex-col justify-between p-7 xl:p-8 bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white transition-colors duration-500 cursor-pointer overflow-visible select-none"
     >
-      {/* Floating Top-Right Pill Badge — #CCFF00 Green for "New", #F5B800 Yellow for "Updated" */}
+      {/* Floating Top-Right Pill Badge · #CCFF00 Green for "New", #CCFF00 Yellow for "Updated" */}
       {effectiveBadgeText && (
         <span
           className={`absolute -top-2.5 right-5 z-30 inline-flex items-center rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs ${
             isUpdateYellow
-              ? 'bg-[#F5B800] text-[#080808]'
+              ? 'bg-[#CCFF00] text-[#080808]'
               : badgeVariant === 'black'
               ? 'bg-[#080808] text-white'
               : 'bg-[#CCFF00] text-[#080808]'
@@ -277,7 +286,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
         {/* Full-Width White Pill Bar on Hover */}
         <div
           onClick={(e) => e.stopPropagation()}
-          className={`absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between transition-all duration-300 ${
+          className={`absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#F7F7F6] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between transition-all duration-300 ${
             mediaMode === 'video'
               ? 'opacity-100 translate-y-0 pointer-events-auto'
               : 'opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto'

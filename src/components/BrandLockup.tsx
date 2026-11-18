@@ -2,7 +2,7 @@ import React from 'react';
 
 interface BrandLockupProps {
   /**
-   * `light`: ink wordmark on an off-white surface; the slash + dot flip to Kinetic Volt on hover.
+   * `light`: ink wordmark on an off-white surface with a permanent Kinetic Volt signature.
    * `dark`: white wordmark on ink; the slash + dot are always Kinetic Volt.
    */
   tone?: 'light' | 'dark';
@@ -10,7 +10,7 @@ interface BrandLockupProps {
   className?: string;
 }
 
-const TAGLINE = 'LINE UP YOUR FUTURE';
+const TAGLINE = 'LINE UP YOUR FUTURE.';
 
 /**
  * The `tmrw/.` desktop lockup: wordmark + 23° slash + dot, hairline, justified tagline.
@@ -19,7 +19,7 @@ const TAGLINE = 'LINE UP YOUR FUTURE';
 export const BrandLockup: React.FC<BrandLockupProps> = ({ tone = 'light', onClick, className = '' }) => {
   const dark = tone === 'dark';
   const ink = dark ? 'text-white' : 'text-[#080808]';
-  const mark = dark ? 'text-[#B8FF00]' : 'text-[#080808] group-hover:text-[#B8FF00]';
+  const mark = 'text-[#B8FF00]';
 
   return (
     <button
@@ -58,7 +58,7 @@ export const BrandLockup: React.FC<BrandLockupProps> = ({ tone = 'light', onClic
         className={`w-full flex justify-between font-mono font-bold text-[7.5px] tracking-[0.20em] uppercase leading-none ${ink}`}
       >
         {TAGLINE.split('').map((ch, i) => (
-          <span key={i}>{ch === ' ' ? '\u00A0' : ch}</span>
+          <span key={i} className={ch === '.' ? 'text-[#B8FF00]' : undefined}>{ch === ' ' ? '\u00A0' : ch}</span>
         ))}
       </span>
     </button>

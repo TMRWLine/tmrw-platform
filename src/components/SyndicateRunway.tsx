@@ -29,7 +29,7 @@ const CARBON_BLADE_WARM_CROP =
   'absolute inset-0 h-full w-full object-cover contrast-[1.24] brightness-[0.92] sepia-[0.28] hue-rotate-[-10deg] saturate-[1.4] select-none transition-transform duration-1000 ease-out origin-bottom';
 
 export const LIT_OBSIDIAN_BTN =
-  'bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-white/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.45),0_0_15px_rgba(204,255,0,0.18)] hover:bg-neutral-900 hover:border-[#CCFF00]/60 hover:text-[#CCFF00] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.6),0_0_28px_rgba(204,255,0,0.35)] active:translate-y-[1px]';
+  'bg-[#080808] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-white/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.45),0_0_15px_rgba(204,255,0,0.18)] hover:bg-neutral-900 hover:border-[#CCFF00]/60 hover:text-[#CCFF00] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.6),0_0_28px_rgba(204,255,0,0.35)] active:translate-y-[1px]';
 
 export interface OlympicHorizonSpec {
   id: '1yr' | '2yr' | '4yr';
@@ -179,7 +179,7 @@ type IndustryId = (typeof INDUSTRIES)[number]['id'];
 
 const FIELD_LABEL = 'font-mono text-[9px] tracking-[0.2em] text-white/45 uppercase block mb-1.5';
 const FIELD_INPUT =
-  'w-full bg-[#0B0B0D] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/30 outline-none focus:border-[#CCFF00] caret-[#CCFF00]';
+  'w-full bg-[#080808] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/30 outline-none focus:border-[#CCFF00] caret-[#CCFF00]';
 
 function EditorialDiptych({
   activeHorizon,
@@ -227,7 +227,7 @@ function EditorialDiptych({
                 className={`absolute -top-2.5 right-5 z-30 inline-flex items-center rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs ${
                   specimen.badgeTone === 'green'
                     ? 'bg-[#CCFF00] text-[#080808]'
-                    : 'bg-[#F5B800] text-[#080808]'
+                    : 'bg-[#CCFF00] text-[#080808]'
                 }`}
               >
                 {specimen.badge}
@@ -254,7 +254,7 @@ function EditorialDiptych({
                   className={`${specimen.grade} ${active ? specimen.activeScale : specimen.inactiveScale}`}
                   style={{ objectPosition: specimen.position }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-amber-950/15 to-black/80" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-neutral-950/15 to-black/80" />
                 <FilmGrainOverlay intensity="fine" />
               </div>
 
@@ -297,7 +297,7 @@ function EditorialDiptych({
 
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className={`absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.45)] px-2 flex items-center justify-between gap-2 transition-all duration-300 ${
+                  className={`absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#F7F7F6] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.45)] px-2 flex items-center justify-between gap-2 transition-all duration-300 ${
                     active ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'
                   }`}
                 >
@@ -403,9 +403,9 @@ function SyndicateApplicationDrawer({
         aria-labelledby={titleId}
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
-        className="relative z-10 flex h-dvh w-full max-w-[580px] flex-col border-l border-white/15 bg-[#0F0F11] text-white shadow-2xl overflow-hidden"
+        className="relative z-10 flex h-dvh w-full max-w-[580px] flex-col border-l border-white/15 bg-[#080808] text-white shadow-2xl overflow-hidden"
       >
-        <header className="shrink-0 z-20 border-b border-white/10 bg-[#0F0F11] px-6 py-4 sm:px-8">
+        <header className="shrink-0 z-20 border-b border-white/10 bg-[#080808] px-6 py-4 sm:px-8">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <h2 id={titleId} className="m-0 font-display text-2xl font-bold tracking-tight text-white uppercase">
@@ -608,7 +608,7 @@ function SyndicateApplicationDrawer({
           )}
         </div>
 
-        <footer className="shrink-0 z-20 border-t border-white/10 bg-[#0F0F11] px-6 py-4 sm:px-8 flex items-center gap-3">
+        <footer className="shrink-0 z-20 border-t border-white/10 bg-[#080808] px-6 py-4 sm:px-8 flex items-center gap-3">
           {step === 2 ? (
             <button
               type="button"
@@ -788,8 +788,8 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
           border-bottom: 0 !important;
         }
         #commercial-tiers button {
-          background-color: #0F0F11 !important;
-          color: #FFFFFF !important;
+          background-color: #080808 !important;
+          color: #F7F7F6 !important;
           border: 1px solid rgba(255, 255, 255, 0.15) !important;
           border-radius: 12px !important;
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -2px 0 rgba(0, 0, 0, 0.8), 0 10px 25px rgba(0, 0, 0, 0.45), 0 0 15px rgba(204, 255, 0, 0.18) !important;
@@ -936,11 +936,11 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
           >
             <span className="font-display text-2xl font-black tracking-[-0.04em] leading-none text-white">
               tmrw
-              <span className="transition-colors duration-300 group-hover:text-[#CCFF00]">/</span>
+              <span className="text-[#CCFF00]">/</span>
               <span className="text-[#CCFF00]">.</span>
             </span>
             <span className="font-mono text-[8px] uppercase tracking-[0.22em] text-neutral-400 mt-1 transition-colors duration-300 group-hover:text-white">
-              LINE UP YOUR FUTURE
+              LINE UP YOUR FUTURE<span className="text-[#CCFF00]">.</span>
             </span>
           </a>
 
@@ -948,7 +948,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
             © 2026{' '}
             <span className="inline-block font-semibold text-white group cursor-pointer">
               tmrw
-              <span className="transition-colors duration-300 hover:text-[#CCFF00]">/</span>
+              <span className="text-[#CCFF00]">/</span>
               <span className="text-[#CCFF00]">.</span>
             </span>{' '}
             All rights reserved. Sovereign sports commercialisation infrastructure for Australia and New Zealand.

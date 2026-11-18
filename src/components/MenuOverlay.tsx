@@ -417,7 +417,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
             </li>
           </ul>
           <p className="m-0 text-[10px] font-mono text-[#666666]">
-            Copyright © 2026 tmrw/. All rights reserved.
+            Copyright © 2026 tmrw<span className="text-[#B8FF00]">/.</span> All rights reserved.
           </p>
         </div>
       </div>

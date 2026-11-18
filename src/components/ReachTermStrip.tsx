@@ -12,7 +12,7 @@ export function ReachTermStrip({
   const badgeClass = onDark
     ? 'text-white font-mono text-xs uppercase tracking-wider px-2.5 py-1 bg-transparent border border-white/20'
     : solid
-      ? 'text-white font-mono text-xs uppercase tracking-wider px-2.5 py-1 bg-[#08080A] border border-white/20'
+      ? 'text-white font-mono text-xs uppercase tracking-wider px-2.5 py-1 bg-[#080808] border border-white/20'
       : 'text-white font-mono text-xs uppercase tracking-wider px-2.5 py-1 bg-black/60 border border-white/20';
 
   return (

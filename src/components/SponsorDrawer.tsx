@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useDialogFocus } from '../lib/useDialogFocus';
 import { supabase } from '../lib/supabase';
 
 interface AthleteSummary {
@@ -109,7 +111,15 @@ interface SyndicateBriefSubmission {
   submittedAt: string;
 }
 
-export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, athlete }) => {
+export const SponsorDrawer: React.FC<SponsorDrawerProps> = (props) => (
+  <AnimatePresence>
+    {props.isOpen && <SponsorDrawerContent {...props} />}
+  </AnimatePresence>
+);
+
+const SponsorDrawerContent: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, athlete }) => {
+  const dialogRef = useDialogFocus(isOpen, onClose);
+  const reducedMotion = useReducedMotion();
   const [selectedTier, setSelectedTier] = useState<'tier1' | 'tier2' | 'tier3'>('tier2');
   const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORIES[0]);
   const [companyName, setCompanyName] = useState<string>('');
@@ -192,14 +202,27 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-xl bg-zinc-950 border-l border-zinc-800 text-white flex flex-col max-h-screen">
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      transition={{ duration: reducedMotion ? 0 : 0.18 }}
+      className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        ref={dialogRef} role="dialog" aria-modal="true" aria-label="Capital deployment terminal" tabIndex={-1}
+        initial={{ x: reducedMotion ? 0 : '100%' }} animate={{ x: 0 }} exit={{ x: reducedMotion ? 0 : '100%' }}
+        transition={{ duration: reducedMotion ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
+        onClick={(event) => event.stopPropagation()}
+        className="w-full max-w-xl bg-[#080808] border-l border-white/15 text-white flex flex-col h-[100dvh]"
+      >
         <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
           <div>
-            <p className="text-xs text-lime-400 font-mono tracking-widest uppercase">// SPONSORSHIP ALLOCATION</p>
+            <p className="text-xs text-[#CCFF00] font-mono tracking-widest uppercase">// SPONSORSHIP ALLOCATION</p>
             <h2 className="text-xl font-bold uppercase tracking-tight mt-1">Capital Deployment Terminal</h2>
           </div>
           <button
+            type="button"
+            aria-label="Close sponsor drawer"
             onClick={onClose}
             className="text-zinc-400 hover:text-white font-mono text-sm px-2 py-1 border border-zinc-800 rounded"
           >
@@ -237,14 +260,14 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
           </div>
 
           {conflictError && (
-            <div className="p-3 bg-red-950/40 border border-red-900 text-red-400 text-xs rounded font-mono">
+            <div className="p-3 bg-neutral-950/40 border border-neutral-900 text-neutral-400 text-xs rounded font-mono">
               // CONFLICT DETECTED: {conflictError}
             </div>
           )}
 
           {dealSuccess && (
-            <div className="p-4 bg-lime-950/30 border border-lime-500/40 text-center rounded font-mono space-y-2">
-              <p className="text-xs text-lime-400 font-bold uppercase tracking-widest">// ESCROW CAPITAL ALLOCATED</p>
+            <div className="p-4 bg-lime-950/30 border border-[#CCFF00]/40 text-center rounded font-mono space-y-2">
+              <p className="text-xs text-[#CCFF00] font-bold uppercase tracking-widest">// ESCROW CAPITAL ALLOCATED</p>
               <p className="text-xs text-zinc-300">
                 Milestone contract created. Funds held in Stripe escrow pending verified matchday delivery.
               </p>
@@ -262,13 +285,13 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
               onClick={() => setSelectedTier('tier3')}
               className={`p-5 rounded border cursor-pointer transition-all ${
                 selectedTier === 'tier3'
-                  ? 'border-lime-400 bg-zinc-900/70 shadow-lg shadow-lime-400/5'
+                  ? 'border-[#CCFF00] bg-zinc-900/70 shadow-lg shadow-[#CCFF00]/5'
                   : 'border-zinc-800 bg-zinc-900/20 hover:border-zinc-700'
               }`}
             >
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <span className="text-[10px] font-mono uppercase bg-lime-400/10 text-lime-400 px-2 py-0.5 rounded border border-lime-400/20">
+                  <span className="text-[10px] font-mono uppercase bg-[#CCFF00]/10 text-[#CCFF00] px-2 py-0.5 rounded border border-[#CCFF00]/20">
                     Brisbane 2032 Runway
                   </span>
                   <h3 className="text-base font-bold uppercase mt-1">Olympic Pathway Syndicate</h3>
@@ -386,13 +409,13 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
           <span>// ESCROW REVENUE SPLIT: 70/15/15</span>
           <span>EST. SETTLEMENT: T+2</span>
         </div>
-      </div>
+      </motion.div>
 
       {showSyndicateModal && (
         <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/90 p-4">
           <div className="max-w-md w-full max-h-[90vh] overflow-y-auto bg-zinc-950 border border-zinc-800 p-6 rounded shadow-2xl font-mono text-white">
             <div className="flex justify-between items-center mb-4">
-              <p className="text-xs text-lime-400 uppercase tracking-widest">// EXECUTIVE APPLICATION</p>
+              <p className="text-xs text-[#CCFF00] uppercase tracking-widest">// EXECUTIVE APPLICATION</p>
               <button
                 onClick={() => {
                   setShowSyndicateModal(false);
@@ -412,8 +435,8 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
             </p>
 
             {syndicateSuccess ? (
-              <div className="p-4 border border-lime-400/40 bg-lime-950/20 rounded text-center space-y-2">
-                <p className="text-xs text-lime-400 font-bold uppercase">// APPLICATION SUBMITTED</p>
+              <div className="p-4 border border-[#CCFF00]/40 bg-lime-950/20 rounded text-center space-y-2">
+                <p className="text-xs text-[#CCFF00] font-bold uppercase">// APPLICATION SUBMITTED</p>
                 {syndicateBrief && (
                   <p className="text-xs text-white font-semibold">{syndicateBrief.portfolioName}</p>
                 )}
@@ -446,13 +469,13 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
                 </div>
 
                 <div className="p-3 border border-zinc-800 bg-zinc-900/50 rounded" aria-live="polite">
-                  <p className="text-[11px] text-lime-400 uppercase tracking-wider mb-2">
+                  <p className="text-[11px] text-[#CCFF00] uppercase tracking-wider mb-2">
                     // KEY DELIVERABLES
                   </p>
                   <ul className="space-y-1.5">
                     {activeSyndicate.deliverables.map((item) => (
                       <li key={item} className="flex gap-2 text-xs text-zinc-300 leading-relaxed">
-                        <span className="text-lime-400">&gt;</span>
+                        <span className="text-[#CCFF00]">&gt;</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -501,7 +524,7 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-lime-400 text-black font-semibold text-xs py-3 uppercase tracking-wider rounded hover:bg-lime-300 transition-colors mt-2"
+                  className="w-full bg-[#CCFF00] text-black font-semibold text-xs py-3 uppercase tracking-wider rounded hover:bg-[#CCFF00] transition-colors mt-2"
                 >
                   {isSubmitting ? 'Transmitting Brief...' : 'Submit Syndicate Brief'}
                 </button>
@@ -510,7 +533,7 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

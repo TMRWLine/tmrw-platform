@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useDialogFocus } from '../lib/useDialogFocus';
 import { BrandLockup } from './BrandLockup';
 import type { AthleteRecord } from '../data/roster';
 
@@ -91,17 +93,17 @@ const SWATCH_THEMES = [
   {
     id: 'obsidian',
     label: '01 · Obsidian Carbon',
-    swatchBg: 'bg-[#0F0F11] text-white',
+    swatchBg: 'bg-[#080808] text-white',
   },
   {
     id: 'stone',
     label: '02 · Raw Stone',
-    swatchBg: 'bg-[#D8D8D2] text-[#0F0F11] border border-black/15',
+    swatchBg: 'bg-[#D8D8D2] text-[#080808] border border-black/15',
   },
   {
     id: 'chalk',
     label: '03 · Gallery Chalk',
-    swatchBg: 'bg-[#F4F4F0] text-[#0F0F11] border border-black/15',
+    swatchBg: 'bg-[#F4F4F0] text-[#080808] border border-black/15',
   },
 ] as const;
 
@@ -144,7 +146,7 @@ const DEFAULT_CAPSULE_DROPS: readonly CartCapsuleItem[] = [
     baseCostAud: 45,
     unitsSold: 58,
     unitsCap: 100,
-    swatchBg: 'bg-[#0F0F11] text-white',
+    swatchBg: 'bg-[#080808] text-white',
     monogram: 'MT·22',
     lockupStyle: 'editorial',
   },
@@ -168,7 +170,7 @@ const DEFAULT_CAPSULE_DROPS: readonly CartCapsuleItem[] = [
     baseCostAud: 25,
     unitsSold: 131,
     unitsCap: 150,
-    swatchBg: 'bg-[#D8D8D2] text-[#0F0F11] border border-black/15',
+    swatchBg: 'bg-[#D8D8D2] text-[#080808] border border-black/15',
     monogram: 'SB·01',
     lockupStyle: 'stencil',
   },
@@ -216,17 +218,17 @@ const RetroPixelCabinetIcon: React.FC = () => (
     shapeRendering="crispEdges"
     aria-hidden="true"
   >
-    <rect x="9" y="2" width="14" height="10" fill="#FFFFFF" stroke="#0F0F11" strokeWidth="2" />
-    <rect x="12" y="12" width="3" height="2" fill="#0F0F11" />
-    <rect x="14" y="4" width="4" height="2" fill="#0F0F11" />
-    <rect x="16" y="6" width="2" height="2" fill="#0F0F11" />
-    <rect x="15" y="9" width="2" height="2" fill="#0F0F11" />
+    <rect x="9" y="2" width="14" height="10" fill="#F7F7F6" stroke="#080808" strokeWidth="2" />
+    <rect x="12" y="12" width="3" height="2" fill="#080808" />
+    <rect x="14" y="4" width="4" height="2" fill="#080808" />
+    <rect x="16" y="6" width="2" height="2" fill="#080808" />
+    <rect x="15" y="9" width="2" height="2" fill="#080808" />
 
-    <rect x="10" y="15" width="12" height="15" fill="#CCFF00" stroke="#0F0F11" strokeWidth="2" />
-    <rect x="12" y="17" width="8" height="5" fill="#99CC00" stroke="#0F0F11" strokeWidth="1" />
-    <rect x="15" y="19" width="2" height="1" fill="#FFFFFF" />
-    <rect x="12" y="23" width="8" height="5" fill="#99CC00" stroke="#0F0F11" strokeWidth="1" />
-    <rect x="15" y="25" width="2" height="1" fill="#FFFFFF" />
+    <rect x="10" y="15" width="12" height="15" fill="#CCFF00" stroke="#080808" strokeWidth="2" />
+    <rect x="12" y="17" width="8" height="5" fill="#B8FF00" stroke="#080808" strokeWidth="1" />
+    <rect x="15" y="19" width="2" height="1" fill="#F7F7F6" />
+    <rect x="12" y="23" width="8" height="5" fill="#B8FF00" stroke="#080808" strokeWidth="1" />
+    <rect x="15" y="25" width="2" height="1" fill="#F7F7F6" />
   </svg>
 );
 
@@ -236,6 +238,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   selectedAthlete,
   onExploreRoster,
 }) => {
+  const dialogRef = useDialogFocus(isOpen, onClose);
+  const reducedMotion = useReducedMotion();
   const [view, setView] = useState<'empty' | 'capsules' | 'creator' | 'checkout_success'>('capsules');
   const [capsules, setCapsules] = useState<CartCapsuleItem[]>(() =>
     typeof window !== 'undefined' ? loadAllCapsules() : [...DEFAULT_CAPSULE_DROPS],
@@ -311,17 +315,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     window.addEventListener('tmrw:capsules-updated', sync);
     return () => window.removeEventListener('tmrw:capsules-updated', sync);
   }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   const toggleFlipCard = (id: string) => {
     setHoveredSides((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -458,14 +451,24 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const previewClubUnit = Math.round(previewNetMargin * 0.15);
 
   return createPortal(
-    <div
+    <AnimatePresence>
+    {isOpen && <motion.div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Capital deployment drawer"
+      tabIndex={-1}
+      initial={{ opacity: 0, x: reducedMotion ? 0 : 32 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: reducedMotion ? 0 : 32 }}
+      transition={{ duration: reducedMotion ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
       data-lenis-prevent="true"
-      className="fixed inset-0 z-[90] bg-[#FFFFFF] text-[#0F0F11] flex flex-col overflow-y-auto selection:bg-[#CCFF00] selection:text-[#0F0F11] animate-fadeIn"
+      className="fixed inset-0 z-[90] bg-[#F7F7F6] text-[#080808] flex flex-col overflow-y-auto selection:bg-[#CCFF00] selection:text-[#080808]"
     >
       <header className="shrink-0 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-5 flex items-center justify-between border-b border-black/10">
         <BrandLockup onClick={onClose} />
 
-        <div className="hidden md:flex items-center gap-6 font-sans text-xs font-medium text-[#0F0F11]">
+        <div className="hidden md:flex items-center gap-6 font-sans text-xs font-medium text-[#080808]">
           <button
             type="button"
             onClick={() => {
@@ -500,8 +503,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             onClick={() => setView('creator')}
             className={`rounded-full px-3.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider cursor-pointer border transition-colors ${
               view === 'creator'
-                ? 'bg-[#0F0F11] text-[#CCFF00] border-[#0F0F11]'
-                : 'bg-[#EAEAE6] text-[#0F0F11] border-black/10 hover:bg-[#0F0F11] hover:text-white'
+                ? 'bg-[#080808] text-[#CCFF00] border-[#080808]'
+                : 'bg-[#EAEAE6] text-[#080808] border-black/10 hover:bg-[#080808] hover:text-white'
             }`}
           >
             Athlete Portal · Studio
@@ -513,7 +516,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <button
               type="button"
               onClick={() => setView('capsules')}
-              className="rounded-full bg-[#0F0F11] text-[#CCFF00] px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer"
+              className="rounded-full bg-[#080808] text-[#CCFF00] px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer"
             >
               {cartItems.reduce((s, i) => s + i.qty, 0)} Items · A${grossTotal.toLocaleString()}
             </button>
@@ -523,10 +526,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             onClick={onClose}
             title="Close [ESC]"
             aria-label="Close bag"
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/20 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#080808] hover:bg-white text-white hover:text-[#080808] border border-transparent hover:border-black/20 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
           >
             <span>Close</span>
-            <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">✕</span>
+            <span className="text-[11px] text-[#CCFF00] group-hover:text-[#080808] transition-colors">✕</span>
           </button>
         </div>
       </header>
@@ -537,7 +540,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <div className="max-w-md mx-auto text-center my-auto py-16">
               <RetroPixelCabinetIcon />
 
-              <h2 className="m-0 font-sans text-2xl sm:text-3xl font-bold tracking-[-0.02em] text-[#0F0F11] mb-5">
+              <h2 className="m-0 font-sans text-2xl sm:text-3xl font-bold tracking-[-0.02em] text-[#080808] mb-5">
                 Your cart is empty
               </h2>
 
@@ -545,7 +548,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <button
                   type="button"
                   onClick={() => setView('capsules')}
-                  className="rounded-full bg-[#CCFF00] hover:bg-[#0F0F11] text-[#0F0F11] hover:text-white px-7 py-3 font-sans text-xs font-bold tracking-tight transition-colors cursor-pointer border-0 shadow-sm"
+                  className="rounded-full bg-[#CCFF00] hover:bg-[#080808] text-[#080808] hover:text-white px-7 py-3 font-sans text-xs font-bold tracking-tight transition-colors cursor-pointer border-0 shadow-sm"
                 >
                   Explore athlete capsules
                 </button>
@@ -553,7 +556,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <button
                   type="button"
                   onClick={() => setView('creator')}
-                  className="rounded-full bg-white hover:bg-[#0F0F11] text-[#0F0F11] hover:text-white px-6 py-2.5 font-mono text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border border-black/10"
+                  className="rounded-full bg-white hover:bg-[#080808] text-[#080808] hover:text-white px-6 py-2.5 font-mono text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border border-black/10"
                 >
                   Open Capsule Studio →
                 </button>
@@ -569,18 +572,18 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-600 mb-1.5">
                     <span>ZERO-INVENTORY PRE-ORDER ENGINE</span>
                     <span>·</span>
-                    <span className="rounded bg-[#0F0F11] text-[#CCFF00] px-2 py-0.5">
+                    <span className="rounded bg-[#080808] text-[#CCFF00] px-2 py-0.5">
                       {hasPartnerActive ? '55 / 15 / 15 / 15 CO-LAB SPLIT' : '70 / 15 / 15 ROYALTY SPLIT'}
                     </span>
                   </div>
-                  <h2 className="m-0 font-sans text-3xl sm:text-5xl font-black uppercase tracking-[-0.03em] text-[#0F0F11] leading-none">
+                  <h2 className="m-0 font-sans text-3xl sm:text-5xl font-black uppercase tracking-[-0.03em] text-[#080808] leading-none">
                     Athlete Capsule Creator Studio<span className="text-[#CCFF00]">.</span>
                   </h2>
                 </div>
                 <button
                   type="button"
                   onClick={() => setView('capsules')}
-                  className="rounded-full bg-white hover:bg-[#0F0F11] text-[#0F0F11] hover:text-white px-5 py-2 font-mono text-[10px] font-bold uppercase cursor-pointer border border-black/15 transition-colors"
+                  className="rounded-full bg-white hover:bg-[#080808] text-[#080808] hover:text-white px-5 py-2 font-mono text-[10px] font-bold uppercase cursor-pointer border border-black/15 transition-colors"
                 >
                   ← Back to Showroom
                 </button>
@@ -599,7 +602,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             type="button"
                             onClick={() => setSpecimenSide('front')}
                             className={`rounded-full px-3 py-1 font-mono text-[9px] font-bold uppercase cursor-pointer border-0 transition-colors ${
-                              specimenSide === 'front' ? 'bg-[#0F0F11] text-[#CCFF00]' : 'bg-transparent text-[#0F0F11]'
+                              specimenSide === 'front' ? 'bg-[#080808] text-[#CCFF00]' : 'bg-transparent text-[#080808]'
                             }`}
                           >
                             Front
@@ -608,7 +611,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             type="button"
                             onClick={() => setSpecimenSide('back')}
                             className={`rounded-full px-3 py-1 font-mono text-[9px] font-bold uppercase cursor-pointer border-0 transition-colors ${
-                              specimenSide === 'back' ? 'bg-[#0F0F11] text-[#CCFF00]' : 'bg-transparent text-[#0F0F11]'
+                              specimenSide === 'back' ? 'bg-[#080808] text-[#CCFF00]' : 'bg-transparent text-[#080808]'
                             }`}
                           >
                             Back
@@ -691,7 +694,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <h3 className="m-0 font-sans text-lg font-black text-[#0F0F11]">
+                          <h3 className="m-0 font-sans text-lg font-black text-[#080808]">
                             {newGarmentTitle}
                           </h3>
                           <p className="m-0 mt-1 font-sans text-xs text-neutral-600">
@@ -699,7 +702,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           </p>
                         </div>
                         <div className="text-right shrink-0">
-                          <span className="font-sans text-2xl font-black text-[#0F0F11] block">
+                          <span className="font-sans text-2xl font-black text-[#080808] block">
                             A${newPrice}
                           </span>
                         </div>
@@ -708,17 +711,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       <div className="mt-4 rounded-xl bg-[#EAEAE6] p-3.5 font-mono text-[10px] space-y-1.5 border border-black/10">
                         <div className="flex justify-between text-neutral-700">
                           <span>{Math.round(athletePctPreview * 100)}% ATHLETE:</span>
-                          <strong className="text-[#0F0F11]">A${previewAthleteUnit} / unit</strong>
+                          <strong className="text-[#080808]">A${previewAthleteUnit} / unit</strong>
                         </div>
                         {hasPartnerActive && (
                           <div className="flex justify-between text-neutral-700">
                             <span>15% CO-LAB ({newCollabPartner.toUpperCase()}):</span>
-                            <strong className="text-[#0F0F11]">A${previewPartnerUnit} / unit</strong>
+                            <strong className="text-[#080808]">A${previewPartnerUnit} / unit</strong>
                           </div>
                         )}
                         <div className="flex justify-between text-neutral-700">
                           <span>15% JUNIOR CLUB:</span>
-                          <strong className="text-[#0F0F11]">A${previewClubUnit} / unit</strong>
+                          <strong className="text-[#080808]">A${previewClubUnit} / unit</strong>
                         </div>
                       </div>
                     </div>
@@ -741,8 +744,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               onClick={() => handleSelectChassis(chassis)}
                               className={`rounded-xl p-3.5 text-left transition-all cursor-pointer border ${
                                 isSelected
-                                  ? 'bg-[#0F0F11] text-white border-[#0F0F11]'
-                                  : 'bg-[#EAEAE6]/60 text-[#0F0F11] border-black/10 hover:bg-[#EAEAE6]'
+                                  ? 'bg-[#080808] text-white border-[#080808]'
+                                  : 'bg-[#EAEAE6]/60 text-[#080808] border-black/10 hover:bg-[#EAEAE6]'
                               }`}
                             >
                               <div className="flex items-center justify-between font-sans text-xs font-bold">
@@ -773,8 +776,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               onClick={() => setSelectedSwatchId(sw.id)}
                               className={`rounded-lg py-2 px-2 font-mono text-[9px] font-bold uppercase cursor-pointer border transition-all ${
                                 selectedSwatchId === sw.id
-                                  ? 'bg-[#0F0F11] text-[#CCFF00] border-[#0F0F11]'
-                                  : 'bg-[#EAEAE6] text-[#0F0F11] border-black/10'
+                                  ? 'bg-[#080808] text-[#CCFF00] border-[#080808]'
+                                  : 'bg-[#EAEAE6] text-[#080808] border-black/10'
                               }`}
                             >
                               {sw.label.split('·')[1]}
@@ -794,8 +797,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               onClick={() => setSelectedLockupStyle(st.id)}
                               className={`rounded-lg py-2 px-2 font-mono text-[9px] font-bold uppercase cursor-pointer border transition-all ${
                                 selectedLockupStyle === st.id
-                                  ? 'bg-[#0F0F11] text-[#CCFF00] border-[#0F0F11]'
-                                  : 'bg-[#EAEAE6] text-[#0F0F11] border-black/10'
+                                  ? 'bg-[#080808] text-[#CCFF00] border-[#080808]'
+                                  : 'bg-[#EAEAE6] text-[#080808] border-black/10'
                               }`}
                             >
                               {st.label}
@@ -844,7 +847,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     </div>
 
                     {newCollabPartner.trim().length > 0 && (
-                      <div className="rounded-xl bg-[#0F0F11] text-white p-3.5 flex flex-wrap items-center justify-between gap-3">
+                      <div className="rounded-xl bg-[#080808] text-white p-3.5 flex flex-wrap items-center justify-between gap-3">
                         <div className="font-mono text-[10px]">
                           <span className="text-[#CCFF00] font-bold uppercase block">
                             CO-BRANDED ROYALTY RAIL ({newCollabPartner.toUpperCase()})
@@ -855,7 +858,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           type="button"
                           onClick={() => setEnablePartnerRoyaltySplit((v) => !v)}
                           className={`rounded-full px-3.5 py-1.5 font-mono text-[9.5px] font-bold uppercase cursor-pointer border-0 ${
-                            enablePartnerRoyaltySplit ? 'bg-[#CCFF00] text-[#0F0F11]' : 'bg-white/15 text-white'
+                            enablePartnerRoyaltySplit ? 'bg-[#CCFF00] text-[#080808]' : 'bg-white/15 text-white'
                           }`}
                         >
                           {enablePartnerRoyaltySplit ? '✓ 55/15/15/15 Split' : '70/15/15 Solo Split'}
@@ -906,7 +909,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         type="checkbox"
                         checked={siaCleared}
                         onChange={(e) => setSiaCleared(e.target.checked)}
-                        className="mt-0.5 accent-[#0F0F11]"
+                        className="mt-0.5 accent-[#080808]"
                       />
                       <span className="font-mono text-[10px] text-neutral-700 leading-relaxed">
                         <strong>SPORT INTEGRITY AUSTRALIA &amp; TPA CLEARANCE:</strong> Verified sovereign athlete monogram IP.
@@ -917,7 +920,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <button
                     type="submit"
                     disabled={!siaCleared}
-                    className="w-full rounded-full bg-[#0F0F11] hover:bg-[#CCFF00] disabled:opacity-40 text-white hover:text-[#0F0F11] py-4 font-mono text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer border-0 shadow-md"
+                    className="w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] disabled:opacity-40 text-white hover:text-[#080808] py-4 font-mono text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer border-0 shadow-md"
                   >
                     Publish Vertical Specimen to Showroom →
                   </button>
@@ -934,7 +937,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500 block mb-2">
                     LIMITED ATHLETE CAPSULE DROPS · ZERO INVENTORY RISK
                   </span>
-                  <h2 className="m-0 font-sans text-3xl sm:text-5xl font-black uppercase tracking-[-0.03em] text-[#0F0F11] leading-none">
+                  <h2 className="m-0 font-sans text-3xl sm:text-5xl font-black uppercase tracking-[-0.03em] text-[#080808] leading-none">
                     Co-Branded Athlete Merch<span className="text-[#CCFF00]">.</span>
                   </h2>
                 </div>
@@ -944,7 +947,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     type="button"
                     onClick={() => setSponsorBulkMode(false)}
                     className={`rounded-full px-4 py-1.5 font-mono text-[10px] font-bold uppercase cursor-pointer border-0 transition-colors ${
-                      !sponsorBulkMode ? 'bg-[#0F0F11] text-[#CCFF00]' : 'bg-transparent text-[#0F0F11]'
+                      !sponsorBulkMode ? 'bg-[#080808] text-[#CCFF00]' : 'bg-transparent text-[#080808]'
                     }`}
                   >
                     Fan Drop (1x Unit)
@@ -953,7 +956,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     type="button"
                     onClick={() => setSponsorBulkMode(true)}
                     className={`rounded-full px-4 py-1.5 font-mono text-[10px] font-bold uppercase cursor-pointer border-0 transition-colors ${
-                      sponsorBulkMode ? 'bg-[#0F0F11] text-[#CCFF00]' : 'bg-transparent text-[#0F0F11]'
+                      sponsorBulkMode ? 'bg-[#080808] text-[#CCFF00]' : 'bg-transparent text-[#080808]'
                     }`}
                   >
                     Sponsor Venue Pack (25x Units)
@@ -963,7 +966,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
               <div className="rounded-2xl bg-white border border-black/15 px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 font-mono text-[10.5px]">
                 <span className="text-neutral-700">
-                  <strong className="text-[#0F0F11]">APPROACH B SPECIMEN INSPECTOR:</strong> Hover or tap any garment card below to fluidly cross-fade between the front retail lookbook and the back club postcode archive.
+                  <strong className="text-[#080808]">APPROACH B SPECIMEN INSPECTOR:</strong> Hover or tap any garment card below to fluidly cross-fade between the front retail lookbook and the back club postcode archive.
                 </span>
                 <span className="text-neutral-500">
                   70/15/15 · STRIPE CONNECT SPLIT
@@ -1007,7 +1010,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             }
                           }}
                         >
-                          <div className="absolute inset-0 z-0 overflow-hidden bg-[#0F0F11]">
+                          <div className="absolute inset-0 z-0 overflow-hidden bg-[#080808]">
                             <img
                               src={drop.frontImageUrl}
                               alt={`${drop.title} front lookbook`}
@@ -1038,7 +1041,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             <span
                               className={`px-3.5 py-1 rounded-full backdrop-blur-sm transition-colors duration-300 ${
                                 isHovered
-                                  ? 'bg-[#CCFF00] text-[#0F0F11]'
+                                  ? 'bg-[#CCFF00] text-[#080808]'
                                   : 'bg-black/60 text-[#CCFF00] border border-[#CCFF00]/30'
                               }`}
                             >
@@ -1106,16 +1109,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <div className="mt-5 mb-4">
                           <div className="flex justify-between font-mono text-[9.5px] uppercase text-neutral-500 mb-1.5">
                             <span>PRE-ORDER TALLY: {sold} / {cap} UNITS</span>
-                            <span className="text-[#0F0F11] font-bold">{pctBooked}% BOOKED · GREENLIT</span>
+                            <span className="text-[#080808] font-bold">{pctBooked}% BOOKED · GREENLIT</span>
                           </div>
                           <div className="w-full h-2 rounded-full bg-[#EAEAE6] overflow-hidden">
-                            <div className="h-full bg-[#0F0F11]" style={{ width: `${pctBooked}%` }} />
+                            <div className="h-full bg-[#080808]" style={{ width: `${pctBooked}%` }} />
                           </div>
                         </div>
 
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <h3 className="m-0 font-sans text-xl font-black text-[#0F0F11]">
+                            <h3 className="m-0 font-sans text-xl font-black text-[#080808]">
                               {drop.title}
                             </h3>
                             <p className="m-0 mt-1 font-sans text-xs text-neutral-600">
@@ -1123,7 +1126,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             </p>
                           </div>
                           <div className="text-right shrink-0">
-                            <span className="font-sans text-2xl font-black text-[#0F0F11] block">
+                            <span className="font-sans text-2xl font-black text-[#080808] block">
                               A${displayPrice.toLocaleString()}
                             </span>
                             <span className="font-mono text-[9px] uppercase text-neutral-500">
@@ -1137,7 +1140,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             <span className="text-neutral-600">
                               {Math.round(athletePct * 100)}% TO {drop.athleteName.toUpperCase()}:
                             </span>
-                            <strong className="text-[#0F0F11]">
+                            <strong className="text-[#080808]">
                               A${athleteTotal.toLocaleString()} {sponsorBulkMode ? '/ pack' : '/ unit'}
                             </strong>
                           </div>
@@ -1146,7 +1149,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               <span className="text-neutral-600">
                                 15% TO {drop.collabPartner.toUpperCase()}:
                               </span>
-                              <strong className="text-[#0F0F11]">
+                              <strong className="text-[#080808]">
                                 A${partnerTotal.toLocaleString()} {sponsorBulkMode ? '/ pack' : '/ unit'}
                               </strong>
                             </div>
@@ -1155,7 +1158,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             <span className="text-neutral-600">
                               15% TO {drop.clubName.toUpperCase()}:
                             </span>
-                            <strong className="text-[#0F0F11]">
+                            <strong className="text-[#080808]">
                               A${clubTotal.toLocaleString()} {sponsorBulkMode ? '/ pack' : '/ unit'}
                             </strong>
                           </div>
@@ -1174,8 +1177,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                                 }
                                 className={`w-9 h-9 rounded-xl font-mono text-xs font-bold cursor-pointer border transition-colors ${
                                   (selectedSize[drop.id] || 'L') === sz
-                                    ? 'bg-[#0F0F11] text-[#CCFF00] border-[#0F0F11]'
-                                    : 'bg-[#EAEAE6] text-[#0F0F11] border-black/10 hover:bg-[#0F0F11] hover:text-white'
+                                    ? 'bg-[#080808] text-[#CCFF00] border-[#080808]'
+                                    : 'bg-[#EAEAE6] text-[#080808] border-black/10 hover:bg-[#080808] hover:text-white'
                                 }`}
                               >
                                 {sz}
@@ -1183,7 +1186,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             ))}
                           </div>
                         ) : (
-                          <div className="rounded-xl bg-[#EAEAE6] px-3 py-2 font-mono text-[10px] font-bold text-[#0F0F11]">
+                          <div className="rounded-xl bg-[#EAEAE6] px-3 py-2 font-mono text-[10px] font-bold text-[#080808]">
                             SIZE CURVE: 3S·8M·9L·5XL
                           </div>
                         )}
@@ -1191,7 +1194,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <button
                           type="button"
                           onClick={() => addToCart(drop)}
-                          className="rounded-full bg-[#0F0F11] hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider cursor-pointer border-0 shadow-md transition-colors"
+                          className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider cursor-pointer border-0 shadow-md transition-colors"
                         >
                           {sponsorBulkMode
                             ? `+ Lock 25x Pack (A$${displayPrice.toLocaleString()})`
@@ -1204,7 +1207,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
 
               {cartItems.length > 0 && (
-                <div className="rounded-[24px] bg-[#0F0F11] text-white p-6 sm:p-8 flex flex-col gap-4 shadow-xl">
+                <div className="rounded-[24px] bg-[#080808] text-white p-6 sm:p-8 flex flex-col gap-4 shadow-xl">
                   <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                     <div className="space-y-2 flex-1">
                       <span className="font-mono text-[10px] uppercase tracking-widest text-[#CCFF00] block">
@@ -1244,7 +1247,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         type="button"
                         disabled={isCheckingOut}
                         onClick={handleStripeCheckout}
-                        className="rounded-full bg-[#CCFF00] disabled:opacity-50 text-[#0F0F11] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md hover:bg-white transition-colors"
+                        className="rounded-full bg-[#CCFF00] disabled:opacity-50 text-[#080808] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md hover:bg-white transition-colors"
                       >
                         {isCheckingOut ? 'Initialising Stripe...' : 'Checkout via Stripe Connect →'}
                       </button>
@@ -1252,7 +1255,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   </div>
 
                   {checkoutError && (
-                    <div className="rounded-xl bg-red-500/20 border border-red-400/40 px-4 py-2.5 font-mono text-xs text-red-200">
+                    <div className="rounded-xl bg-neutral-500/20 border border-neutral-400/40 px-4 py-2.5 font-mono text-xs text-neutral-200">
                       {checkoutError}
                     </div>
                   )}
@@ -1263,10 +1266,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
           {view === 'checkout_success' && (
             <div className="max-w-lg mx-auto text-center my-auto py-12 space-y-5">
-              <span className="inline-block rounded-full bg-[#CCFF00] text-[#0F0F11] font-mono text-[10px] font-bold uppercase tracking-widest px-4 py-1.5">
+              <span className="inline-block rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase tracking-widest px-4 py-1.5">
                 ✓ ORDER LOCKED · ROYALTY CLEARED
               </span>
-              <h2 className="m-0 font-sans text-4xl font-black uppercase tracking-tight text-[#0F0F11]">
+              <h2 className="m-0 font-sans text-4xl font-black uppercase tracking-tight text-[#080808]">
                 Backed the contender<span className="text-[#CCFF00]">.</span>
               </h2>
               <p className="m-0 font-sans text-sm text-neutral-700 leading-relaxed">
@@ -1284,23 +1287,24 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     setCartItems([]);
                     setView('empty');
                   }}
-                  className="rounded-full bg-[#0F0F11] text-white px-6 py-3 font-mono text-[10px] font-bold uppercase tracking-widest cursor-pointer border-0"
+                  className="rounded-full bg-[#080808] text-white px-6 py-3 font-mono text-[10px] font-bold uppercase tracking-widest cursor-pointer border-0"
                 >
                   Back to Empty Bag
                 </button>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/25 px-6 py-3 font-sans text-xs font-bold transition-all duration-300 cursor-pointer group"
+                  className="rounded-full bg-[#080808] hover:bg-white text-white hover:text-[#080808] border border-transparent hover:border-black/25 px-6 py-3 font-sans text-xs font-bold transition-all duration-300 cursor-pointer group"
                 >
-                  Close <span className="text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">✕</span>
+                  Close <span className="text-[#CCFF00] group-hover:text-[#080808] transition-colors">✕</span>
                 </button>
               </div>
             </div>
           )}
         </div>
       </div>
-    </div>,
+    </motion.div>}
+    </AnimatePresence>,
     document.body,
   );
 };

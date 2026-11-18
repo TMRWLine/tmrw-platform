@@ -5,7 +5,7 @@ interface HeroFluidRevealProps {
   imageSrc: string;
 }
 
-/** Per-frame trail fade at 60fps — reaches ~0.04 mask in 1.2–1.8s after input stops. */
+/** Per-frame trail fade at 60fps · reaches ~0.04 mask in 1.2–1.8s after input stops. */
 const TRAIL_DECAY = 0.965;
 
 const VERT = /* glsl */ `

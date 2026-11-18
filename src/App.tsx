@@ -59,6 +59,7 @@ import { CoverHero, PAGE_SHELL } from './components/CoverHero';
 import { ManifestoTrail } from './components/ManifestoTrail';
 import { BroadcastMatrix } from './components/BroadcastMatrix';
 import { RosterGrid } from './components/RosterGrid';
+import { RosterSkeleton } from './components/RosterSkeleton';
 import { AthleteCard } from './components/AthleteCard';
 import { SettlementLedger } from './components/SettlementLedger';
 import { SiteFooter } from './components/SiteFooter';
@@ -685,7 +686,7 @@ export function MarketplaceApp() {
       />
 
       {view === 'sponsor' && (
-        <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden bg-[#08080A]">
+        <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden bg-[#080808]">
           <LivingContours />
         </div>
       )}
@@ -727,13 +728,13 @@ export function MarketplaceApp() {
           <SiteFooter onHome={() => navigateSection('top')} />
         </div>
       ) : view === 'brisbane-runway' ? (
-        <div className="relative z-10 min-h-screen w-full bg-[#0A0A0A] pt-[74px]">
+        <div className="relative z-10 min-h-screen w-full bg-[#080808] pt-[74px]">
           <SyndicateRunway onOpenSyndicateEnquiry={() => setIsSyndicateEnquiryOpen(true)} />
           <SiteFooter onHome={() => navigateSection('top')} tone="dark" />
         </div>
       ) : view === 'landing' ? (
-        <div className="landing-scroll relative z-10 w-full bg-[#FFFFFF]">
-          <main className="bg-[#FFFFFF]">
+        <div className="landing-scroll relative z-10 w-full bg-[#F7F7F6]">
+          <main className="bg-[#F7F7F6]">
             <div className={`${PAGE_SHELL} pt-20`}>
               <CoverHero onNavigateSection={navigateSection} />
             </div>
@@ -759,7 +760,7 @@ export function MarketplaceApp() {
       ) : (
       <main className="page bg-transparent">
         <div className="page-head editorial-copy border-b border-white/10" id="athlete-roster">
-          <p className="font-mono text-xs tracking-widest uppercase text-[#D2FF00] mb-3">
+          <p className="font-mono text-xs tracking-widest uppercase text-[#CCFF00] mb-3">
             // ENTERPRISE WORKSPACE
           </p>
           <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white mt-0">
@@ -792,17 +793,20 @@ export function MarketplaceApp() {
             />
             <div className="radius-filter">
               <span className="radius-filter-label">Radius:</span>
-              <div className="radius-toggle">
+              <div className="radius-toggle" role="group" aria-label="Spatial catchment radius">
                 <button
                   className={catchmentTier === null && radiusFilter === '25km' ? 'active' : ''}
+                  aria-pressed={catchmentTier === null && radiusFilter === '25km'}
                   onClick={() => { setCatchmentTier(null); setRadiusFilter('25km'); }}
                 >25km</button>
                 <button
                   className={catchmentTier === null && radiusFilter === '50km' ? 'active' : ''}
+                  aria-pressed={catchmentTier === null && radiusFilter === '50km'}
                   onClick={() => { setCatchmentTier(null); setRadiusFilter('50km'); }}
                 >50km</button>
                 <button
                   className={catchmentTier === null && radiusFilter === 'all' ? 'active' : ''}
+                  aria-pressed={catchmentTier === null && radiusFilter === 'all'}
                   onClick={() => { setCatchmentTier(null); setRadiusFilter('all'); }}
                 >All Postcodes</button>
               </div>
@@ -816,10 +820,7 @@ export function MarketplaceApp() {
               />
             </div>
             {loadingList ? (
-              <div className="state">
-                <div className="spinner" />
-                Loading athletes…
-              </div>
+              <RosterSkeleton />
             ) : (
               <div className="card-grid">
                 {athletes.filter(Boolean).map((a, i) => (
@@ -1082,7 +1083,7 @@ export function MarketplaceApp() {
       />
 
       {athleteSurface === 'terminal' && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#060709]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#080808]">
           <AthleteProfileManager
             key={terminalKey}
             onExit={exitAthleteSurface}
@@ -1093,7 +1094,7 @@ export function MarketplaceApp() {
       )}
 
       {athleteSurface === 'dashboard' && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#060709]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#080808]">
           <AthleteCommercialDashboard
             onExit={exitAthleteSurface}
             onEditProfile={() => setAthleteSurface('terminal')}
@@ -1162,7 +1163,7 @@ function MarketplaceAthleteCard({
     <AthleteCard
       name={name}
       initials={athlete?.initials || initials(name)}
-      sportLeague={athlete?.sport ?? '\u2014'}
+      sportLeague={athlete?.sport ?? '\u00B7'}
       catchmentTag={catchmentTag}
       tags={tags}
       athlete={athlete}
@@ -1292,7 +1293,7 @@ function ProfileModal({
           <div style={{ flex: 1 }}>
             <h2>{athleteDisplayName(athlete)}</h2>
             <div className="sub">
-              {athlete.sport ?? '—'}
+              {athlete.sport ?? '·'}
               {athlete.current_club ? ` · ${athlete.current_club}` : ''}
             </div>
           </div>
@@ -1328,17 +1329,17 @@ function ProfileModal({
           {tab === 'overview' && (
             <>
               <div className="info-grid">
-                <InfoRow label="Position" value={athlete.profile_data?.position ?? '—'} />
-                <InfoRow label="Age" value={athlete.profile_data?.age != null ? String(athlete.profile_data.age) : '—'} />
+                <InfoRow label="Position" value={athlete.profile_data?.position ?? '·'} />
+                <InfoRow label="Age" value={athlete.profile_data?.age != null ? String(athlete.profile_data.age) : '·'} />
                 <InfoRow
                   label="Market Value"
-                  value={typeof mv === 'number' ? formatCurrency(mv, mvCurrency) : '—'}
+                  value={typeof mv === 'number' ? formatCurrency(mv, mvCurrency) : '·'}
                 />
                 <InfoRow
                   label="Followers"
                   value={athlete.follower_count != null ? String(Math.trunc(athlete.follower_count)) : '-'}
                 />
-                <InfoRow label="Postcode" value={athlete.postcode ?? '—'} />
+                <InfoRow label="Postcode" value={athlete.postcode ?? '·'} />
                 <InfoRow label="Agreement" value={statusBadge(athlete.agreement_status).label} />
               </div>
 
@@ -1351,12 +1352,12 @@ function ProfileModal({
                   {athlete.master_licence_signed ? (
                     <>
                       <BadgeCheck size={16} />
-                      <span>2-Year Master Licence MOU — Signed</span>
+                      <span>2-Year Master Licence MOU · Signed</span>
                     </>
                   ) : (
                     <>
                       <X size={16} />
-                      <span>2-Year Master Licence MOU — Not Signed</span>
+                      <span>2-Year Master Licence MOU · Not Signed</span>
                     </>
                   )}
                 </div>
@@ -1853,16 +1854,16 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         <div className="ledger-tenure-grid">
           <div className="ledger-tenure-cell">
             <span className="ledger-tenure-label">Start Date</span>
-            <span className="ledger-tenure-value">{startDate ? new Date(startDate).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+            <span className="ledger-tenure-value">{startDate ? new Date(startDate).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '·'}</span>
           </div>
           <div className="ledger-tenure-cell">
             <span className="ledger-tenure-label">End Date</span>
-            <span className="ledger-tenure-value">{endDate ? new Date(endDate).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+            <span className="ledger-tenure-value">{endDate ? new Date(endDate).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '·'}</span>
           </div>
           <div className="ledger-tenure-cell">
             <span className="ledger-tenure-label">Days to Expiry</span>
             <span className={`ledger-tenure-value ${daysToExpiry != null && daysToExpiry <= 30 ? 'warn' : ''}`}>
-              {daysToExpiry != null ? `${daysToExpiry} days` : '—'}
+              {daysToExpiry != null ? `${daysToExpiry} days` : '·'}
             </span>
           </div>
           <div className="ledger-tenure-cell">
@@ -1888,7 +1889,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
               <p>
                 This agreement expires in {daysToExpiry} day{daysToExpiry !== 1 ? 's' : ''}.
                 {autoRenewFlag
-                  ? ' Auto-renewal is enabled — the agreement will renew automatically unless cancelled.'
+                  ? ' Auto-renewal is enabled · the agreement will renew automatically unless cancelled.'
                   : ' Review and initiate renewal to maintain continuity.'}
               </p>
             </div>

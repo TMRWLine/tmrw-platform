@@ -163,13 +163,13 @@ export function BrandKitTab({ athlete, onSignMOU }: BrandKitTabProps) {
             ) : videoUrl ? (
               <div className="upload-replace">
                 <FileVideo size={20} />
-                <span>Video loaded — click to replace</span>
+                <span>Video loaded · click to replace</span>
               </div>
             ) : (
               <div className="upload-idle">
                 <UploadCloud size={24} />
                 <span>Drop match footage here or click to browse</span>
-                <span className="upload-hint">MP4, MOV, AVI — max 500MB</span>
+                <span className="upload-hint">MP4, MOV, AVI · max 500MB</span>
               </div>
             )}
           </div>
@@ -262,7 +262,7 @@ export function BrandKitTab({ athlete, onSignMOU }: BrandKitTabProps) {
           <span>
             {dataSource === 'twelvelabs'
               ? 'Events detected via TwelveLabs AI'
-              : 'Mock event data — TwelveLabs API key not configured'}
+              : 'Mock event data · TwelveLabs API key not configured'}
           </span>
         </div>
         {ingestionError && (
@@ -312,7 +312,7 @@ export function BrandKitTab({ athlete, onSignMOU }: BrandKitTabProps) {
           <InfoRow label="Watermark ID" value={`WM-${(athlete?.id ?? 'unknown').slice(0, 8).toUpperCase()}`} />
           <InfoRow
             label="Licence Status"
-            value={signed ? 'Licensed (2yr MOU)' : 'Unlicensed'}
+            value={signed ? 'Licenced (2yr MOU)' : 'Unlicenced'}
           />
           <InfoRow
             label="Follower Reach"
@@ -370,7 +370,7 @@ export function BrandKitTab({ athlete, onSignMOU }: BrandKitTabProps) {
           {signed && (
             <div className="asset-unlocked-banner">
               <CheckCircle2 size={14} />
-              <span>MOU signed — all brand assets unlocked for download.</span>
+              <span>MOU signed · all brand assets unlocked for download.</span>
             </div>
           )}
         </div>
@@ -468,8 +468,8 @@ function BrandLogoSVG({ athlete, variant }: { athlete: Athlete; variant: 'shield
   if (variant === 'monogram') {
     return (
       <svg viewBox="0 0 120 120" width="100" height="100" xmlns="http://www.w3.org/2000/svg" className="brand-logo-svg">
-        <rect x="10" y="10" width="100" height="100" fill="#000000" stroke="#000000" strokeWidth="2" />
-        <text x="60" y="72" textAnchor="middle" fill="#FFFFFF" fontSize="40" fontWeight="800" fontFamily="Inter, sans-serif">
+        <rect x="10" y="10" width="100" height="100" fill="#080808" stroke="#080808" strokeWidth="2" />
+        <text x="60" y="72" textAnchor="middle" fill="#F7F7F6" fontSize="40" fontWeight="800" fontFamily="Inter, sans-serif">
           {initials}
         </text>
       </svg>
@@ -480,15 +480,15 @@ function BrandLogoSVG({ athlete, variant }: { athlete: Athlete; variant: 'shield
     const givenName = firstName(athlete?.name);
     return (
       <svg viewBox="0 0 200 80" width="140" height="56" xmlns="http://www.w3.org/2000/svg" className="brand-logo-svg">
-        <circle cx="24" cy="40" r="18" fill="#000000" stroke="#000000" strokeWidth="2.5" />
-        <text x="24" y="46" textAnchor="middle" fill="#FFFFFF" fontSize="14" fontWeight="800" fontFamily="Inter, sans-serif">
+        <circle cx="24" cy="40" r="18" fill="#080808" stroke="#080808" strokeWidth="2.5" />
+        <text x="24" y="46" textAnchor="middle" fill="#F7F7F6" fontSize="14" fontWeight="800" fontFamily="Inter, sans-serif">
           {initials}
         </text>
-        <text x="52" y="38" fill="#000000" fontSize="16" fontWeight="700" fontFamily="Inter, sans-serif">
+        <text x="52" y="38" fill="#080808" fontSize="16" fontWeight="700" fontFamily="Inter, sans-serif">
           {givenName.toUpperCase()}
         </text>
         <text x="52" y="54" fill="#5A5A58" fontSize="8" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing="1.5">
-          tmrw/.
+          tmrw<tspan fill="#B8FF00">/.</tspan>
         </text>
       </svg>
     );
@@ -498,11 +498,11 @@ function BrandLogoSVG({ athlete, variant }: { athlete: Athlete; variant: 'shield
     <svg viewBox="0 0 120 140" width="100" height="116" xmlns="http://www.w3.org/2000/svg" className="brand-logo-svg">
       <path
         d="M60 8 L108 24 L108 70 Q108 100 60 128 Q12 100 12 70 L12 24 Z"
-        fill="#000000"
-        stroke="#000000"
+        fill="#080808"
+        stroke="#080808"
         strokeWidth="2.5"
       />
-      <text x="60" y="68" textAnchor="middle" fill="#FFFFFF" fontSize="28" fontWeight="800" fontFamily="Inter, sans-serif">
+      <text x="60" y="68" textAnchor="middle" fill="#F7F7F6" fontSize="28" fontWeight="800" fontFamily="Inter, sans-serif">
         {initials}
       </text>
       <text x="60" y="90" textAnchor="middle" fill="#8A8A88" fontSize="7" fontWeight="600" fontFamily="Inter, sans-serif" letterSpacing="1">
@@ -528,22 +528,22 @@ function BrandOverlaySVG({ athlete, signed }: { athlete: Athlete; signed: boolea
     >
       {/* Top-left brand chip */}
       <g opacity="0.85">
-        <rect x="8" y="8" width="70" height="24" fill="#000000" stroke="#000000" strokeWidth="1" />
-        <text x="14" y="24" fill="#FFFFFF" fontSize="9" fontWeight="700" fontFamily="Inter, sans-serif" letterSpacing="0.5">
-          tmrw/.
+        <rect x="8" y="8" width="70" height="24" fill="#080808" stroke="#080808" strokeWidth="1" />
+        <text x="14" y="24" fill="#F7F7F6" fontSize="9" fontWeight="700" fontFamily="Inter, sans-serif" letterSpacing="0.5">
+          tmrw<tspan fill="#B8FF00">/.</tspan>
         </text>
       </g>
       {/* Bottom watermark */}
       <g opacity="0.75">
-        <rect x="8" y="288" width="164" height="24" fill="#000000" />
-        <circle cx="22" cy="300" r="8" fill="none" stroke="#FFFFFF" strokeWidth="1.5" />
-        <text x="22" y="304" textAnchor="middle" fill="#FFFFFF" fontSize="7" fontWeight="800" fontFamily="Inter, sans-serif">
+        <rect x="8" y="288" width="164" height="24" fill="#080808" />
+        <circle cx="22" cy="300" r="8" fill="none" stroke="#F7F7F6" strokeWidth="1.5" />
+        <text x="22" y="304" textAnchor="middle" fill="#F7F7F6" fontSize="7" fontWeight="800" fontFamily="Inter, sans-serif">
           {initials}
         </text>
-        <text x="36" y="298" fill="#FFFFFF" fontSize="8" fontWeight="600" fontFamily="Inter, sans-serif">
+        <text x="36" y="298" fill="#F7F7F6" fontSize="8" fontWeight="600" fontFamily="Inter, sans-serif">
           {displayName(athlete?.name).toUpperCase().slice(0, 18)}
         </text>
-        <text x="36" y="308" fill={signed ? '#FFFFFF' : '#888'} fontSize="6" fontFamily="Inter, sans-serif" letterSpacing="0.5">
+        <text x="36" y="308" fill={signed ? '#F7F7F6' : '#888'} fontSize="6" fontFamily="Inter, sans-serif" letterSpacing="0.5">
           {signed ? 'LICENCED · 2YR MOU' : 'UNLICENCED'}
         </text>
       </g>
@@ -557,24 +557,24 @@ function WatermarkSVG({ athlete }: { athlete: Athlete }) {
   const wmId = `WM-${(athlete?.id ?? 'unknown').slice(0, 8).toUpperCase()}`;
   return (
     <svg viewBox="0 0 200 200" width="180" height="180" xmlns="http://www.w3.org/2000/svg" className="watermark-svg">
-      <circle cx="100" cy="100" r="92" fill="#000000" stroke="#000000" strokeWidth="3" />
-      <circle cx="100" cy="100" r="78" fill="none" stroke="#FFFFFF" strokeWidth="1" opacity="0.3" />
-      <path d="M100 30 L110 55 L100 50 L90 55 Z" fill="#FFFFFF" opacity="0.8" />
-      <text x="100" y="95" textAnchor="middle" fill="#FFFFFF" fontSize="13" fontWeight="700" fontFamily="Inter, sans-serif">
+      <circle cx="100" cy="100" r="92" fill="#080808" stroke="#080808" strokeWidth="3" />
+      <circle cx="100" cy="100" r="78" fill="none" stroke="#F7F7F6" strokeWidth="1" opacity="0.3" />
+      <path d="M100 30 L110 55 L100 50 L90 55 Z" fill="#F7F7F6" opacity="0.8" />
+      <text x="100" y="95" textAnchor="middle" fill="#F7F7F6" fontSize="13" fontWeight="700" fontFamily="Inter, sans-serif">
         VERIFIED
       </text>
       <text x="100" y="112" textAnchor="middle" fill="#999" fontSize="8" fontFamily="Inter, sans-serif" letterSpacing="1.5">
         {wmId}
       </text>
       <line x1="55" y1="125" x2="145" y2="125" stroke="#333" strokeWidth="1" />
-      <text x="100" y="140" textAnchor="middle" fill="#FFFFFF" fontSize="7" fontWeight="600" fontFamily="Inter, sans-serif">
-        tmrw/.
+      <text x="100" y="140" textAnchor="middle" fill="#F7F7F6" fontSize="7" fontWeight="600" fontFamily="Inter, sans-serif">
+        tmrw<tspan fill="#B8FF00">/.</tspan>
       </text>
       <text x="100" y="152" textAnchor="middle" fill="#999" fontSize="6" fontFamily="Inter, sans-serif">
         {athlete.master_licence_signed ? 'LICENCED · 2YR MOU' : 'UNLICENCED'}
       </text>
       {athlete.master_licence_signed && (
-        <path d="M88 165 L96 173 L114 155" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M88 165 L96 173 L114 155" fill="none" stroke="#F7F7F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       )}
     </svg>
   );

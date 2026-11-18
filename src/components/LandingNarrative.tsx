@@ -18,15 +18,15 @@ export function LandingNarrative({
         <section className="landing-chapter landing-chapter-carbon landing-chapter-flush bg-transparent" aria-labelledby="players-heading">
           <div className={CHAPTER_SHELL}>
             <div className="max-w-4xl">
-              <div className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
+              <div className="font-mono text-xs tracking-widest uppercase mb-2 text-[#CCFF00]">
                 // SOVEREIGN TALENT
               </div>
               <h2
                 id="players-heading"
                 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-white mt-0"
               >
-                STOP CHASING <span className="font-serif italic font-normal text-[#D2FF00]">HANDOUTS</span>. OWN YOUR{' '}
-                <span className="font-serif italic font-normal text-[#D2FF00]">TURF</span>.
+                STOP CHASING <span className="font-serif italic font-normal text-[#CCFF00]">HANDOUTS</span>. OWN YOUR{' '}
+                <span className="font-serif italic font-normal text-[#CCFF00]">TURF</span>.
               </h2>
             </div>
             <div className="landing-player-layout w-full flex-none mt-8">
@@ -38,7 +38,7 @@ export function LandingNarrative({
                 <button
                   type="button"
                   onClick={onAthlete}
-                  className="bg-[#D2FF00] text-black font-mono font-bold text-xs uppercase tracking-widest px-8 py-4 transition-transform hover:scale-[1.02] border-0 cursor-pointer"
+                  className="bg-[#CCFF00] text-black font-mono font-bold text-xs uppercase tracking-widest px-8 py-4 transition-transform hover:scale-[1.02] border-0 cursor-pointer"
                 >
                   CLAIM YOUR ATHLETE PROFILE →
                 </button>
@@ -61,15 +61,15 @@ export function LandingNarrative({
             className={`landing-h-panel w-screen flex-shrink-0 ${CHAPTER_SHELL}`}
           >
             <section className="landing-chapter landing-chapter-carbon landing-h-copy bg-transparent" aria-labelledby="brands-heading">
-              <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
+              <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#CCFF00]">
                 // LOCAL DOMINANCE
               </p>
               <h2
                 id="brands-heading"
                 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-white mt-0"
               >
-                OWN THE <span className="font-serif italic font-normal text-[#D2FF00]">POSTCODE</span>. RUN THE{' '}
-                <span className="font-serif italic font-normal text-[#D2FF00]">FLEET</span>.
+                OWN THE <span className="font-serif italic font-normal text-[#CCFF00]">POSTCODE</span>. RUN THE{' '}
+                <span className="font-serif italic font-normal text-[#CCFF00]">FLEET</span>.
               </h2>
               <p className="landing-lede landing-lede-light">
                 Stop setting marketing capital on fire across digital ad networks that customers tune out. Turn suburban
@@ -118,7 +118,7 @@ export function LandingNarrative({
             className={`landing-h-panel w-screen flex-shrink-0 ${CHAPTER_SHELL}`}
           >
             <section className="landing-chapter landing-chapter-carbon landing-h-copy bg-transparent" aria-labelledby="pathways-heading">
-              <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
+              <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#CCFF00]">
                 // ROSTER SPECIFICATIONS
               </p>
               <h2
@@ -126,7 +126,7 @@ export function LandingNarrative({
                 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-white mt-0"
               >
                 DEPLOY ROSTER FLEETS WITH{' '}
-                <span className="font-serif italic font-normal text-[#D2FF00]">SOFTWARE SPEED</span>.
+                <span className="font-serif italic font-normal text-[#CCFF00]">SOFTWARE SPEED</span>.
               </h2>
             </section>
             <div className="catchment-grid landing-tier-grid">
@@ -136,7 +136,7 @@ export function LandingNarrative({
                     ≤ 5 KM RADIUS | In-Kind Drops
                   </span>
                 </div>
-                <h3 className="catchment-card-title" style={{ color: '#FFFFFF' }}>
+                <h3 className="catchment-card-title" style={{ color: '#F7F7F6' }}>
                   Storefront Radius
                 </h3>
                 <p className="landing-tier-copy">
@@ -150,7 +150,7 @@ export function LandingNarrative({
                     5 – 25 KM CLUSTER | A$2000 – A$8000 per Cluster
                   </span>
                 </div>
-                <h3 className="catchment-card-title" style={{ color: '#FFFFFF' }}>
+                <h3 className="catchment-card-title" style={{ color: '#F7F7F6' }}>
                   Metro Reach
                 </h3>
                 <p className="landing-tier-copy">
@@ -164,7 +164,7 @@ export function LandingNarrative({
                     &gt; 25 KM NETWORK | Enterprise Commitment
                   </span>
                 </div>
-                <h3 className="catchment-card-title" style={{ color: '#FFFFFF' }}>
+                <h3 className="catchment-card-title" style={{ color: '#F7F7F6' }}>
                   Regional IP
                 </h3>
                 <p className="landing-tier-copy">
@@ -181,7 +181,7 @@ export function LandingNarrative({
         <section className="landing-chapter landing-chapter-carbon landing-chapter-flush landing-close bg-transparent" aria-labelledby="close-heading">
           <div className={CHAPTER_SHELL}>
             <div className="max-w-4xl">
-              <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#D2FF00]">
+              <p className="font-mono text-xs tracking-widest uppercase mb-2 text-[#CCFF00]">
                 // THE 2026 RUNWAY
               </p>
               <h2 id="close-heading" className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-[0.9] text-white mt-0">
@@ -217,7 +217,7 @@ function AthleteTelemetryPanel() {
     >
       <div className="athlete-telemetry-head font-mono">
         <span>[SPECIMEN 001 // VERIFIED ROSTER]</span>
-        <span className="text-[#D2FF00]">[STATUS: ACTIVE]</span>
+        <span className="text-[#CCFF00]">[STATUS: ACTIVE]</span>
       </div>
       <div className="athlete-metric-grid">
         <article>

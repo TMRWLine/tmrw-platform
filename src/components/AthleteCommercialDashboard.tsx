@@ -134,17 +134,17 @@ export const AthleteCommercialDashboard: React.FC<AthleteCommercialDashboardProp
         type="button"
         onClick={onExit}
         data-testid="dashboard-back-to-roster"
-        className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#D2FF00] hover:text-[#D2FF00] transition-colors"
+        className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors"
       >
         ← Back to Roster [ESC]
       </button>
-      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#D2FF00]">
+      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#CCFF00]">
         ATHLETE COMMERCIAL DASHBOARD
       </span>
       <button
         type="button"
         onClick={onEditProfile}
-        className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#D2FF00] hover:text-[#D2FF00] transition-colors"
+        className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors"
       >
         Edit Talent Profile
       </button>
@@ -153,7 +153,7 @@ export const AthleteCommercialDashboard: React.FC<AthleteCommercialDashboardProp
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#060709] text-white">
+      <div className="min-h-screen bg-[#080808] text-white">
         {topBar}
         <div className="flex items-center justify-center py-32 font-mono text-[11px] tracking-[0.2em]">
           LOADING COMMERCIAL DASHBOARD...
@@ -164,19 +164,19 @@ export const AthleteCommercialDashboard: React.FC<AthleteCommercialDashboardProp
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-[#060709] text-white">
+      <div className="min-h-screen bg-[#080808] text-white">
         {topBar}
         <div className="max-w-xl mx-auto py-24 px-6 space-y-4">
           <div
             role="alert"
-            className="border border-red-500/50 bg-red-500/10 px-4 py-3 font-mono text-[11px] tracking-[0.08em] text-red-300"
+            className="border border-neutral-500/50 bg-neutral-500/10 px-4 py-3 font-mono text-[11px] tracking-[0.08em] text-neutral-300"
           >
             {error ?? 'Dashboard unavailable.'}
           </div>
           <button
             type="button"
             onClick={() => void load()}
-            className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#D2FF00] hover:text-[#D2FF00] transition-colors"
+            className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors"
           >
             Retry
           </button>
@@ -197,12 +197,12 @@ export const AthleteCommercialDashboard: React.FC<AthleteCommercialDashboardProp
   ];
 
   return (
-    <div className="min-h-screen bg-[#060709] text-white selection:bg-[#D2FF00] selection:text-black">
+    <div className="min-h-screen bg-[#080808] text-white selection:bg-[#CCFF00] selection:text-black">
       {topBar}
       <div className="max-w-6xl mx-auto px-6 py-10 lg:px-16 space-y-8">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white/10 border border-white/10">
           {stats.map((s) => (
-            <div key={s.label} className="bg-[#060709] p-4">
+            <div key={s.label} className="bg-[#080808] p-4">
               <span className="block font-mono text-[9px] uppercase tracking-[0.2em] text-white/60 mb-1">
                 {s.label}
               </span>
@@ -214,7 +214,7 @@ export const AthleteCommercialDashboard: React.FC<AthleteCommercialDashboardProp
           <button
             type="button"
             onClick={() => setFocus('overview')}
-            className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#D2FF00] hover:text-[#D2FF00] transition-colors"
+            className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#CCFF00] hover:text-[#CCFF00] transition-colors"
           >
             ← Back to overview
           </button>

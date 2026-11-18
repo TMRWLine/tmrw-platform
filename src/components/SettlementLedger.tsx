@@ -30,9 +30,9 @@ export const SettlementLedger: React.FC = () => {
     <section
       id="settlement-ledger"
       aria-labelledby="ledger-heading"
-      className="w-full bg-[#FFFFFF] pt-8 pb-12 scroll-mt-[100px]"
+      className="w-full bg-[#F7F7F6] pt-8 pb-12 scroll-mt-[100px]"
     >
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full my-12 bg-[#FFFFFF]">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full my-12 bg-[#F7F7F6]">
         
         {/* Header with inline-block text wrapping to lock punctuation */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end pb-8 mb-8">
@@ -190,7 +190,7 @@ export const SettlementLedger: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsReceiptModalOpen(true)}
-              className="w-full bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-6 rounded-xl transition-all uppercase tracking-wider text-center cursor-pointer mt-4 block shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.3),0_0_15px_rgba(184,255,0,0.15)] hover:bg-neutral-900 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.4),0_0_25px_rgba(184,255,0,0.3)] active:translate-y-[1px]"
+              className="w-full bg-[#080808] text-white font-mono font-bold text-xs py-4 px-6 rounded-xl transition-all uppercase tracking-wider text-center cursor-pointer mt-4 block shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.3),0_0_15px_rgba(184,255,0,0.15)] hover:bg-neutral-900 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.4),0_0_25px_rgba(184,255,0,0.3)] active:translate-y-[1px]"
             >
               INSPECT AUDITED CLEARING RECEIPT →
             </button>
@@ -258,7 +258,7 @@ export const SettlementLedger: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsReceiptModalOpen(false)}
-              className="w-full mt-8 bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-6 rounded-xl transition-all uppercase tracking-wider text-center cursor-pointer block shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.3),0_0_15px_rgba(184,255,0,0.15)] hover:bg-neutral-900 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.4),0_0_25px_rgba(184,255,0,0.3)] active:translate-y-[1px]"
+              className="w-full mt-8 bg-[#080808] text-white font-mono font-bold text-xs py-4 px-6 rounded-xl transition-all uppercase tracking-wider text-center cursor-pointer block shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.3),0_0_15px_rgba(184,255,0,0.15)] hover:bg-neutral-900 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.4),0_0_25px_rgba(184,255,0,0.3)] active:translate-y-[1px]"
             >
               CLOSE CERTIFICATE
             </button>
