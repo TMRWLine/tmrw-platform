@@ -2939,8 +2939,8 @@ button {
 .sponsor-card-selected {
   background: var(--text) !important;
 }
-.sponsor-card-selected .card h3,
-.sponsor-card-selected .card .sub,
+.sponsor-card-selected h3,
+.sponsor-card-selected .sub,
 .sponsor-card-selected .badge { color: var(--bg); border-color: rgba(255,255,255,0.3); }
 .sponsor-card-selected .badge.success { color: var(--bg); border-color: rgba(255,255,255,0.3); }
 .sponsor-card-selected .avatar { background: var(--bg); color: var(--text); }
