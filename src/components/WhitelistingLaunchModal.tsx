@@ -354,7 +354,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                     type="button"
                     onClick={() => copyText('meta', resolvedMetaToken)}
                     disabled={!resolvedMetaToken}
-                    className="rounded-full bg-[#080808] text-white px-3 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer"
+                    className="rounded-full bg-[#080808] text-white px-3 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {copiedField === 'meta' ? '✓ COPIED' : 'COPY'}
                   </button>
@@ -365,7 +365,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                 type="button"
                 onClick={() => setMetaAuthorised(true)}
                 disabled={!resolvedMetaToken}
-                className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
+                className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {metaAuthorised
                   ? `✓ AUTHORISED (${metaBmId} · A$${dailySpend}/DAY CAP)`
@@ -400,7 +400,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                     type="button"
                     onClick={() => copyText('tiktok', resolvedSparkCode)}
                     disabled={!resolvedSparkCode}
-                    className="rounded-full bg-[#080808] text-white px-3 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer"
+                    className="rounded-full bg-[#080808] text-white px-3 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {copiedField === 'tiktok' ? '✓ COPIED' : 'COPY'}
                   </button>
@@ -422,7 +422,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                 type="button"
                 onClick={() => setTiktokSynced(true)}
                 disabled={!resolvedSparkCode}
-                className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
+                className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {tiktokSynced
                   ? `✓ SPARK SYNCED (POSTCODE ${safePostcode} · A$${dailySpend}/DAY)`
@@ -481,7 +481,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                 type="button"
                 onClick={exportMediaBuyerCampaignSpec}
                 disabled={!resolvedMetaToken || !resolvedSparkCode}
-                className="mt-4 w-full rounded-full bg-[#CCFF00] hover:bg-white text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
+                className="mt-4 w-full rounded-full bg-[#CCFF00] hover:bg-white text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {specExported
                   ? `✓ AD-SET SPEC EXPORTED (A$${dailySpend}/DAY · POSTCODE ${safePostcode})`
