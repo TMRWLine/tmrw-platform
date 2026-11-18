@@ -200,6 +200,26 @@ test('one trusted proxy separates anonymous client limits and authenticated limi
   assert.equal((await read('192.0.2.11')).status, 200);
   for (let i = 0; i < 65; i++) await read('192.0.2.12', 'buyer');
   assert.equal((await read('192.0.2.13', 'buyer')).status, 429);
-  assert.equal((await read('192.0.2.12', 'other')).status, 200);
+  assert.equal((await read('192.0.2.14', 'other')).status, 200);
+  } finally { app.set('trust proxy', trustProxy); }
+});
+
+test('invalid bearer tokens are IP-throttled before Supabase verification', async (t) => {
+  const trustProxy = app.get('trust proxy');
+  app.set('trust proxy', 1);
+  let verifications = 0;
+  t.mock.method(globalThis, 'fetch', async () => {
+    verifications++;
+    return Response.json({ message: 'Invalid user' }, { status: 401 });
+  });
+  const read = () => nativeFetch(base + '/api/whitelisting/grants?session_id=cs_test_missing', {
+    headers: { 'X-Forwarded-For': '192.0.2.20', Authorization: 'Bearer invalid' },
+  });
+  try {
+    for (let i = 0; i < 60; i++) assert.equal((await read()).status, 401);
+    const response = await read();
+    assert.equal(response.status, 429);
+    assert.ok(Number(response.headers.get('Retry-After')) > 0);
+    assert.equal(verifications, 60);
   } finally { app.set('trust proxy', trustProxy); }
 });

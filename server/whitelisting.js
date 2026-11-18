@@ -59,21 +59,24 @@ export function createWhitelistingRouter() {
   const usage = new Map();
   router.get('/grants', async (req, res) => {
     res.set('Cache-Control', 'no-store');
+    const now = Date.now();
+    for (const [key, entry] of usage) if (entry.until <= now) usage.delete(key);
+    const limited = (key) => {
+      const entry = usage.get(key) || { count: 0, until: now + 60000 };
+      usage.set(key, entry);
+      if (++entry.count <= 60) return false;
+      res.set('Retry-After', String(Math.ceil((entry.until - now) / 1000)));
+      res.status(429).json({ error: 'Entitlement lookup rate limit exceeded' });
+      return true;
+    };
+    if (limited(`ip:${req.ip}`)) return;
     let user = null;
     if (req.get('Authorization')) {
       const authentication = await authenticatedUser(req);
       if (!authentication.user) return res.status(authentication.status).json({ error: authentication.error });
       user = authentication.user;
     }
-    const usageKey = user ? `user:${user.id}` : `ip:${req.ip}`;
-    const now = Date.now();
-    for (const [ip, entry] of usage) if (entry.until <= now) usage.delete(ip);
-    const entry = usage.get(usageKey) || { count: 0, until: now + 60000 };
-    usage.set(usageKey, entry);
-    if (++entry.count > 60) {
-      res.set('Retry-After', String(Math.ceil((entry.until - now) / 1000)));
-      return res.status(429).json({ error: 'Entitlement lookup rate limit exceeded' });
-    }
+    if (user && limited(`user:${user.id}`)) return;
     const sessionId = req.query.session_id;
     if (!validSessionId(sessionId)) return res.status(400).json({ error: 'A valid checkout session id is required' });
     if (!configured()) return res.status(503).json(state(sessionId, null, 'not_configured'));
