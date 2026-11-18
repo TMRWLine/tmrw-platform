@@ -18,9 +18,7 @@ export const SettlementLedger: React.FC = () => {
   useEffect(() => {
     if (!isReceiptModalOpen) return;
     const previousOverflow = document.body.style.overflow;
-    const previousRootOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
     const preventBackgroundScroll = (event: Event) => {
       if (!receiptRef.current?.contains(event.target as Node)) event.preventDefault();
     };
@@ -28,7 +26,6 @@ export const SettlementLedger: React.FC = () => {
     document.addEventListener('touchmove', preventBackgroundScroll, { passive: false });
     return () => {
       document.body.style.overflow = previousOverflow;
-      document.documentElement.style.overflow = previousRootOverflow;
       document.removeEventListener('wheel', preventBackgroundScroll);
       document.removeEventListener('touchmove', preventBackgroundScroll);
     };
