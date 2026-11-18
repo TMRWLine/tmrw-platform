@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import type { Athlete } from '../types';
 import { displayName } from '../lib/formatName';
+import { generateMockEvents } from '../lib/twelvelabs';
+import { withTimeout } from '../lib/spatial';
 import {
   generateAthleteHighlights,
   searchSponsorExposures,
@@ -20,6 +22,15 @@ import {
   type HighlightClip,
   type SponsorExposureResult,
 } from '../services/twelveLabs';
+
+function demoClips(athlete: Athlete): HighlightClip[] {
+  return generateMockEvents(athlete).slice(0, 3).map((event, index) => ({
+    id: `demo-${index}`, title: event.text.replace(/\u2014/g, '·'), action: event.type,
+    startSec: event.start, endSec: event.end, durationSec: event.end - event.start,
+    aspectRatio: '9:16', thumbnailGradient: '#080808',
+    sponsorWatermark: 'Demo · sample footage', downloadUrl: '#', confidence: event.confidence,
+  }));
+}
 
 type Tab = 'highlights' | 'search';
 
@@ -50,6 +61,8 @@ export function TwelveLabsModal({
             <X size={16} />
           </button>
         </div>
+
+        <p role="status" style={{ padding: '0 24px', color: '#080808', background: '#F7F7F6' }}>Demo mode · sample highlights and sponsor exposure data. No live TwelveLabs request is made.</p>
 
         <div className="modal-tabs">
           <button className={tab === 'highlights' ? 'active' : ''} onClick={() => setTab('highlights')}>
@@ -100,10 +113,11 @@ function HighlightTab({
     setError(null);
     setClips([]);
     try {
-      const result = await generateAthleteHighlights(videoIdRef.current, selected);
+      const result = await withTimeout(generateAthleteHighlights(videoIdRef.current, selected));
       setClips(result);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Generation failed');
+    } catch {
+      setClips(demoClips(selected));
+      setError('Generation unavailable or timed out · showing sample highlights.');
     } finally {
       setGenerating(false);
     }
@@ -145,7 +159,7 @@ function HighlightTab({
         </button>
       </div>
 
-      {error && <div className="msg-error"><X size={13} /> {error}</div>}
+      {error && <div role="status" style={{ color: '#080808', background: '#F7F7F6', padding: 12 }}>{error}</div>}
 
       {generating && (
         <div className="tl-generating">
@@ -168,7 +182,7 @@ function HighlightTab({
                 <div className="tl-clip-duration">{formatDuration(clip.durationSec)}</div>
               </div>
               <div className="tl-clip-body">
-                <div className="tl-clip-title">{clip.title}</div>
+                <div className="tl-clip-title">{clip.title.replace(/\u2014/g, '·')}</div>
                 <div className="tl-clip-meta">
                   <span className="badge accent">
                     <Clock size={11} /> {formatDuration(clip.startSec)} – {formatDuration(clip.endSec)}
@@ -177,9 +191,9 @@ function HighlightTab({
                     <Eye size={11} /> {Math.round(clip.confidence * 100)}%
                   </span>
                 </div>
-                <a className="btn btn-sm tl-download" href={clip.downloadUrl} download>
-                  <Download size={12} /> Download
-                </a>
+                <button className="btn btn-sm tl-download" disabled>
+                  <Download size={12} /> Sample · no media download
+                </button>
               </div>
             </div>
           ))}
@@ -211,11 +225,17 @@ function SearchTab() {
     setError(null);
     setResult(null);
     try {
-      const res = await searchSponsorExposures(query.trim());
+      const res = await withTimeout(searchSponsorExposures(query.trim()));
       setResult(res);
       setActiveIdx(0);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Search failed');
+    } catch {
+      setResult({
+        brandName: query.trim(), videoDurationSec: 3600, totalExposureSec: 12,
+        exposures: [{ id: 'demo-exposure', timestamp: '4:12', startSec: 252, durationSec: 12,
+          context: 'Sample sponsor banner appearance', visibilityScore: 0.8 }],
+      });
+      setActiveIdx(0);
+      setError('Search unavailable or timed out · showing sample exposure data.');
     } finally {
       setSearching(false);
     }
@@ -254,7 +274,7 @@ function SearchTab() {
         </button>
       </div>
 
-      {error && <div className="msg-error"><X size={13} /> {error}</div>}
+      {error && <div role="status" style={{ color: '#080808', background: '#F7F7F6', padding: 12 }}>{error}</div>}
 
       {searching && (
         <div className="tl-generating">
@@ -322,7 +342,7 @@ function SearchTab() {
                 <span className="badge">
                   Duration {activeExposure.durationSec}s
                 </span>
-                <span className="badge success">
+                <span className="badge">
                   <Eye size={11} /> {Math.round(activeExposure.visibilityScore * 100)}% visibility
                 </span>
               </div>

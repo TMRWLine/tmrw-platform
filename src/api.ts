@@ -19,8 +19,9 @@ import { COLLAB_SPLIT, HUNTER_BLIGH_COLLAB_DROPS, SPATIAL_TIERS } from './types'
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { parseEwkbPoint } from './lib/postgis';
 import { athleteDisplayName } from './lib/formatName';
-
-const API_BASE = '/api';
+import { ROSTER_SPECIMENS, specimenToAthlete } from './data/roster';
+import { DEMO_SPONSORS } from './data/sponsors';
+import { haversineMeters, withTimeout } from './lib/spatial';
 
 function mapAgreementStatus(raw: unknown): AgreementStatus {
   const s = String(raw ?? '').toLowerCase().replace(/\s+/g, '_');
@@ -65,34 +66,18 @@ export function normalizeAthlete(row: Record<string, unknown> | Athlete | null |
   };
 }
 
-/**
- * Illustrative roster returned by `fetchAthletes` when the live query fails.
- * Sports, clubs, coordinates and follower counts are placeholders only.
- */
-const FALLBACK_ATHLETE_ROWS: Record<string, unknown>[] = [
-  { id: 'fallback-1', name: 'Liam Toole', sport: 'Rugby League', current_club: 'Harbourside Club', agreement_status: 'active', latitude: -33.8688, longitude: 151.2093, postcode: '2000', follower_count: 12000 },
-  { id: 'fallback-2', name: 'Lachlan Miller', sport: 'Rugby Union', current_club: 'Northside Club', agreement_status: 'pending', latitude: -33.7969, longitude: 151.1796, postcode: '2069', follower_count: 8500 },
-  { id: 'fallback-3', name: 'Mitchell Vance', sport: 'Basketball', current_club: 'Westside Club', agreement_status: 'no_agreement', latitude: -33.8151, longitude: 151.0011, postcode: '2150', follower_count: 6400 },
-  { id: 'fallback-4', name: 'Sam Sterling', sport: 'Soccer', current_club: 'Eastern Club', agreement_status: 'active', latitude: -33.8915, longitude: 151.2767, postcode: '2026', follower_count: 9800 },
-  { id: 'fallback-5', name: 'Kal Slater', sport: 'Surfing', current_club: 'Coastal Club', agreement_status: 'pending', latitude: -33.9173, longitude: 151.2313, postcode: '2034', follower_count: 15200 },
-  { id: 'fallback-6', name: 'Marco Rossi', sport: 'Soccer', current_club: 'Inner City Club', agreement_status: 'no_agreement', latitude: -33.8832, longitude: 151.2009, postcode: '2010', follower_count: 7100 },
-  { id: 'fallback-7', name: 'Hunter Bligh', sport: 'Cricket', current_club: 'Southern Club', agreement_status: 'active', latitude: -34.0, longitude: 151.1, postcode: '2229', follower_count: 5300 },
-  { id: 'fallback-8', name: 'Maya Lin', sport: 'Netball', current_club: 'Parkside Club', agreement_status: 'pending', latitude: -33.7506, longitude: 150.6919, postcode: '2750', follower_count: 6900 },
-].map((row) => ({ ...row, created_at: '2026-01-01T00:00:00.000Z' }));
-
-/** Fresh copies on every call, so callers can never mutate the shared fallback. */
 function fallbackAthletes(): Athlete[] {
-  return FALLBACK_ATHLETE_ROWS.map((row) => normalizeAthlete(row));
+  return ROSTER_SPECIMENS.map((specimen) => normalizeAthlete(specimenToAthlete(specimen)));
 }
 
 export async function fetchAthletes(): Promise<Athlete[]> {
-  if (!isSupabaseConfigured || !supabase) return [];
+  if (!isSupabaseConfigured) return fallbackAthletes();
   try {
-    const { data, error } = await supabase.from('athletes').select('*').order('created_at', { ascending: true });
+    const { data, error } = await withTimeout(supabase.from('athletes').select('*').order('created_at', { ascending: true }).abortSignal(AbortSignal.timeout(8000)));
     if (error) throw new Error(`Failed to load athletes: ${error.message}`);
     return (data ?? []).map((row) => normalizeAthlete(row as Record<string, unknown>));
-  } catch (e) {
-    console.warn('fetchAthletes failed, using fallback athletes.', e);
+  } catch {
+    console.warn('Athletes unavailable; using the bundled roster.');
     return fallbackAthletes();
   }
 }
@@ -119,48 +104,33 @@ export async function fetchAthletesNearby(
   lat: number = ROSTER_ORIGIN.lat,
   lng: number = ROSTER_ORIGIN.lng
 ): Promise<Athlete[]> {
-  if (!isSupabaseConfigured || !supabase) return [];
-
-  const { data, error } = await supabase.rpc('get_athletes_nearby', {
-    store_lat: lat,
-    store_lon: lng,
-    radius_meters: radiusKm * 1000,
-  });
-
-  if (!error) {
-    return ((data ?? []) as Record<string, unknown>[]).map((row) => normalizeAthlete(row)).sort(byDistance);
+  if (Number.isNaN(radiusKm) || radiusKm < 0) return [];
+  if (isSupabaseConfigured) {
+    try {
+      // SQL expects kilometres and constructs ST_MakePoint(lng, lat).
+      const query = Number.isFinite(radiusKm)
+        ? supabase.rpc('get_athletes_nearby', { lat, lng, radius_km: radiusKm })
+        : supabase.from('athletes').select('*');
+      const { data, error } = await withTimeout(query.abortSignal(AbortSignal.timeout(8000)));
+      if (error) throw error;
+      return withDistance(((data ?? []) as Record<string, unknown>[]).map(normalizeAthlete), lat, lng)
+        .filter((row) => Number.isFinite(row.distance_km) && row.distance_km! <= radiusKm);
+    } catch {
+      console.warn('Spatial query unavailable; using the bundled roster.');
+    }
   }
-
-  const all = await fetchAthletes();
-  return withDistance(all, lat, lng).filter((a) => (a.distance_km ?? Infinity) <= radiusKm);
+  return withDistance(fallbackAthletes(), lat, lng)
+    .filter((row) => Number.isFinite(row.distance_km) && row.distance_km! <= radiusKm);
 }
 
-/**
- * Athletes in a spatial catchment band via `get_athletes_by_tier`, which takes
- * the tier code ('01' | '02' | '03') and filters by distance server-side.
- */
+/** No tier RPC exists in migrations; filter the nearby RPC results locally. */
 export async function fetchAthletesByTier(
   tier: SpatialTier,
   lat: number = ROSTER_ORIGIN.lat,
   lng: number = ROSTER_ORIGIN.lng
 ): Promise<Athlete[]> {
-  if (!isSupabaseConfigured || !supabase) return [];
-
-  const { data, error } = await supabase.rpc('get_athletes_by_tier', {
-    store_lat: lat,
-    store_lon: lng,
-    tier_code: tier.code,
-  });
-
-  if (error) {
-    return withDistance(await fetchAthletes(), lat, lng).filter((a) => {
-      const km = a.distance_km;
-      if (km == null) return false;
-      return km >= tier.minKm && (tier.maxKm == null || km <= tier.maxKm);
-    });
-  }
-
-  return ((data ?? []) as Record<string, unknown>[]).map((row) => normalizeAthlete(row)).sort(byDistance);
+  const rows = await fetchAthletesNearby(tier.maxKm ?? Infinity, lat, lng);
+  return rows.filter((row) => (row.distance_km ?? -1) >= tier.minKm);
 }
 
 /** Live "in range" totals for each catchment band, keyed by tier code. */
@@ -243,82 +213,17 @@ export async function fetchCollabDrops(athlete?: Athlete | null): Promise<Collab
   }
 }
 
-/**
- * Illustrative sponsors returned by `fetchSponsors` when the live query fails.
- * Names, budgets, and coordinates are placeholders only.
- */
-const FALLBACK_SPONSORS: MatchedSponsor[] = [
-  {
-    id: 'fallback-sponsor-1',
-    business_name: 'Harbourside Performance',
-    merchant_category: 'Sporting Goods',
-    budget_allocation: 25000,
-    contact_email: 'partnerships@harbourside.example',
-    target_radius_meters: 5000,
-    location: 'Sydney CBD',
-    postcode: '2000',
-    latitude: -33.8688,
-    longitude: 151.2093,
-    currency: 'AUD',
-    created_at: '2026-01-01T00:00:00.000Z',
-    updated_at: '2026-01-01T00:00:00.000Z',
-    distance_meters: 0,
-    distance_km: 0,
-    lat: -33.8688,
-    lng: 151.2093,
-  },
-  {
-    id: 'fallback-sponsor-2',
-    business_name: 'Northside Recovery',
-    merchant_category: 'Health & Wellness',
-    budget_allocation: 18000,
-    contact_email: 'hello@northside-recovery.example',
-    target_radius_meters: 8000,
-    location: 'North Sydney',
-    postcode: '2060',
-    latitude: -33.8406,
-    longitude: 151.207,
-    currency: 'AUD',
-    created_at: '2026-01-15T00:00:00.000Z',
-    updated_at: '2026-01-15T00:00:00.000Z',
-    distance_meters: 0,
-    distance_km: 0,
-    lat: -33.8406,
-    lng: 151.207,
-  },
-  {
-    id: 'fallback-sponsor-3',
-    business_name: 'Coastal Fuel Co',
-    merchant_category: 'Food & Beverage',
-    budget_allocation: 12000,
-    contact_email: 'brands@coastalfuel.example',
-    target_radius_meters: 15000,
-    location: 'Bondi',
-    postcode: '2026',
-    latitude: -33.8915,
-    longitude: 151.2767,
-    currency: 'AUD',
-    created_at: '2026-02-01T00:00:00.000Z',
-    updated_at: '2026-02-01T00:00:00.000Z',
-    distance_meters: 0,
-    distance_km: 0,
-    lat: -33.8915,
-    lng: 151.2767,
-  },
-];
-
-/** Fresh copies on every call, so callers can never mutate the shared fallback. */
 function fallbackSponsors(): MatchedSponsor[] {
-  return FALLBACK_SPONSORS.map((row) => ({ ...row }));
+  return DEMO_SPONSORS.map((row) => ({ ...row }));
 }
 
 export async function fetchSponsors(): Promise<MatchedSponsor[]> {
-  if (!isSupabaseConfigured || !supabase) return [];
+  if (!isSupabaseConfigured) return fallbackSponsors();
   try {
-    const { data, error } = await supabase
+    const { data, error } = await withTimeout(supabase
       .from('sponsors')
       .select('*')
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true }).abortSignal(AbortSignal.timeout(8000)));
     if (error) throw new Error(`Failed to load sponsors: ${error.message}`);
     return (data ?? []).map((s) => ({
       ...(s as MatchedSponsor),
@@ -327,8 +232,8 @@ export async function fetchSponsors(): Promise<MatchedSponsor[]> {
       lat: (s as MatchedSponsor).latitude ?? null,
       lng: (s as MatchedSponsor).longitude ?? null,
     }));
-  } catch (e) {
-    console.warn('fetchSponsors failed, using fallback sponsors.', e);
+  } catch {
+    console.warn('Sponsors unavailable; using bundled demo sponsors.');
     return fallbackSponsors();
   }
 }
@@ -423,75 +328,64 @@ export function formatCurrency(amount: number | null | undefined, currency: stri
 }
 
 export async function fetchNearbySponsors(
-  athleteId: string
+  athleteId: string,
+  radiusKm: number = Infinity,
 ): Promise<MatchSponsorsResponse> {
-  if (!athleteId?.trim()) {
-    return { athlete: null, matches: [] };
-  }
-  try {
-    const res = await fetch(
-      `${API_BASE}/match-sponsors?athleteId=${encodeURIComponent(athleteId)}`,
-      { headers: { Accept: 'application/json' } }
-    );
-    if (!res.ok) {
-      return { athlete: null, matches: [] };
+  if (!athleteId?.trim() || Number.isNaN(radiusKm) || radiusKm < 0) return { athlete: null, matches: [] };
+  const bundled = fallbackAthletes().find((row) => row.id === athleteId);
+  let row = bundled;
+  if (isSupabaseConfigured) {
+    try {
+      const [{ data, error }, athleteResult] = await withTimeout(Promise.all([
+        supabase.rpc('match_sponsors_for_athlete', { athlete_id: athleteId }).abortSignal(AbortSignal.timeout(8000)),
+        supabase.from('athletes').select('*').eq('id', athleteId).abortSignal(AbortSignal.timeout(8000)).maybeSingle(),
+      ]));
+      if (error || athleteResult.error) throw error ?? athleteResult.error;
+      row = athleteResult.data ? normalizeAthlete(athleteResult.data) : undefined;
+      return {
+        athlete: row ? athleteLocation(row) : null,
+        matches: ((data ?? []) as MatchedSponsor[]).map((sponsor) => ({
+          ...sponsor, lat: sponsor.latitude, lng: sponsor.longitude,
+        })).filter((sponsor) => Number.isFinite(sponsor.distance_km) && sponsor.distance_km <= radiusKm),
+      };
+    } catch {
+      console.warn('Sponsor matches unavailable; using bundled demo sponsors.');
     }
-    const json = (await res.json()) as MatchSponsorsResponse & { error?: string };
-    if (json.error) return { athlete: json.athlete ?? null, matches: [] };
-    return {
-      athlete: json.athlete ?? null,
-      matches: Array.isArray(json.matches) ? json.matches : [],
-    };
-  } catch {
-    return { athlete: null, matches: [] };
   }
+  if (!row) return { athlete: null, matches: [] };
+  const athlete = athleteLocation(row);
+  return {
+    athlete,
+    matches: sponsorsAtDistance(fallbackSponsors(), athlete, radiusKm)
+      .filter((sponsor) => sponsor.distance_meters <= sponsor.target_radius_meters),
+  };
+}
+
+function athleteLocation(row: Athlete): AthleteLocation {
+  return {
+    id: row.id, name: row.name, lat: row.latitude, lng: row.longitude,
+    postcode: row.postcode, follower_count: row.follower_count,
+    master_licence_signed: row.master_licence_signed,
+    nrl_tpa_registered: row.nrl_tpa_registered, shute_shield_compliant: row.shute_shield_compliant,
+  };
+}
+
+function sponsorsAtDistance(rows: MatchedSponsor[], athlete: AthleteLocation, radiusKm: number): MatchedSponsor[] {
+  return rows.map((sponsor) => {
+    const coords = parseEwkbPoint(sponsor.location);
+    const lat = sponsor.latitude ?? coords?.lat ?? null;
+    const lng = sponsor.longitude ?? coords?.lng ?? null;
+    const distance = haversineMeters(athlete.lat, athlete.lng, lat, lng);
+    return { ...sponsor, lat, lng, distance_meters: distance, distance_km: distance / 1000 };
+  }).filter((sponsor) => Number.isFinite(sponsor.distance_km) && sponsor.distance_km <= radiusKm)
+    .sort((a, b) => a.distance_km - b.distance_km);
 }
 
 export async function fetchSponsorsByRadius(
   athlete: AthleteLocation,
   radiusKm: number
 ): Promise<MatchedSponsor[]> {
-  if (!isSupabaseConfigured || !supabase) return [];
-  const { data, error } = await supabase
-    .from('sponsors')
-    .select('*')
-    .order('created_at', { ascending: true });
-  if (error) throw new Error(`Failed to load sponsors: ${error.message}`);
-  const all = (data ?? []) as MatchedSponsor[];
-  return all
-    .map((s) => ({
-      ...s,
-      lat: s.latitude ?? null,
-      lng: s.longitude ?? null,
-      distance_meters: haversineMeters(athlete.lat, athlete.lng, s.latitude, s.longitude),
-    }))
-    .filter((s) => {
-      const km = s.distance_meters / 1000;
-      return km <= radiusKm;
-    })
-    .map((s) => ({
-      ...s,
-      distance_km: s.distance_meters / 1000,
-    }))
-    .sort((a, b) => a.distance_km - b.distance_km);
-}
-
-function haversineMeters(
-  lat1: number | null,
-  lng1: number | null,
-  lat2: number | null,
-  lng2: number | null
-): number {
-  if (lat1 == null || lng1 == null || lat2 == null || lng2 == null) return Infinity;
-  const R = 6371000;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return sponsorsAtDistance(await fetchSponsors(), athlete, radiusKm);
 }
 
 // ---------------------------------------------------------------------------
