@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useState } from 'react';
-import { BrandLockup } from './BrandLockup';
+import { AthleteAccessHeader, AthleteAccessTabs, AthleteAccessHero } from './AthleteAccessShell';
 import { dispatchOpenCapsuleDrawer } from './CartDrawer';
 import { ROSTER_DATA, suburbForPostcode } from '../data/roster';
 import type { LiveAthleteOverride } from './AthleteDossierDrawer';
@@ -146,11 +146,6 @@ const POSTCODE_CLUB_OVERRIDES: Record<string, Record<string, string>> = {
     'Surfing / Boardriding': 'Queenscliff Boardriders Club',
   },
 };
-
-const MODE_TABS: ReadonlyArray<{ mode: PortalMode; label: string }> = [
-  { mode: 'authenticate', label: 'SIGN IN' },
-  { mode: 'claim', label: 'CLAIM PROFILE' },
-];
 
 const ALL_SECTORS = [
   'Apparel',
@@ -621,57 +616,13 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
             className="flex-1 overflow-y-auto p-6 sm:p-8 md:p-10 flex flex-col justify-between"
           >
             <div>
-              <div className="flex items-center justify-between border-b border-black/10 pb-5">
-                <BrandLockup onClick={onClose} />
-                <button
-                  type="button"
-                  onClick={onClose}
-                  title="Close [ESC]"
-                  aria-label="Close portal"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/25 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
-                >
-                  <span>Close</span>
-                  <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">
-                    ✕
-                  </span>
-                </button>
-              </div>
+              <AthleteAccessHeader onClose={onClose} />
+              <AthleteAccessTabs mode={mode} panelId={panelId} onChange={(nextMode) => {
+                setMode(nextMode);
+                setOtpChallengeSent(false);
+              }} />
 
-              <div
-                role="tablist"
-                aria-label="Portal access mode"
-                className="grid grid-cols-2 p-1 bg-[#EAEAE6] rounded-full my-6 border border-black/10"
-              >
-                {MODE_TABS.map((tab) => {
-                  const active = tab.mode === mode;
-                  return (
-                    <button
-                      key={tab.mode}
-                      type="button"
-                      role="tab"
-                      aria-selected={active}
-                      onClick={() => {
-                        setMode(tab.mode);
-                        setOtpChallengeSent(false);
-                      }}
-                      className={`py-2.5 text-[10px] font-mono font-bold tracking-[0.18em] uppercase rounded-full transition-all duration-200 cursor-pointer border-0 ${
-                        active
-                          ? 'bg-[#0F0F11] text-[#CCFF00] shadow-sm'
-                          : 'bg-transparent text-neutral-600 hover:text-[#0F0F11]'
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mb-6 rounded-[24px] bg-[#0F0F11] text-white p-6 sm:p-7 space-y-4 shadow-xl">
-                <h2 className="m-0 font-sans font-black text-3xl sm:text-4xl uppercase tracking-[-0.03em] text-white leading-[1.02]">
-                  Your career<span className="text-[#CCFF00]">.</span>
-                  <br />
-                  Your terms<span className="text-[#CCFF00]">.</span>
-                </h2>
+              <AthleteAccessHero lines={['Your career', 'Your terms']} headingLevel="h2">
                 <p className="m-0 font-sans text-xs text-neutral-300 leading-relaxed">
                   Zero agency commissions. Lock your postcode, back your junior club with a hardwired{' '}
                   <span className="bg-[#CCFF00] text-[#0F0F11] font-bold px-1.5 py-0.5 rounded-[3px]">
@@ -692,7 +643,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                     Bypass → Open 5-Tab Athlete Studio
                   </button>
                 </div>
-              </div>
+              </AthleteAccessHero>
 
               <div role="tabpanel" id={panelId} className="w-full space-y-4 mb-6">
                 <div className="w-full">
