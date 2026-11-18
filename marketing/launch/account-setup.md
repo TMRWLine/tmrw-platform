@@ -72,3 +72,5 @@ Keep every launch post athlete-free. Use original imagery, leave location tags o
 The second-platform covers are for later adaptations, not extra posts in week one. Use the [end card](assets/end-card.png) for the follow version; for the matchday video, use the nomination line from the script instead.
 
 Use the [dark SVG lockup](assets/logo-dark.svg) on ink and the [light SVG lockup](assets/logo-light.svg) on off-white. Both centre `LINE UP YOUR FUTURE` in bold sans-serif capitals beneath the heavy lowercase wordmark, without the site's rule or monospace lettering. Allow at least 0.4em of clear space around the whole lockup. Use `Line up your Future` in written copy.
+
+For web navigation and footers, the secondary lockups use a hairline and a spaced monospace tagline. The three supplied treatments are [dark with volt](assets/logo-web-dark.svg), [light with ink](assets/logo-web-light.svg) and [light with volt](assets/logo-web-light-volt.svg). These do not replace the primary lockups or the avatar icon.
