@@ -76,8 +76,8 @@
   .whitelisting-backdrop header span { overflow-wrap: anywhere; }
   .whitelisting-backdrop .grid { grid-template-columns: minmax(0, 1fr); }
   .whitelisting-backdrop .grid > div { min-width: 0; padding: 20px; }
-  .whitelisting-backdrop .flex:has(> span),
-  .whitelisting-backdrop .flex:has(> div) { flex-wrap: wrap; gap: 8px; }
+  .whitelisting-backdrop .flex:not(.flex-col):has(> span),
+  .whitelisting-backdrop .flex:not(.flex-col):has(> div) { flex-wrap: wrap; gap: 8px; }
   .whitelisting-backdrop .flex > div { min-width: 0; }
   .whitelisting-backdrop :is(strong, span, button) { overflow-wrap: anywhere; }
   .whitelisting-backdrop label { font-size: 11px; }
