@@ -1,341 +1,111 @@
 {
   "date": "2026-11-19",
+  "status": "research_only",
+  "consent_obtained": false,
+  "do_not_send": true,
   "verification_date_utc": "2026-11-18",
+  "scope": "SME area prospect research only. Club home grounds are geographic anchors, not athlete residences, eligibility catchments, endorsers or partners.",
+  "research_context": {
+    "source_pr": "https://github.com/TMRWLine/tmrw-platform/pull/10",
+    "source_branch": "origin/scout/anz-intake-2026-11-19",
+    "note": "PR description and scouted roster reviewed for club/competition context only. No individual identities, demo roster matches or category rights are used."
+  },
   "notes": [
-    "Queue date is 2026-11-19; verification was performed on 2026-11-18 UTC, not a claim of a future site visit.",
-    "Research queue only. No emails sent and no sponsorship agreements created.",
-    "All 15 roster athletes counted as active: each has PRE-* CLEARED status, a current club, a signed master licence and sanctioned, TPA-compliant, document-verified governing-body fields. No agreement means unallocated, not inactive.",
-    "Catchments use rosterData.ts via roster.ts. Address locality checks are qualitative, not geocoded distance calculations.",
-    "SQL uses existing sponsor columns only. Websites, addresses, draft emails and roster athlete matches remain in this JSON because sponsors has no corresponding columns. Coordinates are left NULL rather than invented; spatial RPC matching needs later verified geocoding.",
-    "Flight 01 annualises A$750 per quarter to A$3,000. Suggested budgets do not imply consent or committed spend."
+    "All previous leads and athlete/category-rights matching have been replaced. No named talent or existing sponsorship rights are offered.",
+    "Fifteen leads across six areas: Brookvale 3, Perth 2, Wellington 3, Werribee 2, Wayville/Goodwood 2, Croudace Bay/Warners Bay 3.",
+    "Wellington prices and SQL budgets use NZD at the same nominal flight amounts, not an AUD currency conversion. NZ availability and tax-invoice compliance remain unverified and require local review. Australian leads use AUD.",
+    "Flight 01 is 750 per quarter, annualised to 3000; Flight 02 is 3500 per year; Flight 03 is 12500 per year. No lead is assigned Flight 03 because research supports local-shop or local-operator scope rather than a national commitment.",
+    "No wagering, alcohol or tobacco categories. No club endorsement, partnership or permission to use protected visual assets is claimed.",
+    "Verification occurred on 2026-11-18 UTC; 2026-11-19 is the queue date. Rough distances are locality estimates, not geocoded measurements.",
+    "SQL is a staged research artefact only, never executed. The sponsors schema cannot persist the research-only or do-not-send safeguards. Do not import until a separate approval process can preserve those restrictions. Coordinates remain NULL, and no agreement or athlete linkage is created.",
+    "Own business pages provide street addresses. Wellington postcodes are corroborated by supplementary address sources below."
   ],
-  "active_athletes": [
+  "supplementary_address_sources": [
+    "https://www.businesslist.nz/category/take-aways/city:wellington-city",
+    "https://www.alaturka.co.nz/"
+  ],
+  "area_anchors": [
     {
-      "id": "11111111-1111-1111-1111-111111111111",
-      "display_name": "M. Thorne",
-      "postcode": "2200",
-      "radius_km": 15,
-      "status": "PRE-TIPOFF CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Bankstown Bruins",
-      "sport": "Basketball",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Apparel",
-          "Footwear",
-          "Sports Nutrition"
-        ],
-        "locked": []
-      }
+      "id": "manly",
+      "club": "Manly-Warringah Sea Eagles",
+      "competition": "NRL",
+      "home_ground": "Brookvale Oval (4 Pines Park)",
+      "address": "Pittwater Road between Alfred Road and Pine Avenue, Brookvale NSW 2100",
+      "source": "https://www.seaeagles.com.au/more/venue/"
     },
     {
-      "id": "22222222-2222-2222-2222-222222222222",
-      "display_name": "S. Blake",
-      "postcode": "2006",
-      "radius_km": 5,
-      "status": "PRE-EVENT CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Sydney University AC",
-      "sport": "Track & Field",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Recovery Tech",
-          "Sun Care",
-          "Footwear"
-        ],
-        "locked": []
-      }
+      "id": "force",
+      "club": "Western Force",
+      "competition": "Super Rugby Pacific",
+      "home_ground": "HBF Park",
+      "address": "310 Pier Street, Perth WA 6000",
+      "source": "https://www.venueswest.wa.gov.au/venues/hbf-park"
     },
     {
-      "id": "33333333-3333-3333-3333-333333333333",
-      "display_name": "H. Bligh",
-      "postcode": "2026",
-      "radius_km": 5,
-      "status": "PRE-TIPOFF CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "City of Sydney Basketball Association",
-      "sport": "Basketball",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Apparel",
-          "Hydration",
-          "Local Banking",
-          "Recovery"
-        ],
-        "locked": []
-      }
+      "id": "pulse",
+      "club": "Pulse",
+      "competition": "ANZ Premiership",
+      "home_ground": "TSB Arena",
+      "address": "4 Queens Wharf, Wellington, New Zealand",
+      "source": "https://www.wellingtonnz.com/venues-wellington/our-venues/tsb-arena"
     },
     {
-      "id": "44444444-4444-4444-4444-444444444444",
-      "display_name": "K. Ross",
-      "postcode": "2042",
-      "radius_km": 15,
-      "status": "PRE-MATCH CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Newtown Jets",
-      "sport": "Rugby League",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Automotive",
-          "Workwear",
-          "Nutrition"
-        ],
-        "locked": [
-          "Sports Betting"
-        ]
-      }
+      "id": "werribee",
+      "club": "Werribee",
+      "competition": "VFL",
+      "home_ground": "Avalon Airport Oval at Chirnside Park",
+      "address": "220 Watton Street, Werribee VIC 3030",
+      "source": "https://www.wyndham.vic.gov.au/directory/werribee-football-club"
     },
     {
-      "id": "55555555-5555-5555-5555-555555555555",
-      "display_name": "S. Jenkins",
-      "postcode": "2230",
-      "radius_km": 25,
-      "status": "PRE-EVENT CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Cronulla Triathlon Club",
-      "sport": "Triathlon",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Bicycle Tech",
-          "Wearables",
-          "Clean Energy"
-        ],
-        "locked": []
-      }
+      "id": "lightning",
+      "club": "Adelaide Lightning",
+      "competition": "WNBL",
+      "home_ground": "SA State Basketball Centre",
+      "address": "142 Rose Terrace, Wayville SA 5034",
+      "source": "https://tickets.adelaidelightning.wnbl.com.au/event/adelaide-lightning-full-season-memberships-2026--baiw3b"
     },
     {
-      "id": "66666666-6666-6666-6666-666666666666",
-      "display_name": "K. Slater",
-      "postcode": "2107",
-      "radius_km": 5,
-      "status": "PRE-EVENT CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "North Shore Boardriders",
-      "sport": "Surfing",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Coastal Lifestyle",
-          "Eyewear",
-          "Sun Care",
-          "Apparel"
-        ],
-        "locked": []
-      }
-    },
-    {
-      "id": "77777777-7777-7777-7777-777777777777",
-      "display_name": "L. Toole",
-      "postcode": "3207",
-      "radius_km": 15,
-      "status": "PRE-MATCH CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Port Melbourne FC",
-      "sport": "Australian Rules",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Automotive",
-          "Suburban Dining",
-          "Footwear"
-        ],
-        "locked": []
-      }
-    },
-    {
-      "id": "88888888-8888-8888-8888-888888888888",
-      "display_name": "L. Miller",
-      "postcode": "2031",
-      "radius_km": 5,
-      "status": "PRE-WHISTLE CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Randwick DRUFC",
-      "sport": "Rugby Union",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Recovery",
-          "Local Retail",
-          "Apparel"
-        ],
-        "locked": []
-      }
-    },
-    {
-      "id": "99999999-9999-9999-9999-999999999999",
-      "display_name": "M. Rossi",
-      "postcode": "2165",
-      "radius_km": 15,
-      "status": "PRE-MATCH CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Sydney United 58",
-      "sport": "Football",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Hydration",
-          "Sports Footwear",
-          "Suburban Auto"
-        ],
-        "locked": []
-      }
-    },
-    {
-      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-      "display_name": "M. Vance",
-      "postcode": "2046",
-      "radius_km": 15,
-      "status": "PRE-REGATTA CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Sydney Rowing Club",
-      "sport": "Rowing",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Wearables",
-          "Endurance Fuel",
-          "Eyewear"
-        ],
-        "locked": []
-      }
-    },
-    {
-      "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-      "display_name": "S. Sterling",
-      "postcode": "3000",
-      "radius_km": 15,
-      "status": "PRE-TIPOFF CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Melbourne Tigers",
-      "sport": "Basketball",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Lifestyle Apparel",
-          "Energy Drink",
-          "Gaming Hardware"
-        ],
-        "locked": []
-      }
-    },
-    {
-      "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
-      "display_name": "M. Lin",
-      "postcode": "2112",
-      "radius_km": 25,
-      "status": "PRE-MEET CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Carlile Swimming",
-      "sport": "Swimming",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Swimwear",
-          "Nutritional Hydration",
-          "Personal Care"
-        ],
-        "locked": []
-      }
-    },
-    {
-      "id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
-      "display_name": "A. Taylor",
-      "postcode": "3128",
-      "radius_km": 25,
-      "status": "PRE-EVENT CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Box Hill AC",
-      "sport": "Athletics",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Footwear",
-          "Electrolytes",
-          "GPS Watches"
-        ],
-        "locked": []
-      }
-    },
-    {
-      "id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
-      "display_name": "L. Silva",
-      "postcode": "3081",
-      "radius_km": 15,
-      "status": "PRE-MATCH CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Heidelberg United",
-      "sport": "Football",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Apparel",
-          "Recovery Clinic",
-          "Sports Drink"
-        ],
-        "locked": []
-      }
-    },
-    {
-      "id": "ffffffff-ffff-ffff-ffff-ffffffffffff",
-      "display_name": "J. Okoye",
-      "postcode": "2148",
-      "radius_km": 15,
-      "status": "PRE-BOUT CLEARED",
-      "agreement_status": "No agreement",
-      "current_club": "Western Sydney Fight Academy",
-      "sport": "Combat Sports",
-      "master_licence_signed": true,
-      "branding_categories": {
-        "available": [
-          "Recovery",
-          "Performance Apparel",
-          "Hydration"
-        ],
-        "locked": [
-          "Wagering"
-        ]
-      }
+      "id": "valentine",
+      "club": "Valentine FC",
+      "competition": "NPL NNSW",
+      "home_ground": "Croudace Bay Sports Complex",
+      "address": "14 Parklea Avenue, Croudace Bay NSW 2280",
+      "source": "https://northernnswfootball.com.au/member-zones/clubs/valentine-fc",
+      "home_ground_source": "https://valentinefc.com.au/about-us/"
     }
   ],
   "leads": [
     {
       "id": "2026-11-19-01",
-      "business_name": "Chain Reaction Bicycles",
-      "merchant_category": "Bicycle Tech",
-      "street_address": "Shop 2, 23/25 The Kingsway, Cronulla NSW 2230",
-      "postcode": "2230",
-      "website": "https://www.chainreactionbicycles.com.au/contact-us/",
-      "verification_source": "https://www.chainreactionbicycles.com.au/contact-us/",
+      "business_name": "Aushealth Physiotherapy",
+      "merchant_category": "Physiotherapy",
+      "street_address": "Level 2, Brookvale House, Vale Medical Centre, 1A Cross Street, Brookvale 2100, Australia",
+      "suburb": "Brookvale",
+      "postcode": "2100",
+      "country": "AU",
+      "website": "https://aushealthphysio.com.au/contact-us/",
+      "verification_source": "https://aushealthphysio.com.au/contact-us/",
       "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Single Cronulla shop with a workshop and bike showroom. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Local clinic and nearby hydrotherapy pool listed. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
       },
       "contact": {
         "email": null,
-        "contact_page": "https://www.chainreactionbicycles.com.au/contact-us/",
-        "note": "No readable public email captured; use contact page or its listed telephone. No email inferred."
+        "contact_page": "https://aushealthphysio.com.au/contact-us/",
+        "note": "No readable public email captured. Use the contact page and its form or listed telephone; do not infer an email."
       },
-      "matched_athlete": {
-        "id": "55555555-5555-5555-5555-555555555555",
-        "display_name": "S. Jenkins",
-        "postcode": "2230",
-        "radius_km": 25,
-        "sport": "Triathlon",
-        "current_club": "Cronulla Triathlon Club",
-        "catchment_note": "Business and athlete share postcode 2230. The named street is in the athlete's local suburb/catchment within 25 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
+      "area_anchor": {
+        "id": "manly",
+        "club": "Manly-Warringah Sea Eagles",
+        "competition": "NRL",
+        "home_ground": "Brookvale Oval (4 Pines Park)",
+        "address": "Pittwater Road between Alfred Road and Pine Avenue, Brookvale NSW 2100",
+        "source": "https://www.seaeagles.com.au/more/venue/",
+        "rough_proximity_note": "Within roughly 2 km of the ground in Brookvale. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
       },
       "flight": {
         "name": "Flight 01",
@@ -343,46 +113,43 @@
         "price": 750,
         "billing_period": "quarter",
         "annualised_value": 3000,
-        "scale_rationale": "Single Cronulla shop with a workshop and bike showroom. Suggested tier only, not evidence of budget or purchase intent."
+        "scale_rationale": "Local clinic and nearby hydrotherapy pool listed. Suggested research tier only, no budget or purchase intent established."
       },
       "outreach_email": {
-        "subject": "Chain Reaction Bicycles: a local 2230 contender, not another generic advert",
-        "body": "Hello Chain Reaction Bicycles team,\n\nCompeting with online bike prices makes it hard to show why an in-person fit and local workshop matter.\n\nCould a local triathlon story help bring riders into your Cronulla showroom for advice rather than another price comparison? We would like to explore a partnership with local contender S. Jenkins, competing in Triathlon and based in postcode 2230.\n\nThe proposed Flight 01 is A$750 per quarter. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+        "subject": "Aushealth Physiotherapy: a community-first programme for Brookvale",
+        "body": "Hello Aushealth Physiotherapy team,\n\nA local practice needs to explain its clinic and hydrotherapy options without becoming another generic health advert.\n\nYour Brookvale clinic and Green Street pool give the programme a practical neighbourhood context. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 01 would be A$750 per quarter. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. Required GST and recipient-created tax invoice setup must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
       }
     },
     {
       "id": "2026-11-19-02",
-      "business_name": "PedL Cronulla",
-      "merchant_category": "Bicycle Tech",
-      "street_address": "2A Surf Road, Cronulla NSW 2230",
-      "postcode": "2230",
-      "website": "https://www.pedl.com.au/pages/about-contact",
-      "verification_source": "https://www.pedl.com.au/pages/about-contact",
+      "business_name": "Rebound Health Brookvale",
+      "merchant_category": "Allied Health",
+      "street_address": "Level 2, 577-579 Pittwater Road, Brookvale 2100, Australia",
+      "suburb": "Brookvale",
+      "postcode": "2100",
+      "country": "AU",
+      "website": "https://www.reboundhealth.com.au/locations/",
+      "verification_source": "https://www.reboundhealth.com.au/locations/",
       "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Redfern showroom and workshop plus Cronulla showroom listed on own site. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Multiple locations listed including Brookvale, Warriewood and Frenchs Forest. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
       },
       "contact": {
-        "email": "contact@pedl.com.au",
-        "contact_page": "https://www.pedl.com.au/pages/about-contact",
-        "note": "Publicly listed on verification source."
+        "email": "reception@reboundhealth.com.au",
+        "contact_page": "https://www.reboundhealth.com.au/locations/",
+        "note": "Email publicly listed on the verification source."
       },
-      "matched_athlete": {
-        "id": "55555555-5555-5555-5555-555555555555",
-        "display_name": "S. Jenkins",
-        "postcode": "2230",
-        "radius_km": 25,
-        "sport": "Triathlon",
-        "current_club": "Cronulla Triathlon Club",
-        "catchment_note": "Business and athlete share postcode 2230. The named street is in the athlete's local suburb/catchment within 25 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
+      "area_anchor": {
+        "id": "manly",
+        "club": "Manly-Warringah Sea Eagles",
+        "competition": "NRL",
+        "home_ground": "Brookvale Oval (4 Pines Park)",
+        "address": "Pittwater Road between Alfred Road and Pine Avenue, Brookvale NSW 2100",
+        "source": "https://www.seaeagles.com.au/more/venue/",
+        "rough_proximity_note": "On the ground's Pittwater Road corridor, roughly 1-2 km away. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
       },
       "flight": {
         "name": "Flight 02",
@@ -390,46 +157,43 @@
         "price": 3500,
         "billing_period": "year",
         "annualised_value": 3500,
-        "scale_rationale": "Redfern showroom and workshop plus Cronulla showroom listed on own site. Suggested tier only, not evidence of budget or purchase intent."
+        "scale_rationale": "Multiple locations listed including Brookvale, Warriewood and Frenchs Forest. Suggested research tier only, no budget or purchase intent established."
       },
       "outreach_email": {
-        "subject": "PedL Cronulla: a local 2230 contender, not another generic advert",
-        "body": "Hello PedL Cronulla team,\n\nHelping locals choose an e-bike takes more education than a short product advert can deliver.\n\nA local triathlon contender could give your Cronulla team a community-led starting point for conversations about everyday riding and servicing. We would like to explore a partnership with local contender S. Jenkins, competing in Triathlon and based in postcode 2230.\n\nThe proposed Flight 02 is A$3,500 per year. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+        "subject": "Rebound Health Brookvale: a community-first programme for Brookvale",
+        "body": "Hello Rebound Health Brookvale team,\n\nA multi-location allied health business needs a local story that does not get lost in a broad service list.\n\nYour Brookvale team could frame a future programme conversation around community access to allied health, without treatment claims. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 02 would be A$3,500 per year. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. Required GST and recipient-created tax invoice setup must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
       }
     },
     {
       "id": "2026-11-19-03",
-      "business_name": "Beach Without Sand",
-      "merchant_category": "Coastal Lifestyle",
-      "street_address": "1 North Avalon Road, Avalon Beach NSW 2107",
-      "postcode": "2107",
-      "website": "https://beachwithoutsand.com.au/pages/contact-us",
-      "verification_source": "https://beachwithoutsand.com.au/pages/contact-us",
+      "business_name": "99 Bikes Brookvale",
+      "merchant_category": "Bicycle Retail and Servicing",
+      "street_address": "521 Pittwater Road, Brookvale 2100, Australia",
+      "suburb": "Brookvale",
+      "postcode": "2100",
+      "country": "AU",
+      "website": "https://99bikes.com.au/pages/store/brookvale",
+      "verification_source": "https://99bikes.com.au/pages/store/brookvale",
       "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Two stores listed: Avalon Beach and Palm Beach. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Local outlet of a network with over 60 stores; local-operator proposal only. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
       },
       "contact": {
-        "email": null,
-        "contact_page": "https://beachwithoutsand.com.au/pages/contact-us",
-        "note": "No readable public email captured; use contact page or its listed telephone. No email inferred."
+        "email": "brookvale@99bikes.com.au",
+        "contact_page": "https://99bikes.com.au/pages/store/brookvale",
+        "note": "Email publicly listed on the verification source."
       },
-      "matched_athlete": {
-        "id": "66666666-6666-6666-6666-666666666666",
-        "display_name": "K. Slater",
-        "postcode": "2107",
-        "radius_km": 5,
-        "sport": "Surfing",
-        "current_club": "North Shore Boardriders",
-        "catchment_note": "Business and athlete share postcode 2107. The named street is in the athlete's local suburb/catchment within 5 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
+      "area_anchor": {
+        "id": "manly",
+        "club": "Manly-Warringah Sea Eagles",
+        "competition": "NRL",
+        "home_ground": "Brookvale Oval (4 Pines Park)",
+        "address": "Pittwater Road between Alfred Road and Pine Avenue, Brookvale NSW 2100",
+        "source": "https://www.seaeagles.com.au/more/venue/",
+        "rough_proximity_note": "Own site says just down from Brookvale Oval; roughly 2 km or less. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
       },
       "flight": {
         "name": "Flight 02",
@@ -437,46 +201,43 @@
         "price": 3500,
         "billing_period": "year",
         "annualised_value": 3500,
-        "scale_rationale": "Two stores listed: Avalon Beach and Palm Beach. Suggested tier only, not evidence of budget or purchase intent."
+        "scale_rationale": "Local outlet of a network with over 60 stores; local-operator proposal only. Suggested research tier only, no budget or purchase intent established."
       },
       "outreach_email": {
-        "subject": "Beach Without Sand: a local 2107 contender, not another generic advert",
-        "body": "Hello Beach Without Sand team,\n\nTurning beach visitors into repeat local customers can be harder than winning a one-off seasonal sale.\n\nYour Avalon and Palm Beach stores could connect their surf essentials with the journey of a local surfing contender. We would like to explore a partnership with local contender K. Slater, competing in Surfing and based in postcode 2107.\n\nThe proposed Flight 02 is A$3,500 per year. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+        "subject": "99 Bikes Brookvale: a community-first programme for Brookvale",
+        "body": "Hello 99 Bikes Brookvale team,\n\nOnline bike pricing can obscure the value of a nearby workshop and in-person advice.\n\nYour Pittwater Road workshop provides a useful community angle beyond another product discount. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 02 would be A$3,500 per year. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. Required GST and recipient-created tax invoice setup must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
       }
     },
     {
       "id": "2026-11-19-04",
-      "business_name": "Rubira's",
-      "merchant_category": "Suburban Dining",
-      "street_address": "192 Station Street, Port Melbourne VIC 3207",
-      "postcode": "3207",
-      "website": "https://www.rubiras.com.au/contact/",
-      "verification_source": "https://www.rubiras.com.au/contact/",
+      "business_name": "Beaufort Physiotherapy",
+      "merchant_category": "Physiotherapy",
+      "street_address": "777 Beaufort Street, Mount Lawley 6050, Australia",
+      "suburb": "Mount Lawley",
+      "postcode": "6050",
+      "country": "AU",
+      "website": "https://www.beaufortphysio.com.au/contact/",
+      "verification_source": "https://www.beaufortphysio.com.au/contact/",
       "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Single Port Melbourne venue targeted. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "One Mount Lawley clinic targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
       },
       "contact": {
-        "email": "info@rubiras.com.au",
-        "contact_page": "https://www.rubiras.com.au/contact/",
-        "note": "Publicly listed on verification source."
+        "email": "reception@beaufortphysio.com.au",
+        "contact_page": "https://www.beaufortphysio.com.au/contact/",
+        "note": "Email publicly listed on the verification source."
       },
-      "matched_athlete": {
-        "id": "77777777-7777-7777-7777-777777777777",
-        "display_name": "L. Toole",
-        "postcode": "3207",
-        "radius_km": 15,
-        "sport": "Australian Rules",
-        "current_club": "Port Melbourne FC",
-        "catchment_note": "Business and athlete share postcode 3207. The named street is in the athlete's local suburb/catchment within 15 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
+      "area_anchor": {
+        "id": "force",
+        "club": "Western Force",
+        "competition": "Super Rugby Pacific",
+        "home_ground": "HBF Park",
+        "address": "310 Pier Street, Perth WA 6000",
+        "source": "https://www.venueswest.wa.gov.au/venues/hbf-park",
+        "rough_proximity_note": "Roughly 3 km north-east of HBF Park along the Beaufort Street corridor. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
       },
       "flight": {
         "name": "Flight 01",
@@ -484,518 +245,219 @@
         "price": 750,
         "billing_period": "quarter",
         "annualised_value": 3000,
-        "scale_rationale": "Single Port Melbourne venue targeted. Suggested tier only, not evidence of budget or purchase intent."
+        "scale_rationale": "One Mount Lawley clinic targeted. Suggested research tier only, no budget or purchase intent established."
       },
       "outreach_email": {
-        "subject": "Rubira's: a local 3207 contender, not another generic advert",
-        "body": "Hello Rubira's team,\n\nFilling quieter lunch sittings without relying on discounts is a constant challenge for a neighbourhood restaurant.\n\nYour seafood lunch and dinner service could be introduced through a local contender's community story rather than another price-led promotion. We would like to explore a partnership with local contender L. Toole, competing in Australian Rules and based in postcode 3207.\n\nThe proposed Flight 01 is A$750 per quarter. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+        "subject": "Beaufort Physiotherapy: a community-first programme for Mount Lawley",
+        "body": "Hello Beaufort Physiotherapy team,\n\nA neighbourhood clinic needs to stay visible to active residents without promising sporting results.\n\nYour Mount Lawley practice could explore a community-first story centred on participation rather than clinical endorsement. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 01 would be A$750 per quarter. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. Required GST and recipient-created tax invoice setup must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
       }
     },
     {
       "id": "2026-11-19-05",
-      "business_name": "Shelanous",
-      "merchant_category": "Suburban Dining",
-      "street_address": "154 Rouse Street, Port Melbourne VIC 3207",
-      "postcode": "3207",
-      "website": "https://www.shelanous.com.au/contact",
-      "verification_source": "https://www.shelanous.com.au/contact",
+      "business_name": "Trained Physio and Fitness",
+      "merchant_category": "Physiotherapy and Fitness",
+      "street_address": "108 Brown Street, East Perth 6004, Australia",
+      "suburb": "East Perth",
+      "postcode": "6004",
+      "country": "AU",
+      "website": "https://www.trainedphysioperth.com.au/",
+      "verification_source": "https://www.trainedphysioperth.com.au/",
       "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Own site lists sister restaurant Shelly in Caulfield and shared vouchers. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "One East Perth practice with a rehab facility and gym. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
       },
       "contact": {
-        "email": "info@shelanous.com.au",
-        "contact_page": "https://www.shelanous.com.au/contact",
-        "note": "Publicly listed on verification source."
+        "email": "hello@trainedphysioperth.com.au",
+        "contact_page": "https://www.trainedphysioperth.com.au/",
+        "note": "Email publicly listed on the verification source."
       },
-      "matched_athlete": {
-        "id": "77777777-7777-7777-7777-777777777777",
-        "display_name": "L. Toole",
-        "postcode": "3207",
-        "radius_km": 15,
-        "sport": "Australian Rules",
-        "current_club": "Port Melbourne FC",
-        "catchment_note": "Business and athlete share postcode 3207. The named street is in the athlete's local suburb/catchment within 15 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
+      "area_anchor": {
+        "id": "force",
+        "club": "Western Force",
+        "competition": "Super Rugby Pacific",
+        "home_ground": "HBF Park",
+        "address": "310 Pier Street, Perth WA 6000",
+        "source": "https://www.venueswest.wa.gov.au/venues/hbf-park",
+        "rough_proximity_note": "Roughly 2 km south-east of HBF Park in neighbouring East Perth. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
       },
       "flight": {
-        "name": "Flight 02",
+        "name": "Flight 01",
         "currency": "AUD",
-        "price": 3500,
-        "billing_period": "year",
-        "annualised_value": 3500,
-        "scale_rationale": "Own site lists sister restaurant Shelly in Caulfield and shared vouchers. Suggested tier only, not evidence of budget or purchase intent."
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "One East Perth practice with a rehab facility and gym. Suggested research tier only, no budget or purchase intent established."
       },
       "outreach_email": {
-        "subject": "Shelanous: a local 3207 contender, not another generic advert",
-        "body": "Hello Shelanous team,\n\nAn immersive dinner needs more explanation than a standard restaurant advert, especially when guests cannot browse a conventional menu.\n\nA local contender partnership could start conversations about your Port Melbourne experience and private functions, with a community reason to discover the venue. We would like to explore a partnership with local contender L. Toole, competing in Australian Rules and based in postcode 3207.\n\nThe proposed Flight 02 is A$3,500 per year. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+        "subject": "Trained Physio and Fitness: a community-first programme for East Perth",
+        "body": "Hello Trained Physio and Fitness team,\n\nExplaining a combined physiotherapy, rehabilitation and gym offering takes more than a short advert.\n\nYour Brown Street facility could be introduced through a neighbourhood participation story, without health or performance promises. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 01 would be A$750 per quarter. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. Required GST and recipient-created tax invoice setup must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
       }
     },
     {
       "id": "2026-11-19-06",
-      "business_name": "Ciao Cielo",
-      "merchant_category": "Suburban Dining",
-      "street_address": "115 Bay Street, Port Melbourne VIC 3207",
-      "postcode": "3207",
-      "website": "https://ciaocielo.com.au/contact/",
-      "verification_source": "https://ciaocielo.com.au/contact/",
+      "business_name": "Dalman Physiotherapy",
+      "merchant_category": "Physiotherapy",
+      "street_address": "Level 9, Petherick Tower, 38 Waring Taylor Street, Wellington Central 6011, New Zealand",
+      "suburb": "Wellington Central",
+      "postcode": "6011",
+      "country": "NZ",
+      "website": "https://www.dalmanphysiotherapy.com/",
+      "verification_source": "https://www.dalmanphysiotherapy.com/",
       "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Single Bay Street venue targeted. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Own site lists Wellington CBD and Tawa clinics. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
       },
       "contact": {
-        "email": "admin@ciaocielo.com.au",
-        "contact_page": "https://ciaocielo.com.au/contact/",
-        "note": "Publicly listed on verification source."
+        "email": "dalmanphysio@gmail.com",
+        "contact_page": "https://www.dalmanphysiotherapy.com/",
+        "note": "Email publicly listed on the verification source."
       },
-      "matched_athlete": {
-        "id": "77777777-7777-7777-7777-777777777777",
-        "display_name": "L. Toole",
-        "postcode": "3207",
-        "radius_km": 15,
-        "sport": "Australian Rules",
-        "current_club": "Port Melbourne FC",
-        "catchment_note": "Business and athlete share postcode 3207. The named street is in the athlete's local suburb/catchment within 15 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
+      "area_anchor": {
+        "id": "pulse",
+        "club": "Pulse",
+        "competition": "ANZ Premiership",
+        "home_ground": "TSB Arena",
+        "address": "4 Queens Wharf, Wellington, New Zealand",
+        "source": "https://www.wellingtonnz.com/venues-wellington/our-venues/tsb-arena",
+        "rough_proximity_note": "Wellington CBD, roughly 0.5-1 km from Queens Wharf. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
       },
       "flight": {
-        "name": "Flight 01",
-        "currency": "AUD",
-        "price": 750,
-        "billing_period": "quarter",
-        "annualised_value": 3000,
-        "scale_rationale": "Single Bay Street venue targeted. Suggested tier only, not evidence of budget or purchase intent."
+        "name": "Flight 02",
+        "currency": "NZD",
+        "price": 3500,
+        "billing_period": "year",
+        "annualised_value": 3500,
+        "scale_rationale": "Own site lists Wellington CBD and Tawa clinics. Suggested research tier only, no budget or purchase intent established."
       },
       "outreach_email": {
-        "subject": "Ciao Cielo: a local 3207 contender, not another generic advert",
-        "body": "Hello Ciao Cielo team,\n\nStaying front of mind for neighbourhood dinner plans is difficult when diners see a stream of near-identical offers.\n\nA Port Melbourne contender's story could give your Bay Street venue a distinctive local conversation that does not depend on discounting. We would like to explore a partnership with local contender L. Toole, competing in Australian Rules and based in postcode 3207.\n\nThe proposed Flight 01 is A$750 per quarter. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+        "subject": "Dalman Physiotherapy: a community-first programme for Wellington Central",
+        "body": "Hello Dalman Physiotherapy team,\n\nA two-clinic practice needs a recognisably local message rather than another broad services advert.\n\nYour CBD clinic and minimum 30-minute appointments offer a concrete starting point for a community-focused conversation. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 02 would be NZ$3,500 per year. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. For New Zealand, local GST, buyer-created invoice requirements and programme availability must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
       }
     },
     {
       "id": "2026-11-19-07",
-      "business_name": "Bay Beach Pizza & Pasta",
-      "merchant_category": "Suburban Dining",
-      "street_address": "238 Bay Street, Port Melbourne VIC 3207",
-      "postcode": "3207",
-      "website": "https://baybeachrestaurants.com.au/contact-us/",
-      "verification_source": "https://baybeachrestaurants.com.au/contact-us/",
+      "business_name": "CBD Physio",
+      "merchant_category": "Physiotherapy",
+      "street_address": "Level 5, Te Whare Maori, 139 Featherston Street, Wellington Central 6011, New Zealand",
+      "suburb": "Wellington Central",
+      "postcode": "6011",
+      "country": "NZ",
+      "website": "https://www.cbdphysio.co.nz/contact-us/",
+      "verification_source": "https://www.cbdphysio.co.nz/contact-us/",
       "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Own contact page lists Port Melbourne and St Kilda stores. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Single CBD clinic targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
       },
       "contact": {
-        "email": "baybeachhospitalityandcatering@gmail.com",
-        "contact_page": "https://baybeachrestaurants.com.au/contact-us/",
-        "note": "Publicly listed on verification source."
+        "email": "contact@cbdphysio.co.nz",
+        "contact_page": "https://www.cbdphysio.co.nz/contact-us/",
+        "note": "Email publicly listed on the verification source."
       },
-      "matched_athlete": {
-        "id": "77777777-7777-7777-7777-777777777777",
-        "display_name": "L. Toole",
-        "postcode": "3207",
-        "radius_km": 15,
-        "sport": "Australian Rules",
-        "current_club": "Port Melbourne FC",
-        "catchment_note": "Business and athlete share postcode 3207. The named street is in the athlete's local suburb/catchment within 15 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
+      "area_anchor": {
+        "id": "pulse",
+        "club": "Pulse",
+        "competition": "ANZ Premiership",
+        "home_ground": "TSB Arena",
+        "address": "4 Queens Wharf, Wellington, New Zealand",
+        "source": "https://www.wellingtonnz.com/venues-wellington/our-venues/tsb-arena",
+        "rough_proximity_note": "Featherston Street is a few blocks inland from TSB Arena, roughly 0.5 km away. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
       },
       "flight": {
-        "name": "Flight 02",
-        "currency": "AUD",
-        "price": 3500,
-        "billing_period": "year",
-        "annualised_value": 3500,
-        "scale_rationale": "Own contact page lists Port Melbourne and St Kilda stores. Suggested tier only, not evidence of budget or purchase intent."
+        "name": "Flight 01",
+        "currency": "NZD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "Single CBD clinic targeted. Suggested research tier only, no budget or purchase intent established."
       },
       "outreach_email": {
-        "subject": "Bay Beach Pizza & Pasta: a local 3207 contender, not another generic advert",
-        "body": "Hello Bay Beach Pizza & Pasta team,\n\nBuilding repeat orders across two neighbourhoods can get expensive when every visit starts with a paid advert.\n\nA Port Melbourne contender partnership could give your Bay Street team a consistent community story alongside its food offering. We would like to explore a partnership with local contender L. Toole, competing in Australian Rules and based in postcode 3207.\n\nThe proposed Flight 02 is A$3,500 per year. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+        "subject": "CBD Physio: a community-first programme for Wellington Central",
+        "body": "Hello CBD Physio team,\n\nBusy city workers can miss a nearby clinic when every health advert sounds the same.\n\nYour Featherston Street location and 30-minute appointments give a future neighbourhood programme a clear local context. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 01 would be NZ$750 per quarter. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. For New Zealand, local GST, buyer-created invoice requirements and programme availability must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
       }
     },
     {
       "id": "2026-11-19-08",
-      "business_name": "Ultra Tune Newtown",
-      "merchant_category": "Automotive",
-      "street_address": "242-244 Enmore Road, Enmore NSW 2042",
-      "postcode": "2042",
-      "website": "https://www.ultratune.com.au/stores/ultra-tune-newtown/",
-      "verification_source": "https://www.ultratune.com.au/stores/ultra-tune-newtown/",
+      "business_name": "Central City Physiotherapy Clinic",
+      "merchant_category": "Physiotherapy",
+      "street_address": "Level 5, 330 Lambton Quay, Wellington Central 6011, New Zealand",
+      "suburb": "Wellington Central",
+      "postcode": "6011",
+      "country": "NZ",
+      "website": "https://www.ccphysio.co.nz/",
+      "verification_source": "https://www.ccphysio.co.nz/",
       "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Local outlet of a multi-site franchise; proposal is for the Newtown operator, not a national commitment. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Single central Wellington clinic targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
       },
       "contact": {
-        "email": "newtown@ultratune.com.au",
-        "contact_page": "https://www.ultratune.com.au/stores/ultra-tune-newtown/",
-        "note": "Publicly listed on verification source."
+        "email": "info@ccphysio.co.nz",
+        "contact_page": "https://www.ccphysio.co.nz/",
+        "note": "Email publicly listed on the verification source."
       },
-      "matched_athlete": {
-        "id": "44444444-4444-4444-4444-444444444444",
-        "display_name": "K. Ross",
-        "postcode": "2042",
-        "radius_km": 15,
-        "sport": "Rugby League",
-        "current_club": "Newtown Jets",
-        "catchment_note": "Business and athlete share postcode 2042. The named street is in the athlete's local suburb/catchment within 15 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [
-          "Sports Betting"
-        ],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
+      "area_anchor": {
+        "id": "pulse",
+        "club": "Pulse",
+        "competition": "ANZ Premiership",
+        "home_ground": "TSB Arena",
+        "address": "4 Queens Wharf, Wellington, New Zealand",
+        "source": "https://www.wellingtonnz.com/venues-wellington/our-venues/tsb-arena",
+        "rough_proximity_note": "Lambton Quay in the same waterfront CBD precinct, roughly 0.5-1 km from TSB Arena. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
       },
       "flight": {
-        "name": "Flight 02",
-        "currency": "AUD",
-        "price": 3500,
-        "billing_period": "year",
-        "annualised_value": 3500,
-        "scale_rationale": "Local outlet of a multi-site franchise; proposal is for the Newtown operator, not a national commitment. Suggested tier only, not evidence of budget or purchase intent."
+        "name": "Flight 01",
+        "currency": "NZD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "Single central Wellington clinic targeted. Suggested research tier only, no budget or purchase intent established."
       },
       "outreach_email": {
-        "subject": "Ultra Tune Newtown: a local 2042 contender, not another generic advert",
-        "body": "Hello Ultra Tune Newtown team,\n\nDrivers often postpone servicing until something goes wrong, making planned bookings harder to build.\n\nYour logbook servicing and clear approval process could be introduced to nearby households through a local contender story focused on trust. We would like to explore a partnership with local contender K. Ross, competing in Rugby League and based in postcode 2042.\n\nThe proposed Flight 02 is A$3,500 per year. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+        "subject": "Central City Physiotherapy Clinic: a community-first programme for Wellington Central",
+        "body": "Hello Central City Physiotherapy Clinic team,\n\nA long-established practice needs to reach new city residents without relying on generic injury messages.\n\nYour Lambton Quay clinic could explore a participation-led local programme that makes no treatment claims. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 01 would be NZ$750 per quarter. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. For New Zealand, local GST, buyer-created invoice requirements and programme availability must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
       }
     },
     {
       "id": "2026-11-19-09",
-      "business_name": "Deesse Boutique",
-      "merchant_category": "Apparel",
-      "street_address": "Shop 3, 72 Old Barrenjoey Road, Avalon Beach NSW 2107",
-      "postcode": "2107",
-      "website": "https://deesse.com.au/pages/our-store",
-      "verification_source": "https://deesse.com.au/pages/our-store",
+      "business_name": "The Spinal Studio Werribee",
+      "merchant_category": "Allied Health",
+      "street_address": "6/70 Watton Street, Werribee 3030, Australia",
+      "suburb": "Werribee",
+      "postcode": "3030",
+      "country": "AU",
+      "website": "https://thespinalstudio.com.au/locations/werribee/",
+      "verification_source": "https://thespinalstudio.com.au/locations/werribee/",
       "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "One Avalon shop with click and collect and local delivery. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Own site describes nine studios; proposal limited to the local operator. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
       },
       "contact": {
-        "email": "hello@deesse.com.au",
-        "contact_page": "https://deesse.com.au/pages/our-store",
-        "note": "Publicly listed on verification source."
+        "email": "werribee@thespinalstudio.com.au",
+        "contact_page": "https://thespinalstudio.com.au/locations/werribee/",
+        "note": "Email publicly listed on the verification source."
       },
-      "matched_athlete": {
-        "id": "66666666-6666-6666-6666-666666666666",
-        "display_name": "K. Slater",
-        "postcode": "2107",
-        "radius_km": 5,
-        "sport": "Surfing",
-        "current_club": "North Shore Boardriders",
-        "catchment_note": "Business and athlete share postcode 2107. The named street is in the athlete's local suburb/catchment within 5 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
-      },
-      "flight": {
-        "name": "Flight 01",
-        "currency": "AUD",
-        "price": 750,
-        "billing_period": "quarter",
-        "annualised_value": 3000,
-        "scale_rationale": "One Avalon shop with click and collect and local delivery. Suggested tier only, not evidence of budget or purchase intent."
-      },
-      "outreach_email": {
-        "subject": "Deesse Boutique: a local 2107 contender, not another generic advert",
-        "body": "Hello Deesse Boutique team,\n\nOnline fashion competition makes it difficult to bring nearby shoppers back into a physical boutique.\n\nYour click and collect and local delivery options could sit beside a local surfing contender story that reminds Avalon customers to shop close to home. We would like to explore a partnership with local contender K. Slater, competing in Surfing and based in postcode 2107.\n\nThe proposed Flight 01 is A$750 per quarter. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
-      }
-    },
-    {
-      "id": "2026-11-19-10",
-      "business_name": "Voss Store",
-      "merchant_category": "Apparel",
-      "street_address": "Shop 2, 25 Old Barrenjoey Road, Avalon Beach NSW 2107",
-      "postcode": "2107",
-      "website": "https://www.vossstore.com.au/contact/",
-      "verification_source": "https://www.vossstore.com.au/contact/",
-      "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Single Avalon menswear shop targeted. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
-      },
-      "contact": {
-        "email": "info@vossstore.com.au",
-        "contact_page": "https://www.vossstore.com.au/contact/",
-        "note": "Publicly listed on verification source."
-      },
-      "matched_athlete": {
-        "id": "66666666-6666-6666-6666-666666666666",
-        "display_name": "K. Slater",
-        "postcode": "2107",
-        "radius_km": 5,
-        "sport": "Surfing",
-        "current_club": "North Shore Boardriders",
-        "catchment_note": "Business and athlete share postcode 2107. The named street is in the athlete's local suburb/catchment within 5 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
-      },
-      "flight": {
-        "name": "Flight 01",
-        "currency": "AUD",
-        "price": 750,
-        "billing_period": "quarter",
-        "annualised_value": 3000,
-        "scale_rationale": "Single Avalon menswear shop targeted. Suggested tier only, not evidence of budget or purchase intent."
-      },
-      "outreach_email": {
-        "subject": "Voss Store: a local 2107 contender, not another generic advert",
-        "body": "Hello Voss Store team,\n\nIndependent menswear stores need a reason for locals to visit that a large online catalogue cannot copy.\n\nBacking an Avalon surfing contender could give your Old Barrenjoey Road store a neighbourhood story beyond the next product release. We would like to explore a partnership with local contender K. Slater, competing in Surfing and based in postcode 2107.\n\nThe proposed Flight 01 is A$750 per quarter. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
-      }
-    },
-    {
-      "id": "2026-11-19-11",
-      "business_name": "Bondi Physiotherapy & Sports Injury Centre",
-      "merchant_category": "Recovery",
-      "street_address": "30 Curlewis Street, Bondi Beach NSW 2026",
-      "postcode": "2026",
-      "website": "https://www.bondiphysio.com.au/contact",
-      "verification_source": "https://www.bondiphysio.com.au/contact",
-      "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Single Bondi Beach practice targeted. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
-      },
-      "contact": {
-        "email": null,
-        "contact_page": "https://www.bondiphysio.com.au/contact",
-        "note": "No readable public email captured; use contact page or its listed telephone. No email inferred."
-      },
-      "matched_athlete": {
-        "id": "33333333-3333-3333-3333-333333333333",
-        "display_name": "H. Bligh",
-        "postcode": "2026",
-        "radius_km": 5,
-        "sport": "Basketball",
-        "current_club": "City of Sydney Basketball Association",
-        "catchment_note": "Business and athlete share postcode 2026. The named street is in the athlete's local suburb/catchment within 5 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
-      },
-      "flight": {
-        "name": "Flight 01",
-        "currency": "AUD",
-        "price": 750,
-        "billing_period": "quarter",
-        "annualised_value": 3000,
-        "scale_rationale": "Single Bondi Beach practice targeted. Suggested tier only, not evidence of budget or purchase intent."
-      },
-      "outreach_email": {
-        "subject": "Bondi Physiotherapy & Sports Injury Centre: a local 2026 contender, not another generic advert",
-        "body": "Hello Bondi Physiotherapy & Sports Injury Centre team,\n\nReaching active locals before a training setback can be difficult without becoming another generic clinic advert.\n\nA local basketball contender's journey could introduce your Curlewis Street practice to nearby residents without making treatment or performance claims. We would like to explore a partnership with local contender H. Bligh, competing in Basketball and based in postcode 2026.\n\nThe proposed Flight 01 is A$750 per quarter. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
-      }
-    },
-    {
-      "id": "2026-11-19-12",
-      "business_name": "Pier 35 Bar & Grill",
-      "merchant_category": "Suburban Dining",
-      "street_address": "263-329 Lorimer Street, Port Melbourne VIC 3207",
-      "postcode": "3207",
-      "website": "https://pier35barandgrill.com.au/contact-us/",
-      "verification_source": "https://pier35barandgrill.com.au/contact-us/",
-      "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Single waterfront venue targeted. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
-      },
-      "contact": {
-        "email": null,
-        "contact_page": "https://pier35barandgrill.com.au/contact-us/",
-        "note": "No readable public email captured; use contact page or its listed telephone. No email inferred."
-      },
-      "matched_athlete": {
-        "id": "77777777-7777-7777-7777-777777777777",
-        "display_name": "L. Toole",
-        "postcode": "3207",
-        "radius_km": 15,
-        "sport": "Australian Rules",
-        "current_club": "Port Melbourne FC",
-        "catchment_note": "Business and athlete share postcode 3207. The named street is in the athlete's local suburb/catchment within 15 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
-      },
-      "flight": {
-        "name": "Flight 01",
-        "currency": "AUD",
-        "price": 750,
-        "billing_period": "quarter",
-        "annualised_value": 3000,
-        "scale_rationale": "Single waterfront venue targeted. Suggested tier only, not evidence of budget or purchase intent."
-      },
-      "outreach_email": {
-        "subject": "Pier 35 Bar & Grill: a local 3207 contender, not another generic advert",
-        "body": "Hello Pier 35 Bar & Grill team,\n\nA waterfront venue still needs to stay visible when locals are choosing a function space or midweek meal.\n\nYour lunch, dinner and function offering could be introduced through a Port Melbourne contender's community story rather than another generic venue advert. We would like to explore a partnership with local contender L. Toole, competing in Australian Rules and based in postcode 3207.\n\nThe proposed Flight 01 is A$750 per quarter. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
-      }
-    },
-    {
-      "id": "2026-11-19-13",
-      "business_name": "Nimbus Co Bondi",
-      "merchant_category": "Recovery",
-      "street_address": "97 Bondi Road, Bondi NSW 2026",
-      "postcode": "2026",
-      "website": "https://nimbusco.com.au/pages/contact",
-      "verification_source": "https://nimbusco.com.au/pages/contact",
-      "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Six studios listed on own contact page; group-level proposal anchored at Bondi, subject to marketing approval. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
-      },
-      "contact": {
-        "email": "marketing@nimbusco.com.au",
-        "contact_page": "https://nimbusco.com.au/pages/contact",
-        "note": "Publicly listed on verification source."
-      },
-      "matched_athlete": {
-        "id": "33333333-3333-3333-3333-333333333333",
-        "display_name": "H. Bligh",
-        "postcode": "2026",
-        "radius_km": 5,
-        "sport": "Basketball",
-        "current_club": "City of Sydney Basketball Association",
-        "catchment_note": "Business and athlete share postcode 2026. The named street is in the athlete's local suburb/catchment within 5 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
-      },
-      "flight": {
-        "name": "Flight 03",
-        "currency": "AUD",
-        "price": 12500,
-        "billing_period": "year",
-        "annualised_value": 12500,
-        "scale_rationale": "Six studios listed on own contact page; group-level proposal anchored at Bondi, subject to marketing approval. Suggested tier only, not evidence of budget or purchase intent."
-      },
-      "outreach_email": {
-        "subject": "Nimbus Co Bondi: a local 2026 contender, not another generic advert",
-        "body": "Hello Nimbus Co Bondi team,\n\nKeeping a multi-studio wellness brand locally relevant is difficult when each neighbourhood has different regulars.\n\nA Bondi basketball contender could anchor a local-first partnership around your private sauna and cold therapy offering, without promising health or performance outcomes. We would like to explore a partnership with local contender H. Bligh, competing in Basketball and based in postcode 2026.\n\nThe proposed Flight 03 is A$12,500 per year. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
-      }
-    },
-    {
-      "id": "2026-11-19-14",
-      "business_name": "Beckenham Optometrist",
-      "merchant_category": "Eyewear",
-      "street_address": "15 Old Barrenjoey Road, Avalon Beach NSW 2107",
-      "postcode": "2107",
-      "website": "https://www.beckenhamoptometrist.com.au/contact/",
-      "verification_source": "https://www.beckenhamoptometrist.com.au/contact/",
-      "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Single independent Avalon practice targeted. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
-      },
-      "contact": {
-        "email": null,
-        "contact_page": "https://www.beckenhamoptometrist.com.au/contact/",
-        "note": "No readable public email captured; use contact page or its listed telephone. No email inferred."
-      },
-      "matched_athlete": {
-        "id": "66666666-6666-6666-6666-666666666666",
-        "display_name": "K. Slater",
-        "postcode": "2107",
-        "radius_km": 5,
-        "sport": "Surfing",
-        "current_club": "North Shore Boardriders",
-        "catchment_note": "Business and athlete share postcode 2107. The named street is in the athlete's local suburb/catchment within 5 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
-      },
-      "flight": {
-        "name": "Flight 01",
-        "currency": "AUD",
-        "price": 750,
-        "billing_period": "quarter",
-        "annualised_value": 3000,
-        "scale_rationale": "Single independent Avalon practice targeted. Suggested tier only, not evidence of budget or purchase intent."
-      },
-      "outreach_email": {
-        "subject": "Beckenham Optometrist: a local 2107 contender, not another generic advert",
-        "body": "Hello Beckenham Optometrist team,\n\nLocals can overlook independent eyewear advice when large chains dominate advertising.\n\nA local surfing contender's story could put your Avalon eyewear service into a familiar coastal context without making clinical claims. We would like to explore a partnership with local contender K. Slater, competing in Surfing and based in postcode 2107.\n\nThe proposed Flight 01 is A$750 per quarter. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
-      }
-    },
-    {
-      "id": "2026-11-19-15",
-      "business_name": "Eyecare Plus Avalon Beach",
-      "merchant_category": "Eyewear",
-      "street_address": "13 Bowling Green Lane, Avalon Beach NSW 2107",
-      "postcode": "2107",
-      "website": "https://www.eyecareplus.com.au/avalonbeach/",
-      "verification_source": "https://www.eyecareplus.com.au/avalonbeach/",
-      "verification": {
-        "checked_at_utc": "2026-11-18",
-        "method": "web_search discovery followed by successful web_get_contents of the business's own live page.",
-        "operating_evidence": "Local practice in a multi-site optometry network; proposal is for the local operator. Live page provides services, trading hours or booking/contact options.",
-        "strength": "Own-site address and live service/contact content; no telephone confirmation."
-      },
-      "contact": {
-        "email": "avalonbeach@eyecareplus.com.au",
-        "contact_page": "https://www.eyecareplus.com.au/avalonbeach/",
-        "note": "Publicly listed on verification source."
-      },
-      "matched_athlete": {
-        "id": "66666666-6666-6666-6666-666666666666",
-        "display_name": "K. Slater",
-        "postcode": "2107",
-        "radius_km": 5,
-        "sport": "Surfing",
-        "current_club": "North Shore Boardriders",
-        "catchment_note": "Business and athlete share postcode 2107. The named street is in the athlete's local suburb/catchment within 5 km of the roster beacon. Qualitative locality check only; no exact geocoded distance claimed."
-      },
-      "locked_category_check": {
-        "passed": true,
-        "locked": [],
-        "available_match": true,
-        "note": "Exact available category match; no locked category or related wagering category overlap."
+      "area_anchor": {
+        "id": "werribee",
+        "club": "Werribee",
+        "competition": "VFL",
+        "home_ground": "Avalon Airport Oval at Chirnside Park",
+        "address": "220 Watton Street, Werribee VIC 3030",
+        "source": "https://www.wyndham.vic.gov.au/directory/werribee-football-club",
+        "rough_proximity_note": "On the same Watton Street corridor as the ground, roughly 1-2 km away. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
       },
       "flight": {
         "name": "Flight 02",
@@ -1003,11 +465,278 @@
         "price": 3500,
         "billing_period": "year",
         "annualised_value": 3500,
-        "scale_rationale": "Local practice in a multi-site optometry network; proposal is for the local operator. Suggested tier only, not evidence of budget or purchase intent."
+        "scale_rationale": "Own site describes nine studios; proposal limited to the local operator. Suggested research tier only, no budget or purchase intent established."
       },
       "outreach_email": {
-        "subject": "Eyecare Plus Avalon Beach: a local 2107 contender, not another generic advert",
-        "body": "Hello Eyecare Plus Avalon Beach team,\n\nExplaining the value of personalised eyewear advice can be difficult in a market led by headline offers.\n\nYour prescription sunglasses range could be introduced through an Avalon surfing contender's local story, without implying a clinical endorsement. We would like to explore a partnership with local contender K. Slater, competing in Surfing and based in postcode 2107.\n\nThe proposed Flight 02 is A$3,500 per year. The model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements, subject to the required GST and recipient-created tax invoice setup. Athlete participation, category rights and final terms would be agreed before activation; this is not an existing endorsement.\n\nWould a short conversation about a local partnership be useful? If you are not the right contact, could you point us to the owner or marketing lead? If you would prefer no further outreach, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+        "subject": "The Spinal Studio Werribee: a community-first programme for Werribee",
+        "body": "Hello The Spinal Studio Werribee team,\n\nA multi-disciplinary studio needs to explain its local offer without overwhelming residents with a list of services.\n\nYour Watton Street team could explore a neighbourhood participation story, rather than an implied clinical endorsement. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 02 would be A$3,500 per year. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. Required GST and recipient-created tax invoice setup must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+      }
+    },
+    {
+      "id": "2026-11-19-10",
+      "business_name": "Enrich Physio Werribee",
+      "merchant_category": "Physiotherapy",
+      "street_address": "Friendly Medical Centre, 82 Watton Street, Werribee 3030, Australia",
+      "suburb": "Werribee",
+      "postcode": "3030",
+      "country": "AU",
+      "website": "https://enrichphysio.com.au/our-locations/",
+      "verification_source": "https://enrichphysio.com.au/our-locations/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Own site lists multiple clinics including Werribee, Aintree and Melton. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": null,
+        "contact_page": "https://enrichphysio.com.au/our-locations/",
+        "note": "No readable public email captured. Use the contact page and its form or listed telephone; do not infer an email."
+      },
+      "area_anchor": {
+        "id": "werribee",
+        "club": "Werribee",
+        "competition": "VFL",
+        "home_ground": "Avalon Airport Oval at Chirnside Park",
+        "address": "220 Watton Street, Werribee VIC 3030",
+        "source": "https://www.wyndham.vic.gov.au/directory/werribee-football-club",
+        "rough_proximity_note": "Same Watton Street corridor as Chirnside Park, roughly 1-2 km away. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 02",
+        "currency": "AUD",
+        "price": 3500,
+        "billing_period": "year",
+        "annualised_value": 3500,
+        "scale_rationale": "Own site lists multiple clinics including Werribee, Aintree and Melton. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Enrich Physio Werribee: a community-first programme for Werribee",
+        "body": "Hello Enrich Physio Werribee team,\n\nA clinic group can struggle to make each branch feel local rather than interchangeable.\n\nYour Friendly Medical Centre location gives a future community programme a specific Werribee focus. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 02 would be A$3,500 per year. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. Required GST and recipient-created tax invoice setup must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+      }
+    },
+    {
+      "id": "2026-11-19-11",
+      "business_name": "The Physio Studio",
+      "merchant_category": "Physiotherapy",
+      "street_address": "93 Goodwood Road, Goodwood 5034, Australia",
+      "suburb": "Goodwood",
+      "postcode": "5034",
+      "country": "AU",
+      "website": "https://www.thephysiostudio.com.au/contact/",
+      "verification_source": "https://www.thephysiostudio.com.au/contact/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "One Goodwood Road clinic targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "admin@thephysiostudio.com.au",
+        "contact_page": "https://www.thephysiostudio.com.au/contact/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "lightning",
+        "club": "Adelaide Lightning",
+        "competition": "WNBL",
+        "home_ground": "SA State Basketball Centre",
+        "address": "142 Rose Terrace, Wayville SA 5034",
+        "source": "https://tickets.adelaidelightning.wnbl.com.au/event/adelaide-lightning-full-season-memberships-2026--baiw3b",
+        "rough_proximity_note": "Neighbouring Goodwood, roughly 1 km east of the Rose Terrace venue. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "AUD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "One Goodwood Road clinic targeted. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "The Physio Studio: a community-first programme for Goodwood",
+        "body": "Hello The Physio Studio team,\n\nA practice offering physiotherapy, Pilates and massage needs a clear community message without promising outcomes.\n\nYour Goodwood Road clinic already describes serving Wayville, making this a relevant area for programme research. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 01 would be A$750 per quarter. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. Required GST and recipient-created tax invoice setup must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+      }
+    },
+    {
+      "id": "2026-11-19-12",
+      "business_name": "Empowered Neurodivergence Physiotherapy",
+      "merchant_category": "Physiotherapy",
+      "street_address": "2-3 Greenhill Road, Wayville 5034, Australia",
+      "suburb": "Wayville",
+      "postcode": "5034",
+      "country": "AU",
+      "website": "https://empoweredneurodivergencephysiotherapy.com.au/appointment-booking/",
+      "verification_source": "https://empoweredneurodivergencephysiotherapy.com.au/appointment-booking/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "One Wayville service address targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "Own page has conflicting closing hours; address and email are consistent. Hours not relied on."
+      },
+      "contact": {
+        "email": "admin@empoweredneurodivergencephysiotherapy.com.au",
+        "contact_page": "https://empoweredneurodivergencephysiotherapy.com.au/appointment-booking/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "lightning",
+        "club": "Adelaide Lightning",
+        "competition": "WNBL",
+        "home_ground": "SA State Basketball Centre",
+        "address": "142 Rose Terrace, Wayville SA 5034",
+        "source": "https://tickets.adelaidelightning.wnbl.com.au/event/adelaide-lightning-full-season-memberships-2026--baiw3b",
+        "rough_proximity_note": "Same Wayville area, roughly 1-2 km from the State Basketball Centre. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "AUD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "One Wayville service address targeted. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Empowered Neurodivergence Physiotherapy: a community-first programme for Wayville",
+        "body": "Hello Empowered Neurodivergence Physiotherapy team,\n\nA specialist physiotherapy service needs to explain its support clearly without reducing it to a generic health advert.\n\nYour Greenhill Road service gives a future participation-focused programme a local starting point, without clinical claims. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 01 would be A$750 per quarter. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. Required GST and recipient-created tax invoice setup must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+      }
+    },
+    {
+      "id": "2026-11-19-13",
+      "business_name": "Warners Bay Physiotherapy",
+      "merchant_category": "Physiotherapy",
+      "street_address": "27 Lake Street, Warners Bay 2282, Australia",
+      "suburb": "Warners Bay",
+      "postcode": "2282",
+      "country": "AU",
+      "website": "https://warnersbayphysiotherapy.com.au/contact-warners-bay-physiotherapy/",
+      "verification_source": "https://warnersbayphysiotherapy.com.au/contact-warners-bay-physiotherapy/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "One Warners Bay clinic targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "reception@warnersbayphysiotherapy.com.au",
+        "contact_page": "https://warnersbayphysiotherapy.com.au/contact-warners-bay-physiotherapy/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "valentine",
+        "club": "Valentine FC",
+        "competition": "NPL NNSW",
+        "home_ground": "Croudace Bay Sports Complex",
+        "address": "14 Parklea Avenue, Croudace Bay NSW 2280",
+        "source": "https://northernnswfootball.com.au/member-zones/clubs/valentine-fc",
+        "home_ground_source": "https://valentinefc.com.au/about-us/",
+        "rough_proximity_note": "Neighbouring lakeside suburb, roughly 3-5 km north of Croudace Bay Sports Complex. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "AUD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "One Warners Bay clinic targeted. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Warners Bay Physiotherapy: a community-first programme for Warners Bay",
+        "body": "Hello Warners Bay Physiotherapy team,\n\nA local clinic needs a community connection that stands apart from repetitive injury advertising.\n\nYour Lake Street practice could explore a local participation story without implying treatment of any contender. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 01 would be A$750 per quarter. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. Required GST and recipient-created tax invoice setup must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+      }
+    },
+    {
+      "id": "2026-11-19-14",
+      "business_name": "Bay Bike Co",
+      "merchant_category": "Bicycle Retail and Servicing",
+      "street_address": "8/56 Medcalf Street, Warners Bay 2282, Australia",
+      "suburb": "Warners Bay",
+      "postcode": "2282",
+      "country": "AU",
+      "website": "https://www.baybikeco.com.au/pages/contact-us",
+      "verification_source": "https://www.baybikeco.com.au/pages/contact-us",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "One Warners Bay shop targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "sales@baybikeco.com.au",
+        "contact_page": "https://www.baybikeco.com.au/pages/contact-us",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "valentine",
+        "club": "Valentine FC",
+        "competition": "NPL NNSW",
+        "home_ground": "Croudace Bay Sports Complex",
+        "address": "14 Parklea Avenue, Croudace Bay NSW 2280",
+        "source": "https://northernnswfootball.com.au/member-zones/clubs/valentine-fc",
+        "home_ground_source": "https://valentinefc.com.au/about-us/",
+        "rough_proximity_note": "Neighbouring Warners Bay retail area, roughly 4-6 km north of Croudace Bay Sports Complex. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "AUD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "One Warners Bay shop targeted. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Bay Bike Co: a community-first programme for Warners Bay",
+        "body": "Hello Bay Bike Co team,\n\nIndependent bike shops need to show why local advice matters when customers compare online prices.\n\nYour Medcalf Street shop could explore a community-led programme rather than another price promotion. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 01 would be A$750 per quarter. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. Required GST and recipient-created tax invoice setup must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
+      }
+    },
+    {
+      "id": "2026-11-19-15",
+      "business_name": "99 Bikes Warners Bay",
+      "merchant_category": "Bicycle Retail and Servicing",
+      "street_address": "64 Medcalf Street, Warners Bay 2282, Australia",
+      "suburb": "Warners Bay",
+      "postcode": "2282",
+      "country": "AU",
+      "website": "https://99bikes.com.au/pages/store/warners-bay-bike-shop",
+      "verification_source": "https://99bikes.com.au/pages/store/warners-bay-bike-shop",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Local outlet of a network with over 60 stores; local-operator proposal only. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "warners.bay@99bikes.com.au",
+        "contact_page": "https://99bikes.com.au/pages/store/warners-bay-bike-shop",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "valentine",
+        "club": "Valentine FC",
+        "competition": "NPL NNSW",
+        "home_ground": "Croudace Bay Sports Complex",
+        "address": "14 Parklea Avenue, Croudace Bay NSW 2280",
+        "source": "https://northernnswfootball.com.au/member-zones/clubs/valentine-fc",
+        "home_ground_source": "https://valentinefc.com.au/about-us/",
+        "rough_proximity_note": "Neighbouring Warners Bay retail area, roughly 4-6 km north of Croudace Bay Sports Complex. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 02",
+        "currency": "AUD",
+        "price": 3500,
+        "billing_period": "year",
+        "annualised_value": 3500,
+        "scale_rationale": "Local outlet of a network with over 60 stores; local-operator proposal only. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "99 Bikes Warners Bay: a community-first programme for Warners Bay",
+        "body": "Hello 99 Bikes Warners Bay team,\n\nA large retail network still needs a neighbourhood reason for residents to choose its local workshop.\n\nYour Medcalf Street servicing and bike-fitting offer provides a practical community angle beyond national promotions. We are researching interest in a programme that could support a local emerging contender from the area's pathway. No individual has been selected or authorised for this proposal.\n\nAn indicative Flight 02 would be A$3,500 per year. The programme model includes 15% grassroots club reinvestment and instant RCTI tax compliance for eligible arrangements. Required GST and recipient-created tax invoice setup must be confirmed before any transaction.\n\nThis is a generic programme concept, not a club-endorsed offer or an existing partnership. No talent consent or media rights have been obtained. Any future activity would require those permissions and separate commercial review; no clinical or performance endorsement is proposed.\n\nIf and when the programme is approved for outreach, would a short conversation about local community goals be useful? If you prefer no further contact, please let us know.\n\nKind regards,\nPostcode Hero partnerships"
       }
     }
   ]
