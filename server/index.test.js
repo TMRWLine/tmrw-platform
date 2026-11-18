@@ -97,3 +97,15 @@ test('capsule economics are authoritative even when legacy client fields are tam
   assert.equal(result.ledger.partnerCents, 0);
   assert.equal((await post({ capsuleItems: [{ ...item, id: 'not-published' }] })).status, 400);
 });
+
+test('venue packs retain catalogue per-garment prices and require full 25-garment curves', async () => {
+  const size = '25x VENUE CURVE (3S·8M·9L·5XL)';
+  for (const qty of [25, 50]) {
+    const response = await post({ capsuleItems: [{ ...item, size, qty, priceAud: 1, baseCostAud: 0 }] });
+    assert.equal(response.status, 200);
+    const { ledger } = await response.json();
+    assert.equal(ledger.grossCents, qty * 9500);
+    assert.equal(ledger.productionCents, qty * 2500);
+  }
+  assert.equal((await post({ capsuleItems: [{ ...item, size, qty: 1 }] })).status, 400);
+});

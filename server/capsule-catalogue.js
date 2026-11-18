@@ -10,7 +10,9 @@ export function catalogueItems(items) {
     if (typeof sku !== 'string' || !Object.hasOwn(catalogue, sku)) throw new Error('Unknown capsule SKU');
     if (!Number.isInteger(item.qty) || item.qty < 1 || item.qty > 100) throw new Error('Invalid capsule quantity');
     const size = item.size ?? 'L';
-    if (!['XS', 'S', 'M', 'L', 'XL', 'XXL'].includes(size)) throw new Error('Invalid capsule size');
+    const venuePack = size === '25x VENUE CURVE (3S·8M·9L·5XL)';
+    if (venuePack && item.qty % 25 !== 0) throw new Error('Venue packs require multiples of 25 garments');
+    if (!venuePack && !['XS', 'S', 'M', 'L', 'XL', 'XXL'].includes(size)) throw new Error('Invalid capsule size');
     return { ...catalogue[sku], id: sku, qty: item.qty, size };
   });
 }
