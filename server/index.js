@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import Stripe from 'stripe';
 import { authenticatedUser } from './auth.js';
-import { recordPaidEntitlement, createWhitelistingRouter } from './whitelisting.js';
+import { recordPaidEntitlement, createWhitelistingRouter, entitlementStorageConfigured } from './whitelisting.js';
 import { catalogueItems } from './capsule-catalogue.js';
 import { createTwelveLabsRouter } from './twelvelabs.js';
 import { checkoutVerification, verifyStripeCheckout } from './checkout-verify.js';
@@ -453,6 +453,9 @@ app.post('/api/checkout/create-session', async (req, res) => {
     const liveCheckout = Boolean(stripeKey && (payees.athlete.accountId || payees.club.accountId));
     let buyer = null;
     if (req.body.whitelisting === true && liveCheckout) {
+      if (!entitlementStorageConfigured()) {
+        return res.status(503).json({ error: 'Paid entitlement storage is not configured' });
+      }
       const authentication = await authenticatedUser(req);
       if (!authentication.user) return res.status(authentication.status).json({ error: authentication.error });
       buyer = authentication.user;

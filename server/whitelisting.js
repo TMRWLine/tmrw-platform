@@ -3,7 +3,7 @@ import { authenticatedUser } from './auth.js';
 
 const validSessionId = (id) => typeof id === 'string' && /^cs_(?:test_|live_)[a-zA-Z0-9]{1,240}$/.test(id);
 const validUuid = (id) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-const configured = () => Boolean((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) && process.env.SUPABASE_SERVICE_ROLE_KEY);
+export const entitlementStorageConfigured = () => Boolean((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) && process.env.SUPABASE_SERVICE_ROLE_KEY);
 const state = (sessionId, row, status = 'not_found') => ({
   status: row?.status || status,
   licenceReference: row?.id || null,
@@ -35,9 +35,9 @@ export async function recordPaidEntitlement(session) {
   const metadata = session.metadata || {};
   if (metadata.whitelisting !== 'true') return null;
   if (session.status !== 'complete' || session.payment_status !== 'paid') return null;
-  if (!configured()) {
+  if (!entitlementStorageConfigured()) {
     console.warn('[whitelisting] Paid entitlement storage is not configured.');
-    return state(session.id, null, 'not_configured');
+    throw new Error('Paid entitlement storage is not configured');
   }
   if (!validSessionId(session.id) || !validUuid(metadata.buyerId) || !metadata.athleteId || !metadata.tierId) {
     throw new Error('Missing verified whitelisting metadata');
@@ -79,7 +79,7 @@ export function createWhitelistingRouter() {
     if (user && limited(`user:${user.id}`)) return;
     const sessionId = req.query.session_id;
     if (!validSessionId(sessionId)) return res.status(400).json({ error: 'A valid checkout session id is required' });
-    if (!configured()) return res.status(503).json(state(sessionId, null, 'not_configured'));
+    if (!entitlementStorageConfigured()) return res.status(503).json(state(sessionId, null, 'not_configured'));
     try {
       const row = (await records(`?checkout_session_id=eq.${encodeURIComponent(sessionId)}&select=*`))[0];
       const result = state(sessionId, row);

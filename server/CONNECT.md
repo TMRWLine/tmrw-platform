@@ -36,8 +36,10 @@ idempotently on checkout_session_id. Status is always `pending_fulfilment` on cr
 An entitlement is an internal paid-rights record, **not proof of Meta/TikTok authorisation
 or delivery**. No platform tokens are generated. Nothing here activates the entitlement;
 only future real platform fulfilment may do so. Duplicate deliveries do not overwrite status.
-Without the service role, transfers still process and webhook returns entitlement
-status `not_configured` with a value-free warning. Replay the webhook after configuration.
+Live whitelisting checkout requires configured entitlement storage before it can charge.
+If storage is missing or fails during a paid webhook, idempotent transfers process first,
+then the webhook returns 500 so Stripe retries. Duplicate transfers are not created.
+The entitlement GET still reports status `not_configured` when storage is unavailable.
 
 `GET /api/whitelisting/grants?session_id=cs_...` accepts the unguessable Checkout session id
 as a public capability, like checkout verification. Anonymous/other-user responses contain

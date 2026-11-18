@@ -18,12 +18,14 @@ const buyer = '11111111-1111-4111-8111-111111111111';
 let rows;
 let inserts;
 let transfers;
+let intentMetadata;
 
 beforeEach((t) => {
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'server-test-only';
   rows = new Map();
   inserts = 0;
   transfers = 0;
+  intentMetadata = {};
   t.mock.method(globalThis, 'fetch', async (input, options = {}) => {
     const url = new URL(input);
     assert.ok(options.signal instanceof AbortSignal);
@@ -37,7 +39,10 @@ beforeEach((t) => {
     }
     if (url.hostname === 'api.stripe.com') {
       if (url.pathname.endsWith('/transfers')) { transfers++; return Response.json({ id: 'tr_mock' }); }
-      return Response.json({ id: 'pi_mock', latest_charge: 'ch_mock', metadata: {} });
+      if (options.method === 'POST') {
+        for (const [key, value] of options.body) if (key.startsWith('metadata[')) intentMetadata[key.slice(9, -1)] = value;
+      }
+      return Response.json({ id: 'pi_mock', latest_charge: 'ch_mock', metadata: intentMetadata });
     }
     assert.equal(url.pathname, '/rest/v1/paid_whitelisting_entitlements');
     assert.equal(new Headers(options.headers).get('apikey'), 'server-test-only');
@@ -131,17 +136,33 @@ test('no entitlement for invalid signature, unpaid, incomplete or unmarked sessi
   assert.equal(inserts, 0);
 });
 
-test('missing service role reports not-configured without preventing transfers', async () => {
+test('missing service role returns retriable webhook failure after transfers; retry does not transfer again', async () => {
   delete process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const response = await webhook(fixture('acct_athlete'));
-  assert.equal(response.status, 200);
-  const result = await response.json();
-  assert.equal(result.entitlement.status, 'not_configured');
-  assert.equal(result.mode, 'stripe_live');
+  const session = fixture('acct_athlete');
+  assert.equal((await webhook(session)).status, 500);
   assert.equal(transfers, 1);
-  const read = await get('buyer');
-  assert.equal(read.status, 503);
-  assert.equal((await read.json()).status, 'not_configured');
+  assert.equal((await webhook(session)).status, 500);
+  assert.equal(transfers, 1);
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'server-test-only';
+  const retry = await webhook(session);
+  assert.equal(retry.status, 200);
+  assert.equal((await retry.json()).entitlement.status, 'pending_fulfilment');
+  assert.equal(transfers, 1);
+  assert.equal(inserts, 1);
+});
+
+test('live whitelisting checkout refuses missing entitlement storage before charging', async () => {
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  process.env.STRIPE_ATHLETE_ACCOUNT_ID = 'acct_athlete';
+  try {
+    const response = await nativeFetch(base + '/api/checkout/create-session', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer buyer' },
+      body: JSON.stringify({ athleteId: 'athlete', tierId: 'local_merchant', whitelisting: true }),
+    });
+    assert.equal(response.status, 503);
+    assert.equal(transfers, 0);
+    assert.equal(inserts, 0);
+  } finally { delete process.env.STRIPE_ATHLETE_ACCOUNT_ID; }
 });
 
 test('checkout uses verified buyer metadata and never a buyer id supplied in the body', async () => {
