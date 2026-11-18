@@ -1,7 +1,7 @@
 /** Safe name helpers — never throw if athlete/campaign strings are missing. */
 
 export function nameParts(name?: string | null): string[] {
-  return (name ?? '').split(' ').filter(Boolean);
+  return (name ?? '').split(/\s+/).filter(Boolean);
 }
 
 export function athleteInitials(name?: string | null): string {
