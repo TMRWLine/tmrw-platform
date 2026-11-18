@@ -297,7 +297,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     const onOpenCustom = (e: Event) => {
       const detail = (e as CustomEvent).detail || {};
       if (detail.initialView) setView(detail.initialView);
-      if (detail.athleteName) setNewAthleteName(detail.athleteName);
+      if (detail.athleteName) {
+        setNewAthleteName(detail.athleteName);
+        const initials = detail.athleteName.trim().split(/\s+/)
+          .map((name: string) => name[0]).join('').toUpperCase().slice(0, 2);
+        setNewMonogram(`${initials}·01`);
+      }
       if (detail.clubName) setNewClubName(detail.clubName);
       if (detail.postcode) setNewPostcode(detail.postcode);
     };
