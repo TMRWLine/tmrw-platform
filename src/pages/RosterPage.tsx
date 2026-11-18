@@ -496,7 +496,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 </button>
 
                 {activeDropdown === 'filters' && (
-                  <div className="roster-filter-popup absolute right-0 mt-3 w-80 bg-white border border-black/10 rounded-2xl p-5 shadow-2xl z-50">
+                  <div data-lenis-prevent className="roster-filter-popup absolute right-0 mt-3 w-80 bg-white border border-black/10 rounded-2xl p-5 shadow-2xl z-50">
                     <div className="grid grid-cols-2 gap-2 mb-6 max-h-64 overflow-y-auto pr-1">
                       {DISCIPLINES.map((item) => {
                         const isSelected = tempDiscipline === item.id;
