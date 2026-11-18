@@ -3,6 +3,7 @@ import { BrandLockup } from './BrandLockup';
 import type { LandingSectionId } from './Navigation';
 import { GUARDIAN_VERIFY_PATH } from './GuardianVerifyPage';
 import { OPEN_DEPLOY_DRAWER_EVENT, emitOverlayEvent } from '../lib/overlayEvents';
+import { useDialogFocus } from '../lib/useDialogFocus';
 
 interface MenuOverlayProps {
   isOpen: boolean;
@@ -221,10 +222,12 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
   onOpenSponsorWorkspace,
 }) => {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // `mounted` keeps the tree alive through the slide-out; `shown` drives the transform/opacity.
   const [mounted, setMounted] = useState(isOpen);
   const [shown, setShown] = useState(false);
+  useDialogFocus(isOpen && shown, dialogRef, onClose);
 
   useEffect(() => {
     if (isOpen) {
@@ -323,6 +326,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label="Site menu"

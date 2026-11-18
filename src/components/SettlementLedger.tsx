@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
+import { useDialogFocus } from '../lib/useDialogFocus';
 
 const GROSS = '$2500 AUD';
 const ATHLETE = '$1750 AUD';
@@ -9,7 +10,26 @@ const ESCROW = '$375 AUD';
 export const SettlementLedger: React.FC = () => {
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [videoUnavailable, setVideoUnavailable] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(isReceiptModalOpen, receiptRef, () => setIsReceiptModalOpen(false));
+
+  useEffect(() => {
+    if (!isReceiptModalOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const preventBackgroundScroll = (event: Event) => {
+      if (!receiptRef.current?.contains(event.target as Node)) event.preventDefault();
+    };
+    document.addEventListener('wheel', preventBackgroundScroll, { passive: false });
+    document.addEventListener('touchmove', preventBackgroundScroll, { passive: false });
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('wheel', preventBackgroundScroll);
+      document.removeEventListener('touchmove', preventBackgroundScroll);
+    };
+  }, [isReceiptModalOpen]);
 
   const toggleMute = () => {
     if (videoRef.current) {
@@ -62,6 +82,8 @@ export const SettlementLedger: React.FC = () => {
               muted={isMuted}
               playsInline
               onTimeUpdate={handleTimeUpdate}
+              onError={() => setVideoUnavailable(true)}
+              onLoadedData={() => setVideoUnavailable(false)}
               className="absolute inset-0 h-full w-full object-contain bg-black contrast-[1.18] saturate-[0.8] brightness-[0.92]"
               src="/tmrw-surfer-loop.mp4"
             />
@@ -81,14 +103,19 @@ export const SettlementLedger: React.FC = () => {
               </span>
 
               {/* Mute / Unmute Toggle Button */}
-              <button
+              {videoUnavailable ? (
+                <span role="status" className="font-mono text-[10px] text-white bg-black/80 px-3 py-1 rounded-full">
+                  VIDEO UNAVAILABLE
+                </span>
+              ) : <button
                 type="button"
                 onClick={toggleMute}
-                className="font-mono text-[10px] text-white uppercase tracking-widest bg-black/60 hover:bg-black/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer z-20"
+                aria-pressed={!isMuted}
+                className="ledger-audio-toggle font-mono text-[10px] text-white uppercase tracking-widest bg-black/60 hover:bg-black/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer z-20"
               >
                 <span className={`inline-block w-2 h-2 rounded-full ${!isMuted ? 'bg-[#CCFF00] animate-pulse' : 'bg-neutral-400'}`} />
                 {isMuted ? 'UNMUTE AUDIO' : 'MUTE AUDIO'}
-              </button>
+              </button>}
             </div>
 
             <div className="relative z-10 text-white">
@@ -206,12 +233,16 @@ export const SettlementLedger: React.FC = () => {
           onClick={() => setIsReceiptModalOpen(false)}
         >
           <div
+            ref={receiptRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="receipt-heading"
             className="certificate-panel bg-white border-2 border-black max-w-xl w-full p-8 md:p-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative z-10"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Masthead */}
             <div className="flex justify-between items-start mb-8 pb-4 border-b-2 border-black">
-              <h3 className="font-mono font-bold text-lg uppercase tracking-tight text-black m-0">
+              <h3 id="receipt-heading" className="font-mono font-bold text-lg uppercase tracking-tight text-black m-0">
                 AUDITED CLEARING CERTIFICATE // H. CLARK
               </h3>
               <button
