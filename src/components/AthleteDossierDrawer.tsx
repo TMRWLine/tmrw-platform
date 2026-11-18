@@ -196,7 +196,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!athlete || stripePayload || activeWhitelistingGrant) return;
+    if (!athlete || stripePayload) return;
     const panel = dialogRef.current;
     if (!panel) return;
     const focusable = () => Array.from(panel.querySelectorAll<HTMLElement>(
@@ -226,7 +226,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
       window.removeEventListener('keydown', handleKey);
       document.removeEventListener('focusin', containFocus);
     };
-  }, [athlete, stripePayload, activeWhitelistingGrant, onClose]);
+  }, [athlete, stripePayload, onClose]);
 
   const currentIndex = athlete
     ? ROSTER_DATA.findIndex(
