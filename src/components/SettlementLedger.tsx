@@ -201,11 +201,12 @@ export const SettlementLedger: React.FC = () => {
       {/* Brutalist Receipt Modal */}
       {isReceiptModalOpen && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          data-lenis-prevent="true"
+          className="mobile-overlay certificate-backdrop fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setIsReceiptModalOpen(false)}
         >
           <div
-            className="bg-white border-2 border-black max-w-xl w-full p-8 md:p-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative z-10"
+            className="certificate-panel bg-white border-2 border-black max-w-xl w-full p-8 md:p-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative z-10"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Masthead */}
