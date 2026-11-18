@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import Stripe from 'stripe';
 
 // Load .env / .env.local
@@ -19,18 +19,19 @@ for (const name of ['.env', '.env.local']) {
   }
 }
 
-const PORT = process.env.PROXY_PORT || 3001;
+const PORT = Number(process.env.PROXY_PORT || process.env.PORT || 3001);
+const REQUEST_TIMEOUT_MS = 10000;
 const SUPABASE_ANON_KEY =
   process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
-const app = express();
+export const app = express();
 app.use(cors());
 
 /**
  * 1. STRIPE WEBHOOK ENDPOINT
  * Must use express.raw({ type: 'application/json' }) and sit BEFORE app.use(express.json()).
  */
-app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json', limit: '256kb' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
   const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -69,13 +70,13 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), a
 
     return res.json({ received: true });
   } catch (err) {
-    console.error(`[stripe webhook] Verification Error: ${err.message}`);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    console.error('[stripe webhook] Signature verification failed');
+    return res.status(400).send('Webhook Error: Signature verification failed');
   }
 });
 
 // General JSON body parser for all other routes
-app.use(express.json());
+app.use(express.json({ limit: '256kb' }));
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'sponsor-match-proxy' });
@@ -118,6 +119,7 @@ app.get('/api/match-sponsors', async (req, res) => {
     const athleteRes = await fetch(
       `${supabaseRestUrl}/rest/v1/athletes?id=eq.${encodeURIComponent(athleteId)}&select=*`,
       {
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         headers: {
           apikey: SUPABASE_ANON_KEY,
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
@@ -147,6 +149,7 @@ app.get('/api/match-sponsors', async (req, res) => {
     }
 
     const rpcRes = await fetch(`${supabaseRestUrl}/rest/v1/rpc/match_sponsors_for_athlete`, {
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       method: 'POST',
       headers: {
         apikey: SUPABASE_ANON_KEY,
@@ -158,9 +161,8 @@ app.get('/api/match-sponsors', async (req, res) => {
     });
 
     if (!rpcRes.ok) {
-      const errText = await rpcRes.text();
       return res.status(502).json({
-        error: `Spatial match RPC failed (${rpcRes.status}): ${errText.slice(0, 200)}`,
+        error: `Spatial match RPC failed (${rpcRes.status})`,
       });
     }
     const matches = await rpcRes.json();
@@ -192,7 +194,7 @@ app.get('/api/match-sponsors', async (req, res) => {
       matches: matchesWithCoords,
     });
   } catch (err) {
-    return res.status(500).json({ error: err?.message ?? 'Unknown server error' });
+    return res.status(500).json({ error: 'Unable to match sponsors.' });
   }
 });
 
@@ -277,6 +279,7 @@ async function hydrateAthleteFromSupabase(athlete) {
     const athleteRes = await fetch(
       `${supabaseRestUrl}/rest/v1/athletes?id=eq.${encodeURIComponent(athlete.id)}&select=*`,
       {
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         headers: {
           apikey: SUPABASE_ANON_KEY,
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
@@ -313,8 +316,31 @@ async function hydrateAthleteFromSupabase(athlete) {
  */
 app.post('/api/checkout/create-session', async (req, res) => {
   try {
+    if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+      return res.status(400).json({ error: 'A checkout request body is required' });
+    }
     const origin = appBaseUrl(req);
     const stripeKey = process.env.STRIPE_SECRET_KEY;
+
+    if ('capsuleItems' in req.body) {
+      const items = req.body.capsuleItems;
+      if (!Array.isArray(items) || items.length < 1 || items.length > 50) {
+        return res.status(400).json({ error: 'capsuleItems must contain between 1 and 50 items' });
+      }
+      const validItems = items.every((entry) => {
+        if (!entry || typeof entry !== 'object') return false;
+        const { qty, priceAud, baseCostAud, collabRoyaltyPct = 0 } = entry;
+        return Number.isInteger(qty) && qty >= 1 && qty <= 100 &&
+          Number.isFinite(priceAud) && priceAud >= 1 && priceAud <= 100000 &&
+          Number.isFinite(baseCostAud) && baseCostAud >= 0 && baseCostAud <= priceAud &&
+          Number.isFinite(collabRoyaltyPct) && collabRoyaltyPct >= 0 && collabRoyaltyPct <= 30;
+      });
+      const totalCents = items.reduce((total, entry) =>
+        total + Math.round(entry?.priceAud * 100) * entry?.qty, 0);
+      if (!validItems || !Number.isSafeInteger(totalCents) || totalCents > 99999999) {
+        return res.status(400).json({ error: 'Invalid capsule quantity, price, base cost, royalty, or order total' });
+      }
+    }
 
     // BRANCH A: Athlete Merch Capsule Checkout from CartDrawer.tsx
     if (Array.isArray(req.body?.capsuleItems) && req.body.capsuleItems.length > 0) {
@@ -328,9 +354,9 @@ app.post('/api/checkout/create-session', async (req, res) => {
       body.set('mode', 'payment');
 
       items.forEach((entry, idx) => {
-        const qty = Math.max(1, Number(entry.qty) || 1);
-        const unitAud = Math.max(1, Number(entry.priceAud) || 100);
-        const baseAud = Math.max(0, Number(entry.baseCostAud) || 0);
+        const qty = entry.qty;
+        const unitAud = entry.priceAud;
+        const baseAud = entry.baseCostAud;
         const netUnitCents = Math.max(0, Math.round((unitAud - baseAud) * 100));
         const hasPartner = Number(entry.collabRoyaltyPct) > 0;
         const athletePct = hasPartner ? 0.55 : 0.7;
@@ -374,6 +400,7 @@ app.post('/api/checkout/create-session', async (req, res) => {
 
       if (stripeKey) {
         const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
           method: 'POST',
           headers: {
             Authorization: `Bearer ${stripeKey}`,
@@ -384,7 +411,7 @@ app.post('/api/checkout/create-session', async (req, res) => {
         const session = await stripeRes.json();
         if (!stripeRes.ok || !session?.url) {
           return res.status(502).json({
-            error: session?.error?.message ?? 'Stripe could not create a capsule checkout session.',
+            error: 'Stripe could not create a capsule checkout session.',
           });
         }
         return res.json({
@@ -411,13 +438,14 @@ app.post('/api/checkout/create-session', async (req, res) => {
     // BRANCH B: Commercial Sponsorship Tier Checkout
     const athleteId = String(req.body?.athleteId ?? '').trim();
     const tierId = String(req.body?.tierId ?? '').trim();
-    if (!athleteId || !tierId) {
+    if (typeof req.body.athleteId !== 'string' || typeof req.body.tierId !== 'string' ||
+        !athleteId || !tierId || athleteId.length > 200 || tierId.length > 100) {
       return res.status(400).json({ error: 'athleteId and tierId (or capsuleItems) are required' });
     }
 
     const catalogue = { ...FALLBACK_COMMERCIAL_TIERS, ...loadCommercialTiers() };
-    const pkg = catalogue[tierId];
-    if (!pkg || !Number.isFinite(pkg.price_aud) || pkg.price_aud <= 0) {
+    const pkg = Object.hasOwn(catalogue, tierId) ? catalogue[tierId] : null;
+    if (!pkg || !Number.isFinite(pkg.price_aud) || pkg.price_aud <= 0 || pkg.price_aud > 100000) {
       return res.status(400).json({ error: `Unknown commercial tier: ${tierId}` });
     }
 
@@ -456,6 +484,7 @@ app.post('/api/checkout/create-session', async (req, res) => {
       body.set('metadata[clubCutCents]', String(Math.round(unitCents * 0.15)));
 
       const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         method: 'POST',
         headers: {
           Authorization: `Bearer ${stripeKey}`,
@@ -466,7 +495,7 @@ app.post('/api/checkout/create-session', async (req, res) => {
       const session = await stripeRes.json();
       if (!stripeRes.ok || !session?.url) {
         return res.status(502).json({
-          error: session?.error?.message ?? 'Stripe could not create a checkout session.',
+          error: 'Stripe could not create a checkout session.',
         });
       }
       return res.json({ checkoutUrl: session.url });
@@ -476,12 +505,17 @@ app.post('/api/checkout/create-session', async (req, res) => {
       checkoutUrl: `/checkout/success?session_id=cs_demo_${Date.now()}&${successQuery}`,
     });
   } catch (err) {
-    return res.status(500).json({ error: err?.message ?? 'Unable to initialise checkout.' });
+    return res.status(500).json({ error: 'Unable to initialise checkout.' });
   }
 });
 
 const distDir = join(__dirname, '..', 'dist');
-if (existsSync(distDir)) {
+app.use('/api', (_req, res) => res.status(404).json({ error: 'API route not found' }));
+app.use((err, _req, res, _next) => {
+  const status = err.type === 'entity.too.large' ? 413 : err.type === 'entity.parse.failed' ? 400 : 500;
+  res.status(status).json({ error: status === 413 ? 'Request body too large' : status === 400 ? 'Invalid JSON body' : 'Internal server error' });
+});
+if (!process.env.VERCEL && existsSync(distDir)) {
   app.use(express.static(distDir));
   app.get('*', (req, res) => res.sendFile(join(distDir, 'index.html')));
 } else {
@@ -490,6 +524,28 @@ if (existsSync(distDir)) {
   );
 }
 
-app.listen(PORT, () => {
-  console.log(`[proxy] sponsor-match unified server listening on http://localhost:${PORT}`);
-});
+export function startServer(port = PORT) {
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    console.error('[proxy] Invalid PORT/PROXY_PORT: expected an integer between 0 and 65535. Server not started.');
+    process.exitCode = 1;
+    return null;
+  }
+  const server = app.listen(port, () => {
+    console.log(`[proxy] sponsor-match unified server listening on http://localhost:${server.address().port}`);
+  });
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`[proxy] Port ${port} is already in use. Server not started; stop the existing server or set PROXY_PORT/PORT to another port.`);
+    } else {
+      console.error(`[proxy] Unable to listen on port ${port} (${err.code || 'unknown error'}). Server not started.`);
+      process.exitCode = 1;
+    }
+  });
+  return server;
+}
+
+if (!process.env.VERCEL && process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  startServer();
+}
+
+export default app;
