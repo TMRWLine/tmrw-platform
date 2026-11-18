@@ -23,7 +23,6 @@ const MILESTONES = [
     done: false,
   },
   { id: 'content', label: 'Content Scheduled', detail: 'Production window locks after brand kit confirmation.', done: false },
-  { id: 'release', label: 'Athlete milestone release', detail: 'Approve delivery before releasing the held athlete payment.', done: false },
 ] as const;
 
 function resolveAthlete(athleteId: string): CommercialAthlete | null {
@@ -104,6 +103,32 @@ function downloadRcti(args: {
   win.print();
 }
 
+function Milestone({ label, detail, done, live, children }: {
+  label: string;
+  detail: string;
+  done: boolean;
+  live?: boolean;
+  children?: React.ReactNode;
+}) {
+  return (
+    <li className="flex items-start gap-4">
+      <span
+        aria-hidden="true"
+        className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold ${
+          done ? 'bg-[#CCFF00] text-[#0F0F11]' : 'border border-neutral-200 text-[#666666]'
+        }`}
+      >
+        {done ? '✓' : ''}
+      </span>
+      <div>
+        <p className="m-0 font-semibold text-[#0F0F11]">{label}</p>
+        <p aria-live={live ? 'polite' : undefined} className="m-0 mt-1 text-sm text-[#666666]">{detail}</p>
+        {children}
+      </div>
+    </li>
+  );
+}
+
 function MilestoneRelease({ checkoutSessionId, athleteId }: { checkoutSessionId: string; athleteId: string }) {
   const [pending, setPending] = useState(false);
   const [released, setReleased] = useState<number | null>(null);
@@ -124,21 +149,28 @@ function MilestoneRelease({ checkoutSessionId, athleteId }: { checkoutSessionId:
   }
 
   return (
-    <div className="mt-6">
-      {released === null ? (
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => void approveDelivery()}
-          className="rounded-full border-0 bg-[#CCFF00] px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-[#dfff66] disabled:opacity-50"
-        >
-          {pending ? 'Confirming release…' : 'Approve deliverables & release'}
-        </button>
-      ) : (
-        <p role="status" className="m-0 text-sm font-semibold">Stripe confirmed {formatAud(released / 100)} released to the athlete.</p>
+    <Milestone
+      label="Athlete milestone release"
+      detail={released === null
+        ? 'Approve delivery before releasing the held athlete payment.'
+        : `Stripe confirmed ${formatAud(released / 100)} released to the athlete.`}
+      done={released !== null}
+      live
+    >
+      {released === null && (
+        <div className="mt-3">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => void approveDelivery()}
+            className="rounded-full border-0 bg-[#CCFF00] px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-[#dfff66] disabled:opacity-50"
+          >
+            {pending ? 'Confirming release…' : 'Approve deliverables & release'}
+          </button>
+          {error && <p role="alert" className="mt-3 text-sm text-[#0F0F11]">{error}</p>}
+        </div>
       )}
-      {error && <p role="alert" className="mt-3 text-sm text-[#0F0F11]">{error}</p>}
-    </div>
+    </Milestone>
   );
 }
 
@@ -302,26 +334,13 @@ export const CheckoutSuccessPage: React.FC = () => {
             Contract milestones
           </h2>
           <ol className="m-0 mt-6 p-0 list-none space-y-4">
-            {MILESTONES.filter((item) => item.id !== 'release' || paid.milestoneReleaseAvailable).map((item) => (
-              <li key={item.id} className="flex items-start gap-4">
-                <span
-                  aria-hidden="true"
-                  className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold ${
-                    item.done ? 'bg-[#CCFF00] text-[#0F0F11]' : 'border border-neutral-200 text-[#666666]'
-                  }`}
-                >
-                  {item.done ? '✓' : ''}
-                </span>
-                <div>
-                  <p className="m-0 font-semibold text-[#0F0F11]">{item.label}</p>
-                  <p className="m-0 mt-1 text-sm text-[#666666]">{item.detail}</p>
-                </div>
-              </li>
+            {MILESTONES.map((item) => (
+              <Milestone key={item.id} label={item.label} detail={item.detail} done={item.done} />
             ))}
+            {paid.milestoneReleaseAvailable && (
+              <MilestoneRelease key={paid.checkoutSessionId} checkoutSessionId={paid.checkoutSessionId} athleteId={grant.athleteId} />
+            )}
           </ol>
-          {paid.milestoneReleaseAvailable && (
-            <MilestoneRelease key={paid.checkoutSessionId} checkoutSessionId={paid.checkoutSessionId} athleteId={grant.athleteId} />
-          )}
         </section>
 
         {athlete && pkg && (
