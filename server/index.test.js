@@ -109,3 +109,24 @@ test('venue packs retain catalogue per-garment prices and require full 25-garmen
   }
   assert.equal((await post({ capsuleItems: [{ ...item, size, qty: 1 }] })).status, 400);
 });
+
+test('whitelisting demo checkout needs no authentication or configuration and never persists an entitlement', async (t) => {
+  const names = ['STRIPE_SECRET_KEY', 'STRIPE_ATHLETE_ACCOUNT_ID', 'STRIPE_CLUB_ACCOUNT_ID',
+    'SUPABASE_URL', 'VITE_SUPABASE_URL', 'SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'];
+  const saved = names.map((name) => process.env[name]);
+  for (const name of names) delete process.env[name];
+  const calls = t.mock.method(globalThis, 'fetch', async () => { throw new Error('Demo must not call auth, Stripe or entitlement storage'); });
+  try {
+    const response = await post({ athleteId: 'demo', tierId: 'local_merchant', whitelisting: true });
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.mode, 'sandbox_demo');
+    assert.equal(result.entitlement, undefined);
+    assert.equal(calls.mock.calls.length, 0);
+  } finally {
+    names.forEach((name, index) => {
+      if (saved[index] === undefined) delete process.env[name];
+      else process.env[name] = saved[index];
+    });
+  }
+});

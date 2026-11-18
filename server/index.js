@@ -446,14 +446,15 @@ app.post('/api/checkout/create-session', async (req, res) => {
       return res.status(400).json({ error: `Unknown commercial tier: ${tierId}` });
     }
 
+    const athlete = await hydrateAthleteFromSupabase(resolveCheckoutAthlete(athleteId, req.body));
+    const payees = configuredPayees(athlete);
+    const liveCheckout = Boolean(stripeKey && (payees.athlete.accountId || payees.club.accountId));
     let buyer = null;
-    if (req.body.whitelisting === true) {
+    if (req.body.whitelisting === true && liveCheckout) {
       const authentication = await authenticatedUser(req);
       if (!authentication.user) return res.status(authentication.status).json({ error: authentication.error });
       buyer = authentication.user;
     }
-    const athlete = await hydrateAthleteFromSupabase(resolveCheckoutAthlete(athleteId, req.body));
-    const payees = configuredPayees(athlete);
     const escrowMode = req.body.escrowMode === 'milestone_50_50' ? 'milestone_50_50' : 'upfront_100';
     const clubCadence = req.body.clubCadence === 'quarterly_batch' ? 'quarterly_batch' : 'immediate_t0';
     const ledger = sponsorshipLedger(Math.round(pkg.price_aud * 100), payees, escrowMode);
@@ -465,7 +466,7 @@ app.post('/api/checkout/create-session', async (req, res) => {
       : `${origin}/#commercial-tiers`;
     const productImage = absoluteAssetUrl(athlete.image_url, origin);
 
-    if (stripeKey && (payees.athlete.accountId || payees.club.accountId)) {
+    if (liveCheckout) {
       const unitCents = ledger.totalPayableCents;
       const body = new URLSearchParams();
       body.set('mode', 'payment');
