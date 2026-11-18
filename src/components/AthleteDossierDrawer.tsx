@@ -3,12 +3,9 @@ import { createPortal } from 'react-dom';
 import { AssetImage } from './AssetImage';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
 import { supabase } from '../lib/supabaseClient';
-import { issuePostcodeWhitelistingGrant, type WhitelistingGrant } from '../lib/whitelisting';
-import { WhitelistingLaunchModal } from './WhitelistingLaunchModal';
 import {
   StripeEscrowCheckoutModal,
   type StripeCheckoutPayload,
-  type StripeEscrowReceipt,
 } from './StripeEscrowCheckoutModal';
 import {
   formatFollowers,
@@ -185,9 +182,6 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
 
   const [downloadedAsset, setDownloadedAsset] = useState<string | null>(null);
   const [stripePayload, setStripePayload] = useState<StripeCheckoutPayload | null>(null);
-  const [lastReceipt, setLastReceipt] = useState<StripeEscrowReceipt | null>(null);
-  const [lastPaidPriceAud, setLastPaidPriceAud] = useState<number>(750);
-  const [activeWhitelistingGrant, setActiveWhitelistingGrant] = useState<WhitelistingGrant | null>(null);
   const [liveOverride, setLiveOverride] = useState<LiveAthleteOverride | null>(null);
 
   const currentIndex = athlete
@@ -225,8 +219,6 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
     setAuditedPillars({});
     setDownloadedAsset(null);
     setStripePayload(null);
-    setLastReceipt(null);
-    setActiveWhitelistingGrant(null);
 
     supabase.auth.getUser().catch(() => {});
   }, [athlete]);
@@ -343,7 +335,6 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
     setSelectedTierId(tierId);
     const flight = BASE_FLIGHTS.find((f) => f.tier_id === tierId) ?? BASE_FLIGHTS[0];
     const priceAud = Math.round(flight.basePrice * (seedConfig.floorLock ? 1 : seedConfig.multiplier));
-    setLastPaidPriceAud(priceAud);
 
     setStripePayload({
       athleteId: athlete.id,
@@ -1344,32 +1335,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
       <StripeEscrowCheckoutModal
         payload={stripePayload}
         onClose={() => setStripePayload(null)}
-        onSuccess={async (receipt) => {
-          const tier = stripePayload?.tierId || selectedTierId;
-          const paidAud = stripePayload?.priceAud || scaledActivePrice;
-          setLastReceipt(receipt);
-          setLastPaidPriceAud(paidAud);
-          setStripePayload(null);
-          markAudited('02');
-          const grant = await issuePostcodeWhitelistingGrant({
-            athleteId: athlete.id,
-            athleteName: displayFullName,
-            flightTierId: tier,
-            postcode: displayPostcode,
-          });
-          setActiveWhitelistingGrant(grant);
-        }}
       />
-
-      {activeWhitelistingGrant && (
-        <WhitelistingLaunchModal
-          grant={activeWhitelistingGrant}
-          receipt={lastReceipt}
-          priceAud={lastPaidPriceAud}
-          clubName={displayClub}
-          onClose={() => setActiveWhitelistingGrant(null)}
-        />
-      )}
     </div>,
     document.body,
   );
