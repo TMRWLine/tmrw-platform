@@ -191,7 +191,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
       onClick={() => clearingStage === 'idle' && onClose()}
-      className="fixed inset-0 z-[110] bg-black/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
+      className="mobile-overlay checkout-backdrop fixed inset-0 z-[110] bg-black/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
       <div
         data-lenis-prevent="true"

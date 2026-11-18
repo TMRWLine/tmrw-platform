@@ -151,10 +151,10 @@ export const Navigation: React.FC<NavigationProps> = ({
     : ICON_BUTTON;
 
   return (
-    <header className={headerClass}>
+    <header className={`tmrw-navigation ${headerClass}`}>
       {/* Grid container: shares the 1600px plumb line of the showcase cards below. */}
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full h-full flex items-center justify-between">
-        <BrandLockup tone={dark ? 'dark' : 'light'} onClick={goHome} />
+        <BrandLockup tone={dark ? 'dark' : 'light'} onClick={goHome} className="nav-brand" />
 
         {/* Centre links */}
         <nav className="hidden md:flex items-center gap-1" aria-label="Primary">
@@ -206,17 +206,22 @@ export const Navigation: React.FC<NavigationProps> = ({
         </nav>
 
         {/* Right utility cluster */}
-        <div className="flex items-center">
+        <div className="nav-utilities flex items-center">
           <button
             type="button"
             onClick={onOpenPortal}
             aria-haspopup="dialog"
-            className={`group relative inline-flex items-center gap-2 rounded-full px-4 py-1.5 border transition-all duration-200 mr-4 cursor-pointer select-none ${focusRing} ${
+            aria-label="Athlete Portal"
+            className={`nav-portal group relative inline-flex items-center gap-2 rounded-full px-4 py-1.5 border transition-all duration-200 mr-4 cursor-pointer select-none ${focusRing} ${
               dark
                 ? 'border-white/20 bg-white/[0.04] hover:bg-[#CCFF00] hover:border-[#CCFF00]'
                 : 'border-[#080808]/20 bg-[#080808]/[0.03] hover:bg-[#080808] hover:border-[#080808]'
             }`}
           >
+            <svg className="nav-portal-icon hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.5" />
+              <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+            </svg>
             {/* Live status telemetry beacon */}
             <span className="relative flex h-2 w-2" aria-hidden="true">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B8FF00] opacity-75"></span>

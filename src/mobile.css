@@ -1,0 +1,124 @@
+/* Phone-only corrections. Keep desktop utilities and their cascade untouched.
+   The second query covers phones rotated into a short landscape viewport. */
+@media (max-width: 767px), (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+  .tmrw-navigation > div {
+    padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
+    gap: 8px;
+  }
+
+  .tmrw-navigation nav { display: none; }
+  .nav-brand { flex-shrink: 0; min-height: 44px; justify-content: center; }
+  .nav-brand > span:first-child > span { font-size: 24px; }
+  .nav-brand svg { width: 15px; }
+  .nav-utilities { flex-shrink: 0; }
+  .nav-utilities > button {
+    min-width: 44px;
+    min-height: 44px;
+    margin: 0;
+    padding: 8px;
+  }
+  .nav-portal > span { display: none; }
+  .nav-portal .nav-portal-icon { display: block; }
+
+  .cover-hero { padding: 24px; min-height: 82svh; }
+  .cover-headline-stage { height: 48svh; min-height: 240px; }
+  .cover-hero h1 { font-size: clamp(2.75rem, 10vw, 4rem); }
+  .cover-hero .cover-intro-headline { font-size: clamp(3rem, 12vw, 4.5rem); }
+  .cover-actions { flex-direction: column; gap: 12px; padding: 0; }
+  .cover-actions > div, .cover-actions button { width: 100%; }
+  .cover-actions button { min-height: 44px; font-size: 14px; }
+
+  .roster-toolbar { gap: 8px; }
+  .roster-toolbar button { min-height: 44px; min-width: 44px; }
+  .roster-toolbar > div:last-child { position: relative; justify-content: space-between; gap: 12px; }
+  .roster-filter-anchor { position: static; }
+  .roster-filter-popup { left: 0; right: 0; width: 100%; padding: 16px; }
+  .roster-filter-popup button { font-size: 12px; letter-spacing: 0; padding-inline: 8px; }
+
+  .mobile-overlay button:not([tabindex="-1"]),
+  .site-menu a,
+  .dossier-panel button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .mobile-overlay :is(input, select, textarea) { font-size: 16px; min-height: 44px; }
+  .search-overlay { padding: max(20px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom)); }
+  .search-overlay h1 { font-size: clamp(2.5rem, 10vw, 3.75rem); overflow-wrap: anywhere; }
+  .site-menu-panel {
+    height: 100dvh;
+    min-height: 0;
+    max-height: 100dvh;
+    padding: max(20px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
+  }
+  .site-menu-panel > div:first-child { flex-shrink: 0; }
+  .site-menu a, .site-menu nav button { display: inline-flex; align-items: center; }
+
+  .dossier-backdrop {
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+  .dossier-panel { height: 100%; max-height: 100%; border-radius: 20px; }
+  .dossier-header { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 10px 12px; }
+  .dossier-athlete-switcher { min-width: 0; gap: 4px; }
+  .dossier-athlete-switcher button { min-width: 0; padding-inline: 10px; flex: 1; }
+  .dossier-athlete-switcher .font-bold { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dossier-close { grid-column: 2; grid-row: 1; }
+  .dossier-close button { padding-inline: 12px; }
+  .dossier-tabs { grid-column: 1 / -1; grid-row: 2; gap: 8px; }
+  .dossier-tabs button { flex: 1; justify-content: center; gap: 4px; font-size: 12px; }
+  .dossier-tabs button > span { padding-inline: 4px; }
+  .dossier-tabs svg { width: 14px; height: 14px; }
+  .dossier-content { padding: 20px 12px 24px; }
+  .dossier-content h1 { font-size: clamp(1.75rem, 8vw, 3rem); overflow-wrap: anywhere; }
+  .dossier-content > div:first-child .line-clamp-2 { -webkit-line-clamp: unset; }
+  .dossier-content > ul { grid-template-columns: minmax(0, 1fr); }
+  .dossier-card { padding: 20px; min-height: 0 !important; }
+  .dossier-card p { font-size: 14px; line-height: 1.55; }
+  .dossier-card .truncate { white-space: normal; overflow-wrap: anywhere; }
+  .package-heading { flex-wrap: wrap; }
+  .dossier-card .divide-y { font-size: 12px; }
+  .dossier-card .divide-y > div { flex-wrap: wrap; }
+  .dossier-card .divide-y > div > :last-child { margin-left: auto; }
+  .dossier-card .divide-y button { font-size: 12px; }
+  .dossier-card-number { font-size: 80px; opacity: 1 !important; transform: none !important; }
+  .dossier-card-actions {
+    position: relative;
+    height: auto;
+    min-height: 44px;
+    margin-top: 16px;
+    padding: 4px;
+    gap: 8px;
+    flex-wrap: wrap;
+    border-radius: 16px;
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+  .dossier-card-actions > div { flex-wrap: wrap; }
+  .dossier-card-actions > span { white-space: normal; }
+  .dossier-card-actions > span:last-child { min-height: 44px; }
+  .dossier-footer { padding: 10px 12px; gap: 8px; }
+  .dossier-footer > div { width: 100%; gap: 4px; }
+  .dossier-footer > div:first-child > span:first-child { display: none; }
+  .dossier-footer .font-display { font-size: 14px; }
+  .dossier-footer button { width: 100%; padding: 10px 12px; font-size: 11px; letter-spacing: 0.04em; }
+
+  .checkout-backdrop { padding-bottom: env(safe-area-inset-bottom); }
+  .checkout-backdrop > div { max-height: calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  .checkout-backdrop header { padding: 12px; gap: 8px; }
+  .checkout-backdrop header .font-mono { overflow-wrap: anywhere; }
+
+  .certificate-backdrop {
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+  .certificate-panel { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 20px; }
+  .certificate-panel > div:first-child { gap: 8px; }
+  .certificate-panel > div:first-child button { flex-shrink: 0; }
+  .certificate-panel .grid { grid-template-columns: minmax(0, 1fr); gap: 4px; overflow-wrap: anywhere; }
+}
+
+@media (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+  .cover-headline-stage { min-height: 160px; }
+  .cover-actions { flex-direction: row; }
+  .dossier-footer > div:first-child { display: none; }
+}
