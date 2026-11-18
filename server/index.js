@@ -4,6 +4,9 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import Stripe from 'stripe';
+import { authenticatedUser } from './auth.js';
+import { recordPaidEntitlement, createWhitelistingRouter } from './whitelisting.js';
+import { catalogueItems } from './capsule-catalogue.js';
 import { createTwelveLabsRouter } from './twelvelabs.js';
 import { checkoutVerification, verifyStripeCheckout } from './checkout-verify.js';
 import { capsuleLedger, sponsorshipLedger } from '../src/lib/commercialLedger.js';
@@ -63,7 +66,8 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json', limi
           return res.json({ received: true });
         }
         const result = await completeCheckout(session);
-        return res.json({ received: true, ...result });
+        const entitlement = await recordPaidEntitlement(session);
+        return res.json({ received: true, ...result, ...(entitlement ? { entitlement } : {}) });
       }
       case 'charge.dispute.created': {
         const reversals = await reverseDispute(event.data.object);
@@ -83,6 +87,7 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json', limi
 // General JSON body parser for all other routes
 app.use('/api/twelvelabs', createTwelveLabsRouter());
 app.use(express.json({ limit: '256kb' }));
+app.use('/api/whitelisting', createWhitelistingRouter());
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'sponsor-match-proxy' });
@@ -333,23 +338,8 @@ app.post('/api/checkout/create-session', async (req, res) => {
     const transferGroup = `tmrw_${idempotencyKey}`;
 
     if ('capsuleItems' in req.body) {
-      const items = req.body.capsuleItems;
-      if (!Array.isArray(items) || items.length < 1 || items.length > 50) {
-        return res.status(400).json({ error: 'capsuleItems must contain between 1 and 50 items' });
-      }
-      const validItems = items.every((entry) => {
-        if (!entry || typeof entry !== 'object') return false;
-        const { qty, priceAud, baseCostAud, collabRoyaltyPct = 0 } = entry;
-        return Number.isInteger(qty) && qty >= 1 && qty <= 100 &&
-          Number.isFinite(priceAud) && priceAud >= 1 && priceAud <= 100000 &&
-          Number.isFinite(baseCostAud) && baseCostAud >= 0 && baseCostAud <= priceAud &&
-          Number.isFinite(collabRoyaltyPct) && collabRoyaltyPct >= 0 && collabRoyaltyPct <= 30;
-      });
-      const totalCents = items.reduce((total, entry) =>
-        total + Math.round(entry?.priceAud * 100) * entry?.qty, 0);
-      if (!validItems || !Number.isSafeInteger(totalCents) || totalCents > 99999999) {
-        return res.status(400).json({ error: 'Invalid capsule quantity, price, base cost, royalty, or order total' });
-      }
+      try { req.body.capsuleItems = catalogueItems(req.body.capsuleItems); }
+      catch (error) { return res.status(400).json({ error: error.message }); }
     }
 
     // BRANCH A: Athlete Merch Capsule Checkout from CartDrawer.tsx
@@ -455,6 +445,12 @@ app.post('/api/checkout/create-session', async (req, res) => {
       return res.status(400).json({ error: `Unknown commercial tier: ${tierId}` });
     }
 
+    let buyer = null;
+    if (req.body.whitelisting === true) {
+      const authentication = await authenticatedUser(req);
+      if (!authentication.user) return res.status(authentication.status).json({ error: authentication.error });
+      buyer = authentication.user;
+    }
     const athlete = await hydrateAthleteFromSupabase(resolveCheckoutAthlete(athleteId, req.body));
     const payees = configuredPayees(athlete);
     const escrowMode = req.body.escrowMode === 'milestone_50_50' ? 'milestone_50_50' : 'upfront_100';
@@ -489,6 +485,10 @@ app.post('/api/checkout/create-session', async (req, res) => {
         body.set('line_items[0][price_data][product_data][images][0]', productImage);
       }
       body.set('metadata[orderType]', 'sponsorship_tier');
+      if (buyer) {
+        body.set('metadata[whitelisting]', 'true');
+        body.set('metadata[buyerId]', buyer.id);
+      }
       body.set('metadata[athleteId]', athleteId);
       body.set('metadata[tierId]', tierId);
       body.set('metadata[athleteCutCents]', String(ledger.athlete70Cents));

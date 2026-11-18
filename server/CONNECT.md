@@ -1,3 +1,59 @@
+# Review hardening contracts
+
+TwelveLabs paid routes require the current Supabase JWT in `Authorization: Bearer <access_token>`.
+The client reads `supabase.auth.getSession()`; no static browser credential is used.
+The server verifies it with Supabase `auth.getUser(token)` (8-second deadline).
+Set `SUPABASE_URL` (or `VITE_SUPABASE_URL`) and `SUPABASE_ANON_KEY` (or public legacy
+configuration/service role). Missing server auth configuration returns 503, absent/invalid
+JWT returns 401; the ingestion caller uses sample analysis on failure.
+Paid routes allow 60 requests/user/minute per server process (429 + Retry-After).
+This basic in-memory limiter is not shared across serverless instances.
+
+Capsule requests retain `{ capsuleItems: [{ id, qty, size }] }` (or `sku` in place of `id`).
+Only `drop_mt_2200` and `drop_sb_2095` are currently published in the server catalogue.
+Legacy economics/display fields are ignored. Sizes: XS/S/M/L/XL/XXL, default L.
+Unknown/unpublished/custom SKUs return 400, including live checkout; custom designs must
+be published server-side before selling. No client-controlled custom preview checkout is enabled.
+
+For local milestone previews call `releaseEscrowMilestoneTranche({ ...params, mode: receipt.mode })`.
+Explicit sandbox mode makes no request and returns `released:false, preview:true,
+mode:'sandbox_demo'`, zero amount and empty transfer/date fields. UI must label this as
+an illustration, never settlement. Missing mode preserves worker-authenticated behaviour.
+403 never becomes demo success; browser clients cannot self-approve live funds.
+
+## Paid whitelisting entitlement (not platform fulfilment)
+
+Apply `supabase/migrations/20261018000003_paid_whitelisting_entitlements.sql` through
+the normal deployment process; it is not applied by this implementation.
+Set server-only `SUPABASE_SERVICE_ROLE_KEY` for persistence.
+Checkout callers must explicitly send `whitelisting:true` and their current Supabase JWT
+(the typed createCheckoutSession helper attaches it). The server verifies the buyer and
+sets buyerId/athleteId/tierId/whitelisting metadata; buyer identity is never accepted from the body.
+Existing callers without the flag keep their current checkout behaviour and do not create entitlements.
+
+After verified paid, complete Stripe webhook events, the server inserts an entitlement
+idempotently on checkout_session_id. Status is always `pending_fulfilment` on creation.
+An entitlement is an internal paid-rights record, **not proof of Meta/TikTok authorisation
+or delivery**. No platform tokens are generated. Nothing here activates the entitlement;
+only future real platform fulfilment may do so. Duplicate deliveries do not overwrite status.
+Without the service role, transfers still process and webhook returns entitlement
+status `not_configured` with a value-free warning. Replay the webhook after configuration.
+
+`GET /api/whitelisting/grants?session_id=cs_...` accepts the unguessable Checkout session id
+as a public capability, like checkout verification. Anonymous/other-user responses contain
+only status/session/athlete/tier/createdAt and a null licenceReference. Only a matching
+buyer verified with the current Supabase JWT receives the internal UUID reference; admins
+do not receive another buyer's reference. Invalid supplied JWT:401; malformed id:400;
+missing storage:503; storage failure:502. Lookups allow 60 requests/IP/minute per process
+and send Cache-Control:no-store. Treat the full session-id URL as sensitive; do not share it.
+Returns `{ status, licenceReference, checkoutSessionId, athleteId, tierId, createdAt }`.
+Status is pending_fulfilment/active/revoked/not_found/not_configured. licenceReference
+is an internal UUID, **not a platform token**, and nullable alongside the other absent fields.
+`src/api.ts` exports `WhitelistingEntitlement` and `fetchWhitelistingGrant(sessionId)`,
+which attaches the current JWT when available, works anonymously on public return pages,
+has a 10-second deadline, and returns status 'error' on authentication/network/HTTP errors. UI must display pending status and retrieve the
+entitlement instead of minting a grant from a redirect or browser callback.
+
 # Stripe Connect settlement
 
 `src/lib/commercialLedger.js` is the shared pure calculation source. Sponsorship
@@ -37,8 +93,8 @@ Live milestone release requires an approved server-to-server POST to
 trusted approval workers, never in Vite or browser code. The server derives
 the amount and destination from Stripe, verifies the original tranche and
 rejects disputed/refunded charges. The browser cannot self-approve a live
-payout. Sandbox release is explicitly simulated; network errors are not
-treated as successful release.
+payout. Sandbox release is an illustrative local preview, not settlement;
+network errors are not treated as successful release.
 
 RCTI calculations are returned in checkout/webhook ledgers, not persisted into
 `rcti_invoices` by this change. `CommercialLedger` is inside `src/App.tsx` and

@@ -1,4 +1,5 @@
 import express from 'express';
+import { requireUser } from './auth.js';
 
 const API_BASE = 'https://api.twelvelabs.io/v1.3';
 const validId = (value) => typeof value === 'string' && /^[a-zA-Z0-9_-]{1,128}$/.test(value);
@@ -18,6 +19,18 @@ export function createTwelveLabsRouter() {
     next();
   });
   router.get('/status', (_req, res) => res.json({ configured: true }));
+  const usage = new Map();
+  router.use(requireUser, (req, res, next) => {
+    const now = Date.now();
+    for (const [id, entry] of usage) if (entry.until <= now) usage.delete(id);
+    const entry = usage.get(req.authUser.id) || { count: 0, until: now + 60000 };
+    usage.set(req.authUser.id, entry);
+    if (++entry.count > 60) {
+      res.set('Retry-After', String(Math.ceil((entry.until - now) / 1000)));
+      return res.status(429).json({ error: 'Video analysis rate limit exceeded' });
+    }
+    next();
+  });
   router.use(express.json({ limit: '64kb' }));
 
   async function upstream(res, path, options, project) {
@@ -27,7 +40,7 @@ export function createTwelveLabsRouter() {
         signal: AbortSignal.timeout(10000),
         headers: { ...options.headers, 'x-api-key': res.locals.apiKey },
       });
-      if (!response.ok) return res.status(502).json({ error: 'TwelveLabs request failed' });
+      if (!response.ok) return res.status(response.status === 429 ? 429 : response.status >= 500 || response.status === 401 || response.status === 403 ? 502 : 400).json({ error: 'TwelveLabs request failed' });
       const data = await response.json();
       const safeJson = JSON.stringify(project(data)).split(res.locals.apiKey).join('[redacted]');
       return res.type('json').send(safeJson);

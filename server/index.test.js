@@ -11,7 +11,7 @@ await new Promise((resolve) => server.once('listening', resolve));
 after(() => new Promise((resolve) => server.close(resolve)));
 const base = `http://127.0.0.1:${server.address().port}`;
 const nativeFetch = globalThis.fetch;
-const item = { qty: 2, priceAud: 100, baseCostAud: 20, collabRoyaltyPct: 0 };
+const item = { id: 'drop_sb_2095', qty: 2, priceAud: 100, baseCostAud: 20, collabRoyaltyPct: 0 };
 const post = (body) => nativeFetch(`${base}/api/checkout/create-session`, {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
 });
@@ -32,16 +32,13 @@ test('tier and capsule checkout work without credentials', async () => {
   const body = await capsule.json();
   assert.equal(body.checkoutUrl, null);
   assert.equal(body.mode, 'sandbox_demo');
-  assert.deepEqual(body.splits, { grossAud: 200, athleteAud: 112, clubAud: 24, partnerAud: 0 });
+  assert.deepEqual(body.splits, { grossAud: 190, athleteAud: 98, clubAud: 21, partnerAud: 0 });
 });
 
 test('empty, malformed, and out-of-bounds checkout inputs are rejected', async () => {
   for (const body of [null, {}, [], { capsuleItems: [] }, { capsuleItems: {} },
     { capsuleItems: Array(51).fill(item) }, { capsuleItems: [null] },
-    ...[{ qty: 0 }, { qty: 1.5 }, { qty: 101 }, { priceAud: -1 },
-      { priceAud: 100001 }, { priceAud: '100' }, { baseCostAud: 101 },
-      { collabRoyaltyPct: 31 }].map((override) => ({ capsuleItems: [{ ...item, ...override }] })),
-    { capsuleItems: Array(50).fill({ ...item, priceAud: 100000, qty: 100 }) },
+    ...[{ qty: 0 }, { qty: 1.5 }, { qty: 101 }, { id: 'unknown' }, { size: 'invalid' }].map((override) => ({ capsuleItems: [{ ...item, ...override }] })),
     { athleteId: 'demo', tierId: '__proto__' }, { athleteId: {}, tierId: 'local_merchant' }]) {
     assert.equal((await post(body)).status, 400, JSON.stringify(body));
   }
@@ -89,4 +86,14 @@ test('Stripe calls use abort signals and sanitize upstream errors', async () => 
     process.env.STRIPE_SECRET_KEY = '';
     delete process.env.STRIPE_ATHLETE_ACCOUNT_ID;
   }
+});
+
+test('capsule economics are authoritative even when legacy client fields are tampered with', async () => {
+  const response = await post({ capsuleItems: [{ ...item, priceAud: 1, baseCostAud: 0, collabRoyaltyPct: 30 }] });
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.ledger.grossCents, 19000);
+  assert.equal(result.ledger.productionCents, 5000);
+  assert.equal(result.ledger.partnerCents, 0);
+  assert.equal((await post({ capsuleItems: [{ ...item, id: 'not-published' }] })).status, 400);
 });

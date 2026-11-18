@@ -1,3 +1,4 @@
+import { currentAccessToken } from './lib/sessionToken';
 import type {
   Athlete,
   AthleteLocation,
@@ -822,3 +823,33 @@ export async function applyToCampaign(
 }
 
 export { createCheckoutSession, CHECKOUT_SUCCESS_PATH } from './lib/checkout';
+
+export type WhitelistingEntitlement = {
+  status: 'pending_fulfilment' | 'active' | 'revoked' | 'not_found' | 'not_configured' | 'error';
+  /** Internal UUID reference only, not a Meta/TikTok authorisation or delivery token. */
+  licenceReference: string | null;
+  checkoutSessionId: string;
+  athleteId: string | null;
+  tierId: string | null;
+  createdAt: string | null;
+  message?: string;
+};
+
+export async function fetchWhitelistingGrant(sessionId: string): Promise<WhitelistingEntitlement> {
+  const empty: WhitelistingEntitlement = {
+    status: 'error', licenceReference: null, checkoutSessionId: sessionId,
+    athleteId: null, tierId: null, createdAt: null,
+  };
+  try {
+    const signal = AbortSignal.timeout(10000);
+    const token = await currentAccessToken(signal);
+    const response = await fetch(`/api/whitelisting/grants?session_id=${encodeURIComponent(sessionId)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}, signal,
+    });
+    const result = await response.json();
+    if (!response.ok && result.status !== 'not_configured') return { ...empty, message: 'Unable to retrieve entitlement' };
+    return result as WhitelistingEntitlement;
+  } catch {
+    return { ...empty, message: 'Unable to retrieve entitlement' };
+  }
+}

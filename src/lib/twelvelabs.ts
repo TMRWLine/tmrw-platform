@@ -2,6 +2,7 @@
 
 import type { Athlete } from '../types';
 import { lastName } from './formatName';
+import { currentAccessToken } from './sessionToken';
 
 const API_BASE = '/api/twelvelabs';
 
@@ -37,10 +38,13 @@ export async function isTwelveLabsConfigured(): Promise<boolean> {
 }
 
 async function twelveLabsFetch(path: string, options: RequestInit = {}): Promise<Response> {
+  const signal = options.signal ?? AbortSignal.timeout(10000);
+  const token = await currentAccessToken(signal);
+  if (!token) return new Response(null, { status: 401 });
   return fetch(`${API_BASE}${path}`, {
     ...options,
-    signal: AbortSignal.timeout(10000),
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    signal,
+    headers: { 'Content-Type': 'application/json', ...options.headers, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
 }
 
@@ -71,28 +75,20 @@ export async function createIndex(indexName: string): Promise<string> {
 /**
  * Upload a small video to the proxy, which creates the upstream multipart body.
  */
-export async function uploadVideo(
-  indexId: string,
-  file: File,
-  onProgress?: (p: IngestionProgress) => void
-): Promise<string> {
-  onProgress?.({ phase: 'uploading', message: `Uploading ${file.name}…`, progress: 10 });
-
-  if (file.size === 0 || file.size > 4 * 1024 * 1024 || (file.type && !file.type.startsWith('video/'))) {
+function validateVideo(file: File) {
+  if (!file.size || file.size > 4 * 1024 * 1024 || !file.type.startsWith('video/')) {
     throw new Error('Choose a video up to 4 MiB · larger footage uses sample analysis');
   }
+}
+
+export async function uploadVideo(indexId: string, file: File, onProgress?: (p: IngestionProgress) => void): Promise<string> {
+  validateVideo(file);
+  onProgress?.({ phase: 'uploading', message: 'Uploading footage…', progress: 10 });
   const res = await twelveLabsFetch(`/uploads?index_id=${encodeURIComponent(indexId)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': file.type || 'application/octet-stream' },
-    body: file,
+    method: 'POST', headers: { 'Content-Type': file.type }, body: file,
   });
   if (!res.ok) throw new Error('Video upload unavailable · using sample data');
-
-  const data = await res.json();
-  const videoId = data._id as string;
-
-  onProgress?.({ phase: 'uploading', message: 'Upload complete', progress: 30 });
-  return videoId;
+  return (await res.json())._id as string;
 }
 
 /**
@@ -107,15 +103,27 @@ export async function waitForIndexReady(
   const start = Date.now();
   onProgress?.({ phase: 'indexing', message: 'Indexing video…', progress: 40 });
 
+  let failures = 0;
   while (Date.now() - start < maxWaitMs) {
-    const res = await twelveLabsFetch(`/indexes/${encodeURIComponent(indexId)}/videos/${encodeURIComponent(videoId)}`);
-    if (!res.ok) throw new Error('Video indexing unavailable · using sample data');
-    const data = await res.json();
-    if (data.system_metadata?.status === 'ready' || data.system_metadata?.ready === true) {
-      onProgress?.({ phase: 'indexing', message: 'Index ready', progress: 60 });
-      return;
+    try {
+      const res = await twelveLabsFetch(`/indexes/${encodeURIComponent(indexId)}/videos/${encodeURIComponent(videoId)}`, {
+        signal: AbortSignal.timeout(Math.max(1, Math.min(10000, maxWaitMs - (Date.now() - start)))),
+      });
+      if (!res.ok && res.status !== 429 && res.status < 500) throw new Error('Permanent video indexing failure');
+      if (res.ok) {
+        failures = 0;
+        const data = await res.json();
+        if (data.system_metadata?.status === 'ready' || data.system_metadata?.ready === true) {
+          onProgress?.({ phase: 'indexing', message: 'Index ready', progress: 60 });
+          return;
+        }
+      } else failures++;
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Permanent video indexing failure') throw error;
+      failures++;
     }
-    await new Promise((r) => setTimeout(r, 3000));
+    const pause = Math.min(failures ? 500 * 2 ** Math.min(failures - 1, 4) : 3000, maxWaitMs - (Date.now() - start));
+    if (pause > 0) await new Promise((resolve) => setTimeout(resolve, pause));
   }
 
   throw new Error('Video indexing timed out');
@@ -136,7 +144,7 @@ export async function detectKeyEvents(
   const prompts = getSportSearchPrompts(sport);
   const allEvents: TwelveLabsEvent[] = [];
 
-  for (const { prompt, type } of prompts) {
+  const search = async ({ prompt, type }: SportPrompt): Promise<TwelveLabsEvent[]> => {
     const res = await twelveLabsFetch(`/search`, {
       method: 'POST',
       body: JSON.stringify({
@@ -151,21 +159,30 @@ export async function detectKeyEvents(
     const data = await res.json();
     const clips = data.clips ?? data.data ?? [];
 
-    for (const clip of clips) {
-      const start = clip.start ?? clip.start_sec ?? 0;
-      const end = clip.end ?? clip.end_sec ?? start + 5;
+    return clips.map((clip: Record<string, string | number>) => {
+      const start = Number(clip.start ?? clip.start_sec ?? 0);
+      const end = Number(clip.end ?? clip.end_sec ?? start + 5);
       const text = clip.text ?? clip.description ?? prompt;
-      const confidence = clip.confidence ?? clip.score ?? 0.5;
+      const confidence = Number(clip.confidence ?? clip.score ?? 0.5);
 
-      allEvents.push({
-        start: typeof start === 'number' ? start : parseFloat(start),
-        end: typeof end === 'number' ? end : parseFloat(end),
-        text,
+      return {
+        start,
+        end,
+        text: String(text),
         confidence,
         type,
-      });
+      };
+    });
+  };
+  let successes = 0;
+  for (let offset = 0; offset < prompts.length; offset += 2) {
+    const results = await Promise.allSettled(prompts.slice(offset, offset + 2).map(search));
+    for (const result of results) if (result.status === 'fulfilled') {
+      successes++;
+      allEvents.push(...result.value);
     }
   }
+  if (!successes) throw new Error('Video search unavailable · using sample data');
 
   allEvents.sort((a, b) => a.start - b.start);
   onProgress?.({ phase: 'detecting', message: 'Event detection complete', progress: 90 });
@@ -215,6 +232,7 @@ export async function ingestMatchFootage(
   athlete: Athlete,
   onProgress?: (p: IngestionProgress) => void
 ): Promise<TwelveLabsIndexResult> {
+  validateVideo(file);
   const indexName = `athlete-${athlete.id}-${Date.now()}`;
   const indexId = await createIndex(indexName);
   const videoId = await uploadVideo(indexId, file, onProgress);

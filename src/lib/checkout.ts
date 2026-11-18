@@ -1,3 +1,4 @@
+import { currentAccessToken } from './sessionToken';
 import { sponsorshipLedger, type Payee, type RctiLine } from './commercialLedger.js';
 
 export const CHECKOUT_SUCCESS_PATH = '/checkout/success';
@@ -35,6 +36,7 @@ export interface CheckoutSessionRequest {
   escrowMode?: 'milestone_50_50' | 'upfront_100';
   clubCadence?: ClubPayoutCadence;
   athlete?: CheckoutAthleteSnapshot;
+  whitelisting?: boolean;
 }
 
 export interface CheckoutSessionResponse {
@@ -56,6 +58,8 @@ export interface EscrowReleaseResult {
   escrowTransferId: string;
   releasedAmountCents: number;
   releasedAt: string;
+  mode?: 'sandbox_demo';
+  preview?: boolean;
 }
 
 export type CreateCheckoutParams = CheckoutSessionRequest;
@@ -136,11 +140,13 @@ export async function createCheckoutSession(
     payload.escrowMode === 'upfront_100' ? null : `tr_ath_escrow_hold_${suffix}`;
 
   try {
+    const token = await currentAccessToken();
     const response = await fetch('/api/checkout/create-session', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Idempotency-Key': idempotencyKey,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
         ...payload,
@@ -195,43 +201,17 @@ export async function releaseEscrowMilestoneTranche(params: {
   athleteId: string;
   escrowHoldCents: number;
   sessionId?: string;
+  mode?: 'sandbox_demo' | 'stripe_live';
 }): Promise<EscrowReleaseResult> {
-  const releaseKey = `idemp_release_${params.transferGroup}_${Date.now()}`;
-  const escrowTransferId = `tr_ath_final50_${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
-
-  try {
-    const response = await fetch('/api/checkout/release-escrow', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Idempotency-Key': releaseKey,
-      },
-      body: JSON.stringify(params),
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'Milestone approval is required');
-    if (result.released) return result as EscrowReleaseResult;
-    if (result.mode !== 'sandbox_demo') throw new Error('Escrow release is unavailable');
-  } catch (error) {
-    throw new Error(error instanceof Error ? error.message : 'Unable to verify escrow release');
-  }
-
-  try {
-    const ledger = JSON.parse(localStorage.getItem('tmrw_escrow_ledger') || '[]');
-    const updated = ledger.map((item: Record<string, unknown>) =>
-      item.transferGroup === params.transferGroup
-        ? { ...item, escrowReleased: true, finalTransferId: escrowTransferId }
-        : item,
-    );
-    localStorage.setItem('tmrw_escrow_ledger', JSON.stringify(updated));
-  } catch {
-    // ignore storage errors
-  }
-
-  return {
-    released: true,
-    escrowTransferId,
-    releasedAmountCents: params.escrowHoldCents,
-    releasedAt: new Date().toISOString(),
+  if (params.mode === 'sandbox_demo') return {
+    released: false, escrowTransferId: '', releasedAmountCents: 0,
+    releasedAt: '', mode: 'sandbox_demo', preview: true,
   };
+  const response = await fetch('/api/checkout/release-escrow', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params), signal: AbortSignal.timeout(10000),
+  });
+  const result = await response.json();
+  if (!response.ok || result.released !== true) throw new Error('Verified milestone approval is required');
+  return result as EscrowReleaseResult;
 }

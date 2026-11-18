@@ -10,15 +10,24 @@ after(() => new Promise((resolve) => server.close(resolve)));
 const base = `http://127.0.0.1:${server.address().port}/api/twelvelabs`;
 const nativeFetch = globalThis.fetch;
 beforeEach(() => {
+  process.env.SUPABASE_URL = 'https://auth.example';
+  process.env.SUPABASE_ANON_KEY = 'public-test-key';
   process.env.TWELVELABS_API_KEY = '';
   process.env.VITE_TWELVELABS_API_KEY = '';
 });
+const mockPaidFetch = (t, implementation) => {
+  let handler = implementation;
+  t.mock.method(globalThis, 'fetch', (url, options) => String(url).includes('/auth/v1/user')
+    ? Promise.resolve(Response.json({ id: 'test-user', app_metadata: {} }))
+    : handler(url, options));
+  return { mock: { mockImplementation: (next) => { handler = next; } } };
+};
 const post = (path, body) => nativeFetch(base + path, {
-  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer user-session' }, body: JSON.stringify(body),
 });
 
 test('unconfigured proxy returns clear 503 JSON without upstream calls', async (t) => {
-  t.mock.method(globalThis, 'fetch', () => { throw new Error('Unexpected upstream call'); });
+  mockPaidFetch(t, () => { throw new Error('Unexpected upstream call'); });
   for (const path of ['/status', '/indexes/i/videos/v']) {
     const response = await nativeFetch(base + path);
     assert.equal(response.status, 503);
@@ -33,7 +42,7 @@ test('fixed proxy operations send server credentials and project only safe field
   const key = 'local-test-credential';
   process.env.TWELVELABS_API_KEY = key;
   const paths = [];
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
+  mockPaidFetch(t, async (url, options) => {
     assert.ok(options.signal instanceof AbortSignal);
     assert.equal(options.headers['x-api-key'], key);
     assert.ok(url.startsWith('https://api.twelvelabs.io/v1.3/'));
@@ -56,10 +65,10 @@ test('fixed proxy operations send server credentials and project only safe field
   assert.deepEqual(await (await nativeFetch(base + '/status')).json(), { configured: true });
   assert.deepEqual(await (await post('/indexes', { index_name: 'Athlete footage', api_key: 'ignored' })).json(), { _id: 'index_123' });
   const upload = await nativeFetch(base + '/uploads?index_id=index_123', {
-    method: 'POST', headers: { 'Content-Type': 'video/mp4' }, body: 'video',
+    method: 'POST', headers: { 'Content-Type': 'video/mp4', Authorization: 'Bearer user-session' }, body: 'video',
   });
   assert.deepEqual(await upload.json(), { _id: 'video_123' });
-  assert.deepEqual(await (await nativeFetch(base + '/indexes/index_123/videos/video_123')).json(), { system_metadata: { status: 'ready', ready: true } });
+  assert.deepEqual(await (await nativeFetch(base + '/indexes/index_123/videos/video_123', { headers: { Authorization: 'Bearer user-session' } })).json(), { system_metadata: { status: 'ready', ready: true } });
   const search = await post('/search', { index_id: 'index_123', query: 'try' });
   const text = await search.text();
   assert.equal(search.status, 200);
@@ -70,7 +79,7 @@ test('fixed proxy operations send server credentials and project only safe field
 
 test('invalid, empty and oversized bodies are rejected before upstream fetch', async (t) => {
   process.env.TWELVELABS_API_KEY = 'local-test-credential';
-  t.mock.method(globalThis, 'fetch', () => { throw new Error('Unexpected upstream call'); });
+  mockPaidFetch(t, () => { throw new Error('Unexpected upstream call'); });
   for (const body of [null, {}, [], { index_name: '' }, { index_name: 'x'.repeat(201) }]) {
     assert.equal((await post('/indexes', body)).status, 400);
   }
@@ -80,11 +89,11 @@ test('invalid, empty and oversized bodies are rejected before upstream fetch', a
   assert.equal((await post('/indexes', { index_name: 'x'.repeat(65536) })).status, 413);
   for (const [query, body] of [['index_id=../private', 'video'], ['index_id=i', '']]) {
     assert.equal((await nativeFetch(base + '/uploads?' + query, {
-      method: 'POST', headers: { 'Content-Type': 'video/mp4' }, body,
+      method: 'POST', headers: { 'Content-Type': 'video/mp4', Authorization: 'Bearer user-session' }, body,
     })).status, 400);
   }
   const large = await nativeFetch(base + '/uploads?index_id=i', {
-    method: 'POST', headers: { 'Content-Type': 'video/mp4' }, body: Buffer.alloc(4 * 1024 * 1024 + 1),
+    method: 'POST', headers: { 'Content-Type': 'video/mp4', Authorization: 'Bearer user-session' }, body: Buffer.alloc(4 * 1024 * 1024 + 1),
   });
   assert.equal(large.status, 413);
 });
@@ -93,10 +102,10 @@ test('upstream failures are sanitised and the 10-second deadline returns 504', a
   process.env.TWELVELABS_API_KEY = 'local-test-credential';
   const timeout = AbortSignal.timeout.bind(AbortSignal);
   t.mock.method(AbortSignal, 'timeout', (ms) => {
-    assert.equal(ms, 10000);
+    assert.ok([8000, 10000].includes(ms));
     return timeout(5);
   });
-  const mock = t.mock.method(globalThis, 'fetch', async (_url, { signal }) => new Promise((_resolve, reject) => {
+  const mock = mockPaidFetch(t, async (_url, { signal }) => new Promise((_resolve, reject) => {
     signal.throwIfAborted();
     signal.addEventListener('abort', () => reject(signal.reason), { once: true });
   }));
@@ -120,4 +129,21 @@ test('legacy configuration is server-only and emits a value-free deprecation war
   assert.match(warning.mock.calls[0].arguments[0], /deprecated/);
   assert.doesNotMatch(warning.mock.calls[0].arguments[0], /legacy-test-credential/);
   assert.deepEqual(await response.json(), { configured: true });
+});
+
+test('paid routes fail closed without Supabase, reject missing/invalid tokens and rate limit verified users', async (t) => {
+  process.env.TWELVELABS_API_KEY = 'server-test-only';
+  delete process.env.SUPABASE_URL;
+  process.env.VITE_SUPABASE_URL = '';
+  assert.equal((await post('/indexes', { index_name: 'test' })).status, 503);
+  process.env.SUPABASE_URL = 'https://auth.example';
+  assert.equal((await nativeFetch(base + '/indexes/i/videos/v')).status, 401);
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ message: 'Invalid token' }, { status: 401 }));
+  assert.equal((await post('/indexes', { index_name: 'test' })).status, 401);
+  globalThis.fetch = async (url) => String(url).includes('/auth/v1/user')
+    ? Response.json({ id: 'rate-limit-user' }) : Response.json({ _id: 'i' });
+  for (let i = 0; i < 60; i++) assert.equal((await post('/indexes', { index_name: 'test' })).status, 200);
+  const limited = await post('/indexes', { index_name: 'test' });
+  assert.equal(limited.status, 429);
+  assert.ok(Number(limited.headers.get('Retry-After')) > 0);
 });
