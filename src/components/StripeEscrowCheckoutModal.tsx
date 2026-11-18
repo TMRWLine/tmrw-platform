@@ -132,7 +132,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
           image_url: payload.athleteImage,
         },
       });
-      if (!checkoutUrl || !/^cs_(test|live)_[a-zA-Z0-9]+$/.test(sessionId)) {
+      if (!checkoutUrl || !sessionId || !/^cs_(test|live)_[a-zA-Z0-9]+$/.test(sessionId)) {
         throw new Error('Secure Stripe Checkout is unavailable.');
       }
       window.location.assign(checkoutUrl);

@@ -228,7 +228,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
       },
     })
       .then(({ checkoutUrl, sessionId }) => {
-        if (!checkoutUrl || !/^cs_(test|live)_[a-zA-Z0-9]+$/.test(sessionId)) {
+        if (!checkoutUrl || !sessionId || !/^cs_(test|live)_[a-zA-Z0-9]+$/.test(sessionId)) {
           throw new Error('Unable to initialise secure checkout.');
         }
         window.location.assign(checkoutUrl);
