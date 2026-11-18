@@ -18,7 +18,12 @@ async function fixture(run) {
       const auth = new Headers(options.headers || (input instanceof Request ? input.headers : undefined)).get('Authorization');
       return auth === 'Bearer valid-token' ? Response.json({ id: 'sponsor' }) : Response.json({ message: 'Invalid token' }, { status: 401 });
     }
-    if (url.pathname === '/rest/v1/athletes') return Response.json([{ stripe_account_id: state.account }]);
+    if (url.pathname === '/rest/v1/athlete_profiles') {
+      assert.equal(url.searchParams.get('id'), 'eq.athlete');
+      assert.equal(url.searchParams.get('select'), 'stripe_account_id');
+      assert.equal(options.headers.apikey, 'test-service');
+      return Response.json(state.noProfile ? [] : [{ stripe_account_id: state.account }]);
+    }
     if (url.hostname !== 'api.stripe.com') throw new Error('Unexpected external request');
     if (state.stripeError) return Response.json({ error: { message: 'Stripe unavailable' } }, { status: 500 });
     if (url.pathname === '/v1/checkout/sessions' && options.method === 'POST') {
@@ -86,6 +91,7 @@ for (const [name, change, status, body = {}, token = 'valid-token'] of [
   ['upfront', (s) => { s.charge.metadata.escrowMode = 'upfront_100'; }, 404],
   ['athlete mismatch', () => {}, 404, { athleteId: 'other' }],
   ['missing account', (s) => { s.account = null; }, 409],
+  ['missing profile', (s) => { s.noProfile = true; }, 409],
   ['no Stripe key', () => { delete process.env.STRIPE_SECRET_KEY; }, 503],
   ['Stripe error', (s) => { s.stripeError = true; }, 502],
   ['unsafe group', () => {}, 400, { transferGroup: 'unsafe' }],

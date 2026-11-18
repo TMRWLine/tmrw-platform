@@ -595,7 +595,7 @@ app.post('/api/checkout/release-escrow', async (req, res) => {
     if (existing) return success(existing, true);
     const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-    const response = await fetch(`${url}/rest/v1/athletes?${new URLSearchParams({ id: `eq.${athleteId}`, select: 'stripe_account_id' })}`, {
+    const response = await fetch(`${url}/rest/v1/athlete_profiles?${new URLSearchParams({ id: `eq.${athleteId}`, select: 'stripe_account_id' })}`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(8000),
     });
     if (!response.ok) return res.status(502).json({ error: 'Unable to look up athlete payout account' });
