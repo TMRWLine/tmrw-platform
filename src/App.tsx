@@ -58,11 +58,8 @@ import { CoverHero, PAGE_SHELL } from './components/CoverHero';
 import { ManifestoTrail } from './components/ManifestoTrail';
 import { BroadcastMatrix } from './components/BroadcastMatrix';
 import { RosterGrid } from './components/RosterGrid';
-import { AthleteCard } from './components/AthleteCard';
 import { SettlementLedger } from './components/SettlementLedger';
 import { SiteFooter } from './components/SiteFooter';
-import { LivingContours } from './components/LivingContours';
-import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDirectory } from './components/SponsorDirectory';
 import { AthleteAuthModal } from './components/AthleteAuthModal';
 import { AthletePortalDrawer } from './components/AthletePortalDrawer';
@@ -70,11 +67,13 @@ import { SyndicateEnquiryModal } from './components/SyndicateEnquiryModal';
 import { AthleteProfileManager } from './components/AthleteProfileManager';
 import { GuardianVerifyPage, GUARDIAN_VERIFY_PATH } from './components/GuardianVerifyPage';
 import { CommercialTiers } from './components/CommercialTiers';
+import { SponsorDiscoveryPage } from './pages/SponsorDiscoveryPage';
 import { SyndicateRunway } from './components/SyndicateRunway';
 import { HowItWorks } from './components/HowItWorks';
 import { ViewportFrame } from './components/ViewportFrame';
 import { ObsidianWipe } from './components/ObsidianWipe';
 import { CheckoutSuccessPage, CHECKOUT_SUCCESS_PATH } from './pages/checkout/success';
+import { calculateExactSplitLedger } from './lib/checkout';
 import { CANVAS_OBSIDIAN, CANVAS_WHITE, mixHex, syndicateProgress } from './lib/canvasTone';
 import { AthleteCommercialDashboard } from './components/AthleteCommercialDashboard';
 import { CartDrawer } from './components/CartDrawer.tsx';
@@ -93,7 +92,13 @@ import {
 } from './api';
 import MapView from './MapView';
 import { athleteInitials, athleteDisplayName } from './lib/formatName';
-import { BRISBANE_RUNWAY_PATH, COMMERCIAL_TIERS_PATH, HOW_IT_WORKS_PATH, THE_ROSTER_PATH } from './lib/routes';
+import {
+  BRISBANE_RUNWAY_PATH,
+  COMMERCIAL_TIERS_PATH,
+  HOW_IT_WORKS_PATH,
+  SPONSOR_DISCOVERY_PATH,
+  THE_ROSTER_PATH,
+} from './lib/routes';
 
 type AppView = 'landing' | 'sponsor' | 'how-it-works' | 'the-roster' | 'commercial-tiers' | 'brisbane-runway';
 
@@ -104,6 +109,7 @@ function viewFromLocation(): AppView {
   if (path === THE_ROSTER_PATH) return 'the-roster';
   if (path === COMMERCIAL_TIERS_PATH) return 'commercial-tiers';
   if (path === BRISBANE_RUNWAY_PATH) return 'brisbane-runway';
+  if (path === SPONSOR_DISCOVERY_PATH) return 'sponsor';
   return 'landing';
 }
 
@@ -435,12 +441,6 @@ export function MarketplaceApp() {
     );
   }
 
-  function openProfile(athlete: Athlete) {
-    setProfileAthlete(athlete);
-    setProfileTab('overview');
-    setSignError(null);
-  }
-
   function openSponsorDrawer(athlete: Athlete | null) {
     setSelectedAthlete(athlete);
     setIsCartOpen(true);
@@ -448,8 +448,8 @@ export function MarketplaceApp() {
 
   function enterSponsorWorkspace() {
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
-    if (path !== THE_ROSTER_PATH) window.history.pushState(null, '', THE_ROSTER_PATH);
-    setView('the-roster');
+    if (path !== SPONSOR_DISCOVERY_PATH) window.history.pushState(null, '', SPONSOR_DISCOVERY_PATH);
+    setView('sponsor');
   }
 
   async function routeAthleteEntry() {
@@ -485,28 +485,6 @@ export function MarketplaceApp() {
     if (path !== THE_ROSTER_PATH) window.history.pushState(null, '', THE_ROSTER_PATH);
     setView('the-roster');
   }
-
-  const catchment3000: AthleteLocation = {
-    id: 'postcode-3000',
-    name: 'Postcode 3000',
-    lat: -37.8136,
-    lng: 144.9631,
-    postcode: '3000',
-    follower_count: null,
-    master_licence_signed: true,
-    nrl_tpa_registered: false,
-    shute_shield_compliant: true,
-  };
-
-  const workspaceSponsors: MatchedSponsor[] = (sponsors ?? [])
-    .filter((s) => s.latitude != null && s.longitude != null)
-    .map((s) => ({
-      ...s,
-      lat: s.latitude,
-      lng: s.longitude,
-      distance_meters: 0,
-      distance_km: 0,
-    }));
 
   async function handleSignMOU(signatoryName: string) {
     if (!profileAthlete) return;
@@ -604,8 +582,9 @@ export function MarketplaceApp() {
 
   useEffect(() => {
     const syncPath = () => {
-      const next = viewFromLocation();
-      setView((current) => (current === 'sponsor' && next === 'landing' ? current : next));
+      setProfileAthlete(null);
+      setShowSignModal(false);
+      setView(viewFromLocation());
     };
     window.addEventListener('popstate', syncPath);
     return () => window.removeEventListener('popstate', syncPath);
@@ -630,14 +609,12 @@ export function MarketplaceApp() {
       ? mixHex(CANVAS_WHITE, CANVAS_OBSIDIAN, canvasProgress)
       : view === 'brisbane-runway'
         ? CANVAS_OBSIDIAN
-        : view === 'sponsor'
-          ? '#080808'
-          : CANVAS_WHITE;
+        : CANVAS_WHITE;
   const inkClass = frameTone === 'dark' ? 'text-white' : 'text-[#080808]';
 
   return (
     <div
-      className={`app-shell font-sans ${inkClass} ${view === 'sponsor' ? 'app-shell-padded bg-grain' : ''}`}
+      className={`app-shell font-sans ${inkClass}`}
       style={{ backgroundColor: shellBackground }}
     >
       <ViewportFrame tone={frameTone} />
@@ -683,11 +660,6 @@ export function MarketplaceApp() {
         onOpenSponsorWorkspace={enterSponsorWorkspace}
       />
 
-      {view === 'sponsor' && (
-        <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden bg-[#08080A]">
-          <LivingContours />
-        </div>
-      )}
 
       <AdminDrawer open={adminOpen} onClose={() => setAdminOpen(false)} />
 
@@ -756,82 +728,23 @@ export function MarketplaceApp() {
           <SiteFooter onHome={() => setLandingSection('top')} tone={canvasProgress > 0.62 ? 'dark' : 'light'} />
         </div>
       ) : (
-      <main className="page bg-transparent">
-        <div className="page-head editorial-copy border-b border-white/10" id="athlete-roster">
-          <p className="font-mono text-xs tracking-widest uppercase text-[#D2FF00] mb-3">
-            // ENTERPRISE WORKSPACE
-          </p>
-          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white mt-0">
-            Sponsor Discovery Workspace
-          </h1>
-          <p className="font-mono text-[11px] tracking-widest text-zinc-400 mt-3">
-            PostGIS radius filters · postcode 3000 catchment · live partner map
-          </p>
-        </div>
-
-        {listError && (
-          <div className="state">
-            <p style={{ color: 'var(--error)', marginBottom: 8 }}>{listError}</p>
-            <button className="btn" onClick={() => window.location.reload()}>
-              <RefreshCw size={14} /> Retry
-            </button>
-          </div>
-        )}
-
-        {!listError && (
-          <>
-            <SpatialCatchment
-              selected={catchmentTier}
-              counts={catchmentCounts}
-              onSelect={(code) => {
-                setCatchmentTier(code);
-                setRadiusFilter('all');
-              }}
-              onClear={() => setCatchmentTier(null)}
-            />
-            <div className="radius-filter">
-              <span className="radius-filter-label">Radius:</span>
-              <div className="radius-toggle">
-                <button
-                  className={catchmentTier === null && radiusFilter === '25km' ? 'active' : ''}
-                  onClick={() => { setCatchmentTier(null); setRadiusFilter('25km'); }}
-                >25km</button>
-                <button
-                  className={catchmentTier === null && radiusFilter === '50km' ? 'active' : ''}
-                  onClick={() => { setCatchmentTier(null); setRadiusFilter('50km'); }}
-                >50km</button>
-                <button
-                  className={catchmentTier === null && radiusFilter === 'all' ? 'active' : ''}
-                  onClick={() => { setCatchmentTier(null); setRadiusFilter('all'); }}
-                >All Postcodes</button>
-              </div>
-            </div>
-            <div className="relative isolate h-[320px] w-full overflow-hidden rounded-none border border-brand-zinc">
-              <MapView
-                athlete={catchment3000}
-                sponsors={workspaceSponsors}
-                catchmentMeters={5000}
-                className="relative h-full w-full overflow-hidden"
-              />
-            </div>
-            {loadingList ? (
-              <div className="state">
-                <div className="spinner" />
-                Loading athletes…
-              </div>
-            ) : (
-              <div className="card-grid">
-                {athletes.filter(Boolean).map((a, i) => (
-                  <MarketplaceAthleteCard
-                    key={a.id ?? `athlete-${i}`}
-                    athlete={a}
-                    onFindNearby={() => openSponsorDrawer(a)}
-                    onProfile={() => openProfile(a)}
-                    onMediaStudio={() => { setMediaStudioAthlete(a); setMediaStudioOpen(true); }}
-                  />
-                ))}
-              </div>
-            )}
+      <div className="relative z-10 min-h-screen w-full bg-white pt-[74px]">
+        <SponsorDiscoveryPage
+          athletes={athletes}
+          loading={loadingList}
+          error={listError}
+          radiusFilter={radiusFilter}
+          catchmentTier={catchmentTier}
+          tierCounts={catchmentCounts}
+          onRadiusChange={setRadiusFilter}
+          onTierChange={(code) => {
+            setCatchmentTier(code);
+            if (code) setRadiusFilter('all');
+          }}
+          onRetry={() => window.location.reload()}
+        />
+        {sponsors.length > 0 ? (
+          <div className={`${PAGE_SHELL} pb-16`}>
             <SponsorDirectory
               sponsors={sponsors}
               athletes={athletes}
@@ -840,10 +753,11 @@ export function MarketplaceApp() {
                 setIsCartOpen(true);
               }}
             />
-          </>
-        )}
-
-      </main>
+          </div>
+        ) : null}
+        <CommercialTiers onNavigateSection={navigateSection} />
+        <SiteFooter onHome={() => navigateSection('top')} />
+      </div>
       )}
 
       <CartDrawer
@@ -1128,50 +1042,6 @@ function statusBadge(status?: string | null): { label: string; cls: string } {
   }
 }
 
-function MarketplaceAthleteCard({
-  athlete,
-  onFindNearby,
-  onProfile,
-  onMediaStudio,
-}: {
-  athlete: Athlete;
-  onFindNearby: () => void;
-  onProfile: () => void;
-  onMediaStudio: () => void;
-}) {
-  const st = statusBadge(athlete?.licence_status ?? athlete?.agreement_status);
-  const leagueTag = (athlete?.tier_tag || getLeagueTag(athlete?.sport))?.toLowerCase();
-  const ipLocked = athlete?.ip_lock === true || athlete?.master_licence_signed === true;
-  const name = athleteDisplayName(athlete);
-  const postcode = athlete?.postcode;
-
-  const catchmentTag = leagueTag
-    ? `${leagueTag} // Postcode ${postcode ?? '2026'}`
-    : postcode
-      ? `Postcode ${postcode}`
-      : 'Catchment 2026';
-
-  const tags: string[] = [];
-  if (st.label) tags.push(st.label);
-  if (ipLocked) tags.push('IP Lock');
-  if (athlete?.nrl_tpa_registered) tags.push('NRL TPA');
-  if (athlete?.shute_shield_compliant) tags.push('Shute Shield');
-
-  return (
-    <AthleteCard
-      name={name}
-      initials={athlete?.initials || initials(name)}
-      sportLeague={athlete?.sport ?? '\u2014'}
-      catchmentTag={catchmentTag}
-      tags={tags}
-      athlete={athlete}
-      onSponsor={onFindNearby}
-      onOpenDossier={onProfile}
-      onMediaStudio={onMediaStudio}
-    />
-  );
-}
-
 export default function App() {
   const path = window.location.pathname.replace(/\/+$/, '');
   const surface =
@@ -1183,20 +1053,6 @@ export default function App() {
       <MarketplaceApp />
     );
   return <div className="min-h-screen w-full bg-white">{surface}</div>;
-}
-
-function getLeagueTag(sport: string | null): string | null {
-  if (!sport) return null;
-  const s = sport.toLowerCase();
-  if (s.includes('basketball')) return '@nbl1';
-  if (s.includes('soccer') || s.includes('football')) return '@nplnsw';
-  if (s.includes('rugby') && s.includes('union')) return '@shuteshield';
-  if (s.includes('rugby') && s.includes('league')) return '@nrl';
-  if (s.includes('afl')) return '@vfl';
-  if (s.includes('netball')) return '@ssn';
-  if (s.includes('cricket')) return '@nswpremier';
-  if (s.includes('combat')) return '@csa';
-  return null;
 }
 
 function MatchCard({
@@ -1737,8 +1593,10 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
   const gstAmount = activeDeal?.gst_amount != null ? Number(activeDeal.gst_amount) : Math.round(grossExGst * 0.1);
   const totalIncGst = activeDeal?.total_inc_gst != null ? Number(activeDeal.total_inc_gst) : grossExGst + gstAmount;
 
-  const commission = Math.round(grossExGst * 0.20);
-  const netPayout = grossExGst - commission;
+  const split = calculateExactSplitLedger(grossExGst, athlete.postcode ?? undefined, athlete.id);
+  const athletePayout = split.athlete70Cents / 100;
+  const clubShare = split.club15Cents / 100;
+  const platformShare = split.ops15Cents / 100;
 
   const [settling, setSettling] = useState(false);
   const [settled, setSettled] = useState(false);
@@ -1769,7 +1627,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
     setSettled(true);
     setSettling(false);
     setWebhookLog(
-      `Stripe webhook ${evtId} received · ${formatCurrency(netPayout, currency)} → athlete account · ${formatCurrency(commission, currency)} platform fee collected`
+      `Stripe webhook ${evtId} received · ${formatCurrency(athletePayout, currency)} → athlete (70%) · ${formatCurrency(clubShare, currency)} → club (15%) · ${formatCurrency(platformShare, currency)} platform (15%) · RCTI issued`
     );
   }
 
@@ -1783,8 +1641,8 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         <p className="ledger-desc">
           Financial breakdown for the active sponsorship deal with{' '}
           <strong>{athleteDisplayName(athlete)}</strong>. GST is calculated at 10% on the gross deal value.
-          The platform collects a 20% commission on the Ex-GST amount; the remaining 80% is
-          released to the athlete's connected account via Stripe Connect split payment.
+          The Ex-GST amount settles 70/15/15 via Stripe Connect: 70% to the athlete's connected account,
+          15% to their club and 15% to the platform, with a Recipient-Created Tax Invoice (RCTI) issued on payout.
         </p>
 
         <div className="ledger-breakdown">
@@ -1826,19 +1684,26 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
           <div className="ledger-divider" />
           <div className="ledger-row">
             <div className="ledger-row-label">
-              <Wallet size={14} /> Platform Commission (20% of Ex-GST)
-            </div>
-            <div className="ledger-row-value commission">
-              −{formatCurrency(commission, currency)}
-            </div>
-          </div>
-          <div className="ledger-divider" />
-          <div className="ledger-row">
-            <div className="ledger-row-label">
-              <Landmark size={14} /> Net Athlete Payout (80% of Ex-GST)
+              <Landmark size={14} /> Athlete Payout (70% of Ex-GST)
             </div>
             <div className="ledger-row-value net">
-              {formatCurrency(netPayout, currency)}
+              {formatCurrency(athletePayout, currency)}
+            </div>
+          </div>
+          <div className="ledger-row">
+            <div className="ledger-row-label">
+              <Wallet size={14} /> Club Share (15% of Ex-GST)
+            </div>
+            <div className="ledger-row-value">
+              {formatCurrency(clubShare, currency)}
+            </div>
+          </div>
+          <div className="ledger-row">
+            <div className="ledger-row-label">
+              <Wallet size={14} /> Platform Share (15% of Ex-GST)
+            </div>
+            <div className="ledger-row-value commission">
+              {formatCurrency(platformShare, currency)}
             </div>
           </div>
         </div>
@@ -1932,7 +1797,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         </div>
         <p className="ledger-desc">
           Executing the split payment triggers a Stripe Connect webhook that releases the net
-          payout to the athlete's connected account and collects the 20% platform fee.
+          payout to the athlete's connected account, transfers the club's 15% and retains the 15% platform share.
         </p>
         <button
           className="btn btn-primary ledger-settle-btn"
