@@ -668,9 +668,10 @@ export async function settleCheckoutSession(checkoutSessionId, authorize = async
   const athleteCut = stampedCents(m.athleteCutCents);
   const hold = stampedCents(m.athleteEscrowHoldCents);
   const clubAmount = stampedCents(m.clubCutCents);
+  const clubCadence = m.clubCadence === undefined ? 'quarterly_batch' : m.clubCadence;
   const amount = athleteCut - hold;
   if (!(athleteCut > 0 && athleteCut <= Math.round(charge.amount * 0.7) && clubAmount > 0 && clubAmount <= Math.round(charge.amount * 0.15) && Number.isSafeInteger(amount) && amount > 0 &&
-    ((m.escrowMode === 'upfront_100' && hold === 0) || (m.escrowMode === 'milestone_50_50' && hold === athleteCut - Math.round(athleteCut * 0.5))) && ['quarterly_batch', 'immediate_t0'].includes(m.clubCadence))) throw payoutError(409, 'Invalid stamped payout amounts or cadence');
+    ((m.escrowMode === 'upfront_100' && hold === 0) || (m.escrowMode === 'milestone_50_50' && hold === athleteCut - Math.round(athleteCut * 0.5))) && ['quarterly_batch', 'immediate_t0'].includes(clubCadence))) throw payoutError(409, 'Invalid stamped payout amounts or cadence');
   const paidAt = new Date((charge.created ?? session.created) * 1000);
   if (!Number.isFinite(paidAt.getTime())) throw payoutError(409, 'Order payment date is missing');
   const profile = await athletePayoutProfile(m.athleteId);
@@ -682,15 +683,15 @@ export async function settleCheckoutSession(checkoutSessionId, authorize = async
     'metadata[payoutFor]': 'athlete_t0', 'metadata[payoutCharge]': charge.id, 'metadata[athleteId]': m.athleteId,
   }, 'POST', `tmrw_athlete_t0_${charge.id}`);
   if (!transfer.id) throw payoutError(502, 'Stripe did not confirm athlete payout');
-  const scheduledFor = m.clubCadence === 'quarterly_batch' ? new Date(Date.UTC(paidAt.getUTCFullYear(), (Math.floor(paidAt.getUTCMonth() / 3) + 1) * 3, 1)).toISOString() : null;
-  const status = m.clubCadence === 'quarterly_batch' ? 'queued_quarterly' : 'awaiting_club_connect_account';
+  const scheduledFor = clubCadence === 'quarterly_batch' ? new Date(Date.UTC(paidAt.getUTCFullYear(), (Math.floor(paidAt.getUTCMonth() / 3) + 1) * 3, 1)).toISOString() : null;
+  const status = clubCadence === 'quarterly_batch' ? 'queued_quarterly' : 'awaiting_club_connect_account';
   const { url, headers } = payoutConfig();
   const clubResponse = await fetch(`${url}/rest/v1/club_payouts?on_conflict=charge_id`, {
     method: 'POST', headers: { ...headers, 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=representation' },
-    body: JSON.stringify({ checkout_session_id: session.id, charge_id: charge.id, transfer_group: group, athlete_id: m.athleteId, club_name: profile.current_club || null, amount_cents: clubAmount, cadence: m.clubCadence, status, scheduled_for: scheduledFor, stripe_transfer_id: null }), signal: AbortSignal.timeout(8000),
+    body: JSON.stringify({ checkout_session_id: session.id, charge_id: charge.id, transfer_group: group, athlete_id: m.athleteId, club_name: profile.current_club || null, amount_cents: clubAmount, cadence: clubCadence, status, scheduled_for: scheduledFor, stripe_transfer_id: null }), signal: AbortSignal.timeout(8000),
   });
   if (!clubResponse.ok) throw payoutError(502, 'Unable to record club payout');
-  return { settled: true, athleteT0: { transferId: transfer.id, amountCents: transfer.amount, alreadyPaid }, club: { status, amountCents: clubAmount, cadence: m.clubCadence, scheduledFor } };
+  return { settled: true, athleteT0: { transferId: transfer.id, amountCents: transfer.amount, alreadyPaid }, club: { status, amountCents: clubAmount, cadence: clubCadence, scheduledFor } };
 }
 
 app.post('/api/checkout/settle', async (req, res) => {

@@ -98,6 +98,15 @@ test('upfront settles full athlete share and records immediate club as awaiting 
   assert.equal(state.creates.length, 1);
 }));
 
+test('legacy paid orders without club cadence default to quarterly batching', () => fixture(async ({ state, post }) => {
+  delete state.metadata.clubCadence;
+  const response = await post();
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).club, { status: 'queued_quarterly', amountCents: 11250, cadence: 'quarterly_batch', scheduledFor: '2027-01-01T00:00:00.000Z' });
+  assert.equal(state.clubRows.get('ch_order').cadence, 'quarterly_batch');
+  assert.equal(state.creates.length, 1);
+}));
+
 test('signature-verified webhook retrieves the paid order and retries failed club writes safely', () => fixture(async ({ state, webhook }) => {
   assert.equal((await webhook(false)).status, 400);
   assert.equal(state.retrievals, 0);
@@ -118,6 +127,7 @@ for (const [name, change, status] of [
   ['missing athlete account', (s) => { s.account = null; }, 409],
   ['invalid athlete cut', (s) => { s.metadata.athleteCutCents = '52501'; }, 409],
   ['invalid club cut', (s) => { s.metadata.clubCutCents = '11251'; }, 409],
+  ...['', null, 'quarterly', 1].map((cadence) => [`invalid club cadence ${cadence}`, (s) => { s.metadata.clubCadence = cadence; }, 409]),
   ['missing service key', () => { delete process.env.SUPABASE_SERVICE_ROLE_KEY; }, 503],
   ['Stripe failure', (s) => { s.stripeFailure = true; }, 502],
   ['owned order without bearer', (s) => { s.metadata.sponsorUserId = 'sponsor'; }, 401],
