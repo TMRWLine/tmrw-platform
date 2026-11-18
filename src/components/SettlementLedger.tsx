@@ -20,7 +20,11 @@ export const SettlementLedger: React.FC = () => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const preventBackgroundScroll = (event: Event) => {
-      if (!receiptRef.current?.contains(event.target as Node)) event.preventDefault();
+      const panel = receiptRef.current;
+      if (event instanceof WheelEvent && event.ctrlKey) return;
+      if (!panel || !panel.contains(event.target as Node) || panel.scrollHeight <= panel.clientHeight) {
+        event.preventDefault();
+      }
     };
     document.addEventListener('wheel', preventBackgroundScroll, { passive: false });
     document.addEventListener('touchmove', preventBackgroundScroll, { passive: false });
