@@ -79,6 +79,7 @@
   .whitelisting-backdrop .flex:not(.flex-col):has(> span),
   .whitelisting-backdrop .flex:not(.flex-col):has(> div) { flex-wrap: wrap; gap: 8px; }
   .whitelisting-backdrop .flex > div { min-width: 0; }
+  .whitelisting-backdrop button { min-width: 44px; max-width: 100%; white-space: normal; }
   .whitelisting-backdrop :is(strong, span, button) { overflow-wrap: anywhere; }
   .whitelisting-backdrop label { font-size: 11px; }
   .whitelisting-backdrop input[type="range"] { min-height: 44px; }
