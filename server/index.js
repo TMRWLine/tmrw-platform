@@ -585,9 +585,11 @@ app.post('/api/checkout/release-escrow', async (req, res) => {
     const c = order.charge;
     const amount = Number(m?.athleteEscrowHoldCents);
     if (!(session.payment_status === 'paid' && c?.status === 'succeeded' && c.paid === true && c.captured === true && !c.refunded && !c.amount_refunded && !c.disputed && !c.dispute && c.currency === 'aud' &&
-      m?.orderType === 'sponsorship_tier' && m.escrowMode === 'milestone_50_50' && m.athleteId === athleteId && typeof group === 'string' && transferGroupPattern.test(group) && (transferGroup === undefined || group === transferGroup) &&
-      typeof m.athleteEscrowHoldCents === 'string' && /^[1-9][0-9]*$/.test(m.athleteEscrowHoldCents) && Number.isSafeInteger(amount) &&
-      Number.isSafeInteger(c.amount) && c.amount > 0 && amount <= escrowHold(c.amount))) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
+      m?.orderType === 'sponsorship_tier' && m.athleteId === athleteId && typeof group === 'string' && transferGroupPattern.test(group) && (transferGroup === undefined || group === transferGroup) &&
+      Number.isSafeInteger(c.amount) && c.amount > 0)) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
+    if (m.escrowMode === 'upfront_100') return res.status(409).json({ error: 'Upfront order has no held escrow to release' });
+    if (!(m.escrowMode === 'milestone_50_50' && typeof m.athleteEscrowHoldCents === 'string' && /^[1-9][0-9]*$/.test(m.athleteEscrowHoldCents) &&
+      Number.isSafeInteger(amount) && amount <= escrowHold(c.amount))) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
     const transfers = await escrowList('transfers', group);
     if (escrowHoldCents !== undefined && escrowHoldCents !== amount) return res.status(409).json({ error: 'Escrow amount does not match the order' });
     const existing = transfers.find((t) => [order.id, order.charge.id].includes(t.metadata?.escrowReleaseFor));

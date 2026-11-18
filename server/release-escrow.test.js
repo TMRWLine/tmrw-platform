@@ -88,7 +88,9 @@ for (const [name, change, status, body = {}, token = 'valid-token'] of [
   ['refunded', (s) => { s.charge.refunded = true; }, 404],
   ['partially refunded', (s) => { s.charge.amount_refunded = 1; }, 404],
   ['disputed', (s) => { s.charge.disputed = true; }, 404],
-  ['upfront', (s) => { s.charge.metadata.escrowMode = 'upfront_100'; }, 404],
+  ['upfront', (s) => { s.charge.metadata.escrowMode = 'upfront_100'; s.charge.metadata.athleteEscrowHoldCents = '0'; }, 409],
+  ['unpaid upfront', (s) => { s.session.payment_status = 'unpaid'; s.session.metadata.escrowMode = 'upfront_100'; }, 404],
+  ['athlete mismatch upfront', (s) => { s.session.metadata.escrowMode = 'upfront_100'; }, 404, { athleteId: 'other' }],
   ['athlete mismatch', () => {}, 404, { athleteId: 'other' }],
   ['missing account', (s) => { s.account = null; }, 409],
   ['missing profile', (s) => { s.noProfile = true; }, 409],
@@ -109,6 +111,7 @@ for (const [name, change, status, body = {}, token = 'valid-token'] of [
   assert.ok(data.error);
   assert.notEqual(data.released, true);
   if (name === 'Stripe error') assert.equal(data.error, 'Stripe unavailable');
+  if (name === 'upfront') assert.equal(data.error, 'Upfront order has no held escrow to release');
   if (name.startsWith('missing payout')) assert.equal(data.error, 'payout lookup not configured');
   assert.equal(state.creates.length, 0);
 }));
