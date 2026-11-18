@@ -127,7 +127,7 @@ const SponsorDrawerContent: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
   const [conflictError, setConflictError] = useState<string | null>(null);
   const [dealSuccess, setDealSuccess] = useState<boolean>(false);
   const [showSyndicateModal, setShowSyndicateModal] = useState<boolean>(false);
-  const dialogRef = useDialogFocus(isOpen && !showSyndicateModal, onClose);
+  const dialogRef = useDialogFocus(isOpen, onClose);
   const syndicateRef = useDialogFocus(showSyndicateModal, () => setShowSyndicateModal(false));
   const [syndicateSuccess, setSyndicateSuccess] = useState<boolean>(false);
   const [selectedSyndicateId, setSelectedSyndicateId] = useState<SyndicatePortfolioId>(

@@ -37,6 +37,9 @@ export function useDialogFocus(open: boolean, onClose: () => void) {
         if (!first || !last) {
           event.preventDefault();
           dialog.focus();
+        } else if (!dialog.contains(document.activeElement)) {
+          event.preventDefault();
+          (event.shiftKey ? last : first).focus();
         } else if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
           event.preventDefault();
           last.focus();

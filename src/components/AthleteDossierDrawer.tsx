@@ -197,7 +197,7 @@ const AthleteDossierContent: React.FC<AthleteDossierDrawerProps> = ({
   const [lastReceipt, setLastReceipt] = useState<StripeEscrowReceipt | null>(null);
   const [lastPaidPriceAud, setLastPaidPriceAud] = useState<number>(750);
   const [activeWhitelistingGrant, setActiveWhitelistingGrant] = useState<WhitelistingGrant | null>(null);
-  const dialogRef = useDialogFocus(Boolean(athlete) && !stripePayload && !activeWhitelistingGrant, onClose);
+  const dialogRef = useDialogFocus(Boolean(athlete), onClose);
   const [liveOverride, setLiveOverride] = useState<LiveAthleteOverride | null>(null);
 
   const currentIndex = athlete
