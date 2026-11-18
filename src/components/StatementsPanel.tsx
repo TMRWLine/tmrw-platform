@@ -72,6 +72,7 @@ export function StatementsPanel({
     if (!selected) return;
     const headers = ['Field', 'Amount'];
     const rows = [
+      ['Record type', 'Allocation estimate only; not a tax invoice or payment receipt'],
       ['Month', selected.month],
       ['Gross Earnings (Ex. GST)', String(selected.grossExGst)],
       ['GST (10%)', String(selected.gst)],
@@ -96,7 +97,7 @@ export function StatementsPanel({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `RCTI_${selectedMonth?.replace(/\s/g, '_') ?? 'statement'}.csv`;
+    a.download = `Allocation_preview_${selected.month.replace(/\s/g, '_')}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -106,14 +107,14 @@ export function StatementsPanel({
     const win = window.open('', '_blank');
     if (!win) return;
     const money = (amount: number) => escapeHtml(formatCurrency(amount, currency, 2));
-    const html = `<!DOCTYPE html><html><head><title>RCTI - ${escapeHtml(selected.month)}</title>
+    const html = `<!DOCTYPE html><html><head><title>Allocation preview - ${escapeHtml(selected.month)}</title>
 <style>
 body{font-family:Inter,sans-serif;padding:40px;color:#080808;max-width:600px;margin:auto;background:#F7F7F6}
 h1{font-size:20px;font-weight:800} table{width:100%;border-collapse:collapse;margin-top:20px}
 td,th{padding:10px;border-bottom:1px solid #F7F7F6;text-align:left}
 th{background:#F7F7F6;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:0.06em} .total{font-weight:800}
 </style></head><body>
-<h1>Recipient Created Tax Invoice</h1>
+<h1>Indicative allocation · not a tax invoice</h1>
 <p><strong>Athlete:</strong> ${escapeHtml(athleteName)}<br>
 <strong>Period:</strong> ${escapeHtml(selected.month)}<br>
 <strong>Agreement Term:</strong> ${escapeHtml(startDate ?? '·')} to ${escapeHtml(endDate ?? '·')}</p>
@@ -129,8 +130,8 @@ th{background:#F7F7F6;font-weight:700;text-transform:uppercase;font-size:11px;le
 ${selected.rctiLines.map((line) => `<tr><td>${line.role} · gross / GST / net</td><td>${(line.grossCents / 100).toFixed(2)} / ${(line.gstCents / 100).toFixed(2)} / ${(line.netCents / 100).toFixed(2)}</td></tr>`).join('')}
 </table>
 <p style="margin-top:30px;font-size:12px;color:#080808">
-This RCTI is issued by tmrw/. on behalf of the athlete under ATO reciprocal agreement.
-GST is reported by the recipient. Generated ${new Date().toLocaleString()}.</p>
+This estimate is not a tax invoice or proof of payment. Confirm transaction and payee tax records before issuing an RCTI.
+Generated ${new Date().toLocaleString()}.</p>
 </body></html>`;
     win.document.write(html);
     win.document.close();
@@ -141,11 +142,11 @@ GST is reported by the recipient. Generated ${new Date().toLocaleString()}.</p>
     <div className="ledger-section">
       <div className="ledger-head">
         <Receipt size={16} />
-        <h3>Statements &amp; Invoices (RCTI)</h3>
+        <h3>Indicative Statements &amp; RCTI Breakdown</h3>
       </div>
       <p className="ledger-desc">
-        Monthly Recipient Created Tax Invoices showing gross earnings, GST, platform commission,
-        and net payout. Download as PDF or CSV for accounting.
+        Allocation estimates showing gross earnings, applicable GST and 70/15/15 entitlements.
+        These are not tax invoices or payment receipts. An RCTI requires verified transaction and payee tax records.
       </p>
 
       <div className="stmt-month-list">
@@ -165,7 +166,7 @@ GST is reported by the recipient. Generated ${new Date().toLocaleString()}.</p>
         <div className="stmt-detail">
           <div className="stmt-detail-head">
             <FileText size={16} />
-            <span>RCTI · {selected.month}</span>
+            <span>Allocation preview · {selected.month}</span>
           </div>
           <div className="ledger-breakdown">
             <div className="ledger-row">
