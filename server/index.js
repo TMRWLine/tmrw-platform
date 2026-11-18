@@ -4,6 +4,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import Stripe from 'stripe';
+import { capsuleLedger, sponsorshipLedger } from '../src/lib/commercialLedger.js';
+import { addConnectMetadata, checkoutKey, configuredPayees, completeCheckout, reverseDispute, releaseHeldFunds } from './connect.js';
 
 // Load .env / .env.local
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -40,38 +42,39 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json', limi
     return res.status(400).json({ error: 'STRIPE_WEBHOOK_SECRET is not configured in .env' });
   }
 
+  let event;
   try {
     const stripe = new Stripe(stripeKey || 'sk_test_placeholder');
-    const event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch {
+    console.error('[stripe webhook] Signature verification failed');
+    return res.status(400).send('Webhook Error: Signature verification failed');
+  }
 
+  try {
     switch (event.type) {
-      case 'checkout.session.completed': {
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object;
-        const totalAud = (session.amount_total ?? 0) / 100;
-        const orderType = session.metadata?.orderType || 'sponsorship_tier';
-        const athleteCutCents = Number(session.metadata?.athleteCutCents || 0);
-        const clubCutCents = Number(session.metadata?.clubCutCents || 0);
-        const partnerCutCents = Number(session.metadata?.partnerCutCents || 0);
-
-        console.log(`[stripe webhook] ✓ Checkout Session Completed: ${session.id}`);
-        console.log(
-          `[stripe webhook]   Type: ${orderType} | Gross: A$${totalAud.toFixed(2)} | Athlete: A$${(athleteCutCents / 100).toFixed(2)} | Club: A$${(clubCutCents / 100).toFixed(2)} | Partner: A$${(partnerCutCents / 100).toFixed(2)}`,
-        );
-        break;
+        if (!session.metadata?.ledgerGrossCents) {
+          console.warn('[stripe connect] Legacy session has no payout ledger; manual review required.');
+          return res.json({ received: true });
+        }
+        const result = await completeCheckout(session);
+        return res.json({ received: true, ...result });
       }
       case 'charge.dispute.created': {
-        const dispute = event.data.object;
-        console.warn(`[stripe webhook] ! Charge dispute created: ${dispute.id}. Initiating transfer reversals.`);
-        break;
+        const reversals = await reverseDispute(event.data.object);
+        return res.json({ received: true, reversals });
       }
       default:
         console.log(`[stripe webhook] Unhandled event type ${event.type}`);
     }
 
     return res.json({ received: true });
-  } catch (err) {
-    console.error('[stripe webhook] Signature verification failed');
-    return res.status(400).send('Webhook Error: Signature verification failed');
+  } catch {
+    console.error('[stripe webhook] Payout processing failed; Stripe should retry the event.');
+    return res.status(500).json({ error: 'Unable to process Stripe event' });
   }
 });
 
@@ -268,21 +271,19 @@ function resolveCheckoutAthlete(athleteId, reqBody) {
 
 async function hydrateAthleteFromSupabase(athlete) {
   const supabaseRestUrl = (process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-  if (!supabaseRestUrl || !SUPABASE_ANON_KEY) return athlete;
+  const serverKey = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
+  if (!supabaseRestUrl || !serverKey) return athlete;
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(athlete.id)) {
-    return athlete;
-  }
-  if (athlete.full_name && athlete.full_name !== 'Verified athlete' && athlete.image_url) {
     return athlete;
   }
   try {
     const athleteRes = await fetch(
-      `${supabaseRestUrl}/rest/v1/athletes?id=eq.${encodeURIComponent(athlete.id)}&select=*`,
+      `${supabaseRestUrl}/rest/v1/athlete_profiles?id=eq.${encodeURIComponent(athlete.id)}&select=*`,
       {
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          apikey: serverKey,
+          Authorization: `Bearer ${serverKey}`,
           Accept: 'application/json',
         },
       },
@@ -293,6 +294,10 @@ async function hydrateAthleteFromSupabase(athlete) {
     if (!row) return athlete;
     return {
       ...athlete,
+      stripe_account_id: row.stripe_account_id,
+      abn: row.abn,
+      gst_registered: row.gst_registered,
+      club: row.club || row.metadata?.club,
       full_name:
         athlete.full_name !== 'Verified athlete'
           ? athlete.full_name
@@ -321,6 +326,8 @@ app.post('/api/checkout/create-session', async (req, res) => {
     }
     const origin = appBaseUrl(req);
     const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const idempotencyKey = checkoutKey(req);
+    const transferGroup = `tmrw_${idempotencyKey}`;
 
     if ('capsuleItems' in req.body) {
       const items = req.body.capsuleItems;
@@ -345,10 +352,9 @@ app.post('/api/checkout/create-session', async (req, res) => {
     // BRANCH A: Athlete Merch Capsule Checkout from CartDrawer.tsx
     if (Array.isArray(req.body?.capsuleItems) && req.body.capsuleItems.length > 0) {
       const items = req.body.capsuleItems;
-      let grossCents = 0;
-      let athleteCutCents = 0;
-      let clubCutCents = 0;
-      let partnerCutCents = 0;
+      const payees = configuredPayees();
+      const ledger = capsuleLedger(items, payees);
+      const { grossCents, athleteCents: athleteCutCents, clubCents: clubCutCents, partnerCents: partnerCutCents } = ledger;
 
       const body = new URLSearchParams();
       body.set('mode', 'payment');
@@ -356,16 +362,8 @@ app.post('/api/checkout/create-session', async (req, res) => {
       items.forEach((entry, idx) => {
         const qty = entry.qty;
         const unitAud = entry.priceAud;
-        const baseAud = entry.baseCostAud;
-        const netUnitCents = Math.max(0, Math.round((unitAud - baseAud) * 100));
         const hasPartner = Number(entry.collabRoyaltyPct) > 0;
         const athletePct = hasPartner ? 0.55 : 0.7;
-        const partnerPct = hasPartner ? Number(entry.collabRoyaltyPct) / 100 : 0;
-
-        grossCents += Math.round(unitAud * 100) * qty;
-        athleteCutCents += Math.round(netUnitCents * athletePct) * qty;
-        clubCutCents += Math.round(netUnitCents * 0.15) * qty;
-        partnerCutCents += Math.round(netUnitCents * partnerPct) * qty;
 
         body.set(`line_items[${idx}][quantity]`, String(qty));
         body.set(`line_items[${idx}][price_data][currency]`, 'aud');
@@ -397,12 +395,14 @@ app.post('/api/checkout/create-session', async (req, res) => {
       body.set('metadata[athleteCutCents]', String(athleteCutCents));
       body.set('metadata[clubCutCents]', String(clubCutCents));
       body.set('metadata[partnerCutCents]', String(partnerCutCents));
+      addConnectMetadata(body, ledger, payees, transferGroup);
 
-      if (stripeKey) {
+      if (stripeKey && (payees.athlete.accountId || payees.club.accountId || payees.partner.accountId)) {
         const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
           signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
           method: 'POST',
           headers: {
+            'Idempotency-Key': `session-${idempotencyKey}`,
             Authorization: `Bearer ${stripeKey}`,
             'Content-Type': 'application/x-www-form-urlencoded',
           },
@@ -418,14 +418,17 @@ app.post('/api/checkout/create-session', async (req, res) => {
           checkoutUrl: session.url,
           mode: 'stripe_live',
           sessionId: session.id,
+          ledger, transferGroup,
         });
       }
 
       // Sandbox Demo fallback when STRIPE_SECRET_KEY is not yet in .env
+      console.info('[stripe connect] Capsule demo ledger computed; Stripe key or connected payout accounts are missing.');
       return res.json({
         checkoutUrl: null,
         mode: 'sandbox_demo',
         sessionId: `cs_demo_capsule_${Date.now()}`,
+        ledger, transferGroup,
         splits: {
           grossAud: grossCents / 100,
           athleteAud: athleteCutCents / 100,
@@ -450,6 +453,11 @@ app.post('/api/checkout/create-session', async (req, res) => {
     }
 
     const athlete = await hydrateAthleteFromSupabase(resolveCheckoutAthlete(athleteId, req.body));
+    const payees = configuredPayees(athlete);
+    const escrowMode = req.body.escrowMode === 'milestone_50_50' ? 'milestone_50_50' : 'upfront_100';
+    const clubCadence = req.body.clubCadence === 'quarterly_batch' ? 'quarterly_batch' : 'immediate_t0';
+    const ledger = sponsorshipLedger(Math.round(pkg.price_aud * 100), payees, escrowMode);
+    const splitLedger = { ...ledger, transferGroup };
     const successQuery = `athleteId=${encodeURIComponent(athleteId)}&tierId=${encodeURIComponent(tierId)}`;
     const successUrl = `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&${successQuery}`;
     const cancelUrl = athleteId
@@ -457,8 +465,8 @@ app.post('/api/checkout/create-session', async (req, res) => {
       : `${origin}/#commercial-tiers`;
     const productImage = absoluteAssetUrl(athlete.image_url, origin);
 
-    if (stripeKey) {
-      const unitCents = Math.round(pkg.price_aud * 100);
+    if (stripeKey && (payees.athlete.accountId || payees.club.accountId)) {
+      const unitCents = ledger.totalPayableCents;
       const body = new URLSearchParams();
       body.set('mode', 'payment');
       body.set('success_url', successUrl);
@@ -480,13 +488,15 @@ app.post('/api/checkout/create-session', async (req, res) => {
       body.set('metadata[orderType]', 'sponsorship_tier');
       body.set('metadata[athleteId]', athleteId);
       body.set('metadata[tierId]', tierId);
-      body.set('metadata[athleteCutCents]', String(Math.round(unitCents * 0.7)));
-      body.set('metadata[clubCutCents]', String(Math.round(unitCents * 0.15)));
+      body.set('metadata[athleteCutCents]', String(ledger.athlete70Cents));
+      body.set('metadata[clubCutCents]', String(ledger.club15Cents));
+      addConnectMetadata(body, ledger, payees, transferGroup, escrowMode, clubCadence);
 
       const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         method: 'POST',
         headers: {
+          'Idempotency-Key': `session-${idempotencyKey}`,
           Authorization: `Bearer ${stripeKey}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -498,14 +508,34 @@ app.post('/api/checkout/create-session', async (req, res) => {
           error: 'Stripe could not create a checkout session.',
         });
       }
-      return res.json({ checkoutUrl: session.url });
+      return res.json({ checkoutUrl: session.url, splitLedger, ledger, transferGroup, sessionId: session.id });
     }
 
+    console.info('[stripe connect] Sponsorship demo ledger computed; Stripe key or connected payout accounts are missing.');
     return res.json({
       checkoutUrl: `/checkout/success?session_id=cs_demo_${Date.now()}&${successQuery}`,
+      splitLedger, ledger, transferGroup, mode: 'sandbox_demo',
     });
   } catch (err) {
     return res.status(500).json({ error: 'Unable to initialise checkout.' });
+  }
+});
+
+app.post('/api/checkout/release-escrow', async (req, res) => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.json({ released: false, mode: 'sandbox_demo' });
+  }
+  const token = process.env.ESCROW_RELEASE_TOKEN;
+  if (!token || req.get('Authorization') !== `Bearer ${token}`) {
+    return res.status(403).json({ error: 'Verified milestone approval is required' });
+  }
+  if (typeof req.body?.sessionId !== 'string' || !/^cs_[a-zA-Z0-9_]+$/.test(req.body.sessionId)) {
+    return res.status(400).json({ error: 'A checkout sessionId is required' });
+  }
+  try {
+    return res.json(await releaseHeldFunds(req.body.sessionId));
+  } catch {
+    return res.status(502).json({ error: 'Unable to release escrow' });
   }
 });
 

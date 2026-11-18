@@ -1,5 +1,18 @@
 import { supabase } from './supabaseClient';
-import type { LiveAthleteOverride } from '../components/AthleteDossierDrawer';
+import type { LiveAthleteOverride as DossierAthleteOverride } from '../components/AthleteDossierDrawer';
+
+export interface LiveAthleteOverride extends DossierAthleteOverride {
+  governing_body?: string;
+  follower_count?: number;
+  engagement_rate?: string;
+  local_concentration?: string;
+  open_categories?: string[];
+  portrait_image?: string;
+  gallery_slides?: { label: string; url: string }[];
+  reel_video_url?: string;
+  highlight_stem_file?: string;
+  monogram_svg_file?: string;
+}
 
 export interface OtpChallengeResult {
   sent: boolean;

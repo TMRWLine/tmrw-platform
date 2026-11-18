@@ -97,7 +97,7 @@ export async function fetchAthletes(): Promise<Athlete[]> {
   }
 }
 
-/** Sydney CBD — default origin for roster proximity and tier queries. */
+/** Sydney CBD · default origin for roster proximity and tier queries. */
 export const ROSTER_ORIGIN = { lat: -33.8688, lng: 151.2093 };
 
 function byDistance(a: Athlete, b: Athlete): number {
@@ -415,7 +415,7 @@ export async function fetchAgreements(athleteId?: string): Promise<Agreement[]> 
 
 /** Format a monetary amount with the appropriate currency label (AUD or NZD). */
 export function formatCurrency(amount: number | null | undefined, currency: string | null | undefined): string {
-  if (amount == null) return '—';
+  if (amount == null) return '·';
   const code = currency ?? 'AUD';
   const prefix = code === 'NZD' ? 'NZ$' : code === 'USD' ? 'US$' : 'A$';
   const sign = amount < 0 ? '-' : '';
@@ -503,13 +503,13 @@ function cacheKey(req: OutreachRequest): string {
 }
 
 // Module-level prompt cache. The pitch is deterministic per (athlete, sport, category)
-// triple, so a cache hit returns the identical copy instantly — this is the
+// triple, so a cache hit returns the identical copy instantly · this is the
 // "prompt-cached" behavior the generateContractReview utility is built around.
 const promptCache = new Map<string, OutreachResponse>();
 
 function buildPitch(req: OutreachRequest): OutreachResponse {
   const { athleteName, sportType, sponsorCategory } = req;
-  const subject = `Partnership opportunity with ${athleteName} — ${sportType}`;
+  const subject = `Partnership opportunity with ${athleteName} · ${sportType}`;
 
   const copy = [
     `Hi ${sponsorCategory} team,`,
@@ -527,8 +527,8 @@ function buildPitch(req: OutreachRequest): OutreachResponse {
     `- Category exclusivity available: I'm currently unsponsored in the ${sponsorCategory}`,
     `  space, so you'd own the category outright.`,
     ``,
-    `I'd love a 20-minute call to walk through a proposed package — content cadence,`,
-    `in-venue activation, and digital rights — and hear what would matter most to you.`,
+    `I'd love a 20-minute call to walk through a proposed package · content cadence,`,
+    `in-venue activation, and digital rights · and hear what would matter most to you.`,
     `Are you open to a brief intro next week?`,
     ``,
     `Warm regards,`,
@@ -745,7 +745,7 @@ const FALLBACK_MESSAGES: Message[] = [
     id: 'fallback-message-2',
     agreement_id: 'fallback-agreement-1',
     sender_type: 'athlete',
-    content: 'Thanks — happy to lock the first match-day post for round one.',
+    content: 'Thanks · happy to lock the first match-day post for round one.',
     created_at: '2026-01-02T11:30:00.000Z',
   },
   {

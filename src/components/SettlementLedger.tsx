@@ -1,10 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
+import { sponsorshipLedger } from '../lib/commercialLedger.js';
+import { formatAudFromCents } from '../lib/checkout';
 
-const GROSS = '$2500 AUD';
-const ATHLETE = '$1750 AUD';
-const CLUB = '$375 AUD';
-const ESCROW = '$375 AUD';
+const ledger = sponsorshipLedger(250000);
+const GROSS = `${formatAudFromCents(ledger.grossCents)} AUD`;
+const ATHLETE = `${formatAudFromCents(ledger.athlete70Cents)} AUD`;
+const CLUB = `${formatAudFromCents(ledger.club15Cents)} AUD`;
+const ESCROW = `${formatAudFromCents(ledger.ops15Cents)} AUD`;
 
 export const SettlementLedger: React.FC = () => {
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);

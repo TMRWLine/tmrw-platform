@@ -69,6 +69,7 @@ test('serverless entry preserves signed raw webhook bytes', async () => {
 
 test('Stripe calls use abort signals and sanitize upstream errors', async () => {
   process.env.STRIPE_SECRET_KEY = 'sk_test_local';
+  process.env.STRIPE_ATHLETE_ACCOUNT_ID = 'acct_local';
   try {
     globalThis.fetch = async (_url, options) => {
       assert.ok(options.signal instanceof AbortSignal);
@@ -86,5 +87,6 @@ test('Stripe calls use abort signals and sanitize upstream errors', async () => 
   } finally {
     globalThis.fetch = nativeFetch;
     process.env.STRIPE_SECRET_KEY = '';
+    delete process.env.STRIPE_ATHLETE_ACCOUNT_ID;
   }
 });
