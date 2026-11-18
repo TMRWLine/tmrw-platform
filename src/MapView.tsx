@@ -102,8 +102,8 @@ export default function MapView({
       if (catchmentMeters > 0) {
         L.circle(pos, {
           radius: catchmentMeters,
-          color: '#10B981',
-          fillColor: '#10B981',
+          color: '#B8FF00',
+          fillColor: '#B8FF00',
           fillOpacity: 0.12,
           weight: 2,
         }).addTo(layer);
@@ -122,8 +122,8 @@ export default function MapView({
       if (s.target_radius_meters) {
         L.circle(pos, {
           radius: s.target_radius_meters,
-          color: '#000000',
-          fillColor: '#000000',
+          color: '#080808',
+          fillColor: '#080808',
           fillOpacity: 0.05,
           weight: 1,
           dashArray: '4 4',

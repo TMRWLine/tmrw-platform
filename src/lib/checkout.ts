@@ -1,3 +1,5 @@
+import { sponsorshipLedger, type Payee, type RctiLine } from './commercialLedger.js';
+
 export const CHECKOUT_SUCCESS_PATH = '/checkout/success';
 
 export interface CheckoutAthleteSnapshot {
@@ -9,6 +11,7 @@ export interface CheckoutAthleteSnapshot {
 export type ClubPayoutCadence = 'quarterly_batch' | 'immediate_t0';
 
 export interface SplitLedgerBreakdown {
+  rctiLines: RctiLine[];
   grossCents: number;
   gstCents: number;
   totalPayableCents: number;
@@ -35,6 +38,7 @@ export interface CheckoutSessionRequest {
 }
 
 export interface CheckoutSessionResponse {
+  mode: 'stripe_live' | 'sandbox_demo';
   checkoutUrl: string | null;
   sessionId: string;
   idempotencyKey: string;
@@ -78,31 +82,16 @@ export function calculateExactSplitLedger(
   postcode = '2000',
   athleteId = 'athlete',
   escrowMode: 'milestone_50_50' | 'upfront_100' = 'milestone_50_50',
+  payees: Record<string, Payee> = {},
 ): SplitLedgerBreakdown {
   const grossCents = Math.round(amountAud * 100);
-  const gstCents = Math.round(grossCents * 0.1);
-  const totalPayableCents = grossCents + gstCents;
-
-  const athlete70Cents = Math.round((grossCents * 7000) / 10000);
-  const club15Cents = Math.round((grossCents * 1500) / 10000);
-  const ops15Cents = grossCents - athlete70Cents - club15Cents;
-
-  const athleteT0AdvanceCents =
-    escrowMode === 'milestone_50_50' ? Math.round(athlete70Cents * 0.5) : athlete70Cents;
-  const athleteEscrowHoldCents = athlete70Cents - athleteT0AdvanceCents;
+  const ledger = sponsorshipLedger(grossCents, payees, escrowMode);
 
   const cleanSlug = athleteId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase() || 'ATH';
   const transferGroup = `TG_2026_${postcode}_${cleanSlug}`;
 
   return {
-    grossCents,
-    gstCents,
-    totalPayableCents,
-    athlete70Cents,
-    athleteT0AdvanceCents,
-    athleteEscrowHoldCents,
-    club15Cents,
-    ops15Cents,
+    ...ledger,
     transferGroup,
     nextQuarterSweepDate: getNextQuarterSweepLabel(),
   };
@@ -162,28 +151,32 @@ export async function createCheckoutSession(
     });
 
     const data = (await response.json().catch(() => null)) as
-      | { checkoutUrl?: string; url?: string; sessionId?: string }
+      | { checkoutUrl?: string; url?: string; sessionId?: string; splitLedger?: SplitLedgerBreakdown; mode?: 'stripe_live' | 'sandbox_demo'; error?: string }
       | null;
 
+    if (!response.ok) throw new Error(data?.error || 'Unable to initialise checkout');
     if (response.ok && (data?.checkoutUrl || data?.url)) {
+      const serverLedger = data.splitLedger ? { ...splitLedger, ...data.splitLedger } : splitLedger;
       return {
+        mode: data.mode || 'stripe_live',
         checkoutUrl: data.checkoutUrl ?? data.url ?? null,
         sessionId: data.sessionId ?? `cs_live_${idempotencyKey}`,
         idempotencyKey,
-        transferGroup: splitLedger.transferGroup,
+        transferGroup: serverLedger.transferGroup,
         chargeId,
         platformRetainedId,
         athleteTransferId,
         clubTransferId,
         escrowTransferId,
-        splitLedger,
+        splitLedger: serverLedger,
       };
     }
-  } catch {
-    // Offline or embedded execution
+  } catch (error) {
+    if (!(error instanceof TypeError)) throw error;
   }
 
   return {
+    mode: 'sandbox_demo',
     checkoutUrl: null,
     sessionId: `cs_embedded_${idempotencyKey}`,
     idempotencyKey,
@@ -201,12 +194,13 @@ export async function releaseEscrowMilestoneTranche(params: {
   transferGroup: string;
   athleteId: string;
   escrowHoldCents: number;
+  sessionId?: string;
 }): Promise<EscrowReleaseResult> {
   const releaseKey = `idemp_release_${params.transferGroup}_${Date.now()}`;
   const escrowTransferId = `tr_ath_final50_${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
 
   try {
-    await fetch('/api/checkout/release-escrow', {
+    const response = await fetch('/api/checkout/release-escrow', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -214,8 +208,12 @@ export async function releaseEscrowMilestoneTranche(params: {
       },
       body: JSON.stringify(params),
     });
-  } catch {
-    // Local sandbox fallback
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Milestone approval is required');
+    if (result.released) return result as EscrowReleaseResult;
+    if (result.mode !== 'sandbox_demo') throw new Error('Escrow release is unavailable');
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Unable to verify escrow release');
   }
 
   try {

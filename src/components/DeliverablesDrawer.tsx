@@ -227,7 +227,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
       },
     })
       .then(({ checkoutUrl }) => {
-        if (!checkoutUrl) throw new Error('Checkout is unavailable. Please try again later.');
+        if (!checkoutUrl) throw new Error('Secure checkout is unavailable. Please try again.');
         window.location.assign(checkoutUrl);
       })
       .catch((error: unknown) => {

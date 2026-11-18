@@ -6,6 +6,7 @@ import {
   createCheckoutSession,
   formatAudFromCents,
   type ClubPayoutCadence,
+  type SplitLedgerBreakdown,
 } from '../lib/checkout';
 
 export interface StripeCheckoutPayload {
@@ -23,6 +24,9 @@ export interface StripeCheckoutPayload {
 }
 
 export interface StripeEscrowReceipt {
+  splitLedger?: SplitLedgerBreakdown;
+  mode?: 'stripe_live' | 'sandbox_demo';
+  sessionId?: string;
   txId: string;
   transferGroup: string;
   chargeId: string;
@@ -50,7 +54,7 @@ type PaymentMethodTab = 'apple_pay' | 'payto_becs' | 'card';
 type ClearingStage = 'idle' | 'apple_biometric' | 'stage_1_charge' | 'stage_2_transfers' | 'stage_3_rcti';
 
 const LIT_OBSIDIAN_BTN =
-  'bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-black/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.25),0_0_15px_rgba(204,255,0,0.18)] hover:bg-[#080808] hover:border-[#CCFF00] hover:text-[#CCFF00] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.35),0_0_28px_rgba(204,255,0,0.35)] active:translate-y-[1px]';
+  'bg-[#080808] text-[#F7F7F6] font-mono font-bold text-xs py-4 px-7 rounded-xl border border-[#080808]/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(247,247,246,0.25),inset_0_-2px_0_rgba(8,8,8,0.8),0_10px_25px_rgba(8,8,8,0.25),0_0_15px_rgba(204,255,0,0.18)] hover:bg-[#080808] hover:border-[#CCFF00] hover:text-[#CCFF00] hover:shadow-[inset_0_1px_0_rgba(247,247,246,0.4),inset_0_-2px_0_rgba(8,8,8,0.9),0_15px_30px_rgba(8,8,8,0.35),0_0_28px_rgba(204,255,0,0.35)] active:translate-y-[1px]';
 
 function formatAbn(raw: string): string {
   const digits = stripNonDigits(raw).slice(0, 11);
@@ -68,8 +72,8 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
   onSuccess,
 }) => {
   const [method, setMethod] = useState<PaymentMethodTab>('apple_pay');
-  const [escrowMode, setEscrowMode] = useState<'milestone_50_50' | 'upfront_100'>('milestone_50_50');
-  const [clubCadence, setClubCadence] = useState<ClubPayoutCadence>('quarterly_batch');
+  const [escrowMode, setEscrowMode] = useState<'milestone_50_50' | 'upfront_100'>('upfront_100');
+  const [clubCadence, setClubCadence] = useState<ClubPayoutCadence>('immediate_t0');
 
   const [legalName, setLegalName] = useState('Peninsula Motor Group Pty Ltd');
   const [abn, setAbn] = useState('51 824 753 556');
@@ -87,7 +91,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
     if (!payload) return;
     setClearingStage('idle');
     setErrorMsg(null);
-    setClubCadence('quarterly_batch');
+    setClubCadence('immediate_t0');
     if (payload.priceAud >= 50000) {
       setMethod('payto_becs');
     } else {
@@ -130,22 +134,34 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
     }
     setErrorMsg(null);
 
-    const sessionPromise = createCheckoutSession({
-      athleteId: payload.athleteId,
-      tierId: payload.tierId,
-      amountAud: payload.priceAud,
-      postcode: payload.postcode,
-      sponsorLegalName: sanitizeInput(legalName.trim()),
-      sponsorAbn: abn,
-      sponsorEmail: sanitizeInput(email.trim()),
-      escrowMode,
-      clubCadence,
-      athlete: {
-        full_name: payload.athleteName,
-        grassroots_club_name: payload.clubName,
-        image_url: payload.athleteImage,
-      },
-    }).catch(() => null);
+    setClearingStage('stage_1_charge');
+    let sessionResult;
+    try {
+      sessionResult = await createCheckoutSession({
+        athleteId: payload.athleteId,
+        tierId: payload.tierId,
+        amountAud: payload.priceAud,
+        postcode: payload.postcode,
+        sponsorLegalName: sanitizeInput(legalName.trim()),
+        sponsorAbn: abn,
+        sponsorEmail: sanitizeInput(email.trim()),
+        escrowMode,
+        clubCadence,
+        athlete: {
+          full_name: payload.athleteName,
+          grassroots_club_name: payload.clubName,
+          image_url: payload.athleteImage,
+        },
+      });
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Unable to initialise checkout');
+      setClearingStage('idle');
+      return;
+    }
+    if (sessionResult.mode === 'stripe_live' && sessionResult.checkoutUrl) {
+      window.location.assign(sessionResult.checkoutUrl);
+      return;
+    }
 
     setClearingStage('stage_1_charge');
     await new Promise((r) => setTimeout(r, 650));
@@ -154,11 +170,13 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
     setClearingStage('stage_3_rcti');
     await new Promise((r) => setTimeout(r, 650));
 
-    const sessionResult = await sessionPromise;
     const txId = `TX-2026-${payload.postcode}-${Math.floor(100000 + Math.random() * 900000)}`;
     const receipt: StripeEscrowReceipt = {
+      splitLedger: sessionResult.splitLedger,
+      mode: sessionResult.mode,
+      sessionId: sessionResult.sessionId,
       txId,
-      transferGroup: split.transferGroup,
+      transferGroup: sessionResult.transferGroup,
       chargeId: sessionResult?.chargeId ?? `py_${txId}`,
       platformRetainedId: sessionResult?.platformRetainedId ?? `fee_tmrw_t0_${txId}`,
       athleteTransferId: sessionResult?.athleteTransferId ?? `tr_ath_${txId}`,
@@ -176,7 +194,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
 
     try {
       const existing = JSON.parse(localStorage.getItem('tmrw_escrow_ledger') || '[]');
-      existing.unshift({ ...receipt, payload, split });
+      existing.unshift({ ...receipt, payload, split: sessionResult.splitLedger });
       localStorage.setItem('tmrw_escrow_ledger', JSON.stringify(existing.slice(0, 30)));
     } catch {
       // ignore storage quota errors
@@ -191,15 +209,15 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
       onClick={() => clearingStage === 'idle' && onClose()}
-      className="fixed inset-0 z-[110] bg-black/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
+      className="fixed inset-0 z-[110] bg-[#080808]/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
       <div
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full sm:max-w-[630px] max-h-[94dvh] sm:max-h-[92dvh] rounded-t-[24px] sm:rounded-[24px] bg-[#FFFFFF] text-[#080808] border border-black/10 shadow-[0_35px_100px_rgba(0,0,0,0.45)] flex flex-col overflow-hidden"
+        className="relative w-full sm:max-w-[630px] max-h-[94dvh] sm:max-h-[92dvh] rounded-t-[24px] sm:rounded-[24px] bg-[#F7F7F6] text-[#080808] border border-[#080808]/10 shadow-[0_35px_100px_rgba(8,8,8,0.45)] flex flex-col overflow-hidden"
       >
-        <header className="shrink-0 flex items-start justify-between gap-4 border-b border-black/10 bg-[#FFFFFF] px-5 py-4 sm:px-7 sm:py-5">
+        <header className="shrink-0 flex items-start justify-between gap-4 border-b border-[#080808]/10 bg-[#F7F7F6] px-5 py-4 sm:px-7 sm:py-5">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 font-sans text-xs tracking-tight">
               <span className="font-display font-black text-sm tracking-[-0.04em] text-[#080808]">
@@ -208,17 +226,17 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
               <span className="bg-[#CCFF00] text-[#080808] font-bold px-2 py-0.5 rounded-[4px] text-[11px]">
                 70/15/15 Separate Charges & Transfers
               </span>
-              <span className="text-neutral-500 font-mono text-[10px] uppercase">
+              <span className="text-[#080808] font-mono text-[10px] uppercase">
                 {split.transferGroup}
               </span>
             </div>
             <h2 className="m-0 mt-2 font-display text-3xl sm:text-4xl font-black uppercase tracking-[-0.03em] leading-none text-[#080808]">
               {formatAudFromCents(split.grossCents)} AUD<span className="text-[#CCFF00]">.</span>{' '}
-              <span className="text-neutral-500 font-sans text-sm sm:text-base font-bold normal-case tracking-tight">
+              <span className="text-[#080808] font-sans text-sm sm:text-base font-bold normal-case tracking-tight">
                 {payload.packageName}
               </span>
             </h2>
-            <p className="m-0 mt-1 font-sans text-xs text-neutral-600 truncate">
+            <p className="m-0 mt-1 font-sans text-xs text-[#080808] truncate">
               Contender: <strong className="text-[#080808]">{payload.athleteName}</strong> · Postcode {payload.postcode} · Club: <strong className="text-[#080808]">{payload.clubName}</strong>
             </p>
           </div>
@@ -227,7 +245,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
             type="button"
             disabled={clearingStage !== 'idle'}
             onClick={onClose}
-            className="shrink-0 rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-4 py-1.5 font-sans text-xs font-bold border-0 cursor-pointer transition-colors"
+            className="shrink-0 rounded-full bg-[#080808] hover:bg-[#CCFF00] text-[#F7F7F6] hover:text-[#080808] px-4 py-1.5 font-sans text-xs font-bold border-0 cursor-pointer transition-colors"
           >
             Close ✕
           </button>
@@ -236,23 +254,23 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
         <div
           data-lenis-prevent="true"
           onWheel={(e) => e.stopPropagation()}
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7 space-y-4 bg-[#FFFFFF]"
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7 space-y-4 bg-[#F7F7F6]"
         >
           {/* 1. 7000 / 1500 / 1500 BPS 3-PARTY SETTLEMENT SCHEDULE */}
-          <div className="rounded-2xl border border-black/10 bg-[#F2F2F0] p-4 space-y-3">
+          <div className="rounded-2xl border border-[#080808]/10 bg-[#F7F7F6] p-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2 font-sans text-xs">
               <span className="font-bold text-[#080808]">
                 3-Party Settlement Schedule (`source_transaction` Locked)<span className="text-[#CCFF00]">.</span>
               </span>
-              <span className="font-mono text-[10px] text-neutral-600 uppercase">
-                +{formatAudFromCents(split.gstCents)} GST (100% RCTI Credit)
+              <span className="font-mono text-[10px] text-[#080808] uppercase">
+                +{formatAudFromCents(split.gstCents)} GST · registered payees only
               </span>
             </div>
 
             <div className="grid grid-cols-3 gap-2 font-mono">
-              <div className="rounded-xl bg-[#080808] text-white p-3">
-                <span className="block text-[8.5px] text-neutral-400 uppercase">70% ATHLETE (7000 BPS)</span>
-                <strong className="text-base sm:text-lg text-white">
+              <div className="rounded-xl bg-[#080808] text-[#F7F7F6] p-3">
+                <span className="block text-[8.5px] text-[#F7F7F6] uppercase">70% ATHLETE (7000 BPS)</span>
+                <strong className="text-base sm:text-lg text-[#F7F7F6]">
                   {formatAudFromCents(split.athlete70Cents)}
                 </strong>
                 <span className="block text-[8px] text-[#CCFF00] mt-0.5">
@@ -262,20 +280,20 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                 </span>
               </div>
 
-              <div className="rounded-xl bg-white border border-black/10 p-3 text-[#080808]">
-                <span className="block text-[8.5px] text-neutral-500 uppercase">15% CLUB (1500 BPS)</span>
+              <div className="rounded-xl bg-[#F7F7F6] border border-[#080808]/10 p-3 text-[#080808]">
+                <span className="block text-[8.5px] text-[#080808] uppercase">15% CLUB (1500 BPS)</span>
                 <strong className="text-base sm:text-lg text-[#080808]">
                   {formatAudFromCents(split.club15Cents)}
                 </strong>
-                <span className="block text-[8px] text-neutral-600 font-bold mt-0.5 truncate">
+                <span className="block text-[8px] text-[#080808] font-bold mt-0.5 truncate">
                   {clubCadence === 'quarterly_batch'
                     ? `Batch: ${split.nextQuarterSweepDate}`
                     : `T+0 Direct · ${payload.clubName}`}
                 </span>
               </div>
 
-              <div className="rounded-xl bg-white border border-black/10 p-3 text-[#080808]">
-                <span className="block text-[8.5px] text-neutral-500 uppercase">15% TMRW/. OPS</span>
+              <div className="rounded-xl bg-[#F7F7F6] border border-[#080808]/10 p-3 text-[#080808]">
+                <span className="block text-[8.5px] text-[#080808] uppercase">15% TMRW/. OPS</span>
                 <strong className="text-base sm:text-lg text-[#080808]">
                   {formatAudFromCents(split.ops15Cents)}
                 </strong>
@@ -292,8 +310,8 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                 onClick={() => setEscrowMode('milestone_50_50')}
                 className={`rounded-xl border p-2.5 text-left cursor-pointer transition-all ${
                   escrowMode === 'milestone_50_50'
-                    ? 'border-[#080808] bg-[#080808] text-white shadow-sm'
-                    : 'border-black/10 bg-white text-[#080808] hover:border-black/30'
+                    ? 'border-[#080808] bg-[#080808] text-[#F7F7F6] shadow-sm'
+                    : 'border-[#080808]/10 bg-[#F7F7F6] text-[#080808] hover:border-[#080808]/30'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -306,7 +324,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                 </div>
                 <span
                   className={`block font-sans text-[11px] mt-1 leading-snug ${
-                    escrowMode === 'milestone_50_50' ? 'text-neutral-300' : 'text-neutral-600'
+                    escrowMode === 'milestone_50_50' ? 'text-[#F7F7F6]' : 'text-[#080808]'
                   }`}
                 >
                   {formatAudFromCents(split.athleteT0AdvanceCents)} T+0; {formatAudFromCents(split.athleteEscrowHoldCents)} on deliverable sign-off.
@@ -318,14 +336,14 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                 onClick={() => setEscrowMode('upfront_100')}
                 className={`rounded-xl border p-2.5 text-left cursor-pointer transition-all ${
                   escrowMode === 'upfront_100'
-                    ? 'border-[#080808] bg-[#080808] text-white shadow-sm'
-                    : 'border-black/10 bg-white text-[#080808] hover:border-black/30'
+                    ? 'border-[#080808] bg-[#080808] text-[#F7F7F6] shadow-sm'
+                    : 'border-[#080808]/10 bg-[#F7F7F6] text-[#080808] hover:border-[#080808]/30'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span
                     className={`font-sans text-[10px] font-bold ${
-                      escrowMode === 'upfront_100' ? 'text-[#CCFF00]' : 'text-neutral-500'
+                      escrowMode === 'upfront_100' ? 'text-[#CCFF00]' : 'text-[#080808]'
                     }`}
                   >
                     02. Athlete 100% Upfront
@@ -336,7 +354,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                 </div>
                 <span
                   className={`block font-sans text-[11px] mt-1 leading-snug ${
-                    escrowMode === 'upfront_100' ? 'text-neutral-300' : 'text-neutral-600'
+                    escrowMode === 'upfront_100' ? 'text-[#F7F7F6]' : 'text-[#080808]'
                   }`}
                 >
                   Full {formatAudFromCents(split.athlete70Cents)} settled T+0 to athlete Express account.
@@ -345,18 +363,18 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
             </div>
 
             {/* Grassroots Junior Club Quarterly Batch vs Immediate T+0 Selector */}
-            <div className="pt-1 border-t border-black/10 flex flex-wrap items-center justify-between gap-2">
-              <span className="font-mono text-[9px] uppercase text-neutral-600 font-bold">
+            <div className="pt-1 border-t border-[#080808]/10 flex flex-wrap items-center justify-between gap-2">
+              <span className="font-mono text-[9px] uppercase text-[#080808] font-bold">
                 15% JUNIOR CLUB PAYOUT RAIL ({payload.clubName.toUpperCase()}):
               </span>
-              <div className="inline-flex rounded-lg bg-white border border-black/10 p-0.5">
+              <div className="inline-flex rounded-lg bg-[#F7F7F6] border border-[#080808]/10 p-0.5">
                 <button
                   type="button"
                   onClick={() => setClubCadence('quarterly_batch')}
                   className={`rounded-md px-2.5 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer transition-colors ${
                     clubCadence === 'quarterly_batch'
                       ? 'bg-[#080808] text-[#CCFF00]'
-                      : 'bg-transparent text-neutral-500 hover:text-[#080808]'
+                      : 'bg-transparent text-[#080808] hover:text-[#080808]'
                   }`}
                 >
                   Quarterly Batch ({split.nextQuarterSweepDate})
@@ -367,7 +385,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                   className={`rounded-md px-2.5 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer transition-colors ${
                     clubCadence === 'immediate_t0'
                       ? 'bg-[#080808] text-[#CCFF00]'
-                      : 'bg-transparent text-neutral-500 hover:text-[#080808]'
+                      : 'bg-transparent text-[#080808] hover:text-[#080808]'
                   }`}
                 >
                   Immediate T+0
@@ -378,7 +396,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-mono text-[9px] uppercase tracking-wider text-neutral-500 block mb-1">
+              <label className="font-mono text-[9px] uppercase tracking-wider text-[#080808] block mb-1">
                 Sponsor Legal Entity (For ATO/IRD RCTI)
               </label>
               <input
@@ -387,11 +405,11 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                 maxLength={120}
                 value={legalName}
                 onChange={(e) => setLegalName(sanitizeInput(e.target.value))}
-                className="w-full rounded-xl bg-[#F2F2F0] border border-black/10 px-3.5 py-2.5 font-sans text-xs font-medium text-[#080808] focus:bg-white focus:border-[#080808] outline-none"
+                className="w-full rounded-xl bg-[#F7F7F6] border border-[#080808]/10 px-3.5 py-2.5 font-sans text-xs font-medium text-[#080808] focus:bg-[#F7F7F6] focus:border-[#080808] outline-none"
               />
             </div>
             <div>
-              <label className="font-mono text-[9px] uppercase tracking-wider text-neutral-500 block mb-1">
+              <label className="font-mono text-[9px] uppercase tracking-wider text-[#080808] block mb-1">
                 Australian Business Number (ABN)
               </label>
               <input
@@ -400,16 +418,16 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                 inputMode="numeric"
                 value={abn}
                 onChange={(e) => setAbn(formatAbn(e.target.value))}
-                className="w-full rounded-xl bg-[#F2F2F0] border border-black/10 px-3.5 py-2.5 font-mono text-xs font-bold text-[#080808] focus:bg-white focus:border-[#080808] outline-none"
+                className="w-full rounded-xl bg-[#F7F7F6] border border-[#080808]/10 px-3.5 py-2.5 font-mono text-xs font-bold text-[#080808] focus:bg-[#F7F7F6] focus:border-[#080808] outline-none"
               />
               {abnDigits.length > 0 && !abnReady && (
-                <span className="block mt-1 font-mono text-[9px] text-[#FF3300]">{ABN_ERROR_MESSAGE}</span>
+                <span className="block mt-1 font-mono text-[9px] text-[#080808]">{ABN_ERROR_MESSAGE}</span>
               )}
             </div>
           </div>
 
           <div>
-            <label className="font-mono text-[9px] uppercase tracking-wider text-neutral-500 block mb-1">
+            <label className="font-mono text-[9px] uppercase tracking-wider text-[#080808] block mb-1">
               Corporate Email (Receives 3-Part RCTI & Meta/TikTok OAuth Tokens)
             </label>
             <input
@@ -418,7 +436,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
               maxLength={120}
               value={email}
               onChange={(e) => setEmail(sanitizeInput(e.target.value))}
-              className="w-full rounded-xl bg-[#F2F2F0] border border-black/10 px-3.5 py-2.5 font-sans text-xs font-medium text-[#080808] focus:bg-white focus:border-[#080808] outline-none"
+              className="w-full rounded-xl bg-[#F7F7F6] border border-[#080808]/10 px-3.5 py-2.5 font-sans text-xs font-medium text-[#080808] focus:bg-[#F7F7F6] focus:border-[#080808] outline-none"
             />
           </div>
 
@@ -437,8 +455,8 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                   onClick={() => setMethod(id)}
                   className={`rounded-xl border py-2.5 px-2 font-sans text-xs font-bold cursor-pointer transition-all ${
                     method === id
-                      ? 'border-[#080808] bg-[#080808] text-white'
-                      : 'border-black/10 bg-[#F2F2F0] text-neutral-600 hover:text-[#080808]'
+                      ? 'border-[#080808] bg-[#080808] text-[#F7F7F6]'
+                      : 'border-[#080808]/10 bg-[#F7F7F6] text-[#080808] hover:text-[#080808]'
                   }`}
                 >
                   {label}
@@ -447,8 +465,8 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
             </div>
 
             {method === 'apple_pay' && (
-              <div className="rounded-2xl border border-black/10 bg-[#F2F2F0] p-4 text-center space-y-3">
-                <p className="m-0 font-sans text-xs text-neutral-600">
+              <div className="rounded-2xl border border-[#080808]/10 bg-[#F7F7F6] p-4 text-center space-y-3">
+                <p className="m-0 font-sans text-xs text-[#080808]">
                   Instant on-domain biometric authorisation on iPhone, iPad, and Mac via <strong className="text-[#080808]">Apple Pay</strong> or <strong className="text-[#080808]">Stripe Link</strong>.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -456,7 +474,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                     type="button"
                     disabled={!canAuthorise || clearingStage !== 'idle'}
                     onClick={() => setClearingStage('apple_biometric')}
-                    className="h-11 rounded-xl bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] font-sans text-sm font-bold flex items-center justify-center gap-2 cursor-pointer border-0 transition-colors shadow-sm disabled:opacity-40"
+                    className="h-11 rounded-xl bg-[#080808] hover:bg-[#CCFF00] text-[#F7F7F6] hover:text-[#080808] font-sans text-sm font-bold flex items-center justify-center gap-2 cursor-pointer border-0 transition-colors shadow-sm disabled:opacity-40"
                   >
                     <span className="text-lg leading-none"></span>
                     <span>Pay {formatAudFromCents(split.grossCents)}</span>
@@ -465,7 +483,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                     type="button"
                     disabled={!canAuthorise || clearingStage !== 'idle'}
                     onClick={() => runInAppStripeClearingSequence('Stripe Link Instant Wallet')}
-                    className="h-11 rounded-xl bg-white hover:bg-[#080808] text-[#080808] hover:text-white border border-black/15 font-sans text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-40"
+                    className="h-11 rounded-xl bg-[#F7F7F6] hover:bg-[#080808] text-[#080808] hover:text-[#F7F7F6] border border-[#080808]/15 font-sans text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-40"
                   >
                     <span className="h-2 w-2 rounded-full bg-[#080808]" />
                     <span>Pay with Stripe Link →</span>
@@ -475,7 +493,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
             )}
 
             {method === 'payto_becs' && (
-              <div className="rounded-2xl border border-black/10 bg-[#F2F2F0] p-4 space-y-2.5">
+              <div className="rounded-2xl border border-[#080808]/10 bg-[#F7F7F6] p-4 space-y-2.5">
                 <div className="flex items-center justify-between font-mono text-[9px] uppercase">
                   <span className="text-[#080808] font-bold">NPP PAYTO / BECS INSTITUTIONAL ESCROW (AU & NZ)</span>
                   <span className="bg-[#CCFF00] text-[#080808] px-1.5 py-0.5 rounded font-bold">0% CARD FEE</span>
@@ -485,17 +503,17 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                   value={payToId}
                   onChange={(e) => setPayToId(sanitizeInput(e.target.value))}
                   placeholder="PayID / ABN or Corporate BSB + Account Number"
-                  className="w-full rounded-xl bg-white border border-black/15 px-3.5 py-2.5 font-mono text-xs text-[#080808]"
+                  className="w-full rounded-xl bg-[#F7F7F6] border border-[#080808]/15 px-3.5 py-2.5 font-mono text-xs text-[#080808]"
                 />
-                <p className="m-0 font-sans text-[11px] text-neutral-600">
+                <p className="m-0 font-sans text-[11px] text-[#080808]">
                   Authorises an instant real-time PayTo / BECS escrow agreement with `source_transaction` transfer locking.
                 </p>
               </div>
             )}
 
             {method === 'card' && (
-              <div className="rounded-2xl border border-black/10 bg-[#F2F2F0] p-4 space-y-2.5">
-                <div className="flex items-center justify-between font-mono text-[9px] uppercase text-neutral-600">
+              <div className="rounded-2xl border border-[#080808]/10 bg-[#F7F7F6] p-4 space-y-2.5">
+                <div className="flex items-center justify-between font-mono text-[9px] uppercase text-[#080808]">
                   <span>CORPORATE AMEX / VISA / MASTERCARD</span>
                   <span className="text-[#080808] font-bold">PCI-DSS LEVEL 1 · 3DS2</span>
                 </div>
@@ -504,7 +522,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                     type="text"
                     value={cardNumber}
                     onChange={(e) => setCardNumber(sanitizeInput(e.target.value))}
-                    className="sm:col-span-2 rounded-xl bg-white border border-black/15 px-3.5 py-2.5 font-mono text-xs text-[#080808]"
+                    className="sm:col-span-2 rounded-xl bg-[#F7F7F6] border border-[#080808]/15 px-3.5 py-2.5 font-mono text-xs text-[#080808]"
                     placeholder="Card Number"
                   />
                   <div className="grid grid-cols-2 gap-2">
@@ -512,14 +530,14 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                       type="text"
                       value={cardExpiry}
                       onChange={(e) => setCardExpiry(sanitizeInput(e.target.value))}
-                      className="rounded-xl bg-white border border-black/15 px-2.5 py-2.5 font-mono text-xs text-[#080808]"
+                      className="rounded-xl bg-[#F7F7F6] border border-[#080808]/15 px-2.5 py-2.5 font-mono text-xs text-[#080808]"
                       placeholder="MM/YY"
                     />
                     <input
                       type="text"
                       value={cardCvc}
                       onChange={(e) => setCardCvc(sanitizeInput(e.target.value))}
-                      className="rounded-xl bg-white border border-black/15 px-2.5 py-2.5 font-mono text-xs text-[#080808]"
+                      className="rounded-xl bg-[#F7F7F6] border border-[#080808]/15 px-2.5 py-2.5 font-mono text-xs text-[#080808]"
                       placeholder="CVC"
                     />
                   </div>
@@ -529,21 +547,21 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
           </div>
 
           {clearingStage === 'apple_biometric' && (
-            <div className="rounded-2xl border-2 border-[#080808] bg-[#080808] text-white p-5 text-center space-y-3 animate-fadeIn">
+            <div className="rounded-2xl border-2 border-[#080808] bg-[#080808] text-[#F7F7F6] p-5 text-center space-y-3 animate-fadeIn">
               <div className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#CCFF00] text-[#080808] text-xl font-bold">
                 
               </div>
-              <h4 className="m-0 font-sans text-sm font-bold text-white">
+              <h4 className="m-0 font-sans text-sm font-bold text-[#F7F7F6]">
                 Apple Pay Biometric Escrow · {formatAudFromCents(split.grossCents)} AUD
               </h4>
-              <p className="m-0 font-mono text-[10px] uppercase text-neutral-300">
+              <p className="m-0 font-mono text-[10px] uppercase text-[#F7F7F6]">
                 70% Athlete ({formatAudFromCents(split.athlete70Cents)}) · 15% Club ({formatAudFromCents(split.club15Cents)}) · 15% Ops ({formatAudFromCents(split.ops15Cents)} Retained T+0)
               </p>
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setClearingStage('idle')}
-                  className="flex-1 rounded-xl border border-white/20 bg-transparent py-2.5 font-mono text-[10px] uppercase text-neutral-300 cursor-pointer"
+                  className="flex-1 rounded-xl border border-[#F7F7F6]/20 bg-transparent py-2.5 font-mono text-[10px] uppercase text-[#F7F7F6] cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -561,12 +579,12 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
           {(clearingStage === 'stage_1_charge' ||
             clearingStage === 'stage_2_transfers' ||
             clearingStage === 'stage_3_rcti') && (
-            <div className="rounded-2xl bg-[#080808] text-white p-4 space-y-2.5 animate-fadeIn font-mono text-[10.5px]">
+            <div className="rounded-2xl bg-[#080808] text-[#F7F7F6] p-4 space-y-2.5 animate-fadeIn font-mono text-[10.5px]">
               <div className="flex items-center justify-between text-[#CCFF00]">
-                <span>STRIPE CONNECT // {split.transferGroup}</span>
+                <span>SANDBOX DEMO · NO FUNDS MOVED // {split.transferGroup}</span>
                 <span className="animate-pulse">● EXECUTING</span>
               </div>
-              <div className="space-y-1.5 text-neutral-300">
+              <div className="space-y-1.5 text-[#F7F7F6]">
                 <div className="flex items-center justify-between">
                   <span>01. Retaining 15% Platform Ops ({formatAudFromCents(split.ops15Cents)}) at T+0</span>
                   <span className="text-[#CCFF00]">✓ RETAINED</span>
@@ -590,11 +608,11 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
           )}
 
           {errorMsg && (
-            <p className="m-0 font-mono text-xs text-[#FF3300] text-center">{errorMsg}</p>
+            <p role="alert" className="m-0 font-mono text-xs text-[#080808] text-center">{errorMsg}</p>
           )}
         </div>
 
-        <footer className="shrink-0 border-t border-black/10 bg-[#FFFFFF] px-5 py-4 sm:px-7">
+        <footer className="shrink-0 border-t border-[#080808]/10 bg-[#F7F7F6] px-5 py-4 sm:px-7">
           <button
             type="button"
             disabled={!canAuthorise || clearingStage !== 'idle'}

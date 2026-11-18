@@ -126,7 +126,7 @@ function HighlightTab({
             <option value="">Choose an athlete…</option>
             {roster.map((a) => (
               <option key={a.id} value={a.id}>
-                {displayName(a?.name)} — {a.sport ?? 'athlete'}
+                {displayName(a?.name)} · {a.sport ?? 'athlete'}
               </option>
             ))}
           </select>
@@ -150,7 +150,7 @@ function HighlightTab({
       {generating && (
         <div className="tl-generating">
           <div className="spinner" />
-          <p>Analyzing match footage with TwelveLabs Marengo 2.7…</p>
+          <p>Analysing match footage with TwelveLabs Marengo 2.7…</p>
           <p className="sub">Detecting key plays, extracting 9:16 vertical clips, applying sponsor watermarks</p>
         </div>
       )}
@@ -159,9 +159,9 @@ function HighlightTab({
         <div className="tl-clips-grid">
           {clips.map((clip) => (
             <div className="tl-clip-card" key={clip.id}>
-              <div className="tl-clip-thumb" style={{ background: clip.thumbnailGradient }}>
+              <div className="tl-clip-thumb" style={{ background: '#080808' }}>
                 <div className="tl-clip-play">
-                  <Play size={24} fill="white" />
+                  <Play size={24} fill="#F7F7F6" />
                 </div>
                 <div className="tl-clip-watermark">{clip.sponsorWatermark}</div>
                 <div className="tl-clip-action-badge">{clip.action}</div>

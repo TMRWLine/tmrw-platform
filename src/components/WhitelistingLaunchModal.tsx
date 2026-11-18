@@ -37,6 +37,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const [finalTransferId, setFinalTransferId] = useState<string | null>(
     receipt?.escrowMode === 'upfront_100' ? receipt.athleteTransferId : null,
   );
+  const [releaseError, setReleaseError] = useState<string | null>(null);
 
   const rawGrant = grant as unknown as Record<string, string | undefined>;
   const safePostcode = grant.postcode || '2200';
@@ -44,18 +45,18 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const safeAthleteId = grant.athleteId || 'marcus-thorne';
 
   const resolvedMetaToken =
-    grant.metaHandleToken ||
+    grant.meta_partnership_token ||
     rawGrant.metaToken ||
     rawGrant.instagramToken ||
     `IG-AUTH-${safePostcode}-9941`;
 
   const resolvedSparkCode =
-    grant.tiktokSparkCode ||
+    grant.tiktok_spark_code ||
     rawGrant.sparkCode ||
     rawGrant.tiktokToken ||
     `TT-SPARK-${safePostcode}-88219X`;
 
-  const split = calculateExactSplitLedger(
+  const split = receipt?.splitLedger ?? calculateExactSplitLedger(
     priceAud,
     safePostcode,
     safeAthleteId,
@@ -80,14 +81,21 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const handleReleaseFinal50 = async () => {
     if (releasingEscrow || deliverablesApproved) return;
     setReleasingEscrow(true);
-    const res = await releaseEscrowMilestoneTranche({
-      transferGroup,
-      athleteId: safeAthleteId,
-      escrowHoldCents: split.athleteEscrowHoldCents,
-    });
-    setFinalTransferId(res.escrowTransferId);
-    setDeliverablesApproved(true);
-    setReleasingEscrow(false);
+    setReleaseError(null);
+    try {
+      const res = await releaseEscrowMilestoneTranche({
+        transferGroup,
+        athleteId: safeAthleteId,
+        escrowHoldCents: split.athleteEscrowHoldCents,
+        sessionId: receipt?.sessionId,
+      });
+      setFinalTransferId(res.escrowTransferId);
+      setDeliverablesApproved(true);
+    } catch (error) {
+      setReleaseError(error instanceof Error ? error.message : 'Unable to release escrow');
+    } finally {
+      setReleasingEscrow(false);
+    }
   };
 
   const downloadRctiPack = () => {
@@ -95,7 +103,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
       [
         `tmrw/. AUDITED ATO & NZ IRD 3-PART RECIPIENT CREATED TAX INVOICE (RCTI)\n`,
         `========================================================================\n`,
-        `Grant ID: ${grant.grantId || `GR-${safePostcode}-2026`}\n`,
+        `Grant ID: ${grant.id || `GR-${safePostcode}-2026`}\n`,
         `Stripe Transfer Group: ${transferGroup}\n`,
         `Sponsor Entity: ${receipt?.legalName || 'Verified Corporate Partner'} (ABN: ${receipt?.abn || '51 824 753 556'})\n`,
         `Athlete / Contender: ${safeAthleteName}\n`,
@@ -103,6 +111,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
         `Gross Package Value: ${formatAudFromCents(split.grossCents)} AUD (+${formatAudFromCents(split.gstCents)} GST)\n`,
         `------------------------------------------------------------------------\n`,
         `70/15/15 SPLIT LEDGER (7000 / 1500 / 1500 BPS):\n`,
+        ...split.rctiLines.map((line) => `  ${line.role}: gross ${formatAudFromCents(line.grossCents)} · GST ${formatAudFromCents(line.gstCents)} · net ${formatAudFromCents(line.netCents)} · ABN ${line.abn || 'not supplied'} · GST registered ${line.gstRegistered}\n`),
         `  1. 70% Athlete (${formatAudFromCents(split.athlete70Cents)}): ${
           deliverablesApproved
             ? `100% Settled (Final Transfer: ${finalTransferId})`
@@ -185,19 +194,19 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
       onClick={onClose}
-      className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
+      className="fixed inset-0 z-[120] bg-[#080808]/70 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
       <div
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[1380px] max-h-[94dvh] rounded-[24px] bg-[#FFFFFF] text-[#080808] shadow-[0_30px_90px_rgba(0,0,0,0.45)] border border-black/10 flex flex-col overflow-hidden"
+        className="relative w-full max-w-[1380px] max-h-[94dvh] rounded-[24px] bg-[#F7F7F6] text-[#080808] shadow-[0_30px_90px_rgba(8,8,8,0.45)] border border-[#080808]/10 flex flex-col overflow-hidden"
       >
-        <header className="shrink-0 flex flex-wrap items-center justify-between gap-3 px-5 sm:px-8 py-4 border-b border-black/10 bg-[#FFFFFF]">
+        <header className="shrink-0 flex flex-wrap items-center justify-between gap-3 px-5 sm:px-8 py-4 border-b border-[#080808]/10 bg-[#F7F7F6]">
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#CCFF00] ring-2 ring-black/15" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#CCFF00] ring-2 ring-[#080808]/15" />
             <span className="font-mono text-[10.5px] font-bold uppercase tracking-[0.16em] text-[#080808]">
-              STRIPE ESCROW CLEARED ({transferGroup}) · {formatAudFromCents(split.grossCents)} SPLIT ACTIVE
+              {receipt?.mode === 'stripe_live' ? 'STRIPE ESCROW' : 'SANDBOX DEMO · NO FUNDS MOVED'} ({transferGroup}) · {formatAudFromCents(split.grossCents)} SPLIT
             </span>
           </div>
 
@@ -205,14 +214,14 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
             <button
               type="button"
               onClick={downloadRctiPack}
-              className="rounded-full bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
+              className="rounded-full bg-[#F7F7F6] hover:bg-[#080808] text-[#080808] hover:text-[#F7F7F6] px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
             >
               ↓ DOWNLOAD 3-PART RCTI & TOKEN PACK
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
+              className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-[#F7F7F6] hover:text-[#080808] px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
             >
               DONE & CLOSE ✕
             </button>
@@ -224,24 +233,25 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
           onWheel={(e) => e.stopPropagation()}
           className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-8 space-y-5"
         >
-          <div className="rounded-2xl bg-[#080808] text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-4">
+          <div className="rounded-2xl bg-[#080808] text-[#F7F7F6] px-5 py-3.5 flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <span className="rounded-full bg-[#CCFF00] text-[#080808] px-3 py-0.5 font-mono text-[9.5px] font-bold uppercase">
                 {deliverablesApproved ? '✓ 100% ESCROW RELEASED' : '50/50 DELIVERABLE ESCROW ACTIVE'}
               </span>
-              <span className="font-sans text-xs text-neutral-300">
+              <span className="font-sans text-xs text-[#F7F7F6]">
                 {deliverablesApproved
                   ? `100% Athlete Payout (${formatAudFromCents(split.athlete70Cents)}) settled · 15% Club (${formatAudFromCents(split.club15Cents)}) ${clubSweepLabel} · 15% tmrw/. (${formatAudFromCents(split.ops15Cents)}) retained T+0.`
                   : `Athlete ${formatAudFromCents(split.athleteT0AdvanceCents)} settled T+0 (${formatAudFromCents(split.athleteEscrowHoldCents)} in escrow) · Club ${formatAudFromCents(split.club15Cents)} ${clubSweepLabel} · tmrw/. ${formatAudFromCents(split.ops15Cents)} retained T+0.`}
               </span>
             </div>
 
+            {releaseError && <p role="alert" className="text-[#F7F7F6]">{releaseError}</p>}
             {!deliverablesApproved ? (
               <button
                 type="button"
                 disabled={releasingEscrow}
                 onClick={handleReleaseFinal50}
-                className="rounded-full bg-[#CCFF00] hover:bg-white text-[#080808] px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors shrink-0 disabled:opacity-50"
+                className="rounded-full bg-[#CCFF00] hover:bg-[#F7F7F6] text-[#080808] px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors shrink-0 disabled:opacity-50"
               >
                 {releasingEscrow
                   ? 'EXECUTING STRIPE TRANSFER...'
@@ -255,7 +265,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <div className="rounded-[20px] bg-[#080808] text-white p-6 flex flex-col justify-between min-h-[210px]">
+            <div className="rounded-[20px] bg-[#080808] text-[#F7F7F6] p-6 flex flex-col justify-between min-h-[210px]">
               <div>
                 <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-[#CCFF00] block mb-2">
                   DIRECT HANDLE SPONSORSHIP
@@ -265,14 +275,14 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                   <span className="text-[#CCFF00]">.</span>
                 </h3>
               </div>
-              <p className="m-0 mt-4 font-sans text-xs text-neutral-300 leading-relaxed">
+              <p className="m-0 mt-4 font-sans text-xs text-[#F7F7F6] leading-relaxed">
                 Your brand is now authorised to run geo-fenced Meta and TikTok ads directly through {safeAthleteName}'s verified handle.
               </p>
             </div>
 
-            <div className="rounded-[20px] bg-gradient-to-br from-[#7BC6FF] via-[#8E8FFA] to-[#9B6BFF] text-[#080808] p-6 flex flex-col justify-between min-h-[210px]">
+            <div className="rounded-[20px] bg-[#B8FF00] text-[#080808] p-6 flex flex-col justify-between min-h-[210px]">
               <div>
-                <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-black/70 block mb-2">
+                <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-[#080808]/70 block mb-2">
                   TERRITORY EXCLUSIVITY LOCKED
                 </span>
                 <h3 className="m-0 font-display text-3xl sm:text-4xl font-black uppercase tracking-tight leading-[0.92] text-[#080808]">
@@ -280,14 +290,14 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                   <span className="text-[#CCFF00]">.</span>
                 </h3>
               </div>
-              <p className="m-0 mt-4 font-sans text-xs text-black/85 leading-relaxed font-medium">
+              <p className="m-0 mt-4 font-sans text-xs text-[#080808]/85 leading-relaxed font-medium">
                 Direct competitors in your category are locked out of {safeAthleteName}'s feed across your active trading radius.
               </p>
             </div>
 
-            <div className="rounded-[20px] bg-[#F2F2F0] text-[#080808] p-6 flex flex-col justify-between min-h-[210px]">
+            <div className="rounded-[20px] bg-[#F7F7F6] text-[#080808] p-6 flex flex-col justify-between min-h-[210px]">
               <div>
-                <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-neutral-500 block mb-2">
+                <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-[#080808] block mb-2">
                   70 / 15 / 15 CLEARING PROTOCOL
                 </span>
                 <h3 className="m-0 font-display text-3xl font-black uppercase tracking-tight leading-[0.95] text-[#080808]">
@@ -295,22 +305,22 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                 </h3>
               </div>
               <div className="space-y-2 mt-4">
-                <div className="h-2 w-full rounded-full bg-black/15 overflow-hidden flex">
+                <div className="h-2 w-full rounded-full bg-[#080808]/15 overflow-hidden flex">
                   <div className="w-[70%] bg-[#080808] h-full" />
                   <div className="w-[15%] bg-[#CCFF00] h-full" />
-                  <div className="w-[15%] bg-neutral-400 h-full" />
+                  <div className="w-[15%] bg-[#F7F7F6] h-full" />
                 </div>
-                <div className="font-mono text-[9px] uppercase text-neutral-600">
+                <div className="font-mono text-[9px] uppercase text-[#080808]">
                   70% ({formatAudFromCents(split.athlete70Cents)}) · 15% CLUB ({formatAudFromCents(split.club15Cents)}) · 15% OPS ({formatAudFromCents(split.ops15Cents)} T+0)
                 </div>
               </div>
             </div>
 
             {/* Card 4: Meta Partnership Ads (Dynamically linked to Card 6 Budget) */}
-            <div className="rounded-[20px] bg-[#F2F2F0] text-[#080808] p-6 flex flex-col justify-between">
+            <div className="rounded-[20px] bg-[#F7F7F6] text-[#080808] p-6 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-[9.5px] uppercase tracking-wider text-neutral-600">
+                  <span className="font-mono text-[9.5px] uppercase tracking-wider text-[#080808]">
                     META PARTNERSHIP ADS (INSTAGRAM)
                   </span>
                   <span className="rounded-full bg-[#CCFF00] text-[#080808] px-2.5 py-0.5 font-mono text-[8.5px] font-bold uppercase">
@@ -318,31 +328,31 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                   </span>
                 </div>
                 <h4 className="m-0 font-sans text-lg font-bold text-[#080808]">Link Meta Business Manager</h4>
-                <p className="m-0 font-sans text-xs text-neutral-600 leading-relaxed">
+                <p className="m-0 font-sans text-xs text-[#080808] leading-relaxed">
                   Enter your Meta Business Manager ID to push pre-cleared Partnership Ads through {safeAthleteName}'s Instagram handle.
                 </p>
 
                 <div>
-                  <label className="font-mono text-[8.5px] uppercase text-neutral-500 block mb-1">
+                  <label className="font-mono text-[8.5px] uppercase text-[#080808] block mb-1">
                     YOUR META BUSINESS MANAGER ID
                   </label>
                   <input
                     type="text"
                     value={metaBmId}
                     onChange={(e) => setMetaBmId(e.target.value)}
-                    className="w-full rounded-xl bg-white border border-black/10 px-3.5 py-2 font-mono text-xs text-[#080808]"
+                    className="w-full rounded-xl bg-[#F7F7F6] border border-[#080808]/10 px-3.5 py-2 font-mono text-xs text-[#080808]"
                   />
                 </div>
 
-                <div className="rounded-xl bg-white border border-black/10 p-3 flex items-center justify-between">
+                <div className="rounded-xl bg-[#F7F7F6] border border-[#080808]/10 p-3 flex items-center justify-between">
                   <div>
-                    <span className="block font-mono text-[8px] uppercase text-neutral-400">OAUTH HANDLE TOKEN</span>
+                    <span className="block font-mono text-[8px] uppercase text-[#080808]/60">OAUTH HANDLE TOKEN</span>
                     <strong className="font-mono text-xs text-[#080808]">{resolvedMetaToken}</strong>
                   </div>
                   <button
                     type="button"
                     onClick={() => copyText('meta', resolvedMetaToken)}
-                    className="rounded-full bg-[#080808] text-white px-3 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer"
+                    className="rounded-full bg-[#080808] text-[#F7F7F6] px-3 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer"
                   >
                     {copiedField === 'meta' ? '✓ COPIED' : 'COPY'}
                   </button>
@@ -352,7 +362,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
               <button
                 type="button"
                 onClick={() => setMetaAuthorised(true)}
-                className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
+                className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-[#F7F7F6] hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
               >
                 {metaAuthorised
                   ? `✓ AUTHORISED (${metaBmId} · A$${dailySpend}/DAY CAP)`
@@ -361,10 +371,10 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
             </div>
 
             {/* Card 5: TikTok Spark Ads (Dynamically linked to Card 6 Budget) */}
-            <div className="rounded-[20px] bg-[#F2F2F0] text-[#080808] p-6 flex flex-col justify-between">
+            <div className="rounded-[20px] bg-[#F7F7F6] text-[#080808] p-6 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-[9.5px] uppercase tracking-wider text-neutral-600">
+                  <span className="font-mono text-[9.5px] uppercase tracking-wider text-[#080808]">
                     TIKTOK SPARK ADS (9:16 REELS)
                   </span>
                   <span className="rounded-full bg-[#CCFF00] text-[#080808] px-2.5 py-0.5 font-mono text-[8.5px] font-bold uppercase">
@@ -372,13 +382,13 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                   </span>
                 </div>
                 <h4 className="m-0 font-sans text-lg font-bold text-[#080808]">Activate TikTok Spark Code</h4>
-                <p className="m-0 font-sans text-xs text-neutral-600 leading-relaxed">
+                <p className="m-0 font-sans text-xs text-[#080808] leading-relaxed">
                   Paste this pre-authorised Spark Code into TikTok Ads Manager under “Creator Authorised Posts” to boost 9:16 vertical stems.
                 </p>
 
-                <div className="rounded-xl bg-white border border-black/10 p-3 flex items-center justify-between">
+                <div className="rounded-xl bg-[#F7F7F6] border border-[#080808]/10 p-3 flex items-center justify-between">
                   <div>
-                    <span className="block font-mono text-[8px] uppercase text-neutral-400">
+                    <span className="block font-mono text-[8px] uppercase text-[#080808]/60">
                       30-DAY SPARK AUTHORISATION CODE
                     </span>
                     <strong className="font-mono text-xs text-[#080808]">{resolvedSparkCode}</strong>
@@ -386,19 +396,19 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                   <button
                     type="button"
                     onClick={() => copyText('tiktok', resolvedSparkCode)}
-                    className="rounded-full bg-[#080808] text-white px-3 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer"
+                    className="rounded-full bg-[#080808] text-[#F7F7F6] px-3 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer"
                   >
                     {copiedField === 'tiktok' ? '✓ COPIED' : 'COPY'}
                   </button>
                 </div>
 
-                <div className="pt-2 border-t border-black/10 font-mono text-[9.5px] space-y-1">
+                <div className="pt-2 border-t border-[#080808]/10 font-mono text-[9.5px] space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-neutral-500">GEO-FENCE LOCK:</span>
+                    <span className="text-[#080808]">GEO-FENCE LOCK:</span>
                     <strong className="text-[#080808]">POSTCODE {safePostcode}</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-neutral-500">CONFIGURED FLIGHT CAP:</span>
+                    <span className="text-[#080808]">CONFIGURED FLIGHT CAP:</span>
                     <strong className="text-[#080808]">A${fourteenDaySpend.toLocaleString()} (0% MARKUP)</strong>
                   </div>
                 </div>
@@ -407,7 +417,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
               <button
                 type="button"
                 onClick={() => setTiktokSynced(true)}
-                className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
+                className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-[#F7F7F6] hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
               >
                 {tiktokSynced
                   ? `✓ SPARK SYNCED (POSTCODE ${safePostcode} · A$${dailySpend}/DAY)`
@@ -416,20 +426,20 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
             </div>
 
             {/* Card 6: Paid Social Amplification Simulator + 1-Click Media Buyer Export */}
-            <div className="rounded-[20px] bg-[#080808] text-white p-6 flex flex-col justify-between">
+            <div className="rounded-[20px] bg-[#080808] text-[#F7F7F6] p-6 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="flex items-center justify-between font-mono text-[9.5px] uppercase">
                   <span className="text-[#CCFF00]">PAID SOCIAL AMPLIFICATION SIMULATOR</span>
-                  <span className="text-neutral-400">0% MARKUP</span>
+                  <span className="text-[#F7F7F6]">0% MARKUP</span>
                 </div>
-                <h4 className="m-0 font-sans text-lg font-bold text-white">You Control the Ad Budget</h4>
-                <p className="m-0 font-sans text-xs text-neutral-300 leading-relaxed">
+                <h4 className="m-0 font-sans text-lg font-bold text-[#F7F7F6]">You Control the Ad Budget</h4>
+                <p className="m-0 font-sans text-xs text-[#F7F7F6] leading-relaxed">
                   API handle access is included in your package. You pay Meta or TikTok directly for whatever ad spend you choose to put behind the post.
                 </p>
 
                 <div className="pt-1">
                   <div className="flex items-center justify-between font-mono text-xs mb-1.5">
-                    <span className="text-neutral-400 text-[9.5px]">DAILY AD SPEND (DIRECT TO META/TIKTOK)</span>
+                    <span className="text-[#F7F7F6] text-[9.5px]">DAILY AD SPEND (DIRECT TO META/TIKTOK)</span>
                     <strong className="text-[#CCFF00]">A${dailySpend}/day</strong>
                   </div>
                   <input
@@ -446,17 +456,17 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                   />
                 </div>
 
-                <div className="rounded-xl bg-white/[0.04] border border-white/10 p-3 font-mono text-[10px] space-y-1.5">
+                <div className="rounded-xl bg-[#F7F7F6]/[0.04] border border-[#F7F7F6]/10 p-3 font-mono text-[10px] space-y-1.5">
                   <div className="flex justify-between">
-                    <span className="text-neutral-400">14-DAY DIRECT AD BUDGET:</span>
-                    <strong className="text-white">A${fourteenDaySpend.toLocaleString()}</strong>
+                    <span className="text-[#F7F7F6]">14-DAY DIRECT AD BUDGET:</span>
+                    <strong className="text-[#F7F7F6]">A${fourteenDaySpend.toLocaleString()}</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-neutral-400">EST. POSTCODE {safePostcode} REACH:</span>
+                    <span className="text-[#F7F7F6]">EST. POSTCODE {safePostcode} REACH:</span>
                     <strong className="text-[#CCFF00]">{estLocalReach.toLocaleString()} Local Feeds</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-neutral-400">TMRW/. MEDIA AGENCY MARKUP:</span>
+                    <span className="text-[#F7F7F6]">TMRW/. MEDIA AGENCY MARKUP:</span>
                     <strong className="text-[#CCFF00]">$0.00 (ZERO CLIP)</strong>
                   </div>
                 </div>
@@ -465,7 +475,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
               <button
                 type="button"
                 onClick={exportMediaBuyerCampaignSpec}
-                className="mt-4 w-full rounded-full bg-[#CCFF00] hover:bg-white text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
+                className="mt-4 w-full rounded-full bg-[#CCFF00] hover:bg-[#F7F7F6] text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
               >
                 {specExported
                   ? `✓ AD-SET SPEC EXPORTED (A$${dailySpend}/DAY · POSTCODE ${safePostcode})`

@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useDialogFocus } from '../lib/useDialogFocus';
 import { BrandLockup } from './BrandLockup';
 import type { AthleteRecord } from '../data/roster';
+import { capsuleLedger } from '../lib/commercialLedger.js';
 
 export type LockupStyleId = 'editorial' | 'stencil' | 'heritage';
 
@@ -430,25 +431,18 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     setCartItems((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const grossTotal = cartItems.reduce((sum, entry) => sum + entry.item.priceAud * entry.qty, 0);
-  const netMarginPool = cartItems.reduce(
-    (sum, entry) => sum + (entry.item.priceAud - entry.item.baseCostAud) * entry.qty,
-    0,
-  );
-  const athleteCutTotal = cartItems.reduce((sum, entry) => {
-    const unitNet = entry.item.priceAud - entry.item.baseCostAud;
-    const athletePct = entry.item.collabRoyaltyPct ? 0.55 : 0.7;
-    return sum + Math.round(unitNet * athletePct) * entry.qty;
-  }, 0);
-  const clubCut15 = Math.round(netMarginPool * 0.15);
+  const cartLedger = capsuleLedger(cartItems.map((entry) => ({ ...entry.item, qty: entry.qty })));
+  const grossTotal = cartLedger.grossCents / 100;
+  const athleteCutTotal = cartLedger.athleteCents / 100;
+  const clubCut15 = cartLedger.clubCents / 100;
 
   const hasPartnerActive = newCollabPartner.trim().length > 0 && enablePartnerRoyaltySplit;
   const athletePctPreview = hasPartnerActive ? 0.55 : 0.7;
   const partnerPctPreview = hasPartnerActive ? 0.15 : 0;
-  const previewNetMargin = Math.max(0, Number(newPrice) - activeChassis.baseCostAud);
-  const previewAthleteUnit = Math.round(previewNetMargin * athletePctPreview);
-  const previewPartnerUnit = Math.round(previewNetMargin * partnerPctPreview);
-  const previewClubUnit = Math.round(previewNetMargin * 0.15);
+  const previewLedger = capsuleLedger([{ priceAud: Math.max(Number(newPrice) || 0, activeChassis.baseCostAud), baseCostAud: activeChassis.baseCostAud, qty: 1, collabRoyaltyPct: partnerPctPreview * 100 }]);
+  const previewAthleteUnit = previewLedger.athleteCents / 100;
+  const previewPartnerUnit = previewLedger.partnerCents / 100;
+  const previewClubUnit = previewLedger.clubCents / 100;
 
   return createPortal(
     <AnimatePresence>

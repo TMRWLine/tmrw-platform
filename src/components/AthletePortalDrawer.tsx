@@ -2,7 +2,6 @@ import React, { useEffect, useId, useState } from 'react';
 import { BrandLockup } from './BrandLockup';
 import { dispatchOpenCapsuleDrawer } from './CartDrawer';
 import { ROSTER_DATA, suburbForPostcode } from '../data/roster';
-import type { LiveAthleteOverride } from './AthleteDossierDrawer';
 import {
   getActiveAthleteSession,
   maskBsbAndAccount,
@@ -12,6 +11,7 @@ import {
   uploadAthleteAsset,
   verifyAthleteOtpCode,
   type VerifiedSession,
+  type LiveAthleteOverride,
 } from '../lib/athleteAuthAndSync';
 
 export type PortalLeague =
