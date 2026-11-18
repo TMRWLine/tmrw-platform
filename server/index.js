@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import Stripe from 'stripe';
 import { createTwelveLabsRouter } from './twelvelabs.js';
+import { checkoutVerification, verifyStripeCheckout } from './checkout-verify.js';
 import { capsuleLedger, sponsorshipLedger } from '../src/lib/commercialLedger.js';
 import { addConnectMetadata, checkoutKey, configuredPayees, completeCheckout, reverseDispute, releaseHeldFunds } from './connect.js';
 
@@ -520,6 +521,22 @@ app.post('/api/checkout/create-session', async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ error: 'Unable to initialise checkout.' });
+  }
+});
+
+app.get('/api/checkout/verify', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const sessionId = req.query.session_id;
+  if (typeof sessionId !== 'string' || !/^cs_(?:test_|live_)[a-zA-Z0-9]{1,240}$/.test(sessionId)) {
+    return res.status(400).json(checkoutVerification('error', 'A valid Stripe Checkout session_id is required'));
+  }
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.json(checkoutVerification('demo', 'Stripe is not configured · no payment has been verified'));
+  }
+  try {
+    return res.json(await verifyStripeCheckout(sessionId));
+  } catch {
+    return res.status(502).json(checkoutVerification('error', 'Unable to verify checkout payment'));
   }
 });
 

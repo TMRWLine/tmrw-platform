@@ -22,6 +22,39 @@ import { athleteDisplayName } from './lib/formatName';
 import { ROSTER_SPECIMENS, specimenToAthlete } from './data/roster';
 import { DEMO_SPONSORS } from './data/sponsors';
 import { haversineMeters, withTimeout } from './lib/spatial';
+import type { SponsorshipLedger } from './lib/commercialLedger';
+
+export type CheckoutVerification = {
+  verified: boolean;
+  status: 'paid' | 'pending' | 'unpaid' | 'expired' | 'demo' | 'error';
+  amountTotalCents: number | null;
+  currency: string | null;
+  ledger: SponsorshipLedger | null;
+  athleteId: string | null;
+  tierId: string | null;
+  transferStatus?: string | null;
+  message?: string;
+};
+
+export async function verifyCheckoutSession(sessionId: string): Promise<CheckoutVerification> {
+  const error: CheckoutVerification = {
+    verified: false, status: 'error', amountTotalCents: null, currency: null,
+    ledger: null, athleteId: null, tierId: null, transferStatus: null,
+    message: 'Unable to verify checkout payment',
+  };
+  try {
+    const response = await fetch(`/api/checkout/verify?session_id=${encodeURIComponent(sessionId)}`, {
+      signal: AbortSignal.timeout(10000), headers: { Accept: 'application/json' }, cache: 'no-store',
+    });
+    if (!response.ok) return error;
+    const data: CheckoutVerification = await response.json();
+    if (!['paid', 'pending', 'unpaid', 'expired', 'demo', 'error'].includes(data.status) ||
+        typeof data.verified !== 'boolean' || (data.verified && data.status !== 'paid')) return error;
+    return data;
+  } catch {
+    return error;
+  }
+}
 
 function mapAgreementStatus(raw: unknown): AgreementStatus {
   const s = String(raw ?? '').toLowerCase().replace(/\s+/g, '_');

@@ -47,6 +47,23 @@ old 20/80 calculations; pass known payee tax details through `StatementsPanel`.
 
 Run `node --test server/*.test.js` for calculation and mocked webhook tests.
 
+## Checkout return verification
+
+`GET /api/checkout/verify?session_id=cs_test_...` (or `cs_live_...`) retrieves
+Stripe state with an expanded PaymentIntent and never performs transfers.
+Only a complete, paid session is verified. Sponsorship ledgers are rebuilt
+from the server-set Stripe metadata and checked against the paid total.
+Legacy/non-sponsorship sessions may be payment-verified with a null ledger.
+The response includes no customer details or connected account IDs.
+`transfers_recorded` means at least one transfer ID exists in webhook-written
+PaymentIntent metadata, not that every payout has settled; otherwise paid
+sessions report `awaiting_webhook`. Non-paid sessions report `not_paid`.
+
+The typed browser helper is `verifyCheckoutSession(sessionId)` in `src/api.ts`.
+It never throws: network/timeout/HTTP failures return an unverified error.
+No Stripe key produces an explicit unverified demo response. Neither query
+parameters nor browser state can supply amounts, tax details or athlete/tier IDs.
+
 ## TwelveLabs proxy
 
 Set `TWELVELABS_API_KEY` only in the Express/Vercel server environment.
