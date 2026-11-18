@@ -7,7 +7,7 @@ async function fixture(run) {
   const names = ['STRIPE_SECRET_KEY', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'];
   const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
   Object.assign(process.env, { STRIPE_SECRET_KEY: 'test-key', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_ANON_KEY: 'test-anon', SUPABASE_SERVICE_ROLE_KEY: 'test-service' });
-  const metadata = { athleteId: 'athlete', tierId: 'local_merchant', orderType: 'sponsorship_tier', escrowMode: 'milestone_50_50' };
+  const metadata = { athleteId: 'athlete', tierId: 'local_merchant', orderType: 'sponsorship_tier', escrowMode: 'milestone_50_50', athleteEscrowHoldCents: '26250' };
   const charge = { id: 'ch_order', metadata, status: 'succeeded', paid: true, captured: true, amount: 75000, currency: 'aud', transfer_group: 'TG_fixture' };
   const session = { id: 'cs_order', metadata, payment_status: 'paid', payment_intent: { transfer_group: 'TG_fixture', latest_charge: charge } };
   const state = { charge, session, charges: [charge], transfers: [], account: 'acct_athlete', creates: [], checkouts: [] };
@@ -98,6 +98,7 @@ for (const [name, change, status, body = {}, token = 'valid-token'] of [
   ['mismatching group', () => {}, 404, { transferGroup: 'TG_other' }],
   ['insufficient amount', (s) => { s.charge.amount = 1; }, 404],
   ['wrong currency', (s) => { s.charge.currency = 'usd'; }, 404],
+  ...[undefined, '', '0', '-1', '1.5', '26251', '9007199254740992'].map((hold) => [`invalid stamped hold ${hold}`, (s) => { s.session.metadata.athleteEscrowHoldCents = hold; }, 404]),
 ]) test(`release refuses ${name}`, () => fixture(async ({ state, post }) => {
   change(state);
   const response = await post(body, token);
@@ -114,6 +115,15 @@ test('sponsor-owned session permits its verified sponsor', () => fixture(async (
   const response = await post({ transferGroup: 'TG_fixture' });
   assert.equal(response.status, 200);
   assert.equal(state.creates[0].body.get('metadata[sponsorUserId]'), 'sponsor');
+}));
+
+test('release uses the paid historical order hold rather than current catalogue pricing', () => fixture(async ({ state, post }) => {
+  state.charge.amount = 60000;
+  state.session.metadata.athleteEscrowHoldCents = '21000';
+  const response = await post({ escrowHoldCents: 21000 }, null);
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).releasedAmountCents, 21000);
+  assert.equal(state.creates[0].body.get('amount'), '21000');
 }));
 
 test('checkout stamps verified sponsor and copies escrow metadata to the payment intent', () => fixture(async ({ state, post }) => {

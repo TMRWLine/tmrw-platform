@@ -583,12 +583,12 @@ app.post('/api/checkout/release-escrow', async (req, res) => {
     const group = intent?.transfer_group;
     const m = order.metadata;
     const c = order.charge;
-    const catalogue = { ...FALLBACK_COMMERCIAL_TIERS, ...loadCommercialTiers() };
+    const amount = Number(m?.athleteEscrowHoldCents);
     if (!(session.payment_status === 'paid' && c?.status === 'succeeded' && c.paid === true && c.captured === true && !c.refunded && !c.amount_refunded && !c.disputed && !c.dispute && c.currency === 'aud' &&
       m?.orderType === 'sponsorship_tier' && m.escrowMode === 'milestone_50_50' && m.athleteId === athleteId && typeof group === 'string' && transferGroupPattern.test(group) && (transferGroup === undefined || group === transferGroup) &&
-      Object.hasOwn(catalogue, m.tierId) && c.amount >= Math.round(catalogue[m.tierId].price_aud * 100))) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
+      typeof m.athleteEscrowHoldCents === 'string' && /^[1-9][0-9]*$/.test(m.athleteEscrowHoldCents) && Number.isSafeInteger(amount) &&
+      Number.isSafeInteger(c.amount) && c.amount > 0 && amount <= escrowHold(c.amount))) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
     const transfers = await escrowList('transfers', group);
-    const amount = escrowHold(Math.round(catalogue[order.metadata.tierId].price_aud * 100));
     if (escrowHoldCents !== undefined && escrowHoldCents !== amount) return res.status(409).json({ error: 'Escrow amount does not match the order' });
     const existing = transfers.find((t) => [order.id, order.charge.id].includes(t.metadata?.escrowReleaseFor));
     const success = (transfer, alreadyReleased) => res.json({ released: true, escrowTransferId: transfer.id, releasedAmountCents: transfer.amount, releasedAt: new Date(transfer.created * 1000).toISOString(), alreadyReleased });
