@@ -4,13 +4,15 @@ import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import app from './index.js';
 
+const athleteId = '11111111-1111-4111-8111-111111111111';
+
 async function fixture(run) {
   const names = ['STRIPE_SECRET_KEY', 'SUPABASE_URL', 'VITE_SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'];
   const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
   Object.assign(process.env, { STRIPE_SECRET_KEY: 'test-key', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_ANON_KEY: 'test-anon', SUPABASE_SERVICE_ROLE_KEY: 'test-service' });
   const proof = 'a'.repeat(64);
   const metadata = {
-    athleteId: 'athlete', tierId: 'local_merchant', orderType: 'sponsorship_tier', escrowMode: 'milestone_50_50',
+    athleteId, tierId: 'local_merchant', orderType: 'sponsorship_tier', escrowMode: 'milestone_50_50',
     athleteEscrowHoldCents: '26250', grantAccessHash: createHash('sha256').update(proof).digest('hex'),
   };
   const charge = { id: 'ch_order', metadata, status: 'succeeded', paid: true, captured: true, amount: 75000, currency: 'aud', transfer_group: 'TG_fixture' };
@@ -24,7 +26,8 @@ async function fixture(run) {
       return auth === 'Bearer valid-token' ? Response.json({ id: 'sponsor' }) : Response.json({ message: 'Invalid token' }, { status: 401 });
     }
     if (url.pathname === '/rest/v1/athlete_profiles') {
-      assert.equal(url.searchParams.get('id'), 'eq.athlete');
+      assert.notEqual(state.session.metadata.athleteId, 'marcus-thorne', 'slug must not reach Supabase');
+      assert.equal(url.searchParams.get('id'), `eq.${athleteId}`);
       assert.equal(url.searchParams.get('select'), 'stripe_account_id');
       assert.equal(options.headers.apikey, 'test-service');
       return Response.json(state.noProfile ? [] : [{ stripe_account_id: state.account }]);
@@ -55,7 +58,7 @@ async function fixture(run) {
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const post = (body = {}, token = 'valid-token', route = 'release-escrow', cookie = `tmrw_grant_cs_order=${proof}`) => originalFetch(`http://127.0.0.1:${server.address().port}/api/checkout/${route}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(cookie ? { Cookie: cookie } : {}), 'Idempotency-Key': 'untrusted' },
-    body: JSON.stringify(route === 'release-escrow' ? { checkoutSessionId: 'cs_order', athleteId: 'athlete', ...body } : { postcode: '2000', ...body }),
+    body: JSON.stringify(route === 'release-escrow' ? { checkoutSessionId: 'cs_order', athleteId, ...body } : { postcode: '2000', ...body }),
   });
   try { await run({ state, post }); } finally {
     globalThis.fetch = originalFetch;
@@ -112,6 +115,7 @@ for (const [name, change, status, body = {}, token = 'valid-token'] of [
   ['athlete mismatch', () => {}, 404, { athleteId: 'other' }],
   ['missing account', (s) => { s.account = null; }, 409],
   ['missing profile', (s) => { s.noProfile = true; }, 409],
+  ['catalogue slug', (s) => { s.session.metadata.athleteId = 'marcus-thorne'; }, 409, { athleteId: 'marcus-thorne' }],
   ['missing payout service key', () => { delete process.env.SUPABASE_SERVICE_ROLE_KEY; }, 503],
   ['missing payout URL', () => { delete process.env.SUPABASE_URL; delete process.env.VITE_SUPABASE_URL; }, 503],
   ['no Stripe key', () => { delete process.env.STRIPE_SECRET_KEY; }, 503],
@@ -130,6 +134,7 @@ for (const [name, change, status, body = {}, token = 'valid-token'] of [
   assert.notEqual(data.released, true);
   if (name === 'Stripe error') assert.equal(data.error, 'Stripe unavailable');
   if (name === 'upfront') assert.equal(data.error, 'Upfront order has no held escrow to release');
+  if (name === 'catalogue slug') assert.equal(data.error, 'Athlete Connect account is not configured');
   if (name.startsWith('missing payout')) assert.equal(data.error, 'payout lookup not configured');
   assert.equal(state.creates.length, 0);
 }));
@@ -151,21 +156,21 @@ test('release uses the paid historical order hold rather than current catalogue 
 }));
 
 test('checkout stamps verified sponsor and copies escrow metadata to the payment intent', () => fixture(async ({ state, post }) => {
-  const response = await post({ athleteId: 'athlete', tierId: 'local_merchant', transferGroup: 'TG_fixture', sponsorUserId: 'forged', athleteEscrowHoldCents: 1 }, 'valid-token', 'create-session');
+  const response = await post({ athleteId, tierId: 'local_merchant', transferGroup: 'TG_fixture', sponsorUserId: 'forged', athleteEscrowHoldCents: 1 }, 'valid-token', 'create-session');
   assert.equal(response.status, 200);
   const result = await response.json();
   assert.equal(result.sessionId, 'cs_test_created');
   assert.equal(result.transferGroup, 'TG_fixture');
   const body = state.checkouts[0];
   assert.equal(body.get('payment_intent_data[transfer_group]'), 'TG_fixture');
-  for (const [key, value] of Object.entries({ sponsorUserId: 'sponsor', escrowMode: 'milestone_50_50', athleteEscrowHoldCents: '26250', athleteId: 'athlete', tierId: 'local_merchant', orderType: 'sponsorship_tier' })) {
+  for (const [key, value] of Object.entries({ sponsorUserId: 'sponsor', escrowMode: 'milestone_50_50', athleteEscrowHoldCents: '26250', athleteId, tierId: 'local_merchant', orderType: 'sponsorship_tier' })) {
     assert.equal(body.get(`metadata[${key}]`), value);
     assert.equal(body.get(`payment_intent_data[metadata][${key}]`), value);
   }
 }));
 
 test('checkout permits anonymous upfront orders, generates safe groups and rejects invalid auth/modes', () => fixture(async ({ state, post }) => {
-  const order = { athleteId: 'athlete', tierId: 'local_merchant', escrowMode: 'upfront_100', transferGroup: '../unsafe' };
+  const order = { athleteId, tierId: 'local_merchant', escrowMode: 'upfront_100', transferGroup: '../unsafe' };
   const response = await post(order, null, 'create-session');
   assert.equal(response.status, 200);
   const result = await response.json();
