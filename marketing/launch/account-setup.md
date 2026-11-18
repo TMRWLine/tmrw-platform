@@ -1,6 +1,6 @@
 # TMRWLine | Social launch kit
 
-**Brand:** TMRWLine, styled `TMRW/.`
+**Brand:** TMRWLine, with the lowercase `tmrw/.` wordmark.
 
 **Tagline:** Line up your Future
 
@@ -8,7 +8,7 @@ Start with Instagram, TikTok and a LinkedIn Company Page. Check `@tmrwline` on b
 
 ## Instagram
 
-**Display name:** TMRWLine | TMRW/.
+**Display name:** TMRWLine | tmrw/.
 
 **Bio (150 characters max):**
 
@@ -70,3 +70,5 @@ Keep every launch post athlete-free. Use original imagery, leave location tags o
 | The A$2,500 Receipt | [Receipt cover](assets/instagram-receipt-cover.png) | [Receipt cover](assets/tiktok-receipt-cover.png) |
 
 The second-platform covers are for later adaptations, not extra posts in week one. Use the [end card](assets/end-card.png) for the follow version; for the matchday video, use the nomination line from the script instead.
+
+Use the [dark SVG lockup](assets/logo-dark.svg) on ink and the [light SVG lockup](assets/logo-light.svg) on off-white. Both include the hairline and spaced monospace `LINE UP YOUR FUTURE`. Keep the wordmark lowercase as artwork and the tagline as `Line up your Future` in written copy.
