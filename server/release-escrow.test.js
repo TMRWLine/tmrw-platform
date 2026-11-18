@@ -7,7 +7,7 @@ async function fixture(run) {
   const names = ['STRIPE_SECRET_KEY', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'];
   const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
   Object.assign(process.env, { STRIPE_SECRET_KEY: 'test-key', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_ANON_KEY: 'test-anon', SUPABASE_SERVICE_ROLE_KEY: 'test-service' });
-  const metadata = { sponsorUserId: 'sponsor', athleteId: 'athlete', tierId: 'local_merchant', orderType: 'sponsorship_tier', escrowMode: 'milestone_50_50' };
+  const metadata = { athleteId: 'athlete', tierId: 'local_merchant', orderType: 'sponsorship_tier', escrowMode: 'milestone_50_50' };
   const charge = { id: 'ch_order', metadata, status: 'succeeded', paid: true, captured: true, amount: 75000, currency: 'aud', transfer_group: 'TG_fixture' };
   const session = { id: 'cs_order', metadata, payment_status: 'paid', payment_intent: { transfer_group: 'TG_fixture', latest_charge: charge } };
   const state = { charge, session, charges: [charge], transfers: [], account: 'acct_athlete', creates: [], checkouts: [] };
@@ -25,8 +25,7 @@ async function fixture(run) {
       state.checkouts.push(new URLSearchParams(options.body));
       return Response.json({ id: 'cs_created', url: 'https://checkout.invalid' });
     }
-    if (url.pathname === '/v1/checkout/sessions/cs_order') return Response.json(state.session);
-    if (url.pathname === '/v1/charges') return Response.json({ data: state.charges, has_more: false });
+    if (url.pathname === '/v1/checkout/sessions/cs_order') return state.missingSession ? Response.json({ error: { message: 'No session' } }, { status: 404 }) : Response.json(state.session);
     if (url.pathname === '/v1/transfers' && options.method === 'GET') return Response.json({ data: state.transfers, has_more: false });
     if (url.pathname === '/v1/transfers' && options.method === 'POST') {
       const body = new URLSearchParams(options.body);
@@ -41,7 +40,7 @@ async function fixture(run) {
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const post = (body = {}, token = 'valid-token', route = 'release-escrow') => originalFetch(`http://127.0.0.1:${server.address().port}/api/checkout/${route}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), 'Idempotency-Key': 'untrusted' },
-    body: JSON.stringify(route === 'release-escrow' ? { transferGroup: 'TG_fixture', athleteId: 'athlete', ...body } : body),
+    body: JSON.stringify(route === 'release-escrow' ? { checkoutSessionId: 'cs_order', athleteId: 'athlete', ...body } : body),
   });
   try { await run({ state, post }); } finally {
     globalThis.fetch = originalFetch;
@@ -53,8 +52,8 @@ async function fixture(run) {
   }
 }
 
-test('release creates the exact held tranche and is idempotent across lookup routes', () => fixture(async ({ state, post }) => {
-  const response = await post({ checkoutSessionId: 'cs_order', escrowHoldCents: 26250 });
+test('session possession releases the exact held tranche anonymously and is idempotent', () => fixture(async ({ state, post }) => {
+  const response = await post({ escrowHoldCents: 26250 }, null);
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { released: true, escrowTransferId: 'tr_release', releasedAmountCents: 26250, releasedAt: '2027-01-15T08:00:00.000Z', alreadyReleased: false });
   const { body, headers } = state.creates[0];
@@ -63,19 +62,20 @@ test('release creates the exact held tranche and is idempotent across lookup rou
   assert.equal(body.get('destination'), 'acct_athlete');
   assert.equal(body.get('source_transaction'), 'ch_order');
   assert.equal(body.get('transfer_group'), 'TG_fixture');
-  assert.equal(body.get('metadata[sponsorUserId]'), 'sponsor');
+  assert.equal(body.get('metadata[sponsorUserId]'), null);
   assert.equal(headers['Idempotency-Key'], 'tmrw_escrow_release_ch_order');
-  const repeat = await post();
+  const repeat = await post({}, null);
   assert.equal(repeat.status, 200);
   assert.equal((await repeat.json()).alreadyReleased, true);
   assert.equal(state.creates.length, 1);
 }));
 
 for (const [name, change, status, body = {}, token = 'valid-token'] of [
-  ['no token', () => {}, 401, {}, null],
-  ['bad token', () => {}, 401, {}, 'invalid'],
+  ['no token for owned order', (s) => { s.session.metadata.sponsorUserId = 'sponsor'; }, 401, {}, null],
+  ['bad token for owned order', (s) => { s.session.metadata.sponsorUserId = 'sponsor'; }, 401, {}, 'invalid'],
   ['other sponsor', (s) => { s.session.metadata.sponsorUserId = 'other'; }, 403, { checkoutSessionId: 'cs_order' }],
-  ['no order', (s) => { s.charges = []; }, 404],
+  ['no order', (s) => { s.missingSession = true; }, 404],
+  ['missing session id', () => {}, 400, { checkoutSessionId: undefined }],
   ['amount mismatch', () => {}, 409, { escrowHoldCents: 1 }],
   ['unpaid session', (s) => { s.session.payment_status = 'unpaid'; }, 404, { checkoutSessionId: 'cs_order' }],
   ['uncaptured', (s) => { s.charge.captured = false; }, 404],
@@ -88,8 +88,10 @@ for (const [name, change, status, body = {}, token = 'valid-token'] of [
   ['missing account', (s) => { s.account = null; }, 409],
   ['no Stripe key', () => { delete process.env.STRIPE_SECRET_KEY; }, 503],
   ['Stripe error', (s) => { s.stripeError = true; }, 502],
-  ['ambiguous orders', (s) => { s.charges.push({ ...s.charge, id: 'ch_second' }); }, 409],
   ['unsafe group', () => {}, 400, { transferGroup: 'unsafe' }],
+  ['mismatching group', () => {}, 404, { transferGroup: 'TG_other' }],
+  ['insufficient amount', (s) => { s.charge.amount = 1; }, 404],
+  ['wrong currency', (s) => { s.charge.currency = 'usd'; }, 404],
 ]) test(`release refuses ${name}`, () => fixture(async ({ state, post }) => {
   change(state);
   const response = await post(body, token);
@@ -99,6 +101,13 @@ for (const [name, change, status, body = {}, token = 'valid-token'] of [
   assert.notEqual(data.released, true);
   if (name === 'Stripe error') assert.equal(data.error, 'Stripe unavailable');
   assert.equal(state.creates.length, 0);
+}));
+
+test('sponsor-owned session permits its verified sponsor', () => fixture(async ({ state, post }) => {
+  state.session.metadata.sponsorUserId = 'sponsor';
+  const response = await post({ transferGroup: 'TG_fixture' });
+  assert.equal(response.status, 200);
+  assert.equal(state.creates[0].body.get('metadata[sponsorUserId]'), 'sponsor');
 }));
 
 test('checkout stamps verified sponsor and copies escrow metadata to the payment intent', () => fixture(async ({ state, post }) => {

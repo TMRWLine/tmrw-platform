@@ -558,48 +558,39 @@ async function escrowList(path, transferGroup) {
   return items;
 }
 
-app.post('/api/checkout/release-escrow', requireUser, async (req, res) => {
+app.post('/api/checkout/release-escrow', async (req, res) => {
   if (!process.env.STRIPE_SECRET_KEY) return res.status(503).json({ error: 'Stripe is not configured' });
   const { transferGroup, athleteId, checkoutSessionId, escrowHoldCents } = req.body ?? {};
-  if (typeof transferGroup !== 'string' || !transferGroupPattern.test(transferGroup) || typeof athleteId !== 'string' || !athleteId ||
-      (checkoutSessionId !== undefined && (typeof checkoutSessionId !== 'string' || !/^cs_[A-Za-z0-9_]+$/.test(checkoutSessionId)))) {
-    return res.status(400).json({ error: 'Valid transferGroup, athleteId and optional checkoutSessionId are required' });
+  if ((transferGroup !== undefined && (typeof transferGroup !== 'string' || !transferGroupPattern.test(transferGroup))) || typeof athleteId !== 'string' || !athleteId ||
+      typeof checkoutSessionId !== 'string' || !/^cs_[A-Za-z0-9_]+$/.test(checkoutSessionId)) {
+    return res.status(400).json({ error: 'Valid checkoutSessionId, athleteId and optional transferGroup are required' });
   }
   try {
-    let orders;
-    if (checkoutSessionId) {
-      let session;
-      try {
-        session = await escrowStripe(`checkout/sessions/${checkoutSessionId}`, { 'expand[]': 'payment_intent.latest_charge' });
-      } catch (error) {
-        if (error.stripeStatus === 404) return res.status(404).json({ error: 'Order not found' });
-        throw error;
-      }
-      if (session.metadata?.sponsorUserId !== req.authUser.id) return res.status(403).json({ error: 'Order access denied' });
-      const intent = session.payment_intent;
-      orders = [{ id: session.id, metadata: session.metadata, paid: session.payment_status === 'paid', group: intent?.transfer_group, charge: intent?.latest_charge }];
-    } else {
-      const charges = await escrowList('charges', transferGroup);
-      const owned = charges.filter((charge) => charge.metadata?.sponsorUserId === req.authUser.id);
-      if (charges.length && !owned.length) return res.status(403).json({ error: 'Order access denied' });
-      orders = owned.map((charge) => ({ id: charge.id, metadata: charge.metadata, paid: true, group: charge.transfer_group, charge }));
+    let session;
+    try {
+      session = await escrowStripe(`checkout/sessions/${checkoutSessionId}`, { 'expand[]': 'payment_intent.latest_charge' });
+    } catch (error) {
+      if (error.stripeStatus === 404) return res.status(404).json({ error: 'Order not found' });
+      throw error;
     }
+    if (session.metadata?.sponsorUserId) {
+      await requireUser(req, res, () => {});
+      if (!req.authUser) return;
+      if (session.metadata.sponsorUserId !== req.authUser.id) return res.status(403).json({ error: 'Order access denied' });
+    }
+    const intent = session.payment_intent;
+    const order = { id: session.id, metadata: session.metadata, charge: intent?.latest_charge };
+    const group = intent?.transfer_group;
+    const m = order.metadata;
+    const c = order.charge;
     const catalogue = { ...FALLBACK_COMMERCIAL_TIERS, ...loadCommercialTiers() };
-    orders = orders.filter(({ metadata: m, paid, group, charge: c }) => paid && c?.status === 'succeeded' && c.paid === true && c.captured === true && !c.refunded && !c.amount_refunded && !c.disputed && !c.dispute && c.currency === 'aud' &&
-      m?.orderType === 'sponsorship_tier' && m.escrowMode === 'milestone_50_50' && m.athleteId === athleteId && group === transferGroup &&
-      Object.hasOwn(catalogue, m.tierId) && c.amount >= Math.round(catalogue[m.tierId].price_aud * 100));
-    if (!orders.length) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
-    const transfers = await escrowList('transfers', transferGroup);
-    const existingFor = (order) => transfers.find((t) => [order.id, order.charge.id].includes(t.metadata?.escrowReleaseFor));
-    if (!checkoutSessionId) {
-      const unreleased = orders.filter((order) => !existingFor(order));
-      if (unreleased.length > 1 || (!unreleased.length && orders.length > 1)) return res.status(409).json({ error: 'Specify checkoutSessionId to identify the order' });
-      orders = unreleased.length ? unreleased : orders;
-    }
-    const order = orders[0];
+    if (!(session.payment_status === 'paid' && c?.status === 'succeeded' && c.paid === true && c.captured === true && !c.refunded && !c.amount_refunded && !c.disputed && !c.dispute && c.currency === 'aud' &&
+      m?.orderType === 'sponsorship_tier' && m.escrowMode === 'milestone_50_50' && m.athleteId === athleteId && typeof group === 'string' && transferGroupPattern.test(group) && (transferGroup === undefined || group === transferGroup) &&
+      Object.hasOwn(catalogue, m.tierId) && c.amount >= Math.round(catalogue[m.tierId].price_aud * 100))) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
+    const transfers = await escrowList('transfers', group);
     const amount = escrowHold(Math.round(catalogue[order.metadata.tierId].price_aud * 100));
     if (escrowHoldCents !== undefined && escrowHoldCents !== amount) return res.status(409).json({ error: 'Escrow amount does not match the order' });
-    const existing = existingFor(order);
+    const existing = transfers.find((t) => [order.id, order.charge.id].includes(t.metadata?.escrowReleaseFor));
     const success = (transfer, alreadyReleased) => res.json({ released: true, escrowTransferId: transfer.id, releasedAmountCents: transfer.amount, releasedAt: new Date(transfer.created * 1000).toISOString(), alreadyReleased });
     if (existing) return success(existing, true);
     const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -611,11 +602,10 @@ app.post('/api/checkout/release-escrow', requireUser, async (req, res) => {
     const athletes = await response.json();
     const destination = athletes[0]?.stripe_account_id;
     if (typeof destination !== 'string' || !/^acct_[A-Za-z0-9]+$/.test(destination)) return res.status(409).json({ error: 'Athlete Connect account is not configured' });
-    // The charge identity is stable across both session and transfer-group lookups.
     const orderId = order.charge.id;
     const transfer = await escrowStripe('transfers', {
-      amount: String(amount), currency: 'aud', destination, transfer_group: transferGroup, source_transaction: orderId,
-      'metadata[escrowReleaseFor]': orderId, 'metadata[athleteId]': athleteId, 'metadata[sponsorUserId]': req.authUser.id,
+      amount: String(amount), currency: 'aud', destination, transfer_group: group, source_transaction: orderId,
+      'metadata[escrowReleaseFor]': orderId, 'metadata[athleteId]': athleteId, ...(m.sponsorUserId ? { 'metadata[sponsorUserId]': m.sponsorUserId } : {}),
     }, 'POST', `tmrw_escrow_release_${orderId}`);
     return success(transfer, false);
   } catch (error) {

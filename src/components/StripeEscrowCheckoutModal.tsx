@@ -23,6 +23,7 @@ export interface StripeCheckoutPayload {
 }
 
 export interface StripeEscrowReceipt {
+  checkoutSessionId?: string;
   txId: string;
   transferGroup: string;
   chargeId: string;
@@ -162,6 +163,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
       const sessionResult = await sessionPromise;
       const txId = `TX-2026-${payload.postcode}-${Math.floor(100000 + Math.random() * 900000)}`;
       const receipt: StripeEscrowReceipt = {
+        checkoutSessionId: sessionResult?.sessionId,
         txId,
         transferGroup: split.transferGroup,
         chargeId: sessionResult?.chargeId ?? `py_${txId}`,

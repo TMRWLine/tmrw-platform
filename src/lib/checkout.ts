@@ -1,3 +1,5 @@
+import { currentAccessToken } from './sessionToken';
+
 export const CHECKOUT_SUCCESS_PATH = '/checkout/success';
 
 export interface CheckoutAthleteSnapshot {
@@ -36,7 +38,7 @@ export interface CheckoutSessionRequest {
 
 export interface CheckoutSessionResponse {
   checkoutUrl: string | null;
-  sessionId: string;
+  sessionId?: string;
   idempotencyKey: string;
   transferGroup: string;
   chargeId: string;
@@ -147,11 +149,13 @@ export async function createCheckoutSession(
     payload.escrowMode === 'upfront_100' ? null : `tr_ath_escrow_hold_${suffix}`;
 
   try {
+    const token = await currentAccessToken(AbortSignal.timeout(8000));
     const response = await fetch('/api/checkout/create-session', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Idempotency-Key': idempotencyKey,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
         ...payload,
@@ -168,7 +172,7 @@ export async function createCheckoutSession(
     if (response.ok && (data?.checkoutUrl || data?.url)) {
       return {
         checkoutUrl: data.checkoutUrl ?? data.url ?? null,
-        sessionId: data.sessionId ?? `cs_live_${idempotencyKey}`,
+        sessionId: data.sessionId,
         idempotencyKey,
         transferGroup: splitLedger.transferGroup,
         chargeId,
@@ -186,16 +190,20 @@ export async function createCheckoutSession(
 }
 
 export async function releaseEscrowMilestoneTranche(params: {
+  checkoutSessionId?: string;
   transferGroup: string;
   athleteId: string;
   escrowHoldCents: number;
 }): Promise<EscrowReleaseResult> {
+  if (!params.checkoutSessionId) throw new Error('Unable to release escrow: a real Checkout Session ID is required.');
+  const token = await currentAccessToken(AbortSignal.timeout(8000));
   const releaseKey = `idemp_release_${params.transferGroup}_${Date.now()}`;
   const response = await fetch('/api/checkout/release-escrow', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Idempotency-Key': releaseKey,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(params),
   });
