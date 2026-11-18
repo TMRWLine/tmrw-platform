@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
+import { OLYMPIC_HORIZONS, type OlympicHorizonSpec } from '../data/olympicHorizons';
 import type { LandingSectionId } from './Navigation';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
 import { issuePostcodeWhitelistingGrant, type WhitelistingGrant } from '../lib/whitelisting';
@@ -30,73 +31,6 @@ const CARBON_BLADE_WARM_CROP =
 
 export const LIT_OBSIDIAN_BTN =
   'bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-white/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.45),0_0_15px_rgba(204,255,0,0.18)] hover:bg-neutral-900 hover:border-[#CCFF00]/60 hover:text-[#CCFF00] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.6),0_0_28px_rgba(204,255,0,0.35)] active:translate-y-[1px]';
-
-export interface OlympicHorizonSpec {
-  id: '1yr' | '2yr' | '4yr';
-  tierId: string;
-  numeral: '01' | '02' | '03';
-  horizonTag: string;
-  label: string;
-  priceAud: number;
-  priceFormatted: string;
-  annualRate: string;
-  athleteNet: number;
-  clubNet: number;
-  opsNet: number;
-  exclusivitySummary: string;
-  txId: string;
-}
-
-const OLYMPIC_HORIZONS: readonly OlympicHorizonSpec[] = [
-  {
-    id: '1yr',
-    tierId: 'olympic_1yr_50k',
-    numeral: '01',
-    horizonTag: '1-Year LA28 Qualifier',
-    label: 'LA 2028 Qualifier Partnership',
-    priceAud: 50000,
-    priceFormatted: 'A$50,000',
-    annualRate: '1 Athlete · 12-Month Category Lock',
-    athleteNet: 35000,
-    clubNet: 7500,
-    opsNet: 7500,
-    exclusivitySummary:
-      '1-Year exclusive category rights (strictly one brand per industry sector) on a marquee contender + 60-day First Right of Refusal to extend into Brisbane 2032.',
-    txId: 'TX-2026-OLYMPIC-1YR-050K',
-  },
-  {
-    id: '2yr',
-    tierId: 'olympic_2yr_110k',
-    numeral: '02',
-    label: 'LA 2028 Games Partnership',
-    horizonTag: '2-Year LA28 Games Lock',
-    priceAud: 110000,
-    priceFormatted: 'A$110,000',
-    annualRate: '1 Athlete · 24-Month Category Lock',
-    athleteNet: 77000,
-    clubNet: 16500,
-    opsNet: 16500,
-    exclusivitySummary:
-      'Locks your industry category through the LA 2028 Games window with Rule 40 pre-cleared campaign stems, global paid social OAuth, and protected 2032 renewal terms.',
-    txId: 'TX-2026-OLYMPIC-2YR-110K',
-  },
-  {
-    id: '4yr',
-    tierId: 'olympic_4yr_250k',
-    numeral: '03',
-    label: 'Brisbane 2032 Home Games Quadrennial',
-    horizonTag: '4-Year Brisbane 32 Lock',
-    priceAud: 250000,
-    priceFormatted: 'A$250,000',
-    annualRate: '1 Athlete · 48-Month Quadrennial Lock',
-    athleteNet: 175000,
-    clubNet: 37500,
-    opsNet: 37500,
-    exclusivitySummary:
-      'Full quadrennial category exclusivity across Australia & New Zealand into the Brisbane 2032 Home Games. Blocks every direct competitor for 4 years on a single tax-deductible RCTI.',
-    txId: 'TX-2026-OLYMPIC-4YR-250K',
-  },
-] as const;
 
 const INDUSTRIES = [
   { id: 'banking', name: 'Banking & Wealth', slot: '1 of 1 AU/NZ Slot Open', lock: 'Locks out all rival retail, private & institutional banks' },

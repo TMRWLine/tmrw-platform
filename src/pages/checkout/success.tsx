@@ -1,15 +1,14 @@
 import React, { useMemo } from 'react';
 import { BrandLockup } from '../../components/BrandLockup';
 import {
-  getCommercialPackage,
   mockDeliverables,
   toCommercialAthlete,
   type CommercialAthlete,
-  type CommercialPackage,
 } from '../../data/mockDeliverables';
 import { CHECKOUT_SUCCESS_PATH } from '../../lib/checkout';
 import { formatAud } from '../../lib/formatMoney';
 import { ROSTER_DATA } from '../../data/roster';
+import { resolveReceiptPackage, type ReceiptPackage } from './receiptPackage';
 
 export { CHECKOUT_SUCCESS_PATH };
 
@@ -44,7 +43,7 @@ function dealReference(sessionId: string | null, athleteId: string, tierId: stri
 function downloadRcti(args: {
   reference: string;
   athlete: CommercialAthlete;
-  pkg: CommercialPackage;
+  pkg: ReceiptPackage;
 }) {
   const { reference, athlete, pkg } = args;
   const gst = Math.round(pkg.price_aud * 0.1 * 100) / 100;
@@ -110,7 +109,7 @@ export const CheckoutSuccessPage: React.FC = () => {
   const tierId = params.get('tierId');
 
   const athlete = resolveAthlete(athleteId);
-  const pkg = getCommercialPackage(tierId) ?? mockDeliverables.packages[0];
+  const pkg = resolveReceiptPackage(tierId);
   const split = pkg.split_breakdown;
   const reference = dealReference(sessionId, athlete.id, pkg.tier_id);
   const locality = [athlete.grassroots_club.suburb, athlete.grassroots_club.state]
