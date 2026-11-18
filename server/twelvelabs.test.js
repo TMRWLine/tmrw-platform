@@ -17,12 +17,13 @@ async function fixture(run, options = {}) {
   const calls = [];
   const auth = [];
   let validUser = true;
+  let userId = 'user_1';
   let respond = () => Response.json({ _id: 'index_1', private_field: KEY });
   globalThis.fetch = async (url, init) => {
     const href = String(url);
     if (href.startsWith('https://fixture.invalid/auth/v1/user')) {
       auth.push(init);
-      return validUser ? Response.json({ id: 'user_1' }) : Response.json({ error: KEY }, { status: 401 });
+      return validUser ? Response.json({ id: userId }) : Response.json({ error: KEY }, { status: 401 });
     }
     if (href.startsWith('https://api.twelvelabs.io/v1.3/')) {
       calls.push({ url: href, init });
@@ -40,7 +41,8 @@ async function fixture(run, options = {}) {
     method: 'POST', headers: { Authorization: 'Bearer test-user', 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body),
   });
   try {
-    await run({ request, post, calls, auth, invalidUser: () => { validUser = false; }, respond: (fn) => { respond = fn; } });
+    const indexHandle = async () => (await (await post('/indexes')).json())._id;
+    await run({ request, post, calls, auth, indexHandle, user: (id) => { userId = id; }, invalidUser: () => { validUser = false; }, respond: (fn) => { respond = fn; } });
   } finally {
     globalThis.fetch = originalFetch;
     for (const [name, value] of Object.entries(previous)) {
@@ -72,7 +74,7 @@ test('anonymous and invalid bearer tokens cannot reach the provider', () => fixt
 
 test('verified requests use only the server key, fixed origin, safe projections and no redirects', () => fixture(async ({ post, calls }) => {
   const response = await post('/indexes', { index_name: ' fixture ', models: [{ model_name: 'untrusted' }] }, { 'x-api-key': 'caller-controlled' });
-  assert.deepEqual(await response.json(), { _id: 'index_1' });
+  assert.match((await response.json())._id, /^index_1\.[a-zA-Z0-9_-]{43}$/);
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, 'https://api.twelvelabs.io/v1.3/indexes');
   assert.equal(calls[0].init.headers['x-api-key'], KEY);
@@ -83,21 +85,22 @@ test('verified requests use only the server key, fixed origin, safe projections 
 
 test('invalid paths, identifiers and input sizes do not reach the upstream', () => fixture(async ({ request, post, calls }) => {
   assert.equal((await post('/indexes', { index_name: '' })).status, 400);
-  assert.equal((await post('/search', { index_id: '../host', query: 'find' })).status, 400);
-  assert.equal((await request('/indexes/bad.id/videos/video_1', { headers: { Authorization: 'Bearer test-user' } })).status, 400);
+  assert.equal((await post('/search', { index_id: '../host', query: 'find' })).status, 403);
+  assert.equal((await request('/indexes/bad.id/videos/video_1', { headers: { Authorization: 'Bearer test-user' } })).status, 403);
   assert.equal((await post('/indexes', { index_name: 'x'.repeat(70000) })).status, 413);
   assert.equal(calls.length, 0);
 }));
 
-test('small video uploads are rebuilt as multipart server-side and oversized uploads are rejected', () => fixture(async ({ request, calls }) => {
-  const upload = (bytes) => request('/uploads?index_id=index_1', {
+test('small video uploads are rebuilt as multipart server-side and oversized uploads are rejected', () => fixture(async ({ request, calls, indexHandle }) => {
+  const handle = await indexHandle();
+  const upload = (bytes) => request(`/uploads?index_id=${handle}`, {
     method: 'POST', headers: { Authorization: 'Bearer test-user', 'Content-Type': 'video/mp4' }, body: bytes,
   });
   assert.equal((await upload(Buffer.from('fixture'))).status, 200);
-  assert.equal(calls[0].init.body.get('index_id'), 'index_1');
-  assert.equal(calls[0].init.body.get('video_file').size, 7);
+  assert.equal(calls[1].init.body.get('index_id'), 'index_1');
+  assert.equal(calls[1].init.body.get('video_file').size, 7);
   assert.equal((await upload(Buffer.alloc(4 * 1024 * 1024 + 1))).status, 413);
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
 }));
 
 test('provider errors, timeouts, malformed and oversized bodies never expose its credential', () => fixture(async ({ post, respond }) => {
@@ -116,9 +119,10 @@ test('provider errors, timeouts, malformed and oversized bodies never expose its
   }
 }));
 
-test('search output is bounded and removes credentials even from otherwise allowed strings', () => fixture(async ({ post, respond }) => {
+test('search output is bounded and removes credentials even from otherwise allowed strings', () => fixture(async ({ post, respond, indexHandle }) => {
+  const handle = await indexHandle();
   respond(() => Response.json({ clips: Array.from({ length: 1005 }, () => ({ start: 1, end: 2, text: KEY, private: KEY })) }));
-  const response = await post('/search', { index_id: 'index_1', query: 'goal' });
+  const response = await post('/search', { index_id: handle, query: 'goal' });
   const body = await response.text();
   assert.ok(!body.includes(KEY));
   const data = JSON.parse(body);
@@ -143,3 +147,29 @@ test('a shared provider budget bounds authenticated upstream traffic', () => fix
   assert.equal((await post('/indexes')).status, 429);
   assert.equal(calls.length, 2);
 }, { providerLimit: 2 }));
+
+test('index handles reject cross-user access, raw identifiers and tampering before any upstream request', () => fixture(async ({ post, request, calls, user, indexHandle, respond }) => {
+  const handle = await indexHandle();
+  user('user_2');
+  assert.equal((await post('/search', { index_id: handle, query: 'goal' })).status, 403);
+  assert.equal((await request(`/indexes/${handle}/videos/video_1`, { headers: { Authorization: 'Bearer test-user' } })).status, 403);
+  assert.equal((await request(`/uploads?index_id=${handle}`, {
+    method: 'POST', headers: { Authorization: 'Bearer test-user', 'Content-Type': 'video/mp4' }, body: Buffer.from('fixture'),
+  })).status, 403);
+  user('user_1');
+  assert.equal((await post('/search', { index_id: 'index_1', query: 'goal' })).status, 403);
+  assert.equal((await post('/search', { index_id: handle.replace('index_1', 'index_2'), query: 'goal' })).status, 403);
+  assert.equal(calls.length, 1);
+  respond(() => Response.json({ clips: [] }));
+  assert.equal((await post('/search', { index_id: handle, query: 'goal' })).status, 200);
+  assert.equal(JSON.parse(calls[1].init.body).index_id, 'index_1');
+}));
+
+test('ownership verification works on a fresh function instance without an in-memory ownership cache', async () => {
+  let handle;
+  await fixture(async ({ indexHandle }) => { handle = await indexHandle(); });
+  await fixture(async ({ post, respond }) => {
+    respond(() => Response.json({ clips: [] }));
+    assert.equal((await post('/search', { index_id: handle, query: 'goal' })).status, 200);
+  });
+});

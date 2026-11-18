@@ -30,6 +30,10 @@ private Stripe/Supabase key in a `VITE_` variable. Vite exposes only the two pub
 Supabase prefixes; TwelveLabs credentials are read exclusively by Express.
 
 Video analysis requires a server-verified Supabase access token. Its fixed
+index handles are signed for that user, so other accounts cannot search,
+upload to or inspect the index. Handles work across function instances without
+a local ownership cache. Rotating the provider key invalidates old handles;
+re-ingest footage to create new ones after rotation. The fixed
 upstream routes reject anonymous spending, validate inputs, bound response sizes,
 disable redirects, and apply timeouts and per-process limits. Uploaded footage
 is limited to 4 MiB, below Vercel's function payload limit. Set provider quotas
