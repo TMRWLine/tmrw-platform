@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import app from './index.js';
 
 async function fixture(run) {
-  const names = ['STRIPE_SECRET_KEY', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'];
+  const names = ['STRIPE_SECRET_KEY', 'SUPABASE_URL', 'VITE_SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'];
   const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
   Object.assign(process.env, { STRIPE_SECRET_KEY: 'test-key', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_ANON_KEY: 'test-anon', SUPABASE_SERVICE_ROLE_KEY: 'test-service' });
   const metadata = { athleteId: 'athlete', tierId: 'local_merchant', orderType: 'sponsorship_tier', escrowMode: 'milestone_50_50', athleteEscrowHoldCents: '26250' };
@@ -92,6 +92,8 @@ for (const [name, change, status, body = {}, token = 'valid-token'] of [
   ['athlete mismatch', () => {}, 404, { athleteId: 'other' }],
   ['missing account', (s) => { s.account = null; }, 409],
   ['missing profile', (s) => { s.noProfile = true; }, 409],
+  ['missing payout service key', () => { delete process.env.SUPABASE_SERVICE_ROLE_KEY; }, 503],
+  ['missing payout URL', () => { delete process.env.SUPABASE_URL; delete process.env.VITE_SUPABASE_URL; }, 503],
   ['no Stripe key', () => { delete process.env.STRIPE_SECRET_KEY; }, 503],
   ['Stripe error', (s) => { s.stripeError = true; }, 502],
   ['unsafe group', () => {}, 400, { transferGroup: 'unsafe' }],
@@ -107,6 +109,7 @@ for (const [name, change, status, body = {}, token = 'valid-token'] of [
   assert.ok(data.error);
   assert.notEqual(data.released, true);
   if (name === 'Stripe error') assert.equal(data.error, 'Stripe unavailable');
+  if (name.startsWith('missing payout')) assert.equal(data.error, 'payout lookup not configured');
   assert.equal(state.creates.length, 0);
 }));
 
