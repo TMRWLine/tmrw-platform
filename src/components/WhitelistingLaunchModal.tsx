@@ -66,8 +66,9 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   );
 
   const transferGroup = receipt?.transferGroup || split.transferGroup;
+  const isDemo = receipt?.mode !== 'stripe_live';
   const clubSweepLabel =
-    receipt?.clubCadence === 'immediate_t0'
+    isDemo ? 'Illustrative allocation only' : receipt?.clubCadence === 'immediate_t0'
       ? 'Settled T+0 Direct'
       : `Queued for ${receipt?.nextQuarterSweepDate || split.nextQuarterSweepDate}`;
 
@@ -103,11 +104,11 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const downloadRctiPack = () => {
     const blob = new Blob(
       [
-        `tmrw/. AUDITED ATO & NZ IRD 3-PART RECIPIENT CREATED TAX INVOICE (RCTI)\n`,
+        `tmrw/. ${isDemo ? 'SANDBOX ALLOCATION PREVIEW · NOT A TAX INVOICE · NO FUNDS MOVED' : '3-PART RECIPIENT CREATED TAX INVOICE (RCTI)'}\n`,
         `========================================================================\n`,
         `Grant ID: ${grant.id || `GR-${safePostcode}-2026`}\n`,
         `Stripe Transfer Group: ${transferGroup}\n`,
-        `Sponsor Entity: ${receipt?.legalName || 'Verified Corporate Partner'} (ABN: ${receipt?.abn || '51 824 753 556'})\n`,
+        `Sponsor Entity: ${receipt?.legalName || 'Not supplied'} (ABN: ${receipt?.abn || 'Not supplied'})\n`,
         `Athlete / Contender: ${safeAthleteName}\n`,
         `Grassroots Junior Club: ${clubName} (Postcode ${safePostcode})\n`,
         `Gross Package Value: ${formatAudFromCents(split.grossCents)} AUD (+${formatAudFromCents(split.gstCents)} GST)\n`,
@@ -115,12 +116,12 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
         `70/15/15 SPLIT LEDGER (7000 / 1500 / 1500 BPS):\n`,
         ...split.rctiLines.map((line) => `  ${line.role}: gross ${formatAudFromCents(line.grossCents)} · GST ${formatAudFromCents(line.gstCents)} · net ${formatAudFromCents(line.netCents)} · ABN ${line.abn || 'not supplied'} · GST registered ${line.gstRegistered}\n`),
         `  1. 70% Athlete (${formatAudFromCents(split.athlete70Cents)}): ${
-          deliverablesApproved
+          isDemo ? 'Illustrative allocation only, no transfer' : deliverablesApproved
             ? `100% Settled (Final Transfer: ${finalTransferId})`
             : `${formatAudFromCents(split.athleteT0AdvanceCents)} Settled T+0 / ${formatAudFromCents(split.athleteEscrowHoldCents)} Held in Deliverable Escrow`
         }\n`,
         `  2. 15% Junior Club (${formatAudFromCents(split.club15Cents)} to ${clubName}): ${clubSweepLabel}\n`,
-        `  3. 15% tmrw/. Platform Ops (${formatAudFromCents(split.ops15Cents)}): Retained T+0 in Master Platform Account (${receipt?.platformRetainedId || 'fee_tmrw_t0'})\n`,
+        `  3. 15% tmrw/. Platform Ops (${formatAudFromCents(split.ops15Cents)}): ${isDemo ? 'Illustrative allocation only' : `Retained T+0 in Master Platform Account (${receipt?.platformRetainedId || 'Not supplied'})`}\n`,
         `------------------------------------------------------------------------\n`,
         `PAID SOCIAL AMPLIFICATION CAMPAIGN SPEC (0% AGENCY MARKUP):\n`,
         `  - Meta Business Manager ID: ${metaBmId}\n`,
@@ -219,7 +220,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
               onClick={downloadRctiPack}
               className="rounded-full bg-[#F7F7F6] hover:bg-[#080808] text-[#080808] hover:text-[#F7F7F6] px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
             >
-              ↓ DOWNLOAD 3-PART RCTI & TOKEN PACK
+              ↓ {isDemo ? 'DOWNLOAD DEMO ALLOCATION & TOKEN PACK' : 'DOWNLOAD 3-PART RCTI & TOKEN PACK'}
             </button>
             <button
               type="button"
@@ -242,7 +243,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                 {deliverablesApproved ? '✓ 100% ESCROW RELEASED' : '50/50 DELIVERABLE ESCROW ACTIVE'}
               </span>
               <span className="font-sans text-xs text-[#F7F7F6]">
-                {deliverablesApproved
+                {isDemo ? 'Sandbox allocation preview only. No funds moved, no escrow was funded and no tax invoice has been issued.' : deliverablesApproved
                   ? `100% Athlete Payout (${formatAudFromCents(split.athlete70Cents)}) settled · 15% Club (${formatAudFromCents(split.club15Cents)}) ${clubSweepLabel} · 15% tmrw/. (${formatAudFromCents(split.ops15Cents)}) retained T+0.`
                   : `Athlete ${formatAudFromCents(split.athleteT0AdvanceCents)} settled T+0 (${formatAudFromCents(split.athleteEscrowHoldCents)} in escrow) · Club ${formatAudFromCents(split.club15Cents)} ${clubSweepLabel} · tmrw/. ${formatAudFromCents(split.ops15Cents)} retained T+0.`}
               </span>
@@ -304,7 +305,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                   70 / 15 / 15 CLEARING PROTOCOL
                 </span>
                 <h3 className="m-0 font-display text-3xl font-black uppercase tracking-tight leading-[0.95] text-[#080808]">
-                  ATO & NZ IRD RCTI ISSUED<span className="text-[#CCFF00]">.</span>
+                  {isDemo ? 'DEMO ALLOCATION · NOT A TAX INVOICE' : 'RCTI ISSUED'}<span className="text-[#CCFF00]">.</span>
                 </h3>
               </div>
               <div className="space-y-2 mt-4">
@@ -368,8 +369,8 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                 className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-[#F7F7F6] hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
               >
                 {metaAuthorised
-                  ? `✓ AUTHORISED (${metaBmId} · A$${dailySpend}/DAY CAP)`
-                  : `1-CLICK AUTHORISE META ADS (A$${dailySpend}/DAY) →`}
+                  ? `✓ CONFIGURATION SAVED LOCALLY (${metaBmId})`
+                  : `SAVE META ADS CONFIGURATION (A$${dailySpend}/DAY) →`}
               </button>
             </div>
 
@@ -423,8 +424,8 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                 className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-[#F7F7F6] hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
               >
                 {tiktokSynced
-                  ? `✓ SPARK SYNCED (POSTCODE ${safePostcode} · A$${dailySpend}/DAY)`
-                  : `SYNC SPARK CODE TO TIKTOK ADS (A$${dailySpend}/DAY) →`}
+                  ? `✓ CONFIGURATION SAVED LOCALLY (POSTCODE ${safePostcode})`
+                  : `SAVE TIKTOK ADS CONFIGURATION (A$${dailySpend}/DAY) →`}
               </button>
             </div>
 
