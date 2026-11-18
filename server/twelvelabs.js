@@ -140,10 +140,18 @@ export function createTwelveLabsRouter({ clientLimit = 120, providerLimit = 300 
     }, (data) => {
       const clips = data?.clips ?? data?.data;
       if (!Array.isArray(clips)) throw new Error('Invalid upstream search result');
-      return { clips: clips.slice(0, 1000).map((clip) => ({
-        start: Number(clip.start ?? clip.start_sec ?? 0), end: Number(clip.end ?? clip.end_sec ?? 0),
-        text: String(clip.text ?? clip.description ?? '').slice(0, 2000), confidence: Number(clip.confidence ?? clip.score ?? 0.5),
-      })) };
+      return { clips: clips.slice(0, 1000).map((clip) => {
+        const rawStart = Number(clip.start ?? clip.start_sec ?? 0);
+        const start = Number.isFinite(rawStart) ? Math.max(0, rawStart) : 0;
+        const rawEnd = clip.end ?? clip.end_sec;
+        const end = rawEnd == null ? undefined : Number(rawEnd);
+        const text = clip.text ?? clip.description;
+        return {
+          start, end: Number.isFinite(end) && end > start ? end : undefined,
+          text: typeof text === 'string' && text.trim() ? text.slice(0, 2000) : undefined,
+          confidence: Number(clip.confidence ?? clip.score ?? 0.5),
+        };
+      }) };
     });
   });
   return router;

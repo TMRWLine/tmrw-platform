@@ -141,6 +141,19 @@ test('untrusted forwarding headers cannot evade pre-authentication throttling', 
   assert.equal(calls.length, 0);
 }, { clientLimit: 2 }));
 
+test('missing or invalid clip fields preserve the client prompt and five-second fallback', () => fixture(async ({ post, respond, indexHandle }) => {
+  const handle = await indexHandle();
+  respond(() => Response.json({ clips: [{ start: 10 }, { start: 20, end: 0, text: '  ' }] }));
+  const response = await post('/search', { index_id: handle, query: 'goal' });
+  const { clips } = await response.json();
+  for (const clip of clips) {
+    assert.equal(clip.end, undefined);
+    assert.equal(clip.text, undefined);
+    assert.equal(clip.end ?? clip.start + 5, clip.start + 5);
+    assert.equal(clip.text ?? 'goal', 'goal');
+  }
+}));
+
 test('a shared provider budget bounds authenticated upstream traffic', () => fixture(async ({ post, calls }) => {
   assert.equal((await post('/indexes')).status, 200);
   assert.equal((await post('/indexes')).status, 200);
