@@ -40,6 +40,14 @@ is limited to 4 MiB, below Vercel's function payload limit. Set provider quotas
 and deployment-edge limits for fleet-wide cost control. No database migration
 or production provider call is performed by deployment verification.
 
+Checkout accepts identifiers and validated quantities/options, not buyer
+economics. Sponsorship flights use the server catalogue (A$750, A$3,500 and
+A$12,500, with the existing A$25,000 world-class option retained). Merchandise
+uses its separate server catalogue (A$180 hood, A$95 tee), including costs and
+royalty rates. Unknown or locally drafted capsule SKUs cannot be purchased
+until registered in the trusted server catalogue. Stripe amounts and split
+metadata are calculated from these server-owned records only.
+
 Verification commands:
 
 ```sh

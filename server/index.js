@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import Stripe from 'stripe';
 import { createTwelveLabsRouter } from './twelvelabs.js';
+import { catalogueItems } from './capsule-catalogue.js';
 
 // Load .env / .env.local
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -320,8 +321,13 @@ app.post('/api/checkout/create-session', async (req, res) => {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
 
     // BRANCH A: Athlete Merch Capsule Checkout from CartDrawer.tsx
-    if (Array.isArray(req.body?.capsuleItems) && req.body.capsuleItems.length > 0) {
-      const items = req.body.capsuleItems;
+    if (Object.hasOwn(req.body ?? {}, 'capsuleItems')) {
+      let items;
+      try {
+        items = catalogueItems(req.body.capsuleItems);
+      } catch (error) {
+        return res.status(400).json({ error: error.message });
+      }
       let grossCents = 0;
       let athleteCutCents = 0;
       let clubCutCents = 0;
@@ -331,9 +337,9 @@ app.post('/api/checkout/create-session', async (req, res) => {
       body.set('mode', 'payment');
 
       items.forEach((entry, idx) => {
-        const qty = Math.max(1, Number(entry.qty) || 1);
-        const unitAud = Math.max(1, Number(entry.priceAud) || 100);
-        const baseAud = Math.max(0, Number(entry.baseCostAud) || 0);
+        const qty = entry.qty;
+        const unitAud = entry.priceAud;
+        const baseAud = entry.baseCostAud;
         const netUnitCents = Math.max(0, Math.round((unitAud - baseAud) * 100));
         const hasPartner = Number(entry.collabRoyaltyPct) > 0;
         const athletePct = hasPartner ? 0.55 : 0.7;
