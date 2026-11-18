@@ -14,6 +14,11 @@ interface StatementRow {
   rctiLines: RctiLine[];
 }
 
+function escapeHtml(value: string): string {
+  const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return value.replace(/[&<>"']/g, (character) => entities[character]);
+}
+
 export function StatementsPanel({
   grossExGst,
   currency,
@@ -83,7 +88,10 @@ export function StatementsPanel({
         [`${line.role} ABN / GST registered`, `${line.abn || 'Not supplied'} / ${line.gstRegistered}`],
       ]),
     ];
-    const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
+    const csv = [headers, ...rows].map((row) => row.map((cell) => {
+      const value = /^[=+@\-\t\r]/.test(cell) ? `'${cell}` : cell;
+      return `"${value.replace(/"/g, '""')}"`;
+    }).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -97,7 +105,8 @@ export function StatementsPanel({
     if (!selected) return;
     const win = window.open('', '_blank');
     if (!win) return;
-    const html = `<!DOCTYPE html><html><head><title>RCTI - ${selected.month}</title>
+    const money = (amount: number) => escapeHtml(formatCurrency(amount, currency, 2));
+    const html = `<!DOCTYPE html><html><head><title>RCTI - ${escapeHtml(selected.month)}</title>
 <style>
 body{font-family:Inter,sans-serif;padding:40px;color:#080808;max-width:600px;margin:auto;background:#F7F7F6}
 h1{font-size:20px;font-weight:800} table{width:100%;border-collapse:collapse;margin-top:20px}
@@ -105,18 +114,18 @@ td,th{padding:10px;border-bottom:1px solid #F7F7F6;text-align:left}
 th{background:#F7F7F6;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:0.06em} .total{font-weight:800}
 </style></head><body>
 <h1>Recipient Created Tax Invoice</h1>
-<p><strong>Athlete:</strong> ${athleteName}<br>
-<strong>Period:</strong> ${selected.month}<br>
-<strong>Agreement Term:</strong> ${startDate ?? '·'} to ${endDate ?? '·'}</p>
+<p><strong>Athlete:</strong> ${escapeHtml(athleteName)}<br>
+<strong>Period:</strong> ${escapeHtml(selected.month)}<br>
+<strong>Agreement Term:</strong> ${escapeHtml(startDate ?? '·')} to ${escapeHtml(endDate ?? '·')}</p>
 <table>
-<tr><th>Field</th><th>Amount (${currency})</th></tr>
-<tr><td>Gross Earnings (Ex. GST)</td><td>A$${selected.grossExGst.toFixed(2)}</td></tr>
-<tr><td>GST (10%)</td><td>A$${selected.gst.toFixed(2)}</td></tr>
-<tr class="total"><td>Total (Inc. GST)</td><td>A$${selected.totalIncGst.toFixed(2)}</td></tr>
-<tr><td>Platform Operations (15%)</td><td>A$${selected.commission.toFixed(2)}</td></tr>
-<tr><td>Grassroots Club (15%)</td><td>A$${selected.clubPayout.toFixed(2)}</td></tr>
-<tr><td>Athlete ABN / GST registered</td><td>${athleteAbn || 'Not supplied'} / ${athleteGstRegistered ? 'Yes' : 'No'}</td></tr>
-<tr class="total"><td>Net Athlete Payout</td><td>A$${selected.netPayout.toFixed(2)}</td></tr>
+<tr><th>Field</th><th>Amount (${escapeHtml(currency)})</th></tr>
+<tr><td>Gross Earnings (Ex. GST)</td><td>${money(selected.grossExGst)}</td></tr>
+<tr><td>GST (10%)</td><td>${money(selected.gst)}</td></tr>
+<tr class="total"><td>Total (Inc. GST)</td><td>${money(selected.totalIncGst)}</td></tr>
+<tr><td>Platform Operations (15%)</td><td>${money(selected.commission)}</td></tr>
+<tr><td>Grassroots Club (15%)</td><td>${money(selected.clubPayout)}</td></tr>
+<tr><td>Athlete ABN / GST registered</td><td>${escapeHtml(athleteAbn || 'Not supplied')} / ${athleteGstRegistered ? 'Yes' : 'No'}</td></tr>
+<tr class="total"><td>Net Athlete Payout</td><td>${money(selected.netPayout)}</td></tr>
 ${selected.rctiLines.map((line) => `<tr><td>${line.role} · gross / GST / net</td><td>${(line.grossCents / 100).toFixed(2)} / ${(line.gstCents / 100).toFixed(2)} / ${(line.netCents / 100).toFixed(2)}</td></tr>`).join('')}
 </table>
 <p style="margin-top:30px;font-size:12px;color:#080808">
