@@ -14,19 +14,14 @@ import {
 import { RosterSpecimenCard } from '../components/RosterSpecimenCard';
 import { AthleteDossierDrawer } from '../components/AthleteDossierDrawer';
 import { CapitalDeploymentDrawer } from '../components/CapitalDeploymentDrawer';
-import { DeliverablesDrawer } from '../components/DeliverablesDrawer';
 import {
   ringForPackage,
   type CatchmentRingId,
 } from '../components/RosterCatchmentMap';
 import {
   getCommercialPackage,
-  mockDeliverables,
-  packageIdForRosterTier,
   rosterFilterForPackage,
   rosterFlightPresentation,
-  ROSTER_FILTER_TO_PACKAGE,
-  toCommercialAthlete,
 } from '../data/mockDeliverables';
 import {
   clearRosterFilter,
@@ -136,7 +131,6 @@ export const RosterPage: React.FC<RosterPageProps> = ({
   const [tier, setTier] = useState<TierFilter>('all');
   const [discipline, setDiscipline] = useState<DisciplineFilter>('all');
   const [tempDiscipline, setTempDiscipline] = useState<DisciplineFilter>('all');
-  const [preferredPackageId, setPreferredPackageId] = useState<string | null>(null);
   const [tierNotice, setTierNotice] = useState<string | null>(null);
 
   const [activeDropdown, setActiveDropdown] = useState<'filters' | 'sort' | null>(null);
@@ -150,9 +144,6 @@ export const RosterPage: React.FC<RosterPageProps> = ({
   const [activeDossier, setActiveDossier] = useState<AthleteRecord | null>(null);
   const [dossierInitialMode, setDossierInitialMode] = useState<'audit' | 'buy'>('audit');
   const [deployAthlete, setDeployAthlete] = useState<AthleteRecord | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [activeAthlete, setActiveAthlete] = useState(mockDeliverables.athlete);
-  const [drawerTierId, setDrawerTierId] = useState(mockDeliverables.packages[0].tier_id);
   const [overrideTick, setOverrideTick] = useState(0);
 
   useEffect(() => {
@@ -240,14 +231,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
 
   const applyRosterFilter = (filter: TierFilter) => {
     setTier(filter);
-    setPreferredPackageId(filter === 'all' ? null : (ROSTER_FILTER_TO_PACKAGE[filter] ?? null));
     setTierNotice(null);
-  };
-
-  const openCommercialDrawer = (record: AthleteRecord, packageId?: string) => {
-    setActiveAthlete(toCommercialAthlete(record));
-    setDrawerTierId(packageId ?? preferredPackageId ?? packageIdForRosterTier(record.tier));
-    setIsDrawerOpen(true);
   };
 
   useEffect(() => {
@@ -256,7 +240,6 @@ export const RosterPage: React.FC<RosterPageProps> = ({
       const filter = tierId ? rosterFilterForPackage(tierId) : null;
       if (!filter || !tierId) return;
       setTier(filter);
-      setPreferredPackageId(ROSTER_FILTER_TO_PACKAGE[filter] ?? tierId);
       const pkg = getCommercialPackage(tierId);
       setTierNotice(detail?.label ?? pkg?.name ?? 'this flight');
     };
@@ -744,15 +727,6 @@ export const RosterPage: React.FC<RosterPageProps> = ({
           setCapitalPackageId(athlete.tier);
         }}
       />
-      {isDrawerOpen ? (
-        <DeliverablesDrawer
-          key={`${activeAthlete.id}-${drawerTierId}`}
-          isOpen
-          athlete={activeAthlete}
-          initialTierId={drawerTierId}
-          onClose={() => setIsDrawerOpen(false)}
-        />
-      ) : null}
       <CapitalDeploymentDrawer
         key={capitalPackageId ?? 'closed'}
         isOpen={capitalPackageId !== null}

@@ -3,6 +3,7 @@ export interface AthleteRecord {
   name: string; // display name e.g. "M. Thorne"
   display_name: string;
   full_name: string;
+  bio?: string;
   legal_full_name: string;
   sport: string;
   league: string;

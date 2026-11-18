@@ -2044,6 +2044,18 @@ function ADMModal({
             <p className="adm-text">
               Confidence scores calculated across active matched partners.
             </p>
+            {matches.length === 0 ? <p>No partners are currently matched.</p> : (
+              <ul>
+                {matches.map((match) => (
+                  <li key={match.id}>
+                    {match.business_name}: {computeConfidence(match.distance_km, match.target_radius_meters)}%
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button type="button" className="btn" aria-pressed={manualOverride} onClick={onToggleOverride}>
+              <Eye size={14} /> {manualOverride ? 'Manual review enabled' : 'Request manual review'}
+            </button>
           </div>
         </div>
       </div>

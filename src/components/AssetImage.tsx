@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export interface AssetImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   file?: string;
@@ -13,11 +13,19 @@ export const AssetImage: React.FC<AssetImageProps> = ({
   alt,
   objectPosition,
   className = '',
+  onError,
   ...props
 }) => {
-  // Gracefully fallback if file is undefined or empty
-  const safeFile = file && typeof file === 'string' ? file : 'placeholder.jpg';
-  const src = safeFile.startsWith('http') || safeFile.startsWith('/') ? safeFile : `/${safeFile}`;
+  const candidates = [...new Set([file, ...fallbackFiles].filter((value): value is string => Boolean(value)))];
+  const key = candidates.join('|');
+  const [failure, setFailure] = useState({ key, index: 0 });
+  const index = failure.key === key ? failure.index : 0;
+  const source = candidates[index];
+  const src = source && (/^https?:\/\//i.test(source) || source.startsWith('/') ? source : `/${source}`);
+
+  if (!src) {
+    return <span role="img" aria-label={alt} className={`asset-unavailable ${className}`}>{alt}</span>;
+  }
 
   return (
     <img
@@ -26,12 +34,8 @@ export const AssetImage: React.FC<AssetImageProps> = ({
       style={{ objectPosition }}
       className={`w-full h-full object-cover ${className}`}
       onError={(e) => {
-        // Try fallback files if primary fails
-        const target = e.target as HTMLImageElement;
-        if (fallbackFiles.length > 0) {
-          const nextFile = fallbackFiles[0];
-          target.src = nextFile.startsWith('/') ? nextFile : `/${nextFile}`;
-        }
+        setFailure({ key, index: index + 1 });
+        onError?.(e);
       }}
       {...props}
     />

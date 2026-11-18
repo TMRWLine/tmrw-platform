@@ -266,7 +266,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [enablePartnerRoyaltySplit, setEnablePartnerRoyaltySplit] = useState(true);
   const [newPostcode, setNewPostcode] = useState('2200');
   const [newGarmentTitle, setNewGarmentTitle] = useState('MT-22 Heavyweight Contrast Hood');
-  const [newUnitsCap, setNewUnitsCap] = useState<number>(100);
+  const [newUnitsCap] = useState<number>(100);
   const [newPrice, setNewPrice] = useState<number>(180);
   const [newMonogram, setNewMonogram] = useState('MT·22');
   const [siaCleared, setSiaCleared] = useState(true);
@@ -930,7 +930,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           )}
 
           {/* SHOWROOM VIEW (OPTION B: INTERACTIVE DUAL-IMAGE SPECIMEN INSPECTOR) */}
-          {(view === 'capsules' || view === 'empty') && view !== 'creator' && view !== 'checkout_success' && (
+          {(view === 'capsules' || view === 'empty') && (
             <div className="w-full space-y-6">
               <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/10 pb-6">
                 <div>

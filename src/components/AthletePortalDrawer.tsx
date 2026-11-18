@@ -240,7 +240,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
   const [payoutBsbAccount, setPayoutBsbAccount] = useState('062-••• · •••• 8821');
   const [stripeExpressLinked, setStripeExpressLinked] = useState(true);
   const [abnStatus, setAbnStatus] = useState<'abn_gst' | 'supplier_statement'>('abn_gst');
-  const [athleteAbn, setAthleteAbn] = useState('83 910 442 190');
+  const [athleteAbn] = useState('83 910 442 190');
 
   // Pillar 8 & Attachment 1: 4-Plate Photo Carousel, Watch Reel Video & Social Attribution
   const [slide1Studio, setSlide1Studio] = useState('/portraits/marcus_thorne.jpg');
@@ -250,14 +250,12 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
   const [reelVideoUrl, setReelVideoUrl] = useState('https://assets.tmrw.sport/reels/marcus_thorne_916_reel.mp4');
   const [socialReelImportInput, setSocialReelImportInput] = useState('');
   const [highlightStemFile, setHighlightStemFile] = useState('916_Highlight_Stem_4K.mp4');
-  const [monogramSvgFile, setMonogramSvgFile] = useState('Athlete_Monogram_Shield.svg');
+  const [monogramSvgFile] = useState('Athlete_Monogram_Shield.svg');
   const [instagramHandle, setInstagramHandle] = useState('@m.thorne');
   const [tiktokHandle, setTiktokHandle] = useState('@marcusthorne_hoops');
   const [followerCount, setFollowerCount] = useState<number>(14200);
   const [engagementRate, setEngagementRate] = useState('6.8%');
   const [localConcentration, setLocalConcentration] = useState('68% IN POSTCODE 2200');
-  const [metaOAuthConnected, setMetaOAuthConnected] = useState(true);
-  const [tiktokSparkConnected, setTiktokSparkConnected] = useState(true);
 
   // Pillar 2 & 3: 48-Sector Conflict Matrix, Governing Body TPA & Document Upload Vault
   const [lockedCategories, setLockedCategories] = useState<string[]>([]);
