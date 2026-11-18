@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { BrandLockup } from '../../components/BrandLockup';
 import {
   getCommercialPackage,
@@ -10,7 +10,8 @@ import {
 import { CHECKOUT_SUCCESS_PATH } from '../../lib/checkout';
 import { formatAud } from '../../lib/formatMoney';
 import { ROSTER_DATA } from '../../data/roster';
-import { sponsorshipLedger } from '../../lib/commercialLedger.js';
+import { sponsorshipLedger, type SponsorshipLedger } from '../../lib/commercialLedger.js';
+import { verifyCheckoutSession } from '../../api';
 
 export { CHECKOUT_SUCCESS_PATH };
 
@@ -42,8 +43,8 @@ function dealReference(sessionId: string | null, athleteId: string, tierId: stri
   return `TMRW-${tierTail || 'TIER'}-${athleteTail || 'ATH'}-${sessionTail || 'ESCROW'}`;
 }
 
-function distributionFor(priceAud: number) {
-  const ledger = sponsorshipLedger(Math.round(priceAud * 100));
+function distributionFor(priceAud: number, verifiedLedger?: SponsorshipLedger | null) {
+  const ledger = verifiedLedger ?? sponsorshipLedger(Math.round(priceAud * 100));
   return {
     athlete_percent: 70, club_percent: 15, platform_percent: 15,
     athlete_amount: ledger.athlete70Cents / 100,
@@ -56,9 +57,10 @@ function downloadAllocation(args: {
   reference: string;
   athlete: CommercialAthlete;
   pkg: CommercialPackage;
+  ledger?: SponsorshipLedger | null;
 }) {
-  const { reference, athlete, pkg } = args;
-  const split = distributionFor(pkg.price_aud);
+  const { reference, athlete, pkg, ledger } = args;
+  const split = distributionFor(pkg.price_aud, ledger);
   const issued = new Date().toLocaleDateString('en-AU', {
     day: 'numeric',
     month: 'long',
@@ -93,7 +95,7 @@ function downloadAllocation(args: {
       <div><dt>Issued</dt><dd>${issued}</dd></div>
       <div><dt>Supplier (athlete)</dt><dd>${athlete.full_name}</dd></div>
       <div><dt>Grassroots club</dt><dd>${athlete.grassroots_club.name}${locality ? ` · ${locality}` : ''}</dd></div>
-      <div><dt>Flight</dt><dd>${pkg.name} · ${pkg.price_display} ex GST</dd></div>
+      <div><dt>Flight context</dt><dd>${pkg.name} · ${formatAud(ledger ? ledger.grossCents / 100 : pkg.price_aud)} ex GST</dd></div>
       <div><dt>GST</dt><dd>Pending payee verification</dd></div>
       <div><dt>Athlete 70% ex GST</dt><dd>${formatAud(split.athlete_amount)}</dd></div>
       <div><dt>Club 15% ex GST</dt><dd>${formatAud(split.club_amount)}</dd></div>
@@ -117,10 +119,26 @@ export const CheckoutSuccessPage: React.FC = () => {
   const sessionId = params.get('session_id');
   const athleteId = params.get('athleteId');
   const tierId = params.get('tierId');
+  const [verification, setVerification] = useState<Awaited<ReturnType<typeof verifyCheckoutSession>> | null>(null);
 
-  const athlete = resolveAthlete(athleteId);
-  const pkg = getCommercialPackage(tierId) ?? mockDeliverables.packages[0];
-  const split = distributionFor(pkg.price_aud);
+  useEffect(() => {
+    if (!sessionId) return;
+    let active = true;
+    void verifyCheckoutSession(sessionId).then((result) => { if (active) setVerification(result); });
+    return () => { active = false; };
+  }, [sessionId]);
+
+  const verifiedPaid = verification?.verified === true && verification.status === 'paid';
+  const verifiedContext = verifiedPaid && Boolean(verification.athleteId && verification.tierId)
+    && (verification.athleteId === mockDeliverables.athlete.id || ROSTER_DATA.some((entry) => entry.id === verification.athleteId))
+    && Boolean(getCommercialPackage(verification.tierId));
+  const athlete = resolveAthlete(verifiedPaid ? verification.athleteId ?? null : athleteId);
+  const pkg = getCommercialPackage(verifiedPaid ? verification.tierId ?? null : tierId) ?? mockDeliverables.packages[0];
+  const verifiedLedger = verifiedPaid && verification.currency?.toLowerCase() === 'aud' ? verification.ledger : null;
+  const split = distributionFor(pkg.price_aud, verifiedLedger);
+  const milestones = MILESTONES.map((item) => item.id === 'escrow' && verifiedPaid
+    ? { ...item, label: 'Payment confirmed by Stripe', detail: 'Transfer status and campaign activation require separate verification.', done: true }
+    : item);
   const reference = dealReference(sessionId, athlete.id, pkg.tier_id);
   const locality = [athlete.grassroots_club.suburb, athlete.grassroots_club.state]
     .filter((part) => part.trim().length > 0)
@@ -136,15 +154,26 @@ export const CheckoutSuccessPage: React.FC = () => {
 
       <main className="max-w-[960px] mx-auto px-4 md:px-8 py-12 md:py-16">
         <p className="m-0 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-[#666666]">
-          Checkout return · verification pending
+          {verifiedPaid ? 'Payment confirmed by Stripe' : verification?.status === 'demo'
+            ? 'Sandbox preview · no funds moved' : sessionId && !verification
+              ? 'Checking payment with the server' : 'Checkout return · payment not verified'}
         </p>
         <h1 className="m-0 mt-3 font-display font-extrabold text-4xl md:text-5xl tracking-tight text-[#080808]">
-          Checkout received. Verification comes next<span className="text-[#B8FF00]">.</span>
+          {verifiedPaid ? 'Payment confirmed. Delivery comes next' : 'Checkout received. Verification comes next'}<span className="text-[#B8FF00]">.</span>
         </h1>
         <p className="m-0 mt-4 max-w-2xl text-sm md:text-base leading-relaxed text-[#666666]">
-          This return page does not verify payment or compliance. Confirm the Stripe payment
-          and athlete clearance before activating the flight. The allocation below is indicative only.
+          {verifiedPaid
+            ? 'Stripe has confirmed payment. Transfers, athlete clearance and campaign activation remain subject to separate verification.'
+            : 'Payment has not been verified. Do not activate the flight or issue a tax invoice from this return URL. The allocation below is indicative only.'}
         </p>
+        <div className="mt-4 font-mono text-xs leading-relaxed" role="status" aria-live="polite">
+          {verification?.message && <p>{verification.message}</p>}
+          {verifiedPaid && verification.amountTotalCents != null && verification.currency && (
+            <p>Provider-confirmed total: {(verification.amountTotalCents / 100).toFixed(2)} {verification.currency.toUpperCase()}</p>
+          )}
+          {verifiedPaid && <p>Transfer status: {verification.transferStatus || 'Not verified'}</p>}
+          {!verifiedContext && <p>Roster and package details are indicative context, not verified payment details.</p>}
+        </div>
 
         <dl className="m-0 mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-6">
@@ -158,7 +187,7 @@ export const CheckoutSuccessPage: React.FC = () => {
               Flight
             </dt>
             <dd className="m-0 mt-2 font-display font-extrabold text-xl tracking-tight text-[#080808]">
-              {pkg.name} · {pkg.price_display}
+              {pkg.name}{!verifiedPaid && ` · ${pkg.price_display}`}
             </dd>
           </div>
           <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-6">
@@ -185,7 +214,7 @@ export const CheckoutSuccessPage: React.FC = () => {
 
         <section className="mt-8 bg-white border border-neutral-200 shadow-sm rounded-xl p-6 md:p-8">
           <h2 className="m-0 font-display font-extrabold text-2xl tracking-tight text-[#080808]">
-            Indicative 70/15/15 distribution · ex GST
+            {verifiedLedger ? 'Provider-verified 70/15/15 allocation · ex GST' : 'Indicative 70/15/15 distribution · ex GST'}
           </h2>
           <div
             className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-neutral-200"
@@ -229,7 +258,7 @@ export const CheckoutSuccessPage: React.FC = () => {
             Contract milestones
           </h2>
           <ol className="m-0 mt-6 p-0 list-none space-y-4">
-            {MILESTONES.map((item) => (
+            {milestones.map((item) => (
               <li key={item.id} className="flex items-start gap-4">
                 <span
                   aria-hidden="true"
@@ -261,7 +290,7 @@ export const CheckoutSuccessPage: React.FC = () => {
           </p>
           <button
             type="button"
-            onClick={() => downloadAllocation({ reference, athlete, pkg })}
+            onClick={() => downloadAllocation({ reference, athlete, pkg, ledger: verifiedLedger })}
             className="mt-6 rounded-full border-0 bg-[#CCFF00] px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#080808] cursor-pointer hover:bg-[#CCFF00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] focus-visible:ring-offset-2"
           >
             Download indicative allocation
