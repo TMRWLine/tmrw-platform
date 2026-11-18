@@ -88,7 +88,7 @@ export function BrandKitTab({ athlete, onSignMOU }: BrandKitTabProps) {
     try {
       let result: TwelveLabsIndexResult;
 
-      if (isTwelveLabsConfigured()) {
+      if (await isTwelveLabsConfigured()) {
         setDataSource('twelvelabs');
         result = await ingestMatchFootage(file, athlete, setIngestion);
       } else {

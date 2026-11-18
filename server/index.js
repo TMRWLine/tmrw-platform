@@ -4,6 +4,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import Stripe from 'stripe';
+import { createTwelveLabsRouter } from './twelvelabs.js';
 import { capsuleLedger, sponsorshipLedger } from '../src/lib/commercialLedger.js';
 import { addConnectMetadata, checkoutKey, configuredPayees, completeCheckout, reverseDispute, releaseHeldFunds } from './connect.js';
 
@@ -79,6 +80,7 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json', limi
 });
 
 // General JSON body parser for all other routes
+app.use('/api/twelvelabs', createTwelveLabsRouter());
 app.use(express.json({ limit: '256kb' }));
 
 app.get('/health', (_req, res) => {

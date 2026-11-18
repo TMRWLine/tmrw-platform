@@ -1,14 +1,9 @@
-/**
- * TwelveLabs video ingestion & indexing client.
- * Initializes the API client from VITE_TWELVELABS_API_KEY and exposes
- * utilities to upload match footage, create an index, and retrieve
- * structured timestamp payloads for detected key player events.
- */
+/** TwelveLabs ingestion through the server proxy, with local sample fallbacks. */
 
 import type { Athlete } from '../types';
 import { lastName } from './formatName';
 
-const API_BASE = 'https://api.twelvelabs.io/v1.3';
+const API_BASE = '/api/twelvelabs';
 
 export interface TwelveLabsEvent {
   start: number;
@@ -32,25 +27,20 @@ export interface IngestionProgress {
   progress: number;
 }
 
-function getApiKey(): string {
-  const key = import.meta.env.VITE_TWELVELABS_API_KEY;
-  if (!key) throw new Error('VITE_TWELVELABS_API_KEY is not configured');
-  return key;
-}
-
-export function isTwelveLabsConfigured(): boolean {
-  return Boolean(import.meta.env.VITE_TWELVELABS_API_KEY);
+export async function isTwelveLabsConfigured(): Promise<boolean> {
+  try {
+    const response = await twelveLabsFetch('/status');
+    return response.ok && (await response.json()).configured === true;
+  } catch {
+    return false;
+  }
 }
 
 async function twelveLabsFetch(path: string, options: RequestInit = {}): Promise<Response> {
-  const key = getApiKey();
   return fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: {
-      'x-api-key': key,
-      'Content-Type': 'application/json',
-      ...(options.headers ?? {}),
-    },
+    signal: AbortSignal.timeout(10000),
+    headers: { 'Content-Type': 'application/json', ...options.headers },
   });
 }
 
@@ -72,16 +62,14 @@ export async function createIndex(indexName: string): Promise<string> {
     }),
   });
   if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Failed to create TwelveLabs index: ${body}`);
+    throw new Error('Video analysis unavailable · using sample data');
   }
   const data = await res.json();
   return data._id as string;
 }
 
 /**
- * Upload match footage to a TwelveLabs index. The file is sent as a
- * multipart form upload to the /uploads endpoint.
+ * Upload a small video to the proxy, which creates the upstream multipart body.
  */
 export async function uploadVideo(
   indexId: string,
@@ -90,21 +78,15 @@ export async function uploadVideo(
 ): Promise<string> {
   onProgress?.({ phase: 'uploading', message: `Uploading ${file.name}…`, progress: 10 });
 
-  const formData = new FormData();
-  formData.append('index_id', indexId);
-  formData.append('video_file', file);
-
-  const key = getApiKey();
-  const res = await fetch(`${API_BASE}/uploads`, {
-    method: 'POST',
-    headers: { 'x-api-key': key },
-    body: formData,
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Upload failed: ${body}`);
+  if (file.size === 0 || file.size > 4 * 1024 * 1024 || (file.type && !file.type.startsWith('video/'))) {
+    throw new Error('Choose a video up to 4 MiB · larger footage uses sample analysis');
   }
+  const res = await twelveLabsFetch(`/uploads?index_id=${encodeURIComponent(indexId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    body: file,
+  });
+  if (!res.ok) throw new Error('Video upload unavailable · using sample data');
 
   const data = await res.json();
   const videoId = data._id as string;
@@ -126,13 +108,12 @@ export async function waitForIndexReady(
   onProgress?.({ phase: 'indexing', message: 'Indexing video…', progress: 40 });
 
   while (Date.now() - start < maxWaitMs) {
-    const res = await twelveLabsFetch(`/indexes/${indexId}/videos/${videoId}`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.system_metadata?.status === 'ready' || data.system_metadata?.ready === true) {
-        onProgress?.({ phase: 'indexing', message: 'Index ready', progress: 60 });
-        return;
-      }
+    const res = await twelveLabsFetch(`/indexes/${encodeURIComponent(indexId)}/videos/${encodeURIComponent(videoId)}`);
+    if (!res.ok) throw new Error('Video indexing unavailable · using sample data');
+    const data = await res.json();
+    if (data.system_metadata?.status === 'ready' || data.system_metadata?.ready === true) {
+      onProgress?.({ phase: 'indexing', message: 'Index ready', progress: 60 });
+      return;
     }
     await new Promise((r) => setTimeout(r, 3000));
   }
@@ -165,7 +146,7 @@ export async function detectKeyEvents(
       }),
     });
 
-    if (!res.ok) continue;
+    if (!res.ok) throw new Error('Video search unavailable · using sample data');
 
     const data = await res.json();
     const clips = data.clips ?? data.data ?? [];

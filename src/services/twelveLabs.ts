@@ -1,8 +1,7 @@
 /**
  * TwelveLabs AI Media Studio service shell.
  * Mock handlers for vertical highlight generation and sponsor exposure search.
- * When VITE_TWELVELABS_API_KEY is configured, real API calls can be wired in;
- * until then these return realistic demo data after a short delay.
+ * These return demo data after a short delay. Live ingestion uses the server proxy.
  */
 
 import type { Athlete } from '../types';

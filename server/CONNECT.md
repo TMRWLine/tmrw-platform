@@ -46,3 +46,27 @@ must be migrated by its owning session to `sponsorshipLedger` instead of its
 old 20/80 calculations; pass known payee tax details through `StatementsPanel`.
 
 Run `node --test server/*.test.js` for calculation and mocked webhook tests.
+
+## TwelveLabs proxy
+
+Set `TWELVELABS_API_KEY` only in the Express/Vercel server environment.
+The legacy `VITE_TWELVELABS_API_KEY` is accepted on the server with a
+deprecation warning; remove it when migrating. Vite exposes only the public
+Supabase configuration variables, so even a legacy video key cannot enter
+the browser environment or bundle. Never add secret values to source files.
+
+The browser uses relative `/api/twelvelabs` routes: `GET /status`,
+`POST /indexes`, `POST /uploads?index_id=...`, `GET /indexes/:indexId/videos/:videoId`
+and `POST /search`. Only those fixed upstream operations are permitted.
+Without a key they return HTTP 503 with a not-configured JSON response, and
+the client retains its sample-analysis fallback. The media-studio service
+remains explicitly demo-only; ingestion uses the proxy.
+
+Uploads accept raw video (or application/octet-stream), capped at 4 MiB to
+fit Vercel's 4.5 MB request ceiling. The server constructs multipart data;
+it never accepts arbitrary upstream URLs. Larger footage uses sample analysis;
+direct-to-storage ingestion is not implemented. JSON is capped at 64 KiB.
+Every upstream request has a 10-second deadline. Responses expose only
+required IDs, readiness and clip fields, never upstream error bodies or keys.
+Existing `/api/*` Vercel routing and disabled body parsing already cover these
+routes; no deployment routing change is needed.
