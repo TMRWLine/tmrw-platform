@@ -52,14 +52,12 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const safeAthleteId = grant.athleteId || 'marcus-thorne';
 
   const resolvedMetaToken =
-    grant.meta_partnership_token ||
     rawGrant.metaHandleToken ||
     rawGrant.metaToken ||
     rawGrant.instagramToken ||
     `IG-AUTH-${safePostcode}-9941`;
 
   const resolvedSparkCode =
-    grant.tiktok_spark_code ||
     rawGrant.tiktokSparkCode ||
     rawGrant.sparkCode ||
     rawGrant.tiktokToken ||
