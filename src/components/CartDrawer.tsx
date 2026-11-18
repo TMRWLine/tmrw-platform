@@ -469,7 +469,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     <div
       ref={dialogRef}
       role="dialog"
-      aria-modal="true"
       aria-label="Athlete merch capsules"
       tabIndex={-1}
       data-lenis-prevent="true"

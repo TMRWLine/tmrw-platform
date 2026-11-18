@@ -34,13 +34,17 @@ export function useMobileDialog(isOpen: boolean, dialogRef: RefObject<HTMLElemen
       contained = true;
       const bodyOverflow = document.body.style.overflow;
       const rootOverflow = document.documentElement.style.overflow;
+      const previousModal = dialog.getAttribute('aria-modal');
       document.body.style.overflow = 'hidden';
       document.documentElement.style.overflow = 'hidden';
+      dialog.setAttribute('aria-modal', 'true');
       dialog.addEventListener('keydown', trapFocus);
       dialog.focus({ preventScroll: true });
       release = () => {
         document.body.style.overflow = bodyOverflow;
         document.documentElement.style.overflow = rootOverflow;
+        if (previousModal === null) dialog.removeAttribute('aria-modal');
+        else dialog.setAttribute('aria-modal', previousModal);
         dialog.removeEventListener('keydown', trapFocus);
       };
     };

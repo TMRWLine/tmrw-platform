@@ -616,7 +616,6 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
         ref={dialogRef}
         tabIndex={-1}
         role="dialog"
-        aria-modal="true"
         aria-label="Athlete portal"
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
