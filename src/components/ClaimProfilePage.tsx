@@ -35,7 +35,7 @@ const FIELD_LABELS: Record<ProfileField, string> = {
 const FIELDS = Object.keys(FIELD_LABELS) as ProfileField[];
 type Step = 'preview' | 'signin' | 'consent' | 'done' | 'decline' | 'deleted' | 'unsubscribe' | 'unsubscribed' | 'guardian';
 
-const META = `${ATHLETE_MONO} text-[9.5px] font-bold uppercase tracking-[0.18em]`;
+const META = `${ATHLETE_MONO} text-[9.5px] font-bold tracking-[0.18em]`;
 const COPY = 'm-0 font-sans text-xs text-neutral-600 leading-relaxed';
 const PANEL = 'rounded-2xl bg-black/5 border border-black/10 p-5 space-y-3 mb-6';
 const LINK = `${ATHLETE_MONO} block w-full bg-transparent border-0 px-0 py-2 text-[10px] text-carbon underline underline-offset-4 text-left cursor-pointer hover:opacity-70 transition-opacity`;
@@ -132,10 +132,10 @@ export function ClaimProfilePage() {
 
 
   const signInContent = <>
-    <ClaimHero label="02 / MAKE IT YOURS" lines={['One profile', 'All yours']}>
+    <ClaimHero label="(02) Prove it’s you" lines={['Claim what’s', 'yours']}>
       <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">
         {guardianToken ? 'You do not need an account for guardian review. Return to the Claim profile tab to review their choices.' :
-          'Sign in to claim your profile. You’ll review every detail and choose what’s public before anything goes live.'}
+          'Sign in so we know it’s really you. You’ll check every detail before anything goes live.'}
       </p>
       <span className={`inline-block rounded-full bg-volt text-carbon px-3 py-1 ${META}`}>Private until you consent</span>
     </ClaimHero>
@@ -149,7 +149,7 @@ export function ClaimProfilePage() {
         <button className={ATHLETE_PRIMARY} disabled={busy} onClick={() => { setAccessMode('claim'); signin('google'); }}>Continue with Google <span aria-hidden="true">↗</span></button>
         <button className={`${ATHLETE_PRIMARY} !bg-black/5 !text-carbon border border-black/10`} disabled={busy} onClick={() => { setAccessMode('claim'); signin('instagram'); }}>Continue with Instagram <span aria-hidden="true">↗</span></button>
         <p className={COPY}>Instagram Login requires a configured app and is not a Supabase identity provider. If unavailable, continue with Google.</p>
-        <p className={COPY}>TMRW is not an agent. No representation agreement. No master licence at this stage.</p>
+        <p className={COPY}>tmrw/. is not an agent. No representation agreement. No master licence at this stage.</p>
         <button className={LINK} onClick={() => { setAccessMode('claim'); setStep('preview'); }}>← Back to private preview</button>
       </div>
     </>}
@@ -172,9 +172,10 @@ export function ClaimProfilePage() {
         {lead && <>
           {accessMode === 'authenticate' ? signInContent : <>
             {step === 'preview' && <>
-              <ClaimHero label="01 / A LOCAL OPPORTUNITY" lines={['Your profile', 'Your terms']}>
-                <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">Local businesses back local talent. We’ve put together a <span className="bg-volt text-carbon font-bold px-1.5 py-0.5 rounded-[3px]">private starting profile</span> for you. Nothing is public until you choose.</p>
+              <ClaimHero label="(01) Private preview" lines={['Backed by your', 'postcode']}>
+                <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">Local businesses want to back local talent. We’ve built you a private starting profile. Nobody sees it unless you say yes.</p>
                 <button className={ATHLETE_VOLT_CTA} onClick={() => setStep('signin')}>Claim my profile <span aria-hidden="true">↗</span></button>
+                <p className="m-0 font-sans text-xs text-white/75">Free. No contract. No agent fees.</p>
               </ClaimHero>
               <section className={PANEL} aria-label="Private profile preview">
                 <div className="flex items-center justify-between gap-2">
@@ -205,15 +206,15 @@ export function ClaimProfilePage() {
               <button className={LINK} aria-expanded={info} onClick={() => setInfo(!info)}>Why am I seeing this? / Sponsorship, not representation</button>
               {info && <div className={`${PANEL} ${COPY}`}>
                 <p>We found you via {lead.where_found}. We recorded public sporting facts only, for private research.</p>
-                <p>TMRW is not an agent. This is a sponsorship platform, not representation or an agency agreement. No master licence is requested here; any agreement comes later, only if there is a real sponsor match.</p>
+                <p>tmrw/. is not an agent. This is a sponsorship platform, not representation or an agency agreement. No master licence is requested here; any agreement comes later, only if there is a real sponsor match.</p>
                 {lead.verification_source_url && <a className={LINK} href={lead.verification_source_url} target="_blank" rel="noreferrer">View public source ↗</a>}
               </div>}
               {privacyActions}
             </>}
             {step === 'signin' && signInContent}
             {step === 'consent' && <>
-              <ClaimHero label="03 / YOU SET THE BOUNDARIES" lines={['Your details', 'Your decision']}>
-                <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">Correct anything below. Only fields marked <span className="bg-volt text-carbon font-bold px-1.5 py-0.5 rounded-[3px]">Public</span> will be visible to sponsors. Your birth date and guardian email always stay private.</p>
+              <ClaimHero label={minor ? "(03) One more yes" : "(03) Your rules"} lines={minor ? ['Bring in your', 'guardian'] : ['Your profile.', 'Your rules']}>
+                <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">Fix anything that’s off. Only fields marked <span className="bg-volt text-carbon font-bold px-1.5 py-0.5 rounded-[3px]">Public</span> are shown to sponsors. Your birth date and guardian email always stay private.</p>
               </ClaimHero>
               <button className={LINK} onClick={() => setStep('preview')}>← Back to private preview</button>
               {privacyActions}
@@ -249,35 +250,36 @@ export function ClaimProfilePage() {
                   <p className={COPY}>Your profile stays private until your parent or guardian consents.</p>
                   <div><label className={ATHLETE_FIELD_LABEL} htmlFor="claim-guardian-email">Parent / guardian email</label>
                     <div className={`${ATHLETE_FIELD_SHELL} !bg-[var(--canvas)]`}><input className={ATHLETE_FIELD_INPUT} id="claim-guardian-email" type="email" required value={guardianEmail} onChange={e => setGuardianEmail(e.target.value)} /></div></div>
-                  <p className={COPY}>A private guardian review link must be provided to them by the TMRW team. This form does not send email.</p>
+                  <p className={COPY}>A private guardian review link must be provided to them by the tmrw/. team. This form does not send email.</p>
                 </section>}
+                <p className={COPY}>You can get independent advice before you say yes, and change your mind any time.</p>
                 <section aria-label="Consent choices" className="rounded-2xl border border-black/10 p-5 space-y-4">
                   <h2 className={SECTION_HEADING}>Before you go live<span className="text-volt">.</span></h2>
                   {[
-                    'I consent to TMRW storing and using these details to operate my sponsorship profile.',
-                    'I consent to publishing only the fields I have marked Public, visible to potential sponsors.',
-                    'I consent to TMRW contacting me about sponsorship opportunities.',
+                    'tmrw/. can store and use my details to run my sponsorship profile.',
+                    'Sponsors can see only the fields I’ve marked Public.',
+                    'tmrw/. can contact me about sponsorship opportunities.',
                   ].map((text, i) => <label className={CHECK} key={text}><input className={CHECK_INPUT} type="checkbox" required checked={consents[i]} onChange={e => setConsents(consents.map((v, n) => n === i ? e.target.checked : v))} /><span>{text}</span></label>)}
                 </section>
-                <p className={COPY}>TMRW is not an agent. No master licence or representation agreement is requested. You can decline and delete your profile, or unsubscribe, using your invitation link.</p>
+                <p className={COPY}>tmrw/. is not an agent. No master licence or representation agreement is requested. You can decline and delete your profile, or unsubscribe, using your invitation link.</p>
                 <button className={ATHLETE_PRIMARY} disabled={busy} type="submit">{busy ? 'Saving…' : minor ? 'Save & request guardian consent' : 'Consent & publish my profile'} <span aria-hidden="true">↗</span></button>
               </form>
             </>}
             {step === 'done' && <>
-              <ClaimHero label={pendingGuardian ? 'SAVED / STILL PRIVATE' : 'CONSENT RECORDED'} lines={pendingGuardian ? ['One more', 'Teammate'] : ['You’re in', 'On your terms']}>
-                <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">{pendingGuardian ? 'Your profile is awaiting parent or guardian consent. It is not public and sponsors cannot see it yet.' : 'Your chosen public fields are now live for potential sponsors. Everything else stays private.'}</p>
+              <ClaimHero label={pendingGuardian ? '(03) One more yes' : '(04) Live'} lines={pendingGuardian ? ['Bring in your', 'guardian'] : ['You’re on', 'the line-up']}>
+                <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">{pendingGuardian ? 'Your profile is awaiting parent or guardian consent. It is not public and sponsors cannot see it yet.' : 'Your chosen fields are live for sponsors. Edit, hide or delete any time. Nothing is signed until a real sponsor match exists.'}</p>
                 <span className={`inline-block bg-volt text-carbon px-3 py-1 rounded-full ${META}`}>{pendingGuardian ? 'Awaiting guardian' : 'Your choices saved'}</span>
               </ClaimHero>
               <section className={PANEL}>
                 <h2 className={SECTION_HEADING}>{pendingGuardian ? 'Next: guardian review' : 'What happens next?'}</h2>
-                <p className={COPY}>{pendingGuardian ? 'The TMRW team must provide your guardian with their private consent link. No email has been sent by this form.' : 'We’ll look for a local sponsorship fit. No guarantees, no representation agreement, and no master licence until a real sponsor match exists.'}</p>
+                <p className={COPY}>{pendingGuardian ? 'The tmrw/. team must provide your guardian with their private consent link. No email has been sent by this form.' : 'We’ll look for a local sponsorship fit. No guarantees, no representation agreement, and no master licence until a real sponsor match exists.'}</p>
               </section>
               {demo && pendingGuardian && <a className={ATHLETE_PRIMARY} href="/claim?guardian=demo-token">Preview guardian consent ↗</a>}
-              <a className={LINK} href="/">Back to TMRW ↗</a>
+              <a className={LINK} href="/">Back to tmrw/. ↗</a>
             </>}
             {step === 'guardian' && <>
-              <ClaimHero label="GUARDIAN / PRIVATE REVIEW" lines={['In their corner', 'On their terms']}>
-                <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">{lead.full_name} would like to make a sponsorship profile on TMRW. They have not been published.</p>
+              <ClaimHero label="(GUARDIAN) Your say" lines={['A quick yes', 'from you']}>
+                <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">{lead.full_name} would like to make a sponsorship profile on tmrw/. Their profile is still private.</p>
                 <span className={`inline-block bg-volt text-carbon px-3 py-1 rounded-full ${META}`}>Private until you consent</span>
               </ClaimHero>
               <section className={PANEL}>
@@ -287,36 +289,36 @@ export function ClaimProfilePage() {
                 <p className={COPY}>Birth date, guardian email and private fields are not published.</p>
               </section>
               <form className="space-y-5" onSubmit={e => { e.preventDefault(); void act(async () => { await rpc('consent_claim_guardian', { p_token: guardianToken, p_consent: guardianConsent }); setPendingGuardian(false); setStep('done'); }); }}>
-                <label className={CHECK}><input className={CHECK_INPUT} type="checkbox" required checked={guardianConsent} onChange={e => setGuardianConsent(e.target.checked)} /><span>I am this athlete’s parent or legal guardian. I consent to TMRW using their details, publishing their selected public fields and contacting them for sponsorship opportunities.</span></label>
-                <p className={COPY}>TMRW is not an agent. This is not a representation agreement or master licence.</p>
+                <label className={CHECK}><input className={CHECK_INPUT} type="checkbox" required checked={guardianConsent} onChange={e => setGuardianConsent(e.target.checked)} /><span>I’m this athlete’s parent or legal guardian. tmrw/. can use their details, show sponsors only their chosen Public fields, and contact them about sponsorship.</span></label>
+                <p className={COPY}>tmrw/. is not an agent. This is not a representation agreement or master licence.</p>
                 <button className={ATHLETE_PRIMARY} disabled={busy}>Approve profile publication ↗</button>
               </form>
             </>}
             {step === 'decline' && <>
-              <ClaimHero label="YOUR CHOICE / ALWAYS" lines={['No pressure', 'No profile']}>
+              <ClaimHero label="(05) Your choice" lines={['Delete everything?']}>
                 <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">Declining permanently deletes your private research profile and any profile published through this invitation. This cannot be undone.</p>
               </ClaimHero>
               <button className={ATHLETE_PRIMARY} disabled={busy} onClick={() => void act(async () => { await rpc('decline_athlete_claim', { p_token: token }); setStep('deleted'); })}>Confirm: delete my data <span aria-hidden="true">×</span></button>
               <button className={LINK} onClick={() => setStep('preview')}>Keep my private preview</button>
             </>}
             {step === 'deleted' && <>
-              <ClaimHero label="DELETION COMPLETE" lines={['Deleted', 'Your call']}>
+              <ClaimHero label="(06) Deleted" lines={['Done.', 'It’s all gone']}>
                 <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">Your lead record and any profile published through this invitation have been deleted. Your invitation no longer works.</p>
               </ClaimHero>
-              <a className={ATHLETE_PRIMARY} href="/">Back to TMRW ↗</a>
+              <a className={ATHLETE_PRIMARY} href="/">Back to <span className="normal-case">tmrw/.</span> ↗</a>
             </>}
             {step === 'unsubscribe' && <>
-              <ClaimHero label="OUTREACH / YOUR CONTROL" lines={['Less noise', 'We hear you']}>
+              <ClaimHero label="(05) Your inbox" lines={['Stop the', 'messages?']}>
                 <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">Stop outreach associated with this invitation and remove your profile details. Only an anonymous suppression marker for this invitation will remain.</p>
               </ClaimHero>
               <button className={ATHLETE_PRIMARY} disabled={busy} onClick={() => void act(async () => { await rpc('unsubscribe_athlete_claim', { p_token: token }); setStep('unsubscribed'); })}>Confirm unsubscribe ↗</button>
               <button className={LINK} onClick={() => setStep('preview')}>Back to preview</button>
             </>}
             {step === 'unsubscribed' && <>
-              <ClaimHero label="UNSUBSCRIBED" lines={['Your inbox', 'Your rules']}>
+              <ClaimHero label="(06) Unsubscribed" lines={['Heard.', 'No more messages']}>
                 <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">Outreach for this invitation is stopped. Your personal details have been removed; only an anonymous suppression marker remains.</p>
               </ClaimHero>
-              <a className={ATHLETE_PRIMARY} href="/">Back to TMRW ↗</a>
+              <a className={ATHLETE_PRIMARY} href="/">Back to <span className="normal-case">tmrw/.</span> ↗</a>
             </>}
           </>}
         </>}
@@ -324,7 +326,7 @@ export function ClaimProfilePage() {
       <footer className="mt-8 border-t border-black/10 pt-5 space-y-2">
         <p className={`${META} text-neutral-500 m-0`}>Local talent. Local backing.</p>
         <p className={`${META} text-neutral-500 m-0`}>Sponsorship. Not representation.</p>
-        <p className={COPY}>TMRW is not an agent.</p>
+        <p className={COPY}>tmrw/. is not an agent.</p>
       </footer>
     </div>
   </main>;

@@ -24,11 +24,11 @@ export function buildClaimOutreach(input: ClaimOutreachInput): string {
   return [
     `Hi ${input.athleteName},`,
     `We found your public sporting profile with ${input.club} via ${input.whereFound}.`,
-    'TMRW connects athletes with local sponsorship opportunities. We are contacting you to invite you to review a private profile and choose whether to make it public for sponsorship.',
-    'TMRW is not an agent. This is sponsorship, not representation or an agency agreement. No master licence is requested at this stage.',
+    'tmrw/. connects athletes with local sponsorship opportunities. We are contacting you to invite you to review a private profile and choose whether to make it public for sponsorship.',
+    'tmrw/. is not an agent. This is sponsorship, not representation or an agency agreement. No master licence is requested at this stage.',
     `Review and claim your profile: ${claim.href}`,
     'You can decline and delete your research profile from that page. Nothing is published unless you consent (and a guardian consents if required).',
     `Unsubscribe from further outreach: ${unsubscribe.href}`,
-    `Sent by ${input.senderBusinessName} (TMRW). Contact: ${input.senderContact}`,
+    `Sent by ${input.senderBusinessName} (tmrw/.). Contact: ${input.senderContact}`,
   ].join('\n\n');
 }

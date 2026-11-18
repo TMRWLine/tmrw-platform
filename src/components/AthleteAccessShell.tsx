@@ -11,7 +11,7 @@ export const ATHLETE_VOLT_CTA = `w-full rounded-full bg-volt text-carbon ${ATHLE
 
 export function AthleteAccessHeader({ onClose }: { onClose: () => void }) {
   return <div className="flex items-center justify-between border-b border-black/10 pb-5">
-    <BrandLockup onClick={onClose} className="[&_svg]:transition-opacity" />
+    <BrandLockup onClick={onClose} />
     <button type="button" onClick={onClose} title="Close" aria-label="Close portal"
       className="inline-flex items-center gap-1.5 rounded-full bg-carbon text-[var(--canvas)] border border-transparent px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-opacity duration-200 hover:opacity-80 cursor-pointer">
       <span>Close</span><span className="text-[11px] text-volt" aria-hidden="true">✕</span>
@@ -42,8 +42,8 @@ export function AthleteAccessHero({ lines, children, headingLevel = 'h1' }: {
 }) {
   const Heading = headingLevel;
   return <section className="mb-6 rounded-[24px] bg-carbon text-[var(--canvas)] p-6 sm:p-7 space-y-4 shadow-xl">
-    <Heading className="m-0 font-sans font-black text-3xl sm:text-4xl uppercase tracking-[-0.03em] text-[var(--canvas)] leading-[1.02]">
-      {lines.map((line, i) => <span className="block" key={i}>{line}<span className="text-volt">.</span></span>)}
+    <Heading className="m-0 font-display font-black text-[42px] sm:text-5xl tracking-[-0.055em] text-[var(--canvas)] leading-[0.9]">
+      {lines.map((line, i) => <span className="block" key={i}>{line.endsWith('.') ? line.slice(0, -1) : line}{(line.endsWith('.') || i === lines.length - 1 && !line.endsWith('?')) && <span className="text-volt">.</span>}</span>)}
     </Heading>
     {children}
   </section>;
