@@ -118,7 +118,6 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = (props) => (
 );
 
 const SponsorDrawerContent: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, athlete }) => {
-  const dialogRef = useDialogFocus(isOpen, onClose);
   const reducedMotion = useReducedMotion();
   const [selectedTier, setSelectedTier] = useState<'tier1' | 'tier2' | 'tier3'>('tier2');
   const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORIES[0]);
@@ -128,6 +127,8 @@ const SponsorDrawerContent: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
   const [conflictError, setConflictError] = useState<string | null>(null);
   const [dealSuccess, setDealSuccess] = useState<boolean>(false);
   const [showSyndicateModal, setShowSyndicateModal] = useState<boolean>(false);
+  const dialogRef = useDialogFocus(isOpen && !showSyndicateModal, onClose);
+  const syndicateRef = useDialogFocus(showSyndicateModal, () => setShowSyndicateModal(false));
   const [syndicateSuccess, setSyndicateSuccess] = useState<boolean>(false);
   const [selectedSyndicateId, setSelectedSyndicateId] = useState<SyndicatePortfolioId>(
     SYNDICATE_PORTFOLIOS[0].id
@@ -412,8 +413,8 @@ const SponsorDrawerContent: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
       </motion.div>
 
       {showSyndicateModal && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/90 p-4">
-          <div className="max-w-md w-full max-h-[90vh] overflow-y-auto bg-zinc-950 border border-zinc-800 p-6 rounded shadow-2xl font-mono text-white">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4" onClick={(event) => event.stopPropagation()}>
+          <div ref={syndicateRef} role="dialog" aria-modal="true" aria-label="Syndicate application" tabIndex={-1} className="max-w-md w-full max-h-[90vh] overflow-y-auto bg-zinc-950 border border-zinc-800 p-6 rounded shadow-2xl font-mono text-white">
             <div className="flex justify-between items-center mb-4">
               <p className="text-xs text-[#CCFF00] uppercase tracking-widest">// EXECUTIVE APPLICATION</p>
               <button
