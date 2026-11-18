@@ -147,7 +147,7 @@ export function MarketplaceApp() {
   const [signError, setSignError] = useState<string | null>(null);
   const [showSignModal, setShowSignModal] = useState(false);
   const [showADMModal, setShowADMModal] = useState(false);
-  const [manualOverride, setManualOverride] = useState(false);
+  const [showReviewGuidance, setShowReviewGuidance] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [mediaStudioOpen, setMediaStudioOpen] = useState(false);
   const [mediaStudioAthlete, setMediaStudioAthlete] = useState<Athlete | null>(null);
@@ -1038,8 +1038,8 @@ export function MarketplaceApp() {
         <ADMModal
           athleteName={athleteDisplayName(activeAthlete)}
           matches={matches}
-          manualOverride={manualOverride}
-          onToggleOverride={() => setManualOverride(!manualOverride)}
+          showReviewGuidance={showReviewGuidance}
+          onToggleReviewGuidance={() => setShowReviewGuidance(!showReviewGuidance)}
           onClose={() => setShowADMModal(false)}
         />
       )}
@@ -1993,14 +1993,14 @@ function computeConfidence(distanceKm: number, radiusM: number): number {
 function ADMModal({
   athleteName,
   matches,
-  manualOverride,
-  onToggleOverride,
+  showReviewGuidance,
+  onToggleReviewGuidance,
   onClose,
 }: {
   athleteName: string;
   matches: MatchedSponsor[];
-  manualOverride: boolean;
-  onToggleOverride: () => void;
+  showReviewGuidance: boolean;
+  onToggleReviewGuidance: () => void;
   onClose: () => void;
 }) {
   return (
@@ -2053,9 +2053,12 @@ function ADMModal({
                 ))}
               </ul>
             )}
-            <button type="button" className="btn" aria-pressed={manualOverride} onClick={onToggleOverride}>
-              <Eye size={14} /> {manualOverride ? 'Manual review enabled' : 'Request manual review'}
+            <button type="button" className="btn" aria-expanded={showReviewGuidance} onClick={onToggleReviewGuidance}>
+              <Eye size={14} /> {showReviewGuidance ? 'Hide manual review guidance' : 'Show manual review guidance'}
             </button>
+            {showReviewGuidance && (
+              <p className="adm-text">This panel does not submit review requests. Contact your account representative to request a human assessment of these matches.</p>
+            )}
           </div>
         </div>
       </div>
