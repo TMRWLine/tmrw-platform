@@ -91,6 +91,7 @@ export function AthletePortal({
           athleteName={name}
           startDate={null}
           endDate={null}
+          collabSplit={COLLAB_SPLIT}
         />
       )}
 
