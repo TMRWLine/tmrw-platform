@@ -1795,7 +1795,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
               <DollarSign size={14} /> Gross Deal (Ex. GST)
             </div>
             <div className="ledger-row-value gross">
-              {formatCurrency(grossExGst, currency)}
+              {formatCurrency(grossExGst, currency, 2)}
             </div>
           </div>
           <div className="ledger-row">
@@ -1803,7 +1803,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
               <Receipt size={14} /> Applicable GST (10% for registered payees)
             </div>
             <div className="ledger-row-value">
-              {formatCurrency(gstAmount, currency)}
+              {formatCurrency(gstAmount, currency, 2)}
             </div>
           </div>
           <div className="ledger-divider" />
@@ -1812,7 +1812,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
               <DollarSign size={14} /> Total (Inc. GST)
             </div>
             <div className="ledger-row-value gross">
-              {formatCurrency(totalIncGst, currency)}
+              {formatCurrency(totalIncGst, currency, 2)}
             </div>
           </div>
           <div className="ledger-divider" />
@@ -1821,7 +1821,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
               <Wallet size={14} /> Platform Operations (15% of Ex-GST)
             </div>
             <div className="ledger-row-value commission">
-              −{formatCurrency(commission, currency)}
+              −{formatCurrency(commission, currency, 2)}
             </div>
           </div>
           <div className="ledger-divider" />
@@ -1829,14 +1829,14 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
             <div className="ledger-row-label">
               <Landmark size={14} /> Grassroots Club (15% of Ex-GST)
             </div>
-            <div className="ledger-row-value">{formatCurrency(clubPayout, currency)}</div>
+            <div className="ledger-row-value">{formatCurrency(clubPayout, currency, 2)}</div>
           </div>
           <div className="ledger-row">
             <div className="ledger-row-label">
               <Landmark size={14} /> Athlete Entitlement (70% plus applicable GST)
             </div>
             <div className="ledger-row-value net">
-              {formatCurrency(netPayout, currency)}
+              {formatCurrency(netPayout, currency, 2)}
             </div>
           </div>
         </div>
@@ -1947,7 +1947,7 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
         {splitPreviewVisible && integrityConfirmed && (
           <div className="ledger-webhook-log" role="status">
             <Info size={14} />
-            <span>Preview only: athlete {formatCurrency(netPayout, currency)}, club {formatCurrency(clubPayout, currency)}, platform {formatCurrency(commission, currency)}. No funds moved.</span>
+            <span>Preview only: athlete {formatCurrency(netPayout, currency, 2)}, club {formatCurrency(clubPayout, currency, 2)}, platform {formatCurrency(commission, currency, 2)}. No funds moved.</span>
           </div>
         )}
       </div>

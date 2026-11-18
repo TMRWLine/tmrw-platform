@@ -414,12 +414,12 @@ export async function fetchAgreements(athleteId?: string): Promise<Agreement[]> 
 }
 
 /** Format a monetary amount with the appropriate currency label (AUD or NZD). */
-export function formatCurrency(amount: number | null | undefined, currency: string | null | undefined): string {
+export function formatCurrency(amount: number | null | undefined, currency: string | null | undefined, fractionDigits: 0 | 2 = 0): string {
   if (amount == null) return '·';
   const code = currency ?? 'AUD';
   const prefix = code === 'NZD' ? 'NZ$' : code === 'USD' ? 'US$' : 'A$';
   const sign = amount < 0 ? '-' : '';
-  return `${sign}${prefix}${Math.round(Math.abs(amount))} ${code}`;
+  return `${sign}${prefix}${Math.abs(amount).toFixed(fractionDigits)} ${code}`;
 }
 
 export async function fetchNearbySponsors(

@@ -161,29 +161,29 @@ GST is reported by the recipient. Generated ${new Date().toLocaleString()}.</p>
           <div className="ledger-breakdown">
             <div className="ledger-row">
               <div className="ledger-row-label">Gross Earnings (Ex. GST)</div>
-              <div className="ledger-row-value gross">{formatCurrency(selected.grossExGst, currency)}</div>
+              <div className="ledger-row-value gross">{formatCurrency(selected.grossExGst, currency, 2)}</div>
             </div>
             <div className="ledger-row">
               <div className="ledger-row-label">GST (10%)</div>
-              <div className="ledger-row-value">{formatCurrency(selected.gst, currency)}</div>
+              <div className="ledger-row-value">{formatCurrency(selected.gst, currency, 2)}</div>
             </div>
             <div className="ledger-divider" />
             <div className="ledger-row">
               <div className="ledger-row-label">Total (Inc. GST)</div>
-              <div className="ledger-row-value gross">{formatCurrency(selected.totalIncGst, currency)}</div>
+              <div className="ledger-row-value gross">{formatCurrency(selected.totalIncGst, currency, 2)}</div>
             </div>
             <div className="ledger-row">
               <div className="ledger-row-label">Platform Operations (15%)</div>
-              <div className="ledger-row-value commission">−{formatCurrency(selected.commission, currency)}</div>
+              <div className="ledger-row-value commission">−{formatCurrency(selected.commission, currency, 2)}</div>
             </div>
             <div className="ledger-row">
               <div className="ledger-row-label">Grassroots Club (15%)</div>
-              <div className="ledger-row-value">{formatCurrency(selected.clubPayout, currency)}</div>
+              <div className="ledger-row-value">{formatCurrency(selected.clubPayout, currency, 2)}</div>
             </div>
             <div className="ledger-divider" />
             <div className="ledger-row">
               <div className="ledger-row-label">Net Athlete Payout</div>
-              <div className="ledger-row-value net">{formatCurrency(selected.netPayout, currency)}</div>
+              <div className="ledger-row-value net">{formatCurrency(selected.netPayout, currency, 2)}</div>
             </div>
           </div>
           <div className="ledger-breakdown">
@@ -193,7 +193,7 @@ GST is reported by the recipient. Generated ${new Date().toLocaleString()}.</p>
                   {line.role} · ABN {line.abn || 'not supplied'} · GST registered: {line.gstRegistered ? 'yes' : 'no'}
                 </div>
                 <div className="ledger-row-value">
-                  Gross {formatCurrency(line.grossCents / 100, currency)} · GST {formatCurrency(line.gstCents / 100, currency)} · Net {formatCurrency(line.netCents / 100, currency)}
+                  Gross {formatCurrency(line.grossCents / 100, currency, 2)} · GST {formatCurrency(line.gstCents / 100, currency, 2)} · Net {formatCurrency(line.netCents / 100, currency, 2)}
                 </div>
               </div>
             ))}
