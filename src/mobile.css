@@ -111,6 +111,10 @@
   .checkout-backdrop > div { max-height: calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
   .checkout-backdrop header { padding: 12px; gap: 8px; }
   .checkout-backdrop header .font-mono { overflow-wrap: anywhere; }
+  .checkout-settlement-grid { grid-template-columns: minmax(0, 1fr); }
+  .checkout-settlement-grid > div { min-width: 0; overflow-wrap: anywhere; }
+  .checkout-settlement-grid span { font-size: 12px; }
+  .checkout-settlement-grid .truncate { white-space: normal; }
 
   .certificate-backdrop {
     padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));

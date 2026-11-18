@@ -249,7 +249,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 font-mono">
+            <div className="checkout-settlement-grid grid grid-cols-3 gap-2 font-mono">
               <div className="rounded-xl bg-[#080808] text-white p-3">
                 <span className="block text-[8.5px] text-neutral-400 uppercase">70% ATHLETE (7000 BPS)</span>
                 <strong className="text-base sm:text-lg text-white">
