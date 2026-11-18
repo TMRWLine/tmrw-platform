@@ -1,4 +1,6 @@
-export interface AthleteRecord {
+export interface CommercialAthleteRecord {
+  intake_status?: 'commercial';
+  verification_source_url?: string;
   id: string; // uuid
   name: string; // display name e.g. "M. Thorne"
   display_name: string;
@@ -30,6 +32,41 @@ export interface AthleteRecord {
     available: string[];
     locked: string[];
   };
+}
+
+export type ScoutAthleteRecord = Omit<CommercialAthleteRecord,
+  'intake_status' | 'legal_full_name' | 'postcode' | 'radiusKm' | 'image' |
+  'valuation' | 'tier' | 'agreement_status' | 'master_licence_signed' |
+  'social' | 'governing_body' | 'branding_categories'
+> & {
+  intake_status: 'scouted';
+  verification_source_url: string;
+  legal_full_name: null;
+  postcode: null;
+  radiusKm: null;
+  image: null;
+  valuation: null;
+  tier: null;
+  agreement_status: null;
+  master_licence_signed: null;
+  social: {
+    instagram_handle: null;
+    follower_count: null;
+    engagement_rate: null;
+  };
+  governing_body: {
+    name: string;
+    sanctioned: null;
+    tpa_compliant: null;
+    document_verified: null;
+  };
+  branding_categories: null;
+};
+
+export type AthleteRecord = CommercialAthleteRecord | ScoutAthleteRecord;
+
+export function isCommercialAthlete(record: AthleteRecord): record is CommercialAthleteRecord {
+  return record.intake_status !== 'scouted';
 }
 
 export const DATABASE_ROSTER: AthleteRecord[] = [
@@ -348,4 +385,75 @@ export const DATABASE_ROSTER: AthleteRecord[] = [
     governing_body: { name: 'Combat Sports Authority NSW', sanctioned: true, tpa_compliant: true, document_verified: true },
     branding_categories: { available: ['Recovery', 'Performance Apparel', 'Hydration'], locked: ['Wagering'] },
   },
+  {
+    id: '973302d2-bc62-47ce-9311-c1052fe13a01',
+    intake_status: 'scouted',
+    name: 'O. Large',
+    display_name: 'O. Large',
+    full_name: 'Onitoni Large',
+    legal_full_name: null,
+    sport: 'Rugby League',
+    league: 'NSW Cup',
+    current_club: 'Manly-Warringah Sea Eagles',
+    verification_source_url: 'https://www.nswrl.com.au/players/nsw-cup/manly-warringah-sea-eagles/onitoni-large/',
+    postcode: null,
+    radiusKm: null,
+    image: null,
+    valuation: null,
+    status: 'PENDING VERIFICATION',
+    tier: null,
+    agreement_status: null,
+    master_licence_signed: null,
+    social: { instagram_handle: null, follower_count: null, engagement_rate: null },
+    governing_body: { name: 'NSWRL', sanctioned: null, tpa_compliant: null, document_verified: null },
+    branding_categories: null,
+  },
+  {
+    id: '973302d2-bc62-47ce-9311-c1052fe13a02',
+    intake_status: 'scouted',
+    name: 'L. Aiken',
+    display_name: 'L. Aiken',
+    full_name: 'Luke Aiken',
+    legal_full_name: null,
+    sport: 'Rugby Union',
+    league: 'Super Rugby Pacific Academy',
+    current_club: 'Western Force',
+    verification_source_url: 'https://www.rugby.com.au/news/emerging-academy-halfback-aiken-elevated-force-squad-2026824',
+    postcode: null,
+    radiusKm: null,
+    image: null,
+    valuation: null,
+    status: 'PENDING VERIFICATION',
+    tier: null,
+    agreement_status: null,
+    master_licence_signed: null,
+    social: { instagram_handle: null, follower_count: null, engagement_rate: null },
+    governing_body: { name: 'Rugby Australia', sanctioned: null, tpa_compliant: null, document_verified: null },
+    branding_categories: null,
+  },
+  {
+    id: '973302d2-bc62-47ce-9311-c1052fe13a03',
+    intake_status: 'scouted',
+    name: 'E. Ngarimu',
+    display_name: 'E. Ngarimu',
+    full_name: 'Erana Ngarimu',
+    legal_full_name: null,
+    sport: 'Netball',
+    league: 'ANZ Premiership',
+    current_club: 'Pulse',
+    verification_source_url: 'https://anzpremiership.co.nz/premiership/teams/pulse/erana-ngarimu.html',
+    postcode: null,
+    radiusKm: null,
+    image: null,
+    valuation: null,
+    status: 'PENDING VERIFICATION',
+    tier: null,
+    agreement_status: null,
+    master_licence_signed: null,
+    social: { instagram_handle: null, follower_count: null, engagement_rate: null },
+    governing_body: { name: 'Netball New Zealand', sanctioned: null, tpa_compliant: null, document_verified: null },
+    branding_categories: null,
+  },
 ];
+
+export const COMMERCIAL_ROSTER = DATABASE_ROSTER.filter(isCommercialAthlete);

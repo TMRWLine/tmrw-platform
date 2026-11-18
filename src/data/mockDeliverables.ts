@@ -1,5 +1,5 @@
 import data from './mockDeliverables.json';
-import { DATABASE_ROSTER, type AthleteRecord } from './rosterData';
+import { COMMERCIAL_ROSTER as DATABASE_ROSTER, type CommercialAthleteRecord as AthleteRecord } from './rosterData';
 
 export interface GrassrootsClub {
   name: string;
