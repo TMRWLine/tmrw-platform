@@ -16,7 +16,6 @@ import {
   Info,
   ToggleLeft,
   ToggleRight,
-  Eye,
   DollarSign,
   Wallet,
   Landmark,
@@ -95,7 +94,13 @@ import {
 } from './api';
 import MapView from './MapView';
 import { athleteInitials, athleteDisplayName } from './lib/formatName';
-import { BRISBANE_RUNWAY_PATH, COMMERCIAL_TIERS_PATH, HOW_IT_WORKS_PATH, THE_ROSTER_PATH } from './lib/routes';
+import {
+  BRISBANE_RUNWAY_PATH,
+  COMMERCIAL_TIERS_PATH,
+  HOW_IT_WORKS_PATH,
+  SPONSOR_DISCOVERY_PATH,
+  THE_ROSTER_PATH,
+} from './lib/routes';
 
 type AppView = 'landing' | 'sponsor' | 'how-it-works' | 'the-roster' | 'commercial-tiers' | 'brisbane-runway';
 
@@ -106,6 +111,7 @@ function viewFromLocation(): AppView {
   if (path === THE_ROSTER_PATH) return 'the-roster';
   if (path === COMMERCIAL_TIERS_PATH) return 'commercial-tiers';
   if (path === BRISBANE_RUNWAY_PATH) return 'brisbane-runway';
+  if (path === SPONSOR_DISCOVERY_PATH) return 'sponsor';
   return 'landing';
 }
 
@@ -450,8 +456,8 @@ export function MarketplaceApp() {
 
   function enterSponsorWorkspace() {
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
-    if (path !== THE_ROSTER_PATH) window.history.pushState(null, '', THE_ROSTER_PATH);
-    setView('the-roster');
+    if (path !== SPONSOR_DISCOVERY_PATH) window.history.pushState(null, '', SPONSOR_DISCOVERY_PATH);
+    setView('sponsor');
   }
 
   async function routeAthleteEntry() {
@@ -1993,17 +1999,8 @@ function CommercialLedger({ athlete }: { athlete: Athlete }) {
   );
 }
 
-function computeConfidence(distanceKm: number, radiusM: number): number {
-  const radiusKm = radiusM / 1000;
-  if (radiusKm <= 0 || distanceKm >= radiusKm) return 0;
-  return Math.round((1 - distanceKm / radiusKm) * 100);
-}
-
 function ADMModal({
   athleteName,
-  matches,
-  manualOverride,
-  onToggleOverride,
   onClose,
 }: {
   athleteName: string;
