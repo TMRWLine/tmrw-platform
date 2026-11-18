@@ -11,6 +11,7 @@ import { grantPath } from './whitelisting.js';
 const table = 'public.whitelisting_grants';
 const stripeURL = 'https://api.stripe.com/v1/checkout/sessions';
 const sessionId = 'cs_test_fixture1';
+const athleteId = 'ea99acbc-c057-49e8-992e-98ec82e994a0';
 const checkoutURL = 'https://checkout.stripe.invalid/fixture';
 const dbURL = 'https://db.fixture.invalid/rest/v1/whitelisting_grants';
 
@@ -71,7 +72,7 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
     if (url.href === stripeURL) {
       checkoutCalls++;
       const params = new URLSearchParams(options.body);
-      assert.equal(params.get('success_url'), 'https://tmrw.fixture.invalid/checkout/success?session_id={CHECKOUT_SESSION_ID}&athleteId=chloe-vance&tierId=pathway_flight');
+      assert.equal(params.get('success_url'), `https://tmrw.fixture.invalid/checkout/success?session_id={CHECKOUT_SESSION_ID}&athleteId=${athleteId}&tierId=pathway_flight`);
       const metadata = Object.fromEntries([...params].flatMap(([key, value]) => {
         const name = /^metadata\[(.+)\]$/.exec(key)?.[1];
         return name ? [[name, value]] : [];
@@ -111,7 +112,7 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
     }
     if (url.origin === 'https://db.fixture.invalid' && url.pathname === '/rest/v1/athlete_profiles' &&
         url.searchParams.get('select') === 'stripe_account_id') {
-      assert.equal(url.searchParams.get('id'), 'eq.chloe-vance');
+      assert.equal(url.searchParams.get('id'), `eq.${athleteId}`);
       assert.equal(options.headers.apikey, 'fixture-service-key');
       return Response.json([{ stripe_account_id: 'acct_fixture' }]);
     }
@@ -148,9 +149,9 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
     body: JSON.stringify(body),
   });
   const start = () => request('/api/checkout/create-session', {
-    athleteId: 'chloe-vance', tierId: 'pathway_contender', postcode: '0220',
+    athleteId, tierId: 'pathway_contender', postcode: '0220',
     escrowMode: 'milestone_50_50', transferGroup,
-    athlete: { full_name: 'Chloe Vance' },
+    athlete: { full_name: 'Chloe Vance', image_url: '/fixture.png' },
   });
 
   try {
@@ -190,7 +191,7 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
     assert.equal(issued.checkoutSessionId, sessionId);
     assert.equal(issued.milestoneReleaseAvailable, true);
     assert.equal(issued.amountPaidCents, 350000);
-    assert.equal(issued.grant.athleteId, 'chloe-vance');
+    assert.equal(issued.grant.athleteId, athleteId);
     assert.equal(issued.grant.athleteName, 'Chloe Vance');
     assert.equal(issued.grant.flightTierId, 'pathway_flight');
     assert.equal(issued.grant.postcode, '0220');
