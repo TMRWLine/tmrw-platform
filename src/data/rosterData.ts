@@ -15,6 +15,7 @@ export interface AthleteRecord {
   tier: 'storefront' | 'metro' | 'regional';
   agreement_status: 'No agreement' | 'Syndicate Active' | 'Category Locked';
   master_licence_signed: boolean;
+  bio?: string;
   social: {
     instagram_handle: string;
     follower_count: number;
