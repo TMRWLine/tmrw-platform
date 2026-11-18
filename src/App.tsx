@@ -1059,6 +1059,7 @@ export function MarketplaceApp() {
       <AthletePortalDrawer
         isOpen={isPortalDrawerOpen}
         onClose={() => setIsPortalDrawerOpen(false)}
+        onOpenCapsuleStudio={() => setIsCartOpen(true)}
         onContinue={() => {
           setIsPortalDrawerOpen(false);
           setIsAuthModalOpen(true);
