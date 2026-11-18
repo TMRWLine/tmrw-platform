@@ -27,7 +27,7 @@ test('release requires server confirmation and never writes a failed release', a
   const storage = globalThis.localStorage;
   let writes = 0;
   globalThis.localStorage = { getItem: () => '[{"transferGroup":"group"}]', setItem: () => { writes++; } } as unknown as Storage;
-  const params = { athleteId: 'athlete', transferGroup: 'group', escrowHoldCents: 100 };
+  const params = { checkoutSessionId: 'cs_test', athleteId: 'athlete', transferGroup: 'group', escrowHoldCents: 100 };
   try {
     for (const [status, body] of [[500, { error: 'Transfer unavailable' }], [200, {}], [200, { released: true }], [200, { released: false, escrowTransferId: 'tr_server' }]] as const) {
       globalThis.fetch = async () => new Response(JSON.stringify(body), { status });
@@ -36,7 +36,7 @@ test('release requires server confirmation and never writes a failed release', a
     globalThis.fetch = async () => { throw new Error('Network unavailable'); };
     await assert.rejects(releaseEscrowMilestoneTranche(params), /Network unavailable/);
     assert.equal(writes, 0);
-    globalThis.fetch = async () => Response.json({ released: true, escrowTransferId: 'tr_server' });
+    globalThis.fetch = async () => Response.json({ released: true, escrowTransferId: 'tr_server', releasedAmountCents: 100, releasedAt: '2026-01-01T00:00:00.000Z' });
     assert.equal((await releaseEscrowMilestoneTranche(params)).escrowTransferId, 'tr_server');
     assert.equal(writes, 1);
   } finally {
