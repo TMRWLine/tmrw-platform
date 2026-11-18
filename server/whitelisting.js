@@ -59,10 +59,17 @@ export function createWhitelistingRouter() {
   const usage = new Map();
   router.get('/grants', async (req, res) => {
     res.set('Cache-Control', 'no-store');
+    let user = null;
+    if (req.get('Authorization')) {
+      const authentication = await authenticatedUser(req);
+      if (!authentication.user) return res.status(authentication.status).json({ error: authentication.error });
+      user = authentication.user;
+    }
+    const usageKey = user ? `user:${user.id}` : `ip:${req.ip}`;
     const now = Date.now();
     for (const [ip, entry] of usage) if (entry.until <= now) usage.delete(ip);
-    const entry = usage.get(req.ip) || { count: 0, until: now + 60000 };
-    usage.set(req.ip, entry);
+    const entry = usage.get(usageKey) || { count: 0, until: now + 60000 };
+    usage.set(usageKey, entry);
     if (++entry.count > 60) {
       res.set('Retry-After', String(Math.ceil((entry.until - now) / 1000)));
       return res.status(429).json({ error: 'Entitlement lookup rate limit exceeded' });
@@ -70,12 +77,6 @@ export function createWhitelistingRouter() {
     const sessionId = req.query.session_id;
     if (!validSessionId(sessionId)) return res.status(400).json({ error: 'A valid checkout session id is required' });
     if (!configured()) return res.status(503).json(state(sessionId, null, 'not_configured'));
-    let user = null;
-    if (req.get('Authorization')) {
-      const authentication = await authenticatedUser(req);
-      if (!authentication.user) return res.status(authentication.status).json({ error: authentication.error });
-      user = authentication.user;
-    }
     try {
       const row = (await records(`?checkout_session_id=eq.${encodeURIComponent(sessionId)}&select=*`))[0];
       const result = state(sessionId, row);

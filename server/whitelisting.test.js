@@ -186,3 +186,15 @@ test('public entitlement lookups are rate limited', async () => {
   }
   assert.equal(limited, true);
 });
+
+test('one trusted proxy separates anonymous client limits and authenticated limits use user identity', async () => {
+  const read = (ip, token) => nativeFetch(base + '/api/whitelisting/grants?session_id=cs_test_missing', {
+    headers: { 'X-Forwarded-For': ip, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  for (let i = 0; i < 60; i++) assert.equal((await read('192.0.2.10')).status, 200);
+  assert.equal((await read('192.0.2.10')).status, 429);
+  assert.equal((await read('192.0.2.11')).status, 200);
+  for (let i = 0; i < 65; i++) await read('192.0.2.12', 'buyer');
+  assert.equal((await read('192.0.2.13', 'buyer')).status, 429);
+  assert.equal((await read('192.0.2.12', 'other')).status, 200);
+});
