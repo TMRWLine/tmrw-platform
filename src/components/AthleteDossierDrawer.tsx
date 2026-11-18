@@ -187,7 +187,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
   const [stripePayload, setStripePayload] = useState<StripeCheckoutPayload | null>(null);
   const [lastReceipt, setLastReceipt] = useState<StripeEscrowReceipt | null>(null);
   const [lastPaidPriceAud, setLastPaidPriceAud] = useState<number>(750);
-  const [activeWhitelistingGrant, setActiveWhitelistingGrant] = useState<WhitelistingGrant | null>(null);
+  const [activeWhitelistingGrant, setActiveWhitelistingGrant] = useState<Partial<WhitelistingGrant> | null>(null);
   const [liveOverride, setLiveOverride] = useState<LiveAthleteOverride | null>(null);
 
   const currentIndex = athlete
@@ -1356,7 +1356,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
             athleteName: displayFullName,
             flightTierId: tier,
             postcode: displayPostcode,
-          });
+          }).catch(() => ({ athleteId: athlete.id, athleteName: displayFullName, flightTierId: tier, postcode: displayPostcode }));
           setActiveWhitelistingGrant(grant);
         }}
       />

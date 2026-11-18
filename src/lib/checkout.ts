@@ -179,22 +179,10 @@ export async function createCheckoutSession(
         splitLedger,
       };
     }
-  } catch {
-    // Offline or embedded execution
+    throw new Error(`Unable to initialise secure checkout (HTTP ${response.status}): ${data && 'error' in data ? String(data.error) : 'checkout URL not supplied.'}`);
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Unable to initialise secure checkout. Check your connection and try again.');
   }
-
-  return {
-    checkoutUrl: null,
-    sessionId: `cs_embedded_${idempotencyKey}`,
-    idempotencyKey,
-    transferGroup: splitLedger.transferGroup,
-    chargeId,
-    platformRetainedId,
-    athleteTransferId,
-    clubTransferId,
-    escrowTransferId,
-    splitLedger,
-  };
 }
 
 export async function releaseEscrowMilestoneTranche(params: {
@@ -203,20 +191,19 @@ export async function releaseEscrowMilestoneTranche(params: {
   escrowHoldCents: number;
 }): Promise<EscrowReleaseResult> {
   const releaseKey = `idemp_release_${params.transferGroup}_${Date.now()}`;
-  const escrowTransferId = `tr_ath_final50_${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
-
-  try {
-    await fetch('/api/checkout/release-escrow', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Idempotency-Key': releaseKey,
-      },
-      body: JSON.stringify(params),
-    });
-  } catch {
-    // Local sandbox fallback
+  const response = await fetch('/api/checkout/release-escrow', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': releaseKey,
+    },
+    body: JSON.stringify(params),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || data?.released !== true || typeof data?.escrowTransferId !== 'string' || !data.escrowTransferId.trim()) {
+    throw new Error(`Unable to release escrow (HTTP ${response.status}): ${data?.error || 'release not confirmed.'}`);
   }
+  const escrowTransferId = data.escrowTransferId;
 
   try {
     const ledger = JSON.parse(localStorage.getItem('tmrw_escrow_ledger') || '[]');

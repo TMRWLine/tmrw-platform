@@ -113,7 +113,7 @@ function toGrant(
 /**
  * Issues a 90-day postcode paid-media licence for TikTok Spark Ads and Meta
  * Partnership Ads, scoped to a 5km, 15km, or 50km catchment. Persists to
- * Supabase when the ledger is available, otherwise returns a local mock grant.
+ * Supabase and requires a persisted grant.
  */
 export async function issuePostcodeWhitelistingGrant(
   input: IssueWhitelistingGrantInput,
@@ -153,12 +153,10 @@ export async function issuePostcodeWhitelistingGrant(
       )
       .maybeSingle();
 
-    if (!error) {
-      return toGrant(data ?? {}, fallback, 'supabase');
-    }
-  } catch {
-    // Local test benches and missing ledgers fall through to a mock grant.
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('Token grant was not issued.');
+    return toGrant(data, { ...fallback, tiktok_spark_code: '', meta_partnership_token: '' }, 'supabase');
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Unable to issue activation tokens.');
   }
-
-  return { ...fallback, source: 'mock' };
 }

@@ -130,6 +130,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
     }
     setErrorMsg(null);
 
+    let failed = false;
     const sessionPromise = createCheckoutSession({
       athleteId: payload.athleteId,
       tierId: payload.tierId,
@@ -145,45 +146,54 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
         grassroots_club_name: payload.clubName,
         image_url: payload.athleteImage,
       },
-    }).catch(() => null);
-
-    setClearingStage('stage_1_charge');
-    await new Promise((r) => setTimeout(r, 650));
-    setClearingStage('stage_2_transfers');
-    await new Promise((r) => setTimeout(r, 750));
-    setClearingStage('stage_3_rcti');
-    await new Promise((r) => setTimeout(r, 650));
-
-    const sessionResult = await sessionPromise;
-    const txId = `TX-2026-${payload.postcode}-${Math.floor(100000 + Math.random() * 900000)}`;
-    const receipt: StripeEscrowReceipt = {
-      txId,
-      transferGroup: split.transferGroup,
-      chargeId: sessionResult?.chargeId ?? `py_${txId}`,
-      platformRetainedId: sessionResult?.platformRetainedId ?? `fee_tmrw_t0_${txId}`,
-      athleteTransferId: sessionResult?.athleteTransferId ?? `tr_ath_${txId}`,
-      clubTransferId: sessionResult?.clubTransferId ?? `q_batch_club_${txId}`,
-      clubCadence,
-      nextQuarterSweepDate: split.nextQuarterSweepDate,
-      idempotencyKey: sessionResult?.idempotencyKey ?? `idemp_${txId}`,
-      legalName: sanitizeInput(legalName.trim()),
-      abn,
-      email: sanitizeInput(email.trim()),
-      paymentMethod: selectedMethodLabel,
-      escrowMode,
-      paidAt: new Date().toISOString(),
-    };
+    });
 
     try {
-      const existing = JSON.parse(localStorage.getItem('tmrw_escrow_ledger') || '[]');
-      existing.unshift({ ...receipt, payload, split });
-      localStorage.setItem('tmrw_escrow_ledger', JSON.stringify(existing.slice(0, 30)));
-    } catch {
-      // ignore storage quota errors
-    }
+      await Promise.all([sessionPromise, (async () => {
+        setClearingStage('stage_1_charge');
+        await new Promise((r) => setTimeout(r, 650));
+        if (failed) return;
+        setClearingStage('stage_2_transfers');
+        await new Promise((r) => setTimeout(r, 750));
+        if (failed) return;
+        setClearingStage('stage_3_rcti');
+        await new Promise((r) => setTimeout(r, 650));
+      })()]);
+      const sessionResult = await sessionPromise;
+      const txId = `TX-2026-${payload.postcode}-${Math.floor(100000 + Math.random() * 900000)}`;
+      const receipt: StripeEscrowReceipt = {
+        txId,
+        transferGroup: split.transferGroup,
+        chargeId: sessionResult?.chargeId ?? `py_${txId}`,
+        platformRetainedId: sessionResult?.platformRetainedId ?? `fee_tmrw_t0_${txId}`,
+        athleteTransferId: sessionResult?.athleteTransferId ?? `tr_ath_${txId}`,
+        clubTransferId: sessionResult?.clubTransferId ?? `q_batch_club_${txId}`,
+        clubCadence,
+        nextQuarterSweepDate: split.nextQuarterSweepDate,
+        idempotencyKey: sessionResult?.idempotencyKey ?? `idemp_${txId}`,
+        legalName: sanitizeInput(legalName.trim()),
+        abn,
+        email: sanitizeInput(email.trim()),
+        paymentMethod: selectedMethodLabel,
+        escrowMode,
+        paidAt: new Date().toISOString(),
+      };
 
-    setClearingStage('idle');
-    onSuccess(receipt);
+      try {
+        const existing = JSON.parse(localStorage.getItem('tmrw_escrow_ledger') || '[]');
+        existing.unshift({ ...receipt, payload, split });
+        localStorage.setItem('tmrw_escrow_ledger', JSON.stringify(existing.slice(0, 30)));
+      } catch {
+        // ignore storage quota errors
+      }
+
+      setClearingStage('idle');
+      onSuccess(receipt);
+    } catch (error) {
+      failed = true;
+      setClearingStage('idle');
+      setErrorMsg(`ESCROW NOT CLEARED: ${error instanceof Error ? error.message : 'Unable to initialise secure checkout. Please try again.'}`);
+    }
   };
 
   return createPortal(

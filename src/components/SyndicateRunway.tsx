@@ -656,7 +656,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
   const [lastReceipt, setLastReceipt] = useState<StripeEscrowReceipt | null>(null);
   const [lastPaidPriceAud, setLastPaidPriceAud] = useState<number>(50000);
   const [lastPaidClubName, setLastPaidClubName] = useState<string>('Balmoral Cycling Club');
-  const [unlockedGrant, setUnlockedGrant] = useState<WhitelistingGrant | null>(null);
+  const [unlockedGrant, setUnlockedGrant] = useState<Partial<WhitelistingGrant> | null>(null);
 
   const activeContender =
     CONTENDER_SPECIMENS.find((c) => c.id === selectedContenderId) ?? CONTENDER_SPECIMENS[0];
@@ -1063,7 +1063,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
             athleteName: currentPayload.athleteName,
             flightTierId: currentPayload.tierId,
             postcode: currentPayload.postcode,
-          });
+          }).catch(() => ({ athleteId: currentPayload.athleteId, athleteName: currentPayload.athleteName, flightTierId: currentPayload.tierId, postcode: currentPayload.postcode }));
           setUnlockedGrant(grant);
         }}
       />
