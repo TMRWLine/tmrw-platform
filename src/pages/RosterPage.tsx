@@ -386,7 +386,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
             </div>
           ) : null}
 
-          <div ref={dropdownRef} className="relative grid grid-cols-1 md:grid-cols-4 items-center mb-4 gap-5">
+          <div ref={dropdownRef} className="roster-toolbar relative grid grid-cols-1 md:grid-cols-4 items-center mb-4 gap-5">
             <div>
               <span className="font-sans font-bold text-[14px] text-[#080808] tracking-tight">
                 Our athlete library
@@ -462,7 +462,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
             </div>
 
             <div className="flex items-center justify-end gap-8 font-sans text-[12.5px] font-normal">
-              <div className="relative">
+              <div className="roster-filter-anchor relative">
                 <button
                   type="button"
                   onClick={() => {
@@ -489,7 +489,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 </button>
 
                 {activeDropdown === 'filters' && (
-                  <div className="absolute right-0 mt-3 w-80 bg-white border border-black/10 rounded-2xl p-5 shadow-2xl z-50">
+                  <div className="roster-filter-popup absolute right-0 mt-3 w-80 bg-white border border-black/10 rounded-2xl p-5 shadow-2xl z-50">
                     <div className="grid grid-cols-2 gap-2 mb-6 max-h-64 overflow-y-auto pr-1">
                       {DISCIPLINES.map((item) => {
                         const isSelected = tempDiscipline === item.id;

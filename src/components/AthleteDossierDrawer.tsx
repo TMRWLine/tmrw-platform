@@ -364,16 +364,16 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
     <div
       data-lenis-prevent="true"
       onClick={onClose}
-      className="fixed inset-0 z-[80] bg-black/45 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
+      className="dossier-backdrop fixed inset-0 z-[80] bg-black/45 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
       <div
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[1840px] h-[94dvh] rounded-[24px] bg-[#FFFFFF] text-[#080808] shadow-[0_30px_90px_rgba(0,0,0,0.28)] border border-black/10 flex flex-col overflow-hidden"
+        className="dossier-panel relative w-full max-w-[1840px] h-[94dvh] rounded-[24px] bg-[#FFFFFF] text-[#080808] shadow-[0_30px_90px_rgba(0,0,0,0.28)] border border-black/10 flex flex-col overflow-hidden"
       >
-        <header className="shrink-0 z-30 grid grid-cols-3 items-center px-4 sm:px-6 md:px-10 py-3.5 bg-[#FFFFFF]/95 backdrop-blur-md border-b border-black/10">
-          <div className="flex items-center gap-2">
+        <header className="dossier-header shrink-0 z-30 grid grid-cols-3 items-center px-4 sm:px-6 md:px-10 py-3.5 bg-[#FFFFFF]/95 backdrop-blur-md border-b border-black/10">
+          <div className="dossier-athlete-switcher flex items-center gap-2">
             <button
               type="button"
               onClick={() => prevEntry && onSelectAthlete?.(prevEntry.record)}
@@ -392,7 +392,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center justify-center gap-7 font-sans text-[13px] tracking-tight">
+          <div className="dossier-tabs flex items-center justify-center gap-7 font-sans text-[13px] tracking-tight">
             <button
               type="button"
               onClick={() => setDrawerMode('audit')}
@@ -453,7 +453,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center justify-end">
+          <div className="dossier-close flex items-center justify-end">
             <button
               type="button"
               onClick={onClose}
@@ -469,7 +469,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
 
         <div
           data-lenis-prevent="true"
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 md:px-10 pt-5 pb-10 bg-[#FFFFFF]"
+          className="dossier-content flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 md:px-10 pt-5 pb-10 bg-[#FFFFFF]"
         >
           <div className="mb-5 border-b border-black/10 pb-4">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-5 items-center">
@@ -540,7 +540,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                       onMouseEnter={() => !isFloorLocked && setSelectedTierId(pkg.tier_id)}
                       onClick={() => !isFloorLocked && triggerCheckout(pkg.tier_id)}
                       style={{ borderRadius: '16px', minHeight: '490px' }}
-                      className={`group relative isolate flex flex-col justify-between p-7 xl:p-8 transition-colors duration-500 overflow-visible select-none ${
+                      className={`dossier-card group relative isolate flex flex-col justify-between p-7 xl:p-8 transition-colors duration-500 overflow-visible select-none ${
                         isFloorLocked
                           ? 'bg-[#F0F0EE]/60 text-neutral-400 cursor-not-allowed border border-black/10'
                           : isSelected
@@ -584,7 +584,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         <FilmGrainOverlay intensity="fine" />
                       </div>
 
-                      <div className="relative z-20 flex items-start justify-between gap-3">
+                      <div className="package-heading relative z-20 flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <h3 className="m-0 font-sans text-[18px] font-bold tracking-[-0.02em] leading-snug">
                             <span
@@ -648,7 +648,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
 
                       <div className="relative z-20 mt-auto pt-4 pb-1">
                         <div
-                          className={`font-display text-[128px] xl:text-[138px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 ${
+                          className={`dossier-card-number font-display text-[128px] xl:text-[138px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 ${
                             !isFloorLocked
                               ? 'group-hover:opacity-0 group-hover:translate-y-2 group-hover:pointer-events-none'
                               : ''
@@ -662,7 +662,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                               e.stopPropagation();
                               triggerCheckout(pkg.tier_id);
                             }}
-                            className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
+                            className="dossier-card-actions absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                           >
                             <span className="font-sans text-[11.5px] font-semibold tracking-tight text-[#080808] pl-2.5 truncate">
                               {pkg.shortCode} · {pkg.badge}
@@ -687,7 +687,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                 <article
                   onMouseEnter={() => setSelectedDossierPillar('01')}
                   style={{ borderRadius: '16px', minHeight: '490px' }}
-                  className={`group relative isolate flex flex-col justify-between p-7 xl:p-8 transition-colors duration-500 cursor-pointer overflow-visible select-none ${
+                  className={`dossier-card group relative isolate flex flex-col justify-between p-7 xl:p-8 transition-colors duration-500 cursor-pointer overflow-visible select-none ${
                     selectedDossierPillar === '01'
                       ? 'bg-[#080808] text-white shadow-xl'
                       : 'bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white'
@@ -813,12 +813,12 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                   </div>
 
                   <div className="relative z-20 mt-auto pt-4 pb-1">
-                    <div className="font-display text-[128px] xl:text-[138px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 group-hover:opacity-0 group-hover:translate-y-2 group-hover:pointer-events-none">
+                    <div className="dossier-card-number font-display text-[128px] xl:text-[138px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 group-hover:opacity-0 group-hover:translate-y-2 group-hover:pointer-events-none">
                       01
                     </div>
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
+                      className="dossier-card-actions absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                     >
                       <div className="flex items-center gap-0.5 pl-1">
                         {(['specs', 'honours', 'schedule'] as const).map((lens) => (
@@ -856,7 +856,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                 <article
                   onMouseEnter={() => setSelectedDossierPillar('02')}
                   style={{ borderRadius: '16px', minHeight: '490px' }}
-                  className={`group relative isolate flex flex-col justify-between p-7 xl:p-8 transition-colors duration-500 cursor-pointer overflow-visible select-none ${
+                  className={`dossier-card group relative isolate flex flex-col justify-between p-7 xl:p-8 transition-colors duration-500 cursor-pointer overflow-visible select-none ${
                     selectedDossierPillar === '02'
                       ? 'bg-[#080808] text-white shadow-xl'
                       : 'bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white'
@@ -966,7 +966,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                   </div>
 
                   <div className="relative z-20 mt-auto pt-4 pb-1">
-                    <div className="font-display text-[128px] xl:text-[138px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 group-hover:opacity-0 group-hover:translate-y-2 group-hover:pointer-events-none">
+                    <div className="dossier-card-number font-display text-[128px] xl:text-[138px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 group-hover:opacity-0 group-hover:translate-y-2 group-hover:pointer-events-none">
                       02
                     </div>
                     <div
@@ -974,7 +974,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         e.stopPropagation();
                         triggerCheckout(selectedTierId);
                       }}
-                      className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
+                      className="dossier-card-actions absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                     >
                       <span className="font-sans text-[11.5px] font-semibold tracking-tight text-[#080808] pl-2.5 truncate">
                         {downloadedAsset ? `✓ Pulled ${downloadedAsset}` : `OAuth · ${displayIgHandle}`}
@@ -992,7 +992,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                 <article
                   onMouseEnter={() => setSelectedDossierPillar('03')}
                   style={{ borderRadius: '16px', minHeight: '490px' }}
-                  className={`group relative isolate flex flex-col justify-between p-7 xl:p-8 transition-colors duration-500 cursor-pointer overflow-visible select-none ${
+                  className={`dossier-card group relative isolate flex flex-col justify-between p-7 xl:p-8 transition-colors duration-500 cursor-pointer overflow-visible select-none ${
                     selectedDossierPillar === '03'
                       ? 'bg-[#080808] text-white shadow-xl'
                       : 'bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white'
@@ -1103,12 +1103,12 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                   </div>
 
                   <div className="relative z-20 mt-auto pt-4 pb-1">
-                    <div className="font-display text-[128px] xl:text-[138px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 group-hover:opacity-0 group-hover:translate-y-2 group-hover:pointer-events-none">
+                    <div className="dossier-card-number font-display text-[128px] xl:text-[138px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 group-hover:opacity-0 group-hover:translate-y-2 group-hover:pointer-events-none">
                       03
                     </div>
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
+                      className="dossier-card-actions absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                     >
                       <div className="flex items-center gap-0.5 pl-1">
                         {(['5km', '15km', '50km'] as const).map((ring) => (
@@ -1146,7 +1146,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                 <article
                   onMouseEnter={() => setSelectedDossierPillar('04')}
                   style={{ borderRadius: '16px', minHeight: '490px' }}
-                  className={`group relative isolate flex flex-col justify-between p-7 xl:p-8 transition-colors duration-500 cursor-pointer overflow-visible select-none ${
+                  className={`dossier-card group relative isolate flex flex-col justify-between p-7 xl:p-8 transition-colors duration-500 cursor-pointer overflow-visible select-none ${
                     selectedDossierPillar === '04'
                       ? 'bg-[#080808] text-white shadow-xl'
                       : 'bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white'
@@ -1280,7 +1280,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                   </div>
 
                   <div className="relative z-20 mt-auto pt-4 pb-1">
-                    <div className="font-display text-[128px] xl:text-[138px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 group-hover:opacity-0 group-hover:translate-y-2 group-hover:pointer-events-none">
+                    <div className="dossier-card-number font-display text-[128px] xl:text-[138px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 group-hover:opacity-0 group-hover:translate-y-2 group-hover:pointer-events-none">
                       04
                     </div>
                     <div
@@ -1289,7 +1289,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         markAudited('04');
                         triggerCheckout(selectedTierId);
                       }}
-                      className="absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
+                      className="dossier-card-actions absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                     >
                       <span className="font-sans text-[11.5px] font-semibold tracking-tight text-[#080808] pl-2.5 truncate">
                         ✓ {auditedSector || availableCategories[0]} Cleared
@@ -1306,7 +1306,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
           )}
         </div>
 
-        <footer className="shrink-0 z-30 border-t border-black/10 bg-[#FFFFFF] px-4 sm:px-6 md:px-10 py-3.5 flex flex-wrap items-center justify-between gap-4">
+        <footer className="dossier-footer shrink-0 z-30 border-t border-black/10 bg-[#FFFFFF] px-4 sm:px-6 md:px-10 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500">
               SELECTED PACKAGE:

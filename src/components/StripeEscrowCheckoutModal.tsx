@@ -191,7 +191,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
       onClick={() => clearingStage === 'idle' && onClose()}
-      className="fixed inset-0 z-[110] bg-black/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
+      className="mobile-overlay checkout-backdrop fixed inset-0 z-[110] bg-black/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
       <div
         data-lenis-prevent="true"
@@ -249,7 +249,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 font-mono">
+            <div className="checkout-settlement-grid grid grid-cols-3 gap-2 font-mono">
               <div className="rounded-xl bg-[#080808] text-white p-3">
                 <span className="block text-[8.5px] text-neutral-400 uppercase">70% ATHLETE (7000 BPS)</span>
                 <strong className="text-base sm:text-lg text-white">
