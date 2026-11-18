@@ -48,7 +48,7 @@ export const SettlementLedger: React.FC = () => {
           </div>
           <div className="lg:col-span-5 min-w-0">
             <p className="m-0 text-sm sm:text-base text-neutral-600 leading-relaxed font-sans">
-              Traditional sponsorship traps elite contenders in ninety-day payment terms, lost paperwork, and out-of-pocket travel overhead. tmrw/<span className="text-[#B8FF00]">.</span> eliminates friction with absolute financial certainty. Capital clears directly into the contender's account prior to competition day, their grassroots club secures its clean dividend, and an immutable tax invoice executes instantly.
+              Traditional sponsorship traps elite contenders in ninety-day payment terms, lost paperwork, and out-of-pocket travel overhead. tmrw<span className="text-[#B8FF00]">/.</span> eliminates friction with absolute financial certainty. Capital clears directly into the contender's account prior to competition day, their grassroots club secures its clean dividend, and an immutable tax invoice executes instantly.
             </p>
           </div>
         </div>

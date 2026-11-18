@@ -312,7 +312,7 @@ export function BrandKitTab({ athlete, onSignMOU }: BrandKitTabProps) {
           <InfoRow label="Watermark ID" value={`WM-${(athlete?.id ?? 'unknown').slice(0, 8).toUpperCase()}`} />
           <InfoRow
             label="Licence Status"
-            value={signed ? 'Licenced (2yr MOU)' : 'Unlicenced'}
+            value={signed ? 'Licensed (2yr MOU)' : 'Unlicensed'}
           />
           <InfoRow
             label="Follower Reach"
@@ -571,7 +571,7 @@ function WatermarkSVG({ athlete }: { athlete: Athlete }) {
         tmrw<tspan fill="#B8FF00">/.</tspan>
       </text>
       <text x="100" y="152" textAnchor="middle" fill="#999" fontSize="6" fontFamily="Inter, sans-serif">
-        {athlete.master_licence_signed ? 'LICENCED · 2YR MOU' : 'UNLICENCED'}
+        {athlete.master_licence_signed ? 'LICENSED · 2YR MOU' : 'UNLICENSED'}
       </text>
       {athlete.master_licence_signed && (
         <path d="M88 165 L96 173 L114 155" fill="none" stroke="#F7F7F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />

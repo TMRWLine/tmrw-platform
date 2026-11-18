@@ -249,7 +249,7 @@ function LandingFooter({ onHome }: { onHome: () => void }) {
     <footer className="landing-footer landing-footer-brand landing-footer-stack">
       <BrandLockup onClick={onHome} size="footer" />
       <p className="landing-footer-legal">
-        © 2026 tmrw/. All rights reserved. Sovereign sports commercialisation infrastructure for Australia and New
+        © 2026 tmrw<span className="text-[#B8FF00]">/.</span> All rights reserved. Sovereign sports commercialisation infrastructure for Australia and New
         Zealand.
       </p>
     </footer>
