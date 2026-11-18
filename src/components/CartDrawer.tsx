@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BrandLockup } from './BrandLockup';
+import { useMobileDialog } from '../lib/useMobileDialog';
 import type { AthleteRecord } from '../data/roster';
 
 export type LockupStyleId = 'editorial' | 'stencil' | 'heritage';
@@ -236,6 +237,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   selectedAthlete,
   onExploreRoster,
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useMobileDialog(isOpen, dialogRef);
   const [view, setView] = useState<'empty' | 'capsules' | 'creator' | 'checkout_success'>('capsules');
   const [capsules, setCapsules] = useState<CartCapsuleItem[]>(() =>
     typeof window !== 'undefined' ? loadAllCapsules() : [...DEFAULT_CAPSULE_DROPS],
@@ -464,6 +467,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   return createPortal(
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Athlete merch capsules"
+      tabIndex={-1}
       data-lenis-prevent="true"
       className="fixed inset-0 z-[90] bg-[#FFFFFF] text-[#0F0F11] flex flex-col overflow-y-auto selection:bg-[#CCFF00] selection:text-[#0F0F11] animate-fadeIn"
     >

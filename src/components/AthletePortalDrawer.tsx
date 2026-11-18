@@ -4,6 +4,7 @@ import { AthleteAccessHeader, AthleteAccessTabs, AthleteAccessHero } from './Ath
 import { dispatchOpenCapsuleDrawer } from './CartDrawer';
 import { ROSTER_DATA, suburbForPostcode } from '../data/roster';
 import type { LiveAthleteOverride } from './AthleteDossierDrawer';
+import { useMobileDialog } from '../lib/useMobileDialog';
 import {
   getActiveAthleteSession,
   maskBsbAndAccount,
@@ -188,6 +189,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
   onOpenCapsuleStudio,
 }) => {
   const dialogRef = useRef<HTMLElement>(null);
+  useMobileDialog(isOpen, dialogRef);
   const baseId = useId();
   const identifierId = `${baseId}-identifier`;
   const leagueId = `${baseId}-league`;
@@ -460,45 +462,6 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOpen, onClose]);
-
-  useEffect(() => {
-    if (!isOpen || !window.matchMedia('(max-width: 1023px)').matches) return;
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    const previousFocus = document.activeElement;
-    const bodyOverflow = document.body.style.overflow;
-    const rootOverflow = document.documentElement.style.overflow;
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-    dialog.focus({ preventScroll: true });
-
-    const trapFocus = (event: KeyboardEvent) => {
-      if (event.key !== 'Tab') return;
-      const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
-        'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]',
-      )).filter((element) => element.tabIndex >= 0 && element.getClientRects().length > 0);
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      if (!first || !last) {
-        event.preventDefault();
-        return;
-      }
-      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialog)) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    dialog.addEventListener('keydown', trapFocus);
-    return () => {
-      document.body.style.overflow = bodyOverflow;
-      document.documentElement.style.overflow = rootOverflow;
-      dialog.removeEventListener('keydown', trapFocus);
-      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
-    };
-  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && window.matchMedia('(max-width: 1023px)').matches) {
