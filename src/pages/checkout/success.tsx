@@ -1,13 +1,8 @@
 import React, { useMemo } from 'react';
 import { BrandLockup } from '../../components/BrandLockup';
-import {
-  mockDeliverables,
-  toCommercialAthlete,
-  type CommercialAthlete,
-} from '../../data/mockDeliverables';
 import { CHECKOUT_SUCCESS_PATH } from '../../lib/checkout';
 import { formatAud } from '../../lib/formatMoney';
-import { ROSTER_DATA } from '../../data/roster';
+import { resolveReceiptAthlete, type ReceiptAthlete } from './receiptAthlete';
 import { resolveReceiptPackage, type ReceiptPackage } from './receiptPackage';
 
 export { CHECKOUT_SUCCESS_PATH };
@@ -24,15 +19,6 @@ const MILESTONES = [
   { id: 'release', label: 'Final Release', detail: '70/15/15 disbursement on verified delivery.', done: false },
 ] as const;
 
-function resolveAthlete(athleteId: string | null): CommercialAthlete {
-  if (athleteId && athleteId === mockDeliverables.athlete.id) {
-    return mockDeliverables.athlete;
-  }
-  const roster = athleteId ? ROSTER_DATA.find((entry) => entry.id === athleteId) : undefined;
-  if (roster) return toCommercialAthlete(roster.record);
-  return mockDeliverables.athlete;
-}
-
 function dealReference(sessionId: string | null, athleteId: string, tierId: string): string {
   const sessionTail = (sessionId ?? 'DEMO').replace(/[^a-zA-Z0-9]/g, '').slice(-8).toUpperCase();
   const athleteTail = athleteId.replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase();
@@ -42,7 +28,7 @@ function dealReference(sessionId: string | null, athleteId: string, tierId: stri
 
 function downloadRcti(args: {
   reference: string;
-  athlete: CommercialAthlete;
+  athlete: ReceiptAthlete;
   pkg: ReceiptPackage;
 }) {
   const { reference, athlete, pkg } = args;
@@ -108,7 +94,7 @@ export const CheckoutSuccessPage: React.FC = () => {
   const athleteId = params.get('athleteId');
   const tierId = params.get('tierId');
 
-  const athlete = resolveAthlete(athleteId);
+  const athlete = resolveReceiptAthlete(athleteId, tierId);
   const pkg = resolveReceiptPackage(tierId);
   const split = pkg.split_breakdown;
   const reference = dealReference(sessionId, athlete.id, pkg.tier_id);

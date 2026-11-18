@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mockDeliverables } from '../src/data/mockDeliverables.ts';
+import { resolveReceiptAthlete } from '../src/pages/checkout/receiptAthlete.ts';
 import { resolveReceiptPackage } from '../src/pages/checkout/receiptPackage.ts';
 
 test('Olympic checkout receipts use the correct packages, prices and 70/15/15 splits', () => {
@@ -29,4 +30,20 @@ test('existing receipt packages and the unknown-tier fallback are unchanged', ()
   }
   assert.equal(resolveReceiptPackage('unknown'), mockDeliverables.packages[0]);
   assert.equal(resolveReceiptPackage(null), mockDeliverables.packages[0]);
+});
+
+test('Olympic receipt IDs resolve the chosen contender and grassroots club', () => {
+  for (const tierId of ['olympic_1yr_50k', 'olympic_2yr_110k', 'olympic_4yr_250k']) {
+    for (const [athleteId, name, club] of [
+      ['chloe-vance', 'Chloe Vance', 'Balmoral Cycling Club'],
+      ['lara-mercer', 'Lara Mercer', 'Sydney University Para Athletics'],
+    ]) {
+      const athlete = resolveReceiptAthlete(athleteId, tierId);
+      assert.equal(athlete.id, athleteId);
+      assert.equal(athlete.full_name, name);
+      assert.equal(athlete.grassroots_club.name, club);
+      assert.equal(resolveReceiptAthlete(athleteId, 'local_merchant'), mockDeliverables.athlete);
+    }
+  }
+  assert.equal(resolveReceiptAthlete(mockDeliverables.athlete.id, 'local_merchant'), mockDeliverables.athlete);
 });

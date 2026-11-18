@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
+import { OLYMPIC_CONTENDERS } from '../data/olympicContenders';
 import { OLYMPIC_HORIZONS, type OlympicHorizonSpec } from '../data/olympicHorizons';
 import type { LandingSectionId } from './Navigation';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
@@ -68,14 +69,9 @@ const BESPOKE_PILLARS = [
 const CONTENDER_SPECIMENS = [
   {
     id: 'vance' as const,
-    athleteId: 'chloe-vance',
-    postcode: '4171',
+    ...OLYMPIC_CONTENDERS.vance,
     initials: 'CV',
-    firstInitial: 'C.',
-    surname: 'Vance',
-    fullName: 'Chloe Vance',
-    sport: 'Olympic Track Cycling · Velodrome Sprint',
-    club: 'Balmoral Cycling Club (Postcode 4171)',
+    club: `${OLYMPIC_CONTENDERS.vance.clubName} (Postcode ${OLYMPIC_CONTENDERS.vance.postcode})`,
     pathway: 'LA 2028 & Brisbane 2032 Olympic Contender',
     badge: '1 Telco & 1 Bank Slot Open',
     badgeTone: 'green' as const,
@@ -88,14 +84,9 @@ const CONTENDER_SPECIMENS = [
   },
   {
     id: 'mercer' as const,
-    athleteId: 'lara-mercer',
-    postcode: '2006',
+    ...OLYMPIC_CONTENDERS.mercer,
     initials: 'LM',
-    firstInitial: 'L.',
-    surname: 'Mercer',
-    fullName: 'Lara Mercer',
-    sport: 'Paralympic 100m Sprint · Carbon Blade (T64)',
-    club: 'Sydney University Para Athletics (Postcode 2006)',
+    club: `${OLYMPIC_CONTENDERS.mercer.clubName} (Postcode ${OLYMPIC_CONTENDERS.mercer.postcode})`,
     pathway: 'LA 2028 & Brisbane 2032 Paralympic Contender',
     badge: 'Rule 40 Pre-Cleared',
     badgeTone: 'yellow' as const,
