@@ -23,6 +23,7 @@ export interface StripeCheckoutPayload {
 }
 
 export interface StripeEscrowReceipt {
+  checkoutSessionId?: string;
   txId: string;
   transferGroup: string;
   chargeId: string;

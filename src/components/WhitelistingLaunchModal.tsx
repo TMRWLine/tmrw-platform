@@ -9,7 +9,7 @@ import {
 import type { StripeEscrowReceipt } from './StripeEscrowCheckoutModal';
 
 interface WhitelistingLaunchModalProps {
-  grant: WhitelistingGrant;
+  grant: Partial<WhitelistingGrant>;
   receipt?: StripeEscrowReceipt | null;
   priceAud?: number;
   clubName?: string;
@@ -31,6 +31,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const [specExported, setSpecExported] = useState(false);
 
   const [releasingEscrow, setReleasingEscrow] = useState(false);
+  const [releaseError, setReleaseError] = useState<string | null>(null);
   const [deliverablesApproved, setDeliverablesApproved] = useState(
     receipt?.escrowMode === 'upfront_100',
   );
@@ -44,16 +45,18 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const safeAthleteId = grant.athleteId || 'marcus-thorne';
 
   const resolvedMetaToken =
+    rawGrant.meta_partnership_token ||
     rawGrant.metaHandleToken ||
     rawGrant.metaToken ||
     rawGrant.instagramToken ||
-    `IG-AUTH-${safePostcode}-9941`;
+    '';
 
   const resolvedSparkCode =
+    rawGrant.tiktok_spark_code ||
     rawGrant.tiktokSparkCode ||
     rawGrant.sparkCode ||
     rawGrant.tiktokToken ||
-    `TT-SPARK-${safePostcode}-88219X`;
+    '';
 
   const split = calculateExactSplitLedger(
     priceAud,
@@ -80,14 +83,21 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const handleReleaseFinal50 = async () => {
     if (releasingEscrow || deliverablesApproved) return;
     setReleasingEscrow(true);
-    const res = await releaseEscrowMilestoneTranche({
-      transferGroup,
-      athleteId: safeAthleteId,
-      escrowHoldCents: split.athleteEscrowHoldCents,
-    });
-    setFinalTransferId(res.escrowTransferId);
-    setDeliverablesApproved(true);
-    setReleasingEscrow(false);
+    setReleaseError(null);
+    try {
+      const res = await releaseEscrowMilestoneTranche({
+        checkoutSessionId: receipt?.checkoutSessionId,
+        transferGroup,
+        athleteId: safeAthleteId,
+        escrowHoldCents: split.athleteEscrowHoldCents,
+      });
+      setFinalTransferId(res.escrowTransferId);
+      setDeliverablesApproved(true);
+    } catch (error) {
+      setReleaseError(error instanceof Error ? error.message : 'Unable to release escrow. Please try again.');
+    } finally {
+      setReleasingEscrow(false);
+    }
   };
 
   const downloadRctiPack = () => {
@@ -113,8 +123,8 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
         `------------------------------------------------------------------------\n`,
         `PAID SOCIAL AMPLIFICATION CAMPAIGN SPEC (0% AGENCY MARKUP):\n`,
         `  - Meta Business Manager ID: ${metaBmId}\n`,
-        `  - Meta Partnership OAuth Token: ${resolvedMetaToken}\n`,
-        `  - TikTok Spark Authorisation Code: ${resolvedSparkCode}\n`,
+        `  - Meta Partnership OAuth Token: ${resolvedMetaToken || 'NOT ISSUED'}\n`,
+        `  - TikTok Spark Authorisation Code: ${resolvedSparkCode || 'NOT ISSUED'}\n`,
         `  - Geo-Fence Target: Postcode ${safePostcode} (Active Trading Radius)\n`,
         `  - Configured Daily Ad Spend: A$${dailySpend}/day (14-Day Budget: A$${fourteenDaySpend.toLocaleString()} AUD)\n`,
         `  - Estimated Local Feed Reach: ${estLocalReach.toLocaleString()} Verified Human Feeds in Postcode ${safePostcode}\n`,
@@ -132,6 +142,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   };
 
   const exportMediaBuyerCampaignSpec = () => {
+    if (!resolvedMetaToken || !resolvedSparkCode) return;
     const campaignPayload = {
       platform: 'tmrw/. Sovereign Clearinghouse',
       transferGroup,
@@ -197,7 +208,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="h-2.5 w-2.5 rounded-full bg-[#CCFF00] ring-2 ring-black/15" />
             <span className="font-mono text-[10.5px] font-bold uppercase tracking-[0.16em] text-[#080808]">
-              STRIPE ESCROW CLEARED ({transferGroup}) · {formatAudFromCents(split.grossCents)} SPLIT ACTIVE
+              {receipt && <>STRIPE ESCROW CLEARED ({transferGroup}) · {formatAudFromCents(split.grossCents)} SPLIT ACTIVE</>}
             </span>
           </div>
 
@@ -254,6 +265,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
             )}
           </div>
 
+          {releaseError && <p role="alert" className="m-0 border border-black/15 bg-[#F7F7F6] p-3 font-mono text-xs text-[#080808]">ESCROW NOT RELEASED: {releaseError}</p>}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <div className="rounded-[20px] bg-[#080808] text-white p-6 flex flex-col justify-between min-h-[210px]">
               <div>
@@ -337,12 +349,13 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                 <div className="rounded-xl bg-white border border-black/10 p-3 flex items-center justify-between">
                   <div>
                     <span className="block font-mono text-[8px] uppercase text-neutral-400">OAUTH HANDLE TOKEN</span>
-                    <strong className="font-mono text-xs text-[#080808]">{resolvedMetaToken}</strong>
+                    <strong className="font-mono text-xs text-[#080808]">{resolvedMetaToken || 'token not issued'}</strong>
                   </div>
                   <button
                     type="button"
                     onClick={() => copyText('meta', resolvedMetaToken)}
-                    className="rounded-full bg-[#080808] text-white px-3 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer"
+                    disabled={!resolvedMetaToken}
+                    className="rounded-full bg-[#080808] text-white px-3 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {copiedField === 'meta' ? '✓ COPIED' : 'COPY'}
                   </button>
@@ -352,7 +365,8 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
               <button
                 type="button"
                 onClick={() => setMetaAuthorised(true)}
-                className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
+                disabled={!resolvedMetaToken}
+                className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {metaAuthorised
                   ? `✓ AUTHORISED (${metaBmId} · A$${dailySpend}/DAY CAP)`
@@ -381,12 +395,13 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
                     <span className="block font-mono text-[8px] uppercase text-neutral-400">
                       30-DAY SPARK AUTHORISATION CODE
                     </span>
-                    <strong className="font-mono text-xs text-[#080808]">{resolvedSparkCode}</strong>
+                    <strong className="font-mono text-xs text-[#080808]">{resolvedSparkCode || 'token not issued'}</strong>
                   </div>
                   <button
                     type="button"
                     onClick={() => copyText('tiktok', resolvedSparkCode)}
-                    className="rounded-full bg-[#080808] text-white px-3 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer"
+                    disabled={!resolvedSparkCode}
+                    className="rounded-full bg-[#080808] text-white px-3 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {copiedField === 'tiktok' ? '✓ COPIED' : 'COPY'}
                   </button>
@@ -407,7 +422,8 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
               <button
                 type="button"
                 onClick={() => setTiktokSynced(true)}
-                className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
+                disabled={!resolvedSparkCode}
+                className="mt-5 w-full rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {tiktokSynced
                   ? `✓ SPARK SYNCED (POSTCODE ${safePostcode} · A$${dailySpend}/DAY)`
@@ -465,7 +481,8 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
               <button
                 type="button"
                 onClick={exportMediaBuyerCampaignSpec}
-                className="mt-4 w-full rounded-full bg-[#CCFF00] hover:bg-white text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors"
+                disabled={!resolvedMetaToken || !resolvedSparkCode}
+                className="mt-4 w-full rounded-full bg-[#CCFF00] hover:bg-white text-[#080808] py-3 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {specExported
                   ? `✓ AD-SET SPEC EXPORTED (A$${dailySpend}/DAY · POSTCODE ${safePostcode})`
