@@ -1,10 +1,15 @@
 ---
 name: anz-contender-scout
-description: Daily ANZ pathway and Olympic-runway athlete discovery and governing body compliance mapping.
+description: Automated daily Tier-1 and Tier-2 ANZ sports scout (Super Rugby, AFL, NRL, Shute Shield, NBL1, ANZ Premiership) and governing body compliance mapper.
 ---
 1. Checkout `release/v1-stable-launch` and branch into `scout/anz-intake-[YYYY-MM-DD]`.
-2. Read `src/data/roster.ts` to prevent duplicates.
-3. Discover 5 to 10 emerging Australian and New Zealand athletes across Rugby League (NRL/NSWRL/QRL/NZRL), Rugby Union (Shute Shield/NPC/Super Rugby), Basketball (NBL1/Sal's NBL), Football (NPL/NZ National League), Netball, Cricket, and Olympic/Action pathways (WSL, Athletics, AusTriathlon, AOC/NZOC).
-4. ANTI-HALLUCINATION RULE: Never guess social handles, follower counts, or postcodes. Use public league rosters, news reports, and public search indexes. Set unverified metrics to `null` and include a mandatory `verification_source_url` for every athlete.
-5. Append verified entries to `src/data/roster.ts` (`AthleteRecord` schema) and create `supabase/migrations/[YYYYMMDD]_daily_scout_intake.sql`.
-6. Run `npx tsc --noEmit` and open a PR titled `scout: daily ANZ contender intake [YYYY-MM-DD]`.
+2. Read `src/data/roster.ts` to prevent duplicate entries.
+3. SCRAPING TARGET MATRIX: Scan public team sheets, match reports, and fixture portals across Australia and New Zealand:
+   - Rugby Union: Super Rugby Pacific academies + Shute Shield (Sydney clubs) & New Zealand NPC provincial squads.
+   - Rugby League: NRL pathways, NSWRL (Ron Massey/Knockout), and QRL (Hostplus Cup) feeder teams.
+   - Australian Rules Football (AFL): VFL, SANFL, and WAFL state league lists.
+   - Basketball: NBL and NBL1 (East, South, North, West) weekly box scores and standout player rosters.
+   - Netball & Football: ANZ Premiership pathways and NPL Men's/Women's football.
+4. ANTI-HALLUCINATION & VERIFICATION GATE: Never guess handles or metrics. Cross-reference names against public league data, set unverified engagement metrics to `null`, and include a mandatory `verification_source_url` pointing to the official match sheet or public profile.
+5. Append verified contenders to `src/data/roster.ts` matching the `AthleteRecord` schema and generate `supabase/migrations/[YYYYMMDD]_daily_scout_intake.sql`.
+6. Run `npx tsc --noEmit` and open a Pull Request titled `scout: daily ANZ contender intake [YYYY-MM-DD]`.
