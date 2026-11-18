@@ -16,7 +16,7 @@ export function createGrantAccess() {
 
 export function setGrantAccessCookie(req, res, sessionId, secret) {
   res.cookie(cookieName(sessionId), secret, {
-    path: grantPath,
+    path: '/api/checkout',
     httpOnly: true,
     sameSite: 'lax',
     secure: req.secure || process.env.NODE_ENV === 'production',
@@ -29,6 +29,12 @@ function grantCookie(req, sessionId) {
   const entry = (req.get('Cookie') || '').split(';').map((part) => part.trim()).find((part) => part.startsWith(prefix));
   const secret = entry?.slice(prefix.length);
   return /^[a-f0-9]{64}$/.test(secret || '') ? secret : null;
+}
+
+export function hasGrantAccess(req, sessionId, hash) {
+  const secret = grantCookie(req, sessionId);
+  return secret !== null && typeof hash === 'string' && /^[a-f0-9]{64}$/.test(hash) &&
+    timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(digest(secret), 'hex'));
 }
 
 function radiusForTier(tierId) {
@@ -69,9 +75,8 @@ export async function issuePaidWhitelistingGrant(req, res) {
   res.set('Cache-Control', 'no-store');
   const sessionId = req.body?.sessionId;
   if (!isStripeCheckoutId(sessionId)) return res.status(400).json({ error: 'A Stripe Checkout session is required.' });
-  const secret = grantCookie(req, sessionId);
   const noAccess = () => res.status(403).json({ error: 'Open this receipt in the browser used to start checkout.' });
-  if (!secret) return noAccess();
+  if (!grantCookie(req, sessionId)) return noAccess();
 
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) return res.status(503).json({ error: 'Stripe payment verification is unavailable.' });
@@ -84,9 +89,7 @@ export async function issuePaidWhitelistingGrant(req, res) {
     if (!response.ok) throw new Error('Stripe session lookup failed');
     const session = await response.json();
     const metadata = session.metadata ?? {};
-    const hash = metadata.grantAccessHash;
-    if (session.id !== sessionId || !/^[a-f0-9]{64}$/.test(hash || '') ||
-        !timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(digest(secret), 'hex'))) return noAccess();
+    if (session.id !== sessionId || !hasGrantAccess(req, sessionId, metadata.grantAccessHash)) return noAccess();
     if (metadata.orderType !== 'sponsorship_tier' || session.mode !== 'payment' ||
         session.currency !== 'aud' || !Number.isSafeInteger(session.amount_total) || session.amount_total <= 0 ||
         !metadata.athleteId || !metadata.athleteName || !metadata.tierId || !isGrantPostcode(metadata.postcode)) {

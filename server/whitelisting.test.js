@@ -162,7 +162,7 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
     assert.deepEqual(await checkout.json(), { checkoutUrl: checkoutURL, sessionId, transferGroup });
     const setCookie = checkout.headers.get('Set-Cookie');
     assert.match(setCookie, /HttpOnly; SameSite=Lax|HttpOnly; Secure; SameSite=Lax/);
-    assert.ok(setCookie.includes(`Path=${grantPath}`));
+    assert.ok(setCookie.includes('Path=/api/checkout;'));
     const cookie = setCookie.split(';')[0];
     const cookieSecret = cookie.split('=')[1];
     assert.equal(stripeSession.metadata.grantAccessHash, createHash('sha256').update(cookieSecret).digest('hex'));
@@ -214,6 +214,7 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
 
     const releasePath = '/api/checkout/release-escrow';
     const approval = { checkoutSessionId: issued.checkoutSessionId, athleteId: issued.grant.athleteId };
+    assert.equal((await request(releasePath, approval)).status, 403);
     const release = await request(releasePath, approval, cookie);
     assert.equal(release.status, 200);
     assert.deepEqual(await release.json(), {

@@ -1,13 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
+import { createHash } from 'node:crypto';
 import app from './index.js';
 
 async function fixture(run) {
   const names = ['STRIPE_SECRET_KEY', 'SUPABASE_URL', 'VITE_SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'];
   const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
   Object.assign(process.env, { STRIPE_SECRET_KEY: 'test-key', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_ANON_KEY: 'test-anon', SUPABASE_SERVICE_ROLE_KEY: 'test-service' });
-  const metadata = { athleteId: 'athlete', tierId: 'local_merchant', orderType: 'sponsorship_tier', escrowMode: 'milestone_50_50', athleteEscrowHoldCents: '26250' };
+  const proof = 'a'.repeat(64);
+  const metadata = {
+    athleteId: 'athlete', tierId: 'local_merchant', orderType: 'sponsorship_tier', escrowMode: 'milestone_50_50',
+    athleteEscrowHoldCents: '26250', grantAccessHash: createHash('sha256').update(proof).digest('hex'),
+  };
   const charge = { id: 'ch_order', metadata, status: 'succeeded', paid: true, captured: true, amount: 75000, currency: 'aud', transfer_group: 'TG_fixture' };
   const session = { id: 'cs_order', metadata, payment_status: 'paid', payment_intent: { transfer_group: 'TG_fixture', latest_charge: charge } };
   const state = { charge, session, charges: [charge], transfers: [], account: 'acct_athlete', creates: [], checkouts: [] };
@@ -48,8 +53,8 @@ async function fixture(run) {
   };
   const server = createServer(app);
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  const post = (body = {}, token = 'valid-token', route = 'release-escrow') => originalFetch(`http://127.0.0.1:${server.address().port}/api/checkout/${route}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), 'Idempotency-Key': 'untrusted' },
+  const post = (body = {}, token = 'valid-token', route = 'release-escrow', cookie = `tmrw_grant_cs_order=${proof}`) => originalFetch(`http://127.0.0.1:${server.address().port}/api/checkout/${route}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(cookie ? { Cookie: cookie } : {}), 'Idempotency-Key': 'untrusted' },
     body: JSON.stringify(route === 'release-escrow' ? { checkoutSessionId: 'cs_order', athleteId: 'athlete', ...body } : { postcode: '2000', ...body }),
   });
   try { await run({ state, post }); } finally {
@@ -62,7 +67,7 @@ async function fixture(run) {
   }
 }
 
-test('session possession releases the exact held tranche anonymously and is idempotent', () => fixture(async ({ state, post }) => {
+test('initiating browser proof releases the exact held tranche anonymously and is idempotent', () => fixture(async ({ state, post }) => {
   const response = await post({ escrowHoldCents: 26250 }, null);
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { released: true, escrowTransferId: 'tr_release', releasedAmountCents: 26250, releasedAt: '2027-01-15T08:00:00.000Z', alreadyReleased: false });
@@ -78,6 +83,14 @@ test('session possession releases the exact held tranche anonymously and is idem
   assert.equal(repeat.status, 200);
   assert.equal((await repeat.json()).alreadyReleased, true);
   assert.equal(state.creates.length, 1);
+}));
+
+test('a shared receipt, wrong cookie or legacy anonymous order cannot release escrow', () => fixture(async ({ state, post }) => {
+  assert.equal((await post({}, null, 'release-escrow', '')).status, 403);
+  assert.equal((await post({}, null, 'release-escrow', `tmrw_grant_cs_order=${'b'.repeat(64)}`)).status, 403);
+  delete state.session.metadata.grantAccessHash;
+  assert.equal((await post({}, null)).status, 403);
+  assert.equal(state.creates.length, 0);
 }));
 
 for (const [name, change, status, body = {}, token = 'valid-token'] of [
@@ -123,7 +136,7 @@ for (const [name, change, status, body = {}, token = 'valid-token'] of [
 
 test('sponsor-owned session permits its verified sponsor', () => fixture(async ({ state, post }) => {
   state.session.metadata.sponsorUserId = 'sponsor';
-  const response = await post({ transferGroup: 'TG_fixture' });
+  const response = await post({ transferGroup: 'TG_fixture' }, 'valid-token', 'release-escrow', '');
   assert.equal(response.status, 200);
   assert.equal(state.creates[0].body.get('metadata[sponsorUserId]'), 'sponsor');
 }));

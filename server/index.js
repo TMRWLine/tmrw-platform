@@ -11,6 +11,7 @@ import {
   checkGrantStorage,
   createGrantAccess,
   grantPath,
+  hasGrantAccess,
   isGrantPostcode,
   isStripeCheckoutId,
   issuePaidWhitelistingGrant,
@@ -604,10 +605,13 @@ app.post('/api/checkout/release-escrow', async (req, res) => {
       if (error.stripeStatus === 404) return res.status(404).json({ error: 'Order not found' });
       throw error;
     }
+    if (session.id !== checkoutSessionId) return res.status(404).json({ error: 'Order not found' });
     if (session.metadata?.sponsorUserId) {
       await requireUser(req, res, () => {});
       if (!req.authUser) return;
       if (session.metadata.sponsorUserId !== req.authUser.id) return res.status(403).json({ error: 'Order access denied' });
+    } else if (!hasGrantAccess(req, checkoutSessionId, session.metadata?.grantAccessHash)) {
+      return res.status(403).json({ error: 'Open the receipt in the browser used to start checkout to approve delivery.' });
     }
     const intent = session.payment_intent;
     const order = { id: session.id, metadata: session.metadata, charge: intent?.latest_charge };
