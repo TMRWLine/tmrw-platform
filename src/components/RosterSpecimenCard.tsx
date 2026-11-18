@@ -135,7 +135,10 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
 
   return (
     <article
-      onClick={() => onOpenDossier(athlete, 'audit')}
+      onClick={(event) => {
+        event.currentTarget.querySelector<HTMLButtonElement>('.roster-dossier-open')?.focus({ preventScroll: true });
+        onOpenDossier(athlete, 'audit');
+      }}
       style={{
         borderRadius: '16px',
         aspectRatio: '1 / 1.24',
