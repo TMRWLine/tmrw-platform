@@ -4,7 +4,7 @@
 
 **Tagline:** Line up your Future
 
-Start with Instagram, TikTok and a LinkedIn Company Page. Check `@tmrwline` on both social apps and `/company/tmrwline` on LinkedIn. If unavailable, check `@tmrwlineanz` and `/company/tmrwlineanz`. Availability has not been verified. Use the [profile picture](assets/profile-picture.png) on all three accounts and the [LinkedIn banner](assets/linkedin-banner.png) on the Company Page.
+Start with Instagram, TikTok and a LinkedIn Company Page. Check `@tmrwline` on both social apps and `/company/tmrwline` on LinkedIn. If unavailable, check `@tmrwlineanz` and `/company/tmrwlineanz`. Availability has not been verified. Use the [profile picture](assets/profile-picture.png), a dark version of the [slash-and-dot app icon](assets/app-icon.svg) sized for circular crops, on all three accounts. Use the [LinkedIn banner](assets/linkedin-banner.png) on the Company Page.
 
 ## Instagram
 
@@ -71,4 +71,4 @@ Keep every launch post athlete-free. Use original imagery, leave location tags o
 
 The second-platform covers are for later adaptations, not extra posts in week one. Use the [end card](assets/end-card.png) for the follow version; for the matchday video, use the nomination line from the script instead.
 
-Use the [dark SVG lockup](assets/logo-dark.svg) on ink and the [light SVG lockup](assets/logo-light.svg) on off-white. Both include the hairline and spaced monospace `LINE UP YOUR FUTURE`. Keep the wordmark lowercase as artwork and the tagline as `Line up your Future` in written copy.
+Use the [dark SVG lockup](assets/logo-dark.svg) on ink and the [light SVG lockup](assets/logo-light.svg) on off-white. Both centre `LINE UP YOUR FUTURE` in bold sans-serif capitals beneath the heavy lowercase wordmark, without the site's rule or monospace lettering. Allow at least 0.4em of clear space around the whole lockup. Use `Line up your Future` in written copy.
