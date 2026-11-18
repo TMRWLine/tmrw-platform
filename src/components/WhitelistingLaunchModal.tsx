@@ -86,7 +86,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
     setReleaseError(null);
     try {
       const res = await releaseEscrowMilestoneTranche({
-        checkoutSessionId: receipt?.checkoutSessionId,
+        checkoutSessionId: receipt?.checkoutSessionId ?? '',
         transferGroup,
         athleteId: safeAthleteId,
         escrowHoldCents: split.athleteEscrowHoldCents,

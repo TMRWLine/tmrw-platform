@@ -190,14 +190,14 @@ export async function createCheckoutSession(
 }
 
 export async function releaseEscrowMilestoneTranche(params: {
-  checkoutSessionId?: string;
-  transferGroup: string;
+  checkoutSessionId: string;
+  transferGroup?: string;
   athleteId: string;
-  escrowHoldCents: number;
+  escrowHoldCents?: number;
 }): Promise<EscrowReleaseResult> {
   if (!params.checkoutSessionId) throw new Error('Unable to release escrow: a real Checkout Session ID is required.');
   const token = await currentAccessToken(AbortSignal.timeout(8000));
-  const releaseKey = `idemp_release_${params.transferGroup}_${Date.now()}`;
+  const releaseKey = `idemp_release_${params.checkoutSessionId}_${Date.now()}`;
   const response = await fetch('/api/checkout/release-escrow', {
     method: 'POST',
     headers: {
@@ -208,7 +208,9 @@ export async function releaseEscrowMilestoneTranche(params: {
     body: JSON.stringify(params),
   });
   const data = await response.json().catch(() => null);
-  if (!response.ok || data?.released !== true || typeof data?.escrowTransferId !== 'string' || !data.escrowTransferId.trim()) {
+  if (!response.ok || data?.released !== true || typeof data?.escrowTransferId !== 'string' || !data.escrowTransferId.trim() ||
+      !Number.isSafeInteger(data?.releasedAmountCents) || data.releasedAmountCents <= 0 ||
+      typeof data?.releasedAt !== 'string' || !Number.isFinite(Date.parse(data.releasedAt))) {
     throw new Error(`Unable to release escrow (HTTP ${response.status}): ${data?.error || 'release not confirmed.'}`);
   }
   const escrowTransferId = data.escrowTransferId;
@@ -216,8 +218,8 @@ export async function releaseEscrowMilestoneTranche(params: {
   try {
     const ledger = JSON.parse(localStorage.getItem('tmrw_escrow_ledger') || '[]');
     const updated = ledger.map((item: Record<string, unknown>) =>
-      item.transferGroup === params.transferGroup
-        ? { ...item, escrowReleased: true, finalTransferId: escrowTransferId }
+      item.checkoutSessionId === params.checkoutSessionId
+        ? { ...item, escrowReleased: true, finalTransferId: escrowTransferId, releasedAmountCents: data.releasedAmountCents, releasedAt: data.releasedAt }
         : item,
     );
     localStorage.setItem('tmrw_escrow_ledger', JSON.stringify(updated));
@@ -228,7 +230,7 @@ export async function releaseEscrowMilestoneTranche(params: {
   return {
     released: true,
     escrowTransferId,
-    releasedAmountCents: params.escrowHoldCents,
-    releasedAt: new Date().toISOString(),
+    releasedAmountCents: data.releasedAmountCents,
+    releasedAt: data.releasedAt,
   };
 }
