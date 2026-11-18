@@ -16,7 +16,7 @@ export function SpatialCatchment({
     <section className="catchment-section">
       <div className="catchment-header">
         <div>
-          <span className="catchment-eyebrow">02 —— SPONSORSHIP TIERS</span>
+          <span className="catchment-eyebrow">02 · SPONSORSHIP TIERS</span>
           <h2>Buy reach by radius.</h2>
           <p>
             Select a spatial tier to live-filter the roster below by proximity to your store
@@ -40,15 +40,15 @@ export function SpatialCatchment({
               onClick={() => onSelect(tier.code)}
             >
               <div className="catchment-card-head">
-                <span className="catchment-card-index text-zinc-400 font-mono">
+                <span className="catchment-card-index font-mono">
                   {tier.code} {tier.catchment}
                 </span>
               </div>
 
-              <h3 className="catchment-card-title text-white font-bold text-xl tracking-tight">
+              <h3 className="catchment-card-title font-bold text-xl tracking-tight">
                 {tier.title}
               </h3>
-              <div className="catchment-card-price font-mono text-white/80">{tier.price}</div>
+              <div className="catchment-card-price font-mono">{tier.price}</div>
 
               <ul className="catchment-card-features">
                 {tier.features.map((feature) => (
@@ -60,7 +60,7 @@ export function SpatialCatchment({
 
               <div className="catchment-card-foot">
                 <span className="catchment-card-range">
-                  In range <strong>{counts?.[tier.code] ?? '—'}</strong>
+                  In range <strong>{counts?.[tier.code] ?? '-'}</strong>
                 </span>
                 <span className="catchment-card-cta">
                   {isSelected ? (

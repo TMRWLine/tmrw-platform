@@ -3050,3 +3050,48 @@ button {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+
+/* Sponsor discovery: light editorial theme matching The Roster. */
+.sponsor-light {
+  --bg: #FFFFFF;
+  --bg-elev: #F7F7F6;
+  --bg-card: #FFFFFF;
+  --border: #EAEAEA;
+  --border-strong: #D4D4D8;
+  --border-hairline: #EAEAEA;
+  --hairline: 1px solid #EAEAEA;
+  --text: #080808;
+  --text-muted: #666666;
+  --text-dim: #8A8A8A;
+  --primary: #080808;
+  --primary-strong: #080808;
+  --emerald: #080808;
+  --emerald-text: #080808;
+  color: #080808;
+  max-width: 1840px;
+}
+.sponsor-light .page-head { border-bottom-color: #EAEAEA; }
+.sponsor-light .page-head h1 { color: #080808; }
+.sponsor-light .card { border: 1px solid #EAEAEA; border-radius: 16px; }
+.sponsor-light .card:hover { background: #F7F7F6; }
+.sponsor-light .btn, .sponsor-light .icon-btn, .sponsor-light .badge { border-radius: 999px; }
+.sponsor-light .btn-primary { background: #CCFF00; color: #080808; border-color: #CCFF00; }
+.sponsor-light .btn-primary:hover { background: #080808; color: #FFFFFF; border-color: #080808; }
+.sponsor-light .catchment-card {
+  background: #F7F7F6; color: #080808; border: 1px solid #EAEAEA; border-radius: 16px;
+}
+.sponsor-light .catchment-card:hover { background: #FFFFFF; border-color: #080808; }
+.sponsor-light .catchment-card.selected { background: #FFFFFF; border-color: #080808; box-shadow: inset 0 0 0 1px #080808; }
+.sponsor-light .catchment-card-index,
+.sponsor-light .catchment-card-catchment { color: #666666; }
+.sponsor-light .catchment-card-title { color: #080808; }
+.sponsor-light .catchment-card-price { color: #333333; }
+.sponsor-light .catchment-card-features svg { color: #080808; }
+.sponsor-light .catchment-card.selected .catchment-card-cta {
+  background: #CCFF00; color: #080808; padding: 2px 8px; border-radius: 4px;
+}
+.sponsor-light .catchment-clear { border-radius: 999px; }
+.sponsor-light .radius-toggle { border: 1px solid #EAEAEA; border-radius: 999px; overflow: hidden; }
+.sponsor-light .radius-toggle button.active { background: #CCFF00; color: #080808; font-weight: 700; }
+.sponsor-light .leaflet-container { border-radius: 16px; }
+.sponsor-light .page-head p { color: inherit; }

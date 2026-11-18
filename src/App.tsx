@@ -61,7 +61,6 @@ import { RosterGrid } from './components/RosterGrid';
 import { AthleteCard } from './components/AthleteCard';
 import { SettlementLedger } from './components/SettlementLedger';
 import { SiteFooter } from './components/SiteFooter';
-import { LivingContours } from './components/LivingContours';
 import { SpatialCatchment } from './components/SpatialCatchment';
 import { SponsorDirectory } from './components/SponsorDirectory';
 import { AthleteAuthModal } from './components/AthleteAuthModal';
@@ -639,14 +638,12 @@ export function MarketplaceApp() {
       ? mixHex(CANVAS_WHITE, CANVAS_OBSIDIAN, canvasProgress)
       : view === 'brisbane-runway'
         ? CANVAS_OBSIDIAN
-        : view === 'sponsor'
-          ? '#080808'
-          : CANVAS_WHITE;
+        : CANVAS_WHITE;
   const inkClass = frameTone === 'dark' ? 'text-white' : 'text-[#080808]';
 
   return (
     <div
-      className={`app-shell font-sans ${inkClass} ${view === 'sponsor' ? 'app-shell-padded bg-grain' : ''}`}
+      className={`app-shell font-sans ${inkClass}`}
       style={{ backgroundColor: shellBackground }}
     >
       <ViewportFrame tone={frameTone} />
@@ -692,11 +689,6 @@ export function MarketplaceApp() {
         onOpenSponsorWorkspace={enterSponsorWorkspace}
       />
 
-      {view === 'sponsor' && (
-        <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden bg-[#08080A]">
-          <LivingContours />
-        </div>
-      )}
 
       <AdminDrawer open={adminOpen} onClose={() => setAdminOpen(false)} />
 
@@ -765,17 +757,23 @@ export function MarketplaceApp() {
           <SiteFooter onHome={() => setLandingSection('top')} tone={canvasProgress > 0.62 ? 'dark' : 'light'} />
         </div>
       ) : (
-      <main className="page bg-transparent">
-        <div className="page-head editorial-copy border-b border-white/10" id="athlete-roster">
-          <p className="font-mono text-xs tracking-widest uppercase text-[#D2FF00] mb-3">
-            // ENTERPRISE WORKSPACE
-          </p>
-          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white mt-0">
-            Sponsor Discovery Workspace
+      <main className="page sponsor-light bg-[#FFFFFF]">
+        <div
+          className="page-head flex flex-col gap-6 border-b border-[#EAEAEA] pb-6 lg:flex-row lg:items-end lg:justify-between"
+          id="athlete-roster"
+        >
+          <h1 className="m-0 font-display text-5xl sm:text-6xl xl:text-[74px] font-black tracking-[-0.04em] leading-[0.86] uppercase text-[#080808]">
+            SPONSOR DISCOVERY<span className="text-[#CCFF00]">.</span>
           </h1>
-          <p className="font-mono text-[11px] tracking-widest text-zinc-400 mt-3">
-            PostGIS radius filters · postcode 3000 catchment · live partner map
-          </p>
+          <div className="max-w-[420px] border-l border-[#EAEAEA] pl-4">
+            <p className="m-0 font-sans text-[14.5px] font-bold tracking-[-0.02em] leading-[1.28] text-[#080808]">
+              Find talent inside your store&apos;s catchment.
+            </p>
+            <p className="m-0 mt-1 font-sans text-[12px] leading-[1.45] text-neutral-600">
+              Filter the roster by distance from postcode 3000, pick a sponsorship tier, and settle every deal on the{' '}
+              <span className="bg-[#CCFF00] text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">70/15/15 split</span>.
+            </p>
+          </div>
         </div>
 
         {listError && (
