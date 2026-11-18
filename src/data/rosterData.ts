@@ -6,6 +6,7 @@ export interface CommercialAthleteRecord {
   display_name: string;
   full_name: string;
   legal_full_name: string;
+  bio?: string;
   sport: string;
   league: string;
   current_club: string;
