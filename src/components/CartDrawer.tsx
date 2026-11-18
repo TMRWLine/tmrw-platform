@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import './CartDrawer.css';
 import { createPortal } from 'react-dom';
 import { BrandLockup } from './BrandLockup';
 import type { AthleteRecord } from '../data/roster';
@@ -250,6 +251,31 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [lastSessionId, setLastSessionId] = useState<string | null>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const bagRef = useRef<HTMLDivElement>(null);
+  const [scrollToBag, setScrollToBag] = useState(false);
+
+  const showBag = () => {
+    setView(cartItems.length ? 'capsules' : 'empty');
+    setScrollToBag(true);
+  };
+
+  useEffect(() => {
+    if (!isOpen || !window.matchMedia('(max-width: 767px)').matches) return;
+    if (drawerRef.current) drawerRef.current.scrollTop = 0;
+  }, [view, isOpen]);
+
+  useEffect(() => {
+    if (!scrollToBag) return;
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+    if (bagRef.current) {
+      drawer.scrollTop += bagRef.current.getBoundingClientRect().top
+        - drawer.getBoundingClientRect().top - (headerRef.current?.offsetHeight ?? 0) - 16;
+    }
+    setScrollToBag(false);
+  }, [view, scrollToBag]);
 
   // Studio State
   const [selectedChassisId, setSelectedChassisId] = useState<string>('hoodie_420');
@@ -434,6 +460,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   };
 
   const removeFromCart = (idx: number) => {
+    if (cartItems.length === 1 && window.matchMedia('(max-width: 767px)').matches) setView('empty');
     setCartItems((prev) => prev.filter((_, i) => i !== idx));
   };
 
@@ -459,10 +486,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   return createPortal(
     <div
+      ref={drawerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Athlete capsule shop"
       data-lenis-prevent="true"
-      className="fixed inset-0 z-[90] bg-[#FFFFFF] text-[#0F0F11] flex flex-col overflow-y-auto selection:bg-[#CCFF00] selection:text-[#0F0F11] animate-fadeIn"
+      className="capsule-shop fixed inset-0 z-[90] bg-[#FFFFFF] text-[#0F0F11] flex flex-col overflow-y-auto selection:bg-[#CCFF00] selection:text-[#0F0F11] animate-fadeIn"
     >
-      <header className="shrink-0 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-5 flex items-center justify-between border-b border-black/10">
+      <header ref={headerRef} className="capsule-shop-header shrink-0 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-5 flex items-center justify-between border-b border-black/10">
         <BrandLockup onClick={onClose} />
 
         <div className="hidden md:flex items-center gap-6 font-sans text-xs font-medium text-[#0F0F11]">
@@ -512,7 +543,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           {cartItems.length > 0 && (
             <button
               type="button"
-              onClick={() => setView('capsules')}
+              onClick={() => window.matchMedia('(max-width: 767px)').matches ? showBag() : setView('capsules')}
               className="rounded-full bg-[#0F0F11] text-[#CCFF00] px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer"
             >
               {cartItems.reduce((s, i) => s + i.qty, 0)} Items · A${grossTotal.toLocaleString()}
@@ -529,10 +560,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">✕</span>
           </button>
         </div>
+
+        <nav className="capsule-mobile-nav" aria-label="Capsule shop navigation">
+          <button type="button" aria-pressed={view === 'capsules'} onClick={() => { setView('capsules'); if (drawerRef.current) drawerRef.current.scrollTop = 0; }}>Showroom</button>
+          <button type="button" onClick={showBag}>Bag ({cartItems.reduce((sum, entry) => sum + entry.qty, 0)})</button>
+          <button type="button" aria-pressed={view === 'creator'} onClick={() => { setView('creator'); if (drawerRef.current) drawerRef.current.scrollTop = 0; }}>Studio</button>
+          <button type="button" onClick={() => { onClose(); onExploreRoster?.(); }}>The Roster</button>
+        </nav>
       </header>
 
-      <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 pt-6 pb-14 flex flex-col justify-center">
-        <div className="w-full min-h-[640px] rounded-[28px] bg-[#EAEAE6] p-6 sm:p-12 md:p-16 flex flex-col justify-center relative overflow-hidden">
+      <div className="capsule-shop-content flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 pt-6 pb-14 flex flex-col justify-center">
+        <div className="capsule-shop-panel w-full min-h-[640px] rounded-[28px] bg-[#EAEAE6] p-6 sm:p-12 md:p-16 flex flex-col justify-center relative overflow-hidden">
           {view === 'empty' && cartItems.length === 0 && (
             <div className="max-w-md mx-auto text-center my-auto py-16">
               <RetroPixelCabinetIcon />
@@ -563,7 +601,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
           {/* CREATOR STUDIO VIEW */}
           {view === 'creator' && (
-            <div className="w-full max-w-6xl mx-auto space-y-6">
+            <div className="capsule-studio w-full max-w-6xl mx-auto space-y-6">
               <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/15 pb-5">
                 <div>
                   <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-600 mb-1.5">
@@ -598,6 +636,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           <button
                             type="button"
                             onClick={() => setSpecimenSide('front')}
+                            aria-pressed={specimenSide === 'front'}
                             className={`rounded-full px-3 py-1 font-mono text-[9px] font-bold uppercase cursor-pointer border-0 transition-colors ${
                               specimenSide === 'front' ? 'bg-[#0F0F11] text-[#CCFF00]' : 'bg-transparent text-[#0F0F11]'
                             }`}
@@ -607,6 +646,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           <button
                             type="button"
                             onClick={() => setSpecimenSide('back')}
+                            aria-pressed={specimenSide === 'back'}
                             className={`rounded-full px-3 py-1 font-mono text-[9px] font-bold uppercase cursor-pointer border-0 transition-colors ${
                               specimenSide === 'back' ? 'bg-[#0F0F11] text-[#CCFF00]' : 'bg-transparent text-[#0F0F11]'
                             }`}
@@ -617,9 +657,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       </div>
 
                       <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Flip capsule preview"
+                        aria-pressed={specimenSide === 'back'}
                         onClick={() => setSpecimenSide((s) => (s === 'front' ? 'back' : 'front'))}
-                        onMouseEnter={() => setSpecimenSide('back')}
-                        onMouseLeave={() => setSpecimenSide('front')}
+                        onPointerEnter={(e) => { if (e.pointerType === 'mouse') setSpecimenSide('back'); }}
+                        onPointerLeave={(e) => { if (e.pointerType === 'mouse') setSpecimenSide('front'); }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSpecimenSide((side) => side === 'front' ? 'back' : 'front');
+                          }
+                        }}
                         className={`rounded-[18px] h-96 p-6 flex flex-col justify-between mb-5 transition-all relative overflow-hidden cursor-pointer select-none ${activeSwatch.swatchBg}`}
                       >
                         <div className="absolute inset-0 z-0 overflow-hidden bg-black/20">
@@ -738,7 +788,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             <button
                               key={chassis.id}
                               type="button"
-                              onClick={() => handleSelectChassis(chassis)}
+                                onClick={() => handleSelectChassis(chassis)}
+                                aria-pressed={isSelected}
                               className={`rounded-xl p-3.5 text-left transition-all cursor-pointer border ${
                                 isSelected
                                   ? 'bg-[#0F0F11] text-white border-[#0F0F11]'
@@ -771,6 +822,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               key={sw.id}
                               type="button"
                               onClick={() => setSelectedSwatchId(sw.id)}
+                              aria-pressed={selectedSwatchId === sw.id}
                               className={`rounded-lg py-2 px-2 font-mono text-[9px] font-bold uppercase cursor-pointer border transition-all ${
                                 selectedSwatchId === sw.id
                                   ? 'bg-[#0F0F11] text-[#CCFF00] border-[#0F0F11]'
@@ -792,6 +844,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               key={st.id}
                               type="button"
                               onClick={() => setSelectedLockupStyle(st.id)}
+                              aria-pressed={selectedLockupStyle === st.id}
                               className={`rounded-lg py-2 px-2 font-mono text-[9px] font-bold uppercase cursor-pointer border transition-all ${
                                 selectedLockupStyle === st.id
                                   ? 'bg-[#0F0F11] text-[#CCFF00] border-[#0F0F11]'
@@ -807,36 +860,39 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
-                        <label className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
+                        <label htmlFor="capsule-athlete-name" className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
                           ATHLETE NAME
                         </label>
                         <input
                           type="text"
                           required
                           value={newAthleteName}
+                          id="capsule-athlete-name"
                           onChange={(e) => setNewAthleteName(e.target.value)}
                           className="w-full rounded-xl bg-[#EAEAE6] border-0 px-3.5 py-2.5 font-sans text-xs font-bold"
                         />
                       </div>
                       <div>
-                        <label className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
+                        <label htmlFor="capsule-club-name" className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
                           JUNIOR CLUB (15%)
                         </label>
                         <input
                           type="text"
                           required
                           value={newClubName}
+                          id="capsule-club-name"
                           onChange={(e) => setNewClubName(e.target.value)}
                           className="w-full rounded-xl bg-[#EAEAE6] border-0 px-3.5 py-2.5 font-sans text-xs font-bold"
                         />
                       </div>
                       <div>
-                        <label className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
+                        <label htmlFor="capsule-partner-name" className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
                           CO-LAB BRAND
                         </label>
                         <input
                           type="text"
                           value={newCollabPartner}
+                          id="capsule-partner-name"
                           onChange={(e) => setNewCollabPartner(e.target.value)}
                           className="w-full rounded-xl bg-[#EAEAE6] border-0 px-3.5 py-2.5 font-sans text-xs font-bold"
                         />
@@ -854,6 +910,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <button
                           type="button"
                           onClick={() => setEnablePartnerRoyaltySplit((v) => !v)}
+                          aria-pressed={enablePartnerRoyaltySplit}
                           className={`rounded-full px-3.5 py-1.5 font-mono text-[9.5px] font-bold uppercase cursor-pointer border-0 ${
                             enablePartnerRoyaltySplit ? 'bg-[#CCFF00] text-[#0F0F11]' : 'bg-white/15 text-white'
                           }`}
@@ -865,36 +922,40 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                     <div className="grid grid-cols-2 sm:grid-cols-12 gap-3">
                       <div className="col-span-2 sm:col-span-6">
-                        <label className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
+                        <label htmlFor="capsule-garment-title" className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
                           GARMENT TITLE
                         </label>
                         <input
                           type="text"
                           required
                           value={newGarmentTitle}
+                          id="capsule-garment-title"
                           onChange={(e) => setNewGarmentTitle(e.target.value)}
                           className="w-full rounded-xl bg-[#EAEAE6] border-0 px-3.5 py-2.5 font-sans text-xs font-bold"
                         />
                       </div>
                       <div className="col-span-1 sm:col-span-3">
-                        <label className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
+                        <label htmlFor="capsule-postcode" className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
                           POSTCODE
                         </label>
                         <input
                           type="text"
                           maxLength={4}
                           value={newPostcode}
+                          id="capsule-postcode"
+                          inputMode="numeric"
                           onChange={(e) => setNewPostcode(e.target.value)}
                           className="w-full rounded-xl bg-[#EAEAE6] border-0 px-3 py-2.5 font-mono text-xs font-bold"
                         />
                       </div>
                       <div className="col-span-1 sm:col-span-3">
-                        <label className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
+                        <label htmlFor="capsule-retail-price" className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
                           RETAIL AUD
                         </label>
                         <input
                           type="number"
                           value={newPrice}
+                          id="capsule-retail-price"
                           onChange={(e) => setNewPrice(Number(e.target.value))}
                           className="w-full rounded-xl bg-[#EAEAE6] border-0 px-3 py-2.5 font-mono text-xs font-bold"
                         />
@@ -928,7 +989,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
           {/* SHOWROOM VIEW (OPTION B: INTERACTIVE DUAL-IMAGE SPECIMEN INSPECTOR) */}
           {(view === 'capsules' || view === 'empty') && (
-            <div className="w-full space-y-6">
+            <div className={`capsule-showroom w-full space-y-6 ${view === 'empty' && cartItems.length === 0 ? 'capsule-showroom-with-empty-bag' : ''}`}>
               <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/10 pb-6">
                 <div>
                   <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500 block mb-2">
@@ -939,10 +1000,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   </h2>
                 </div>
 
-                <div className="flex items-center gap-2 bg-white p-1.5 rounded-full border border-black/10">
+                <div className="capsule-purchase-mode flex items-center gap-2 bg-white p-1.5 rounded-full border border-black/10">
                   <button
                     type="button"
-                    onClick={() => setSponsorBulkMode(false)}
+                      onClick={() => setSponsorBulkMode(false)}
+                      aria-pressed={!sponsorBulkMode}
                     className={`rounded-full px-4 py-1.5 font-mono text-[10px] font-bold uppercase cursor-pointer border-0 transition-colors ${
                       !sponsorBulkMode ? 'bg-[#0F0F11] text-[#CCFF00]' : 'bg-transparent text-[#0F0F11]'
                     }`}
@@ -952,6 +1014,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => setSponsorBulkMode(true)}
+                    aria-pressed={sponsorBulkMode}
                     className={`rounded-full px-4 py-1.5 font-mono text-[10px] font-bold uppercase cursor-pointer border-0 transition-colors ${
                       sponsorBulkMode ? 'bg-[#0F0F11] text-[#CCFF00]' : 'bg-transparent text-[#0F0F11]'
                     }`}
@@ -989,16 +1052,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   return (
                     <article
                       key={drop.id}
-                      className="rounded-[24px] bg-white p-6 sm:p-8 border border-black/15 flex flex-col justify-between shadow-md transition-all duration-300 hover:shadow-xl"
+                      className="capsule-product rounded-[24px] bg-white p-6 sm:p-8 border border-black/15 flex flex-col justify-between shadow-md transition-all duration-300 hover:shadow-xl"
                     >
                       <div>
                         <div
                           role="button"
                           tabIndex={0}
                           aria-label={`Inspect ${drop.title} front and back archive`}
+                          aria-pressed={isHovered}
                           className={`relative h-[440px] rounded-[20px] p-6 flex flex-col justify-between overflow-hidden cursor-pointer select-none transition-all duration-500 ${drop.swatchBg}`}
-                          onMouseEnter={() => setHoveredSides((p) => ({ ...p, [drop.id]: true }))}
-                          onMouseLeave={() => setHoveredSides((p) => ({ ...p, [drop.id]: false }))}
+                          onPointerEnter={(e) => { if (e.pointerType === 'mouse') setHoveredSides((p) => ({ ...p, [drop.id]: true })); }}
+                          onPointerLeave={(e) => { if (e.pointerType === 'mouse') setHoveredSides((p) => ({ ...p, [drop.id]: false })); }}
                           onClick={() => toggleFlipCard(drop.id)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
@@ -1042,7 +1106,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                                   : 'bg-black/60 text-[#CCFF00] border border-[#CCFF00]/30'
                               }`}
                             >
-                              {isHovered ? '⚡ SHOWING BACK ARCHIVE' : '⚡ HOVER TO FLIP BACK'}
+                              <span className="capsule-desktop-flip-hint">{isHovered ? '⚡ SHOWING BACK ARCHIVE' : '⚡ HOVER TO FLIP BACK'}</span>
+                              <span className="capsule-touch-flip-hint">{isHovered ? 'TAP FOR FRONT' : 'TAP FOR BACK'}</span>
                             </span>
                           </div>
 
@@ -1162,13 +1227,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         </div>
                       </div>
 
-                      <div className="pt-5 mt-5 border-t border-black/10 flex items-center justify-between gap-2">
+                      <div className="capsule-product-actions pt-5 mt-5 border-t border-black/10 flex items-center justify-between gap-2">
                         {!sponsorBulkMode ? (
                           <div className="flex items-center gap-1.5">
                             {['S', 'M', 'L', 'XL'].map((sz) => (
                               <button
                                 key={sz}
                                 type="button"
+                                aria-label={`Size ${sz} for ${drop.title}`}
+                                aria-pressed={(selectedSize[drop.id] || 'L') === sz}
                                 onClick={() =>
                                   setSelectedSize((prev) => ({ ...prev, [drop.id]: sz }))
                                 }
@@ -1204,7 +1271,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
 
               {cartItems.length > 0 && (
-                <div className="rounded-[24px] bg-[#0F0F11] text-white p-6 sm:p-8 flex flex-col gap-4 shadow-xl">
+                <div ref={bagRef} className="capsule-live-bag rounded-[24px] bg-[#0F0F11] text-white p-6 sm:p-8 flex flex-col gap-4 shadow-xl">
                   <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                     <div className="space-y-2 flex-1">
                       <span className="font-mono text-[10px] uppercase tracking-widest text-[#CCFF00] block">
@@ -1221,6 +1288,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             </span>
                             <button
                               type="button"
+                              aria-label={`Remove ${entry.item.title} (${entry.size}) from bag`}
                               onClick={() => removeFromCart(idx)}
                               className="bg-transparent border-0 text-[#CCFF00] cursor-pointer font-bold"
                             >
@@ -1231,7 +1299,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4 self-stretch lg:self-auto justify-between">
+                    <div className="capsule-checkout-actions flex items-center gap-4 self-stretch lg:self-auto justify-between">
                       <div className="text-right">
                         <span className="font-mono text-[10px] text-neutral-400 uppercase block">
                           TOTAL AUD
