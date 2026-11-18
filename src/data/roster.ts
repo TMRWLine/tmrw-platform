@@ -1,5 +1,5 @@
 import type { Athlete as DbAthlete } from '../types';
-import { DATABASE_ROSTER, type AthleteRecord } from './rosterData';
+import { DATABASE_ROSTER, COMMERCIAL_ROSTER, type CommercialAthleteRecord as AthleteRecord } from './rosterData';
 
 /**
  * Sovereign roster specimen. Distinct from the Supabase `Athlete` row in `src/types`.
@@ -191,9 +191,9 @@ function projectAthlete(record: AthleteRecord): Athlete {
   };
 }
 
-export const ROSTER_DATA: Athlete[] = DATABASE_ROSTER.map(projectAthlete);
+export const ROSTER_DATA: Athlete[] = COMMERCIAL_ROSTER.map(projectAthlete);
 
-const recordById = new Map(DATABASE_ROSTER.map((record) => [record.id, record]));
+const recordById = new Map(COMMERCIAL_ROSTER.map((record) => [record.id, record]));
 
 export function recordFor(id: string): AthleteRecord | null {
   return recordById.get(id) ?? null;
