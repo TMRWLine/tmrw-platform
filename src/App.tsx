@@ -69,6 +69,7 @@ import { AthletePortalDrawer } from './components/AthletePortalDrawer';
 import { SyndicateEnquiryModal } from './components/SyndicateEnquiryModal';
 import { AthleteProfileManager } from './components/AthleteProfileManager';
 import { GuardianVerifyPage, GUARDIAN_VERIFY_PATH } from './components/GuardianVerifyPage';
+import { ClaimProfilePage } from './components/ClaimProfilePage';
 import { CommercialTiers } from './components/CommercialTiers';
 import { SyndicateRunway } from './components/SyndicateRunway';
 import { HowItWorks } from './components/HowItWorks';
@@ -1176,7 +1177,9 @@ function MarketplaceAthleteCard({
 export default function App() {
   const path = window.location.pathname.replace(/\/+$/, '');
   const surface =
-    path === GUARDIAN_VERIFY_PATH ? (
+    path === '/claim' ? (
+      <ClaimProfilePage />
+    ) : path === GUARDIAN_VERIFY_PATH ? (
       <GuardianVerifyPage />
     ) : path === CHECKOUT_SUCCESS_PATH ? (
       <CheckoutSuccessPage />

@@ -1,0 +1,743 @@
+{
+  "date": "2026-11-19",
+  "status": "research_only",
+  "consent_obtained": false,
+  "do_not_send": true,
+  "verification_date_utc": "2026-11-18",
+  "scope": "SME area prospect research only. Club home grounds are geographic anchors, not athlete residences, eligibility catchments, endorsers or partners.",
+  "research_context": {
+    "source_pr": "https://github.com/TMRWLine/tmrw-platform/pull/10",
+    "source_branch": "origin/scout/anz-intake-2026-11-19",
+    "note": "PR description and scouted roster reviewed for club/competition context only. No individual identities, demo roster matches or category rights are used."
+  },
+  "notes": [
+    "All previous leads and athlete/category-rights matching have been replaced. No named talent or existing sponsorship rights are offered.",
+    "Fifteen leads across six areas: Brookvale 3, Perth 2, Wellington 3, Werribee 2, Wayville/Goodwood 2, Croudace Bay/Warners Bay 3.",
+    "Wellington prices and SQL budgets use NZD at the same nominal flight amounts, not an AUD currency conversion. NZ availability and tax-invoice compliance remain unverified and require local review. Australian leads use AUD.",
+    "Flight 01 is 750 per quarter, annualised to 3000; Flight 02 is 3500 per year; Flight 03 is 12500 per year. No lead is assigned Flight 03 because research supports local-shop or local-operator scope rather than a national commitment.",
+    "No wagering, alcohol or tobacco categories. No club endorsement, partnership or permission to use protected visual assets is claimed.",
+    "Verification occurred on 2026-11-18 UTC; 2026-11-19 is the queue date. Rough distances are locality estimates, not geocoded measurements.",
+    "SQL is a staged research artefact only, never executed. The sponsors schema cannot persist the research-only or do-not-send safeguards. Do not import until a separate approval process can preserve those restrictions. Coordinates remain NULL, and no agreement or athlete linkage is created.",
+    "Own business pages provide street addresses. Wellington postcodes are corroborated by supplementary address sources below."
+  ],
+  "supplementary_address_sources": [
+    "https://www.businesslist.nz/category/take-aways/city:wellington-city",
+    "https://www.alaturka.co.nz/"
+  ],
+  "area_anchors": [
+    {
+      "id": "manly",
+      "club": "Manly-Warringah Sea Eagles",
+      "competition": "NRL",
+      "home_ground": "Brookvale Oval (4 Pines Park)",
+      "address": "Pittwater Road between Alfred Road and Pine Avenue, Brookvale NSW 2100",
+      "source": "https://www.seaeagles.com.au/more/venue/"
+    },
+    {
+      "id": "force",
+      "club": "Western Force",
+      "competition": "Super Rugby Pacific",
+      "home_ground": "HBF Park",
+      "address": "310 Pier Street, Perth WA 6000",
+      "source": "https://www.venueswest.wa.gov.au/venues/hbf-park"
+    },
+    {
+      "id": "pulse",
+      "club": "Pulse",
+      "competition": "ANZ Premiership",
+      "home_ground": "TSB Arena",
+      "address": "4 Queens Wharf, Wellington, New Zealand",
+      "source": "https://www.wellingtonnz.com/venues-wellington/our-venues/tsb-arena"
+    },
+    {
+      "id": "werribee",
+      "club": "Werribee",
+      "competition": "VFL",
+      "home_ground": "Avalon Airport Oval at Chirnside Park",
+      "address": "220 Watton Street, Werribee VIC 3030",
+      "source": "https://www.wyndham.vic.gov.au/directory/werribee-football-club"
+    },
+    {
+      "id": "lightning",
+      "club": "Adelaide Lightning",
+      "competition": "WNBL",
+      "home_ground": "SA State Basketball Centre",
+      "address": "142 Rose Terrace, Wayville SA 5034",
+      "source": "https://tickets.adelaidelightning.wnbl.com.au/event/adelaide-lightning-full-season-memberships-2026--baiw3b"
+    },
+    {
+      "id": "valentine",
+      "club": "Valentine FC",
+      "competition": "NPL NNSW",
+      "home_ground": "Croudace Bay Sports Complex",
+      "address": "14 Parklea Avenue, Croudace Bay NSW 2280",
+      "source": "https://northernnswfootball.com.au/member-zones/clubs/valentine-fc",
+      "home_ground_source": "https://valentinefc.com.au/about-us/"
+    }
+  ],
+  "leads": [
+    {
+      "id": "2026-11-19-01",
+      "business_name": "Aushealth Physiotherapy",
+      "merchant_category": "Physiotherapy",
+      "street_address": "Level 2, Brookvale House, Vale Medical Centre, 1A Cross Street, Brookvale 2100, Australia",
+      "suburb": "Brookvale",
+      "postcode": "2100",
+      "country": "AU",
+      "website": "https://aushealthphysio.com.au/contact-us/",
+      "verification_source": "https://aushealthphysio.com.au/contact-us/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Local clinic and nearby hydrotherapy pool listed. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": null,
+        "contact_page": "https://aushealthphysio.com.au/contact-us/",
+        "note": "No readable public email captured. Use the contact page and its form or listed telephone; do not infer an email."
+      },
+      "area_anchor": {
+        "id": "manly",
+        "club": "Manly-Warringah Sea Eagles",
+        "competition": "NRL",
+        "home_ground": "Brookvale Oval (4 Pines Park)",
+        "address": "Pittwater Road between Alfred Road and Pine Avenue, Brookvale NSW 2100",
+        "source": "https://www.seaeagles.com.au/more/venue/",
+        "rough_proximity_note": "Within roughly 2 km of the ground in Brookvale. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "AUD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "Local clinic and nearby hydrotherapy pool listed. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Cross Street, Green Street",
+        "body": "Two Brookvale streets. One practice.\nYour Cross Street clinic and Green Street hydrotherapy pool put care into the everyday map of this place. What if local sporting ambition had a place on that map too? Not a famous face. Someone still finding their way.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nStart from A$750 a quarter. We handle the tax invoices. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under Ad Standards and ACCC rules. No club association or endorsement is implied.\n\nWorth a quiet conversation?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-02",
+      "business_name": "Rebound Health Brookvale",
+      "merchant_category": "Allied Health",
+      "street_address": "Level 2, 577-579 Pittwater Road, Brookvale 2100, Australia",
+      "suburb": "Brookvale",
+      "postcode": "2100",
+      "country": "AU",
+      "website": "https://www.reboundhealth.com.au/locations/",
+      "verification_source": "https://www.reboundhealth.com.au/locations/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Multiple locations listed including Brookvale, Warriewood and Frenchs Forest. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "reception@reboundhealth.com.au",
+        "contact_page": "https://www.reboundhealth.com.au/locations/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "manly",
+        "club": "Manly-Warringah Sea Eagles",
+        "competition": "NRL",
+        "home_ground": "Brookvale Oval (4 Pines Park)",
+        "address": "Pittwater Road between Alfred Road and Pine Avenue, Brookvale NSW 2100",
+        "source": "https://www.seaeagles.com.au/more/venue/",
+        "rough_proximity_note": "On the ground's Pittwater Road corridor, roughly 1-2 km away. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 02",
+        "currency": "AUD",
+        "price": 3500,
+        "billing_period": "year",
+        "annualised_value": 3500,
+        "scale_rationale": "Multiple locations listed including Brookvale, Warriewood and Frenchs Forest. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Brookvale, not a pin",
+        "body": "A postcode on a locations page is only the beginning.\nYour Brookvale team sits on Pittwater Road, while the wider practice reaches beyond the Beaches. Here's an idea for keeping one story close: support emerging local talent, right where the weekend starts.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nA local commitment starts from A$3,500 a year. We handle the tax invoices. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under Ad Standards and ACCC rules. No club association or endorsement is implied.\n\nCould this fit your local plans?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-03",
+      "business_name": "99 Bikes Brookvale",
+      "merchant_category": "Bicycle Retail and Servicing",
+      "street_address": "521 Pittwater Road, Brookvale 2100, Australia",
+      "suburb": "Brookvale",
+      "postcode": "2100",
+      "country": "AU",
+      "website": "https://99bikes.com.au/pages/store/brookvale",
+      "verification_source": "https://99bikes.com.au/pages/store/brookvale",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Local outlet of a network with over 60 stores; local-operator proposal only. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "brookvale@99bikes.com.au",
+        "contact_page": "https://99bikes.com.au/pages/store/brookvale",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "manly",
+        "club": "Manly-Warringah Sea Eagles",
+        "competition": "NRL",
+        "home_ground": "Brookvale Oval (4 Pines Park)",
+        "address": "Pittwater Road between Alfred Road and Pine Avenue, Brookvale NSW 2100",
+        "source": "https://www.seaeagles.com.au/more/venue/",
+        "rough_proximity_note": "Own site says just down from Brookvale Oval; roughly 2 km or less. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 02",
+        "currency": "AUD",
+        "price": 3500,
+        "billing_period": "year",
+        "annualised_value": 3500,
+        "scale_rationale": "Local outlet of a network with over 60 stores; local-operator proposal only. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "The workshop stays local",
+        "body": "You can buy a bike from anywhere.\nThe workshop is another matter. Your Pittwater Road mechanics give Brookvale riders somewhere to return. We'd put that same value on staying local into support for a sporting contender before the wider world notices.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nFrom A$3,500 a year, with the tax invoices handled by us. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under Ad Standards and ACCC rules. No club association or endorsement is implied.\n\nShall we talk about the local version?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-04",
+      "business_name": "Beaufort Physiotherapy",
+      "merchant_category": "Physiotherapy",
+      "street_address": "777 Beaufort Street, Mount Lawley 6050, Australia",
+      "suburb": "Mount Lawley",
+      "postcode": "6050",
+      "country": "AU",
+      "website": "https://www.beaufortphysio.com.au/contact/",
+      "verification_source": "https://www.beaufortphysio.com.au/contact/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "One Mount Lawley clinic targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "reception@beaufortphysio.com.au",
+        "contact_page": "https://www.beaufortphysio.com.au/contact/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "force",
+        "club": "Western Force",
+        "competition": "Super Rugby Pacific",
+        "home_ground": "HBF Park",
+        "address": "310 Pier Street, Perth WA 6000",
+        "source": "https://www.venueswest.wa.gov.au/venues/hbf-park",
+        "rough_proximity_note": "Roughly 3 km north-east of HBF Park along the Beaufort Street corridor. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "AUD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "One Mount Lawley clinic targeted. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Saturday on Beaufort Street",
+        "body": "Saturday appointments say something about a street.\nAt your Mount Lawley clinic, the working week doesn't quite end on Friday. Neither does the effort behind weekend sport. We'd like to put a small, fair commitment behind someone doing that work locally.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nThe starting point is A$750 a quarter. We handle the tax invoices. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under Ad Standards and ACCC rules. No club association or endorsement is implied.\n\nWould you like the outline?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-05",
+      "business_name": "Trained Physio and Fitness",
+      "merchant_category": "Physiotherapy and Fitness",
+      "street_address": "108 Brown Street, East Perth 6004, Australia",
+      "suburb": "East Perth",
+      "postcode": "6004",
+      "country": "AU",
+      "website": "https://www.trainedphysioperth.com.au/",
+      "verification_source": "https://www.trainedphysioperth.com.au/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "One East Perth practice with a rehab facility and gym. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "hello@trainedphysioperth.com.au",
+        "contact_page": "https://www.trainedphysioperth.com.au/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "force",
+        "club": "Western Force",
+        "competition": "Super Rugby Pacific",
+        "home_ground": "HBF Park",
+        "address": "310 Pier Street, Perth WA 6000",
+        "source": "https://www.venueswest.wa.gov.au/venues/hbf-park",
+        "rough_proximity_note": "Roughly 2 km south-east of HBF Park in neighbouring East Perth. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "AUD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "One East Perth practice with a rehab facility and gym. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Brown Street, before the crowd",
+        "body": "The work happens before anyone watches.\nYour Brown Street practice brings a gym and rehabilitation facilities under one roof. That's a useful starting point for a different kind of local support: an emerging East Perth contender, valued for their effort, not their audience.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nBacking starts from A$750 a quarter. We handle the tax invoices. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under Ad Standards and ACCC rules. No club association or endorsement is implied.\n\nDoes that sound worth discussing?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-06",
+      "business_name": "Dalman Physiotherapy",
+      "merchant_category": "Physiotherapy",
+      "street_address": "Level 9, Petherick Tower, 38 Waring Taylor Street, Wellington Central 6011, New Zealand",
+      "suburb": "Wellington Central",
+      "postcode": "6011",
+      "country": "NZ",
+      "website": "https://www.dalmanphysiotherapy.com/",
+      "verification_source": "https://www.dalmanphysiotherapy.com/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Own site lists Wellington CBD and Tawa clinics. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "dalmanphysio@gmail.com",
+        "contact_page": "https://www.dalmanphysiotherapy.com/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "pulse",
+        "club": "Pulse",
+        "competition": "ANZ Premiership",
+        "home_ground": "TSB Arena",
+        "address": "4 Queens Wharf, Wellington, New Zealand",
+        "source": "https://www.wellingtonnz.com/venues-wellington/our-venues/tsb-arena",
+        "rough_proximity_note": "Wellington CBD, roughly 0.5-1 km from Queens Wharf. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 02",
+        "currency": "NZD",
+        "price": 3500,
+        "billing_period": "year",
+        "annualised_value": 3500,
+        "scale_rationale": "Own site lists Wellington CBD and Tawa clinics. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Half an hour, properly given",
+        "body": "Thirty minutes is a choice.\nYour minimum appointment time gives people room. Between Waring Taylor Street and Tawa, that's a distinct way to work. We'd bring the same patience to backing emerging Wellington talent: space to develop, without demanding a ready-made star.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nFrom NZ$3,500 a year. We handle the tax invoices, subject to GST and buyer-created invoice rules. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under ASA rules. No club association or endorsement is implied.\n\nCould we make time for this?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-07",
+      "business_name": "CBD Physio",
+      "merchant_category": "Physiotherapy",
+      "street_address": "Level 5, Te Whare Maori, 139 Featherston Street, Wellington Central 6011, New Zealand",
+      "suburb": "Wellington Central",
+      "postcode": "6011",
+      "country": "NZ",
+      "website": "https://www.cbdphysio.co.nz/contact-us/",
+      "verification_source": "https://www.cbdphysio.co.nz/contact-us/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Single CBD clinic targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "contact@cbdphysio.co.nz",
+        "contact_page": "https://www.cbdphysio.co.nz/contact-us/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "pulse",
+        "club": "Pulse",
+        "competition": "ANZ Premiership",
+        "home_ground": "TSB Arena",
+        "address": "4 Queens Wharf, Wellington, New Zealand",
+        "source": "https://www.wellingtonnz.com/venues-wellington/our-venues/tsb-arena",
+        "rough_proximity_note": "Featherston Street is a few blocks inland from TSB Arena, roughly 0.5 km away. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "NZD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "Single CBD clinic targeted. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Featherston Street, looking forward",
+        "body": "A city can rush past its own talent.\nYour Featherston Street clinic sets aside thirty minutes for each appointment. Here's another reason to pause: someone in Wellington's sporting pathway, still building their future. Local support could meet them before the headlines do.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nConsider NZ$750 a quarter. We handle the tax invoices, subject to GST and buyer-created invoice rules. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under ASA rules. No club association or endorsement is implied.\n\nWould a short note with details help?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-08",
+      "business_name": "Central City Physiotherapy Clinic",
+      "merchant_category": "Physiotherapy",
+      "street_address": "Level 5, 330 Lambton Quay, Wellington Central 6011, New Zealand",
+      "suburb": "Wellington Central",
+      "postcode": "6011",
+      "country": "NZ",
+      "website": "https://www.ccphysio.co.nz/",
+      "verification_source": "https://www.ccphysio.co.nz/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Single central Wellington clinic targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "info@ccphysio.co.nz",
+        "contact_page": "https://www.ccphysio.co.nz/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "pulse",
+        "club": "Pulse",
+        "competition": "ANZ Premiership",
+        "home_ground": "TSB Arena",
+        "address": "4 Queens Wharf, Wellington, New Zealand",
+        "source": "https://www.wellingtonnz.com/venues-wellington/our-venues/tsb-arena",
+        "rough_proximity_note": "Lambton Quay in the same waterfront CBD precinct, roughly 0.5-1 km from TSB Arena. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "NZD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "Single central Wellington clinic targeted. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Lambton Quay, since 1989",
+        "body": "Since 1989, plenty has changed around Lambton Quay.\nYour practice is still here. That continuity offers a different lens on Wellington sport: not the next big moment, but the next person worth standing behind. We'd start small, with an emerging local contender.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nIt begins at NZ$750 a quarter. We handle the tax invoices, subject to GST and buyer-created invoice rules. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under ASA rules. No club association or endorsement is implied.\n\nIs there room for that conversation?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-09",
+      "business_name": "The Spinal Studio Werribee",
+      "merchant_category": "Allied Health",
+      "street_address": "6/70 Watton Street, Werribee 3030, Australia",
+      "suburb": "Werribee",
+      "postcode": "3030",
+      "country": "AU",
+      "website": "https://thespinalstudio.com.au/locations/werribee/",
+      "verification_source": "https://thespinalstudio.com.au/locations/werribee/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Own site describes nine studios; proposal limited to the local operator. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "werribee@thespinalstudio.com.au",
+        "contact_page": "https://thespinalstudio.com.au/locations/werribee/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "werribee",
+        "club": "Werribee",
+        "competition": "VFL",
+        "home_ground": "Avalon Airport Oval at Chirnside Park",
+        "address": "220 Watton Street, Werribee VIC 3030",
+        "source": "https://www.wyndham.vic.gov.au/directory/werribee-football-club",
+        "rough_proximity_note": "On the same Watton Street corridor as the ground, roughly 1-2 km away. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 02",
+        "currency": "AUD",
+        "price": 3500,
+        "billing_period": "year",
+        "annualised_value": 3500,
+        "scale_rationale": "Own site describes nine studios; proposal limited to the local operator. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Watton Street, one doorway",
+        "body": "One doorway. More than one way to care.\nYour Watton Street studio brings several disciplines together. We'd take that spirit outside the treatment room: a local business helping emerging Wyndham talent find their own way through sport. No treatment story. No promised result.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nThe local option is from A$3,500 a year. We handle the tax invoices. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under Ad Standards and ACCC rules. No club association or endorsement is implied.\n\nMight this belong in your plans?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-10",
+      "business_name": "Enrich Physio Werribee",
+      "merchant_category": "Physiotherapy",
+      "street_address": "Friendly Medical Centre, 82 Watton Street, Werribee 3030, Australia",
+      "suburb": "Werribee",
+      "postcode": "3030",
+      "country": "AU",
+      "website": "https://enrichphysio.com.au/our-locations/",
+      "verification_source": "https://enrichphysio.com.au/our-locations/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Own site lists multiple clinics including Werribee, Aintree and Melton. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": null,
+        "contact_page": "https://enrichphysio.com.au/our-locations/",
+        "note": "No readable public email captured. Use the contact page and its form or listed telephone; do not infer an email."
+      },
+      "area_anchor": {
+        "id": "werribee",
+        "club": "Werribee",
+        "competition": "VFL",
+        "home_ground": "Avalon Airport Oval at Chirnside Park",
+        "address": "220 Watton Street, Werribee VIC 3030",
+        "source": "https://www.wyndham.vic.gov.au/directory/werribee-football-club",
+        "rough_proximity_note": "Same Watton Street corridor as Chirnside Park, roughly 1-2 km away. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 02",
+        "currency": "AUD",
+        "price": 3500,
+        "billing_period": "year",
+        "annualised_value": 3500,
+        "scale_rationale": "Own site lists multiple clinics including Werribee, Aintree and Melton. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "A local name for Watton",
+        "body": "A network can grow without every street feeling the same.\nYour clinic inside Friendly Medical Centre gives Watton Street its own point of contact. We'd keep a sporting commitment just as specific: support for an emerging contender from Wyndham, rather than a distant campaign.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nPut aside from A$3,500 a year. We handle the tax invoices. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under Ad Standards and ACCC rules. No club association or endorsement is implied.\n\nCould we sketch the idea together?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-11",
+      "business_name": "The Physio Studio",
+      "merchant_category": "Physiotherapy",
+      "street_address": "93 Goodwood Road, Goodwood 5034, Australia",
+      "suburb": "Goodwood",
+      "postcode": "5034",
+      "country": "AU",
+      "website": "https://www.thephysiostudio.com.au/contact/",
+      "verification_source": "https://www.thephysiostudio.com.au/contact/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "One Goodwood Road clinic targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "admin@thephysiostudio.com.au",
+        "contact_page": "https://www.thephysiostudio.com.au/contact/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "lightning",
+        "club": "Adelaide Lightning",
+        "competition": "WNBL",
+        "home_ground": "SA State Basketball Centre",
+        "address": "142 Rose Terrace, Wayville SA 5034",
+        "source": "https://tickets.adelaidelightning.wnbl.com.au/event/adelaide-lightning-full-season-memberships-2026--baiw3b",
+        "rough_proximity_note": "Neighbouring Goodwood, roughly 1 km east of the Rose Terrace venue. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "AUD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "One Goodwood Road clinic targeted. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Goodwood Road, beyond Saturday",
+        "body": "Weekend sport leaves a weekday story.\nYour Goodwood Road clinic serves Wayville with physiotherapy, Pilates and massage. We'd tell a different part of that local story: the ambition that keeps someone practising, long before a crowd arrives. A small commitment could help it continue.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nFrom A$750 a quarter, with us handling the tax invoices. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under Ad Standards and ACCC rules. No club association or endorsement is implied.\n\nWould you be open to hearing more?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-12",
+      "business_name": "Empowered Neurodivergence Physiotherapy",
+      "merchant_category": "Physiotherapy",
+      "street_address": "2-3 Greenhill Road, Wayville 5034, Australia",
+      "suburb": "Wayville",
+      "postcode": "5034",
+      "country": "AU",
+      "website": "https://empoweredneurodivergencephysiotherapy.com.au/appointment-booking/",
+      "verification_source": "https://empoweredneurodivergencephysiotherapy.com.au/appointment-booking/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "One Wayville service address targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "Own page has conflicting closing hours; address and email are consistent. Hours not relied on."
+      },
+      "contact": {
+        "email": "admin@empoweredneurodivergencephysiotherapy.com.au",
+        "contact_page": "https://empoweredneurodivergencephysiotherapy.com.au/appointment-booking/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "lightning",
+        "club": "Adelaide Lightning",
+        "competition": "WNBL",
+        "home_ground": "SA State Basketball Centre",
+        "address": "142 Rose Terrace, Wayville SA 5034",
+        "source": "https://tickets.adelaidelightning.wnbl.com.au/event/adelaide-lightning-full-season-memberships-2026--baiw3b",
+        "rough_proximity_note": "Same Wayville area, roughly 1-2 km from the State Basketball Centre. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "AUD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "One Wayville service address targeted. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Greenhill Road, room to begin",
+        "body": "Not every sporting story starts at the same line.\nYour Greenhill Road physiotherapy service gives Wayville a local place to ask about support. We'd like to make room for emerging talent too, with backing shaped around the person, not an expectation of who they should become.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nA first commitment could be A$750 a quarter. We handle the tax invoices. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under Ad Standards and ACCC rules. No club association or endorsement is implied.\n\nMay we send a simple outline?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-13",
+      "business_name": "Warners Bay Physiotherapy",
+      "merchant_category": "Physiotherapy",
+      "street_address": "27 Lake Street, Warners Bay 2282, Australia",
+      "suburb": "Warners Bay",
+      "postcode": "2282",
+      "country": "AU",
+      "website": "https://warnersbayphysiotherapy.com.au/contact-warners-bay-physiotherapy/",
+      "verification_source": "https://warnersbayphysiotherapy.com.au/contact-warners-bay-physiotherapy/",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "One Warners Bay clinic targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "reception@warnersbayphysiotherapy.com.au",
+        "contact_page": "https://warnersbayphysiotherapy.com.au/contact-warners-bay-physiotherapy/",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "valentine",
+        "club": "Valentine FC",
+        "competition": "NPL NNSW",
+        "home_ground": "Croudace Bay Sports Complex",
+        "address": "14 Parklea Avenue, Croudace Bay NSW 2280",
+        "source": "https://northernnswfootball.com.au/member-zones/clubs/valentine-fc",
+        "home_ground_source": "https://valentinefc.com.au/about-us/",
+        "rough_proximity_note": "Neighbouring lakeside suburb, roughly 3-5 km north of Croudace Bay Sports Complex. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "AUD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "One Warners Bay clinic targeted. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Lake Street, the weekday work",
+        "body": "The weekend gets the attention.\nYour Lake Street clinic opens on weekdays. It's a reminder that local sport has a life between fixtures. We'd put support into that quieter stretch, backing an emerging Lake Macquarie contender while they're still building, not just when they're winning.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nThat starts from A$750 a quarter. We handle the tax invoices. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under Ad Standards and ACCC rules. No club association or endorsement is implied.\n\nWorth talking through over the phone?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-14",
+      "business_name": "Bay Bike Co",
+      "merchant_category": "Bicycle Retail and Servicing",
+      "street_address": "8/56 Medcalf Street, Warners Bay 2282, Australia",
+      "suburb": "Warners Bay",
+      "postcode": "2282",
+      "country": "AU",
+      "website": "https://www.baybikeco.com.au/pages/contact-us",
+      "verification_source": "https://www.baybikeco.com.au/pages/contact-us",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "One Warners Bay shop targeted. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "sales@baybikeco.com.au",
+        "contact_page": "https://www.baybikeco.com.au/pages/contact-us",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "valentine",
+        "club": "Valentine FC",
+        "competition": "NPL NNSW",
+        "home_ground": "Croudace Bay Sports Complex",
+        "address": "14 Parklea Avenue, Croudace Bay NSW 2280",
+        "source": "https://northernnswfootball.com.au/member-zones/clubs/valentine-fc",
+        "home_ground_source": "https://valentinefc.com.au/about-us/",
+        "rough_proximity_note": "Neighbouring Warners Bay retail area, roughly 4-6 km north of Croudace Bay Sports Complex. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 01",
+        "currency": "AUD",
+        "price": 750,
+        "billing_period": "quarter",
+        "annualised_value": 3000,
+        "scale_rationale": "One Warners Bay shop targeted. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Saturday at Medcalf Street",
+        "body": "A Saturday shop visit can start a weekend.\nYour Medcalf Street store gives Warners Bay riders local advice and somewhere to stop in. What if some of that local connection reached a sporting contender still starting out? Less distant sponsorship. More support close to home.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nFrom A$750 a quarter. The tax invoices are ours to handle. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under Ad Standards and ACCC rules. No club association or endorsement is implied.\n\nCould that be your kind of backing?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    },
+    {
+      "id": "2026-11-19-15",
+      "business_name": "99 Bikes Warners Bay",
+      "merchant_category": "Bicycle Retail and Servicing",
+      "street_address": "64 Medcalf Street, Warners Bay 2282, Australia",
+      "suburb": "Warners Bay",
+      "postcode": "2282",
+      "country": "AU",
+      "website": "https://99bikes.com.au/pages/store/warners-bay-bike-shop",
+      "verification_source": "https://99bikes.com.au/pages/store/warners-bay-bike-shop",
+      "verification": {
+        "checked_date_utc": "2026-11-18",
+        "method": "Discovered with web_search; own live website successfully loaded with web_get_contents.",
+        "evidence": "Local outlet of a network with over 60 stores; local-operator proposal only. Live page lists its street address and services, booking options or trading hours.",
+        "limitations": "No telephone or in-person confirmation."
+      },
+      "contact": {
+        "email": "warners.bay@99bikes.com.au",
+        "contact_page": "https://99bikes.com.au/pages/store/warners-bay-bike-shop",
+        "note": "Email publicly listed on the verification source."
+      },
+      "area_anchor": {
+        "id": "valentine",
+        "club": "Valentine FC",
+        "competition": "NPL NNSW",
+        "home_ground": "Croudace Bay Sports Complex",
+        "address": "14 Parklea Avenue, Croudace Bay NSW 2280",
+        "source": "https://northernnswfootball.com.au/member-zones/clubs/valentine-fc",
+        "home_ground_source": "https://valentinefc.com.au/about-us/",
+        "rough_proximity_note": "Neighbouring Warners Bay retail area, roughly 4-6 km north of Croudace Bay Sports Complex. Indicative locality estimate, not a measured route or verified eligibility catchment.",
+        "endorsement_obtained": false
+      },
+      "flight": {
+        "name": "Flight 02",
+        "currency": "AUD",
+        "price": 3500,
+        "billing_period": "year",
+        "annualised_value": 3500,
+        "scale_rationale": "Local outlet of a network with over 60 stores; local-operator proposal only. Suggested research tier only, no budget or purchase intent established."
+      },
+      "outreach_email": {
+        "subject": "Try first, Medcalf Street",
+        "body": "A test ride leaves the decision with the rider.\nYour Medcalf Street store offers them free, alongside bike fitting and workshop servicing. We'd take the same approach to a Lake Macquarie talent partnership: let the person decide whether it's right, before anything moves.\n\nAthletes own their name, image and likeness. Nobody is attached. Anyone joining would choose freely, on fair terms, with consent.\n\nFor the local store, from A$3,500 a year. We handle the tax invoices. 15% goes back to the local grassroots club.\n\nFuture content would be clearly disclosed as a paid partnership, under Ad Standards and ACCC rules. No club association or endorsement is implied.\n\nShall we see whether it fits?\nIf you'd rather not hear more, say so.\n\nTMRWLine\ntmrw/. Line up your Future"
+      }
+    }
+  ]
+}
