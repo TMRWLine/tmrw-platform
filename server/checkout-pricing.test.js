@@ -51,6 +51,28 @@ test('flight prices, currency and splits ignore every buyer-supplied economic ov
   }
 }));
 
+test('Olympic horizon tiers create Stripe sessions at their advertised AUD prices', () => fixture(async ({ post, calls }) => {
+  const tiers = [
+    ['olympic_1yr_50k', '5000000'],
+    ['olympic_2yr_110k', '11000000'],
+    ['olympic_4yr_250k', '25000000'],
+  ];
+  for (const [tierId, cents] of tiers) {
+    const response = await post({ athleteId: 'fixture', tierId, amountAud: 1 });
+    assert.equal(response.status, 200, tierId);
+    assert.deepEqual(await response.json(), { checkoutUrl: 'https://checkout.stripe.invalid/fixture' });
+    const body = calls.at(-1);
+    assert.equal(body.get('metadata[tierId]'), tierId);
+    assert.equal(body.get('line_items[0][price_data][unit_amount]'), cents);
+    assert.equal(body.get('line_items[0][price_data][currency]'), 'aud');
+  }
+  assert.equal(calls.length, tiers.length);
+
+  const unknown = await post({ athleteId: 'fixture', tierId: 'olympic_3yr_unknown' });
+  assert.equal(unknown.status, 400);
+  assert.equal(calls.length, tiers.length);
+}));
+
 test('capsule prices, costs, royalties, identity and product images come only from the server catalogue', () => fixture(async ({ post, calls }) => {
   const response = await post({ capsuleItems: [{
     id: 'drop_mt_2200', qty: 2, size: 'L', priceAud: 1, baseCostAud: -999999,
