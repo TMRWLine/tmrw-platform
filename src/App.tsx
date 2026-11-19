@@ -563,8 +563,10 @@ export function MarketplaceApp() {
   }
 
   function navigateFromMenu(id: LandingSectionId, headingId: string) {
-    navigateSection(id);
+    if (id !== 'top' || view !== 'landing') navigateSection(id);
+    const sameView = view === viewFromLocation();
     requestAnimationFrame(() => {
+      if (sameView) window.scrollTo({ top: 0, behavior: 'instant' });
       const heading = document.getElementById(headingId);
       if (!heading) return;
       heading.tabIndex = -1;
