@@ -692,7 +692,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
   };
 
   return (
-    <div data-runway-root="true" className="w-full bg-[#080808]">
+    <div data-runway-root="true" className="w-full overflow-x-clip sm:overflow-visible bg-[#080808]">
       <style>{`
         #commercial-tiers [data-sovereign-board] {
           border-top: 0 !important;
@@ -714,13 +714,8 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
           color: #B8FF00 !important;
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.9), 0 15px 30px rgba(0, 0, 0, 0.6), 0 0 28px rgba(184, 255, 0, 0.35) !important;
         }
-        body:has(#tmrw-locked-runway-footer) footer:not(#tmrw-locked-runway-footer) {
+        body:has(#tmrw-locked-runway-footer) footer[data-site-footer] {
           display: none !important;
-        }
-        @media (min-width: 768px) {
-          body:has(#tmrw-locked-runway-footer) footer:not(#tmrw-locked-runway-footer)[data-syndicate-checkout-actions] {
-            display: block !important;
-          }
         }
       `}</style>
 
@@ -762,7 +757,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
                       key={horizon.id}
                       type="button"
                       onClick={() => setSelectedHorizon(horizon)}
-                      className={`rounded-2xl border p-4 text-left cursor-pointer transition-all ${
+                      className={`rounded-2xl border p-2 sm:p-4 text-left cursor-pointer transition-all ${
                         active
                           ? 'border-volt/60 bg-[#141418] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_14px_34px_rgba(0,0,0,0.5),0_0_20px_rgba(184,255,0,0.14)]'
                           : 'border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/25 hover:text-white'
@@ -777,7 +772,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
                           {horizon.numeral}.
                         </span>
                       </div>
-                      <div className="font-display text-xl sm:text-2xl font-black tracking-tight text-white">
+                      <div className="font-display text-[clamp(0.875rem,4vw,1rem)] sm:text-2xl font-black tracking-tight text-white">
                         {horizon.priceFormatted}
                       </div>
                       <div className="font-sans text-[11.5px] leading-snug text-neutral-300 mt-1.5">
