@@ -57,7 +57,7 @@ import { AdminDrawer } from './components/AdminDrawer';
 import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { CoverHero } from './components/CoverHero';
 import { CoverHero as PastedCoverHero, PAGE_SHELL as PASTED_PAGE_SHELL } from './components/pasted/CoverHero';
-import { hasCourtLineArrived, isPastedCover } from './lib/coverMotion';
+import { isPastedCover } from './lib/coverMotion';
 import { ManifestoTrail } from './components/ManifestoTrail';
 import { BroadcastMatrix } from './components/BroadcastMatrix';
 import { RosterGrid } from './components/RosterGrid';
@@ -238,10 +238,7 @@ export function MarketplaceApp() {
 
   useEffect(() => {
     if (view !== 'landing' || isPastedCover(window.location.search)) return;
-    const joinMarker = document.querySelector('.cover-sequence .cover-join-marker');
-    const rule = document.querySelector('.cover-sequence .cover-story-rule');
-    const motion = window.matchMedia('(prefers-reduced-motion: no-preference)');
-    const supportsTimeline = CSS.supports('animation-timeline: scroll(root block)');
+    const cover = document.querySelector('.landing-scroll .cover-stage');
     const sections = [
       ['how-it-works', 'cover-story-heading'],
       ['roster', 'roster'],
@@ -251,12 +248,7 @@ export function MarketplaceApp() {
     let frame = 0;
     const update = () => {
       frame = 0;
-      const past = joinMarker !== null && rule !== null && hasCourtLineArrived(
-        rule.getBoundingClientRect().top,
-        joinMarker.getBoundingClientRect().top,
-        window.innerHeight,
-        supportsTimeline && motion.matches,
-      );
+      const past = (cover?.getBoundingClientRect().bottom ?? Infinity) <= NAV_HEIGHT_PX;
       setPastLandingCover(past);
       let active: LandingSectionId | null = past ? 'how-it-works' : null;
       if (past) {
@@ -271,12 +263,10 @@ export function MarketplaceApp() {
     update();
     window.addEventListener('scroll', requestUpdate, { passive: true });
     window.addEventListener('resize', requestUpdate);
-    motion.addEventListener('change', requestUpdate);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener('scroll', requestUpdate);
       window.removeEventListener('resize', requestUpdate);
-      motion.removeEventListener('change', requestUpdate);
     };
   }, [view]);
 
@@ -846,23 +836,19 @@ export function MarketplaceApp() {
         <div className="landing-scroll relative z-10 w-full bg-[#FFFFFF]">
           <main className="bg-[#FFFFFF]">
             {isPastedCover(window.location.search) ? (
-              <>
-                <div className={`${PASTED_PAGE_SHELL} pt-20`}>
-                  <PastedCoverHero onNavigateSection={navigateToHeading} />
-                </div>
-                <HowItWorksStrip />
-              </>
+              <div className={`${PASTED_PAGE_SHELL} pt-20`}>
+                <PastedCoverHero onNavigateSection={navigateToHeading} />
+              </div>
             ) : (
-              <div className="cover-sequence pt-20">
-                <span className="cover-join-marker" aria-hidden="true" />
+              <div className="pt-20">
                 <CoverHero
                   onNavigateSection={navigateToHeading}
                   scrollForKeyboardFocus={scrollForKeyboardFocus}
                   overlayOpen={isMenuOpen || isCartOpen || isSearchOpen || isPortalDrawerOpen || isAuthModalOpen || isSyndicateEnquiryOpen}
                 />
-                <HowItWorksStrip courtHandoff />
               </div>
             )}
+            <HowItWorksStrip />
             <ManifestoTrail onNavigateSection={navigateSection} />
             <BroadcastMatrix />
             <SettlementLedger />
