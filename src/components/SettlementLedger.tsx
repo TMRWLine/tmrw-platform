@@ -64,9 +64,9 @@ export const SettlementLedger: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch w-full">
+        <div className="grid w-full grid-cols-1 items-start gap-10 lg:grid-cols-2">
           {/* Left Column: Kinetic Video Specimen with Elite Grain Overlay */}
-          <div className="lg:col-span-6 rounded-[24px] overflow-hidden relative aspect-[4/3] bg-neutral-950 shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col justify-between p-6 sm:p-8">
+          <div className="relative flex aspect-[4/3] w-full min-w-0 flex-col justify-between overflow-hidden rounded-[24px] bg-neutral-950 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.3)] sm:p-8">
             <video
               ref={videoRef}
               autoPlay={!reducedMotion}
@@ -125,10 +125,10 @@ export const SettlementLedger: React.FC = () => {
           </div>
 
           {/* Right Column: RCTI Invoice Panel */}
-          <div className="lg:col-span-6 flex flex-col justify-between py-2 px-1">
+          <div className="flex min-w-0 flex-col justify-between px-1 py-2">
             
             {/* Wieden+Kennedy Refined Editorial Vault Seal */}
-            <div className="flex justify-between items-center border-b-2 border-neutral-900 pb-4 mb-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b-2 border-neutral-900 pb-4">
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-neutral-900">
                 THE LOCAL RECEIPT
               </span>

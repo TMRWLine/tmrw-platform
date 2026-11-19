@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { BrandLockup } from '../../components/BrandLockup';
-import {
-  getCommercialPackage,
-  mockDeliverables,
-  toCommercialAthlete,
-  type CommercialAthlete,
-  type CommercialPackage,
-} from '../../data/mockDeliverables';
 import { CHECKOUT_SUCCESS_PATH, releaseEscrowMilestoneTranche } from '../../lib/checkout';
 import { formatAud } from '../../lib/formatMoney';
 import { fetchPaidWhitelistingGrant, type PaidWhitelistingGrant } from '../../lib/whitelisting';
-import { ROSTER_DATA } from '../../data/roster';
+import { resolveReceiptAthlete, type ReceiptAthlete } from './receiptAthlete';
+import { resolveReceiptPackage, type ReceiptPackage } from './receiptPackage';
 
 export { CHECKOUT_SUCCESS_PATH };
 
@@ -25,15 +19,6 @@ const MILESTONES = [
   { id: 'content', label: 'Content Scheduled', detail: 'Production window locks after brand kit confirmation.', done: false },
 ] as const;
 
-function resolveAthlete(athleteId: string): CommercialAthlete | null {
-  if (athleteId && athleteId === mockDeliverables.athlete.id) {
-    return mockDeliverables.athlete;
-  }
-  const roster = athleteId ? ROSTER_DATA.find((entry) => entry.id === athleteId) : undefined;
-  if (roster) return toCommercialAthlete(roster.record);
-  return null;
-}
-
 function dealReference(sessionId: string | null, athleteId: string, tierId: string): string {
   const sessionTail = (sessionId ?? 'DEMO').replace(/[^a-zA-Z0-9]/g, '').slice(-8).toUpperCase();
   const athleteTail = athleteId.replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase();
@@ -43,8 +28,8 @@ function dealReference(sessionId: string | null, athleteId: string, tierId: stri
 
 function downloadRcti(args: {
   reference: string;
-  athlete: CommercialAthlete;
-  pkg: CommercialPackage;
+  athlete: ReceiptAthlete;
+  pkg: ReceiptPackage;
 }) {
   const { reference, athlete, pkg } = args;
   const gst = Math.round(pkg.price_aud * 0.1 * 100) / 100;
@@ -196,8 +181,8 @@ export const CheckoutSuccessPage: React.FC = () => {
   }, [sessionId, attempt]);
 
   const grant = paid?.grant;
-  const athlete = grant ? resolveAthlete(grant.athleteId) : null;
-  const pkg = grant ? getCommercialPackage(grant.flightTierId) : null;
+  const athlete = grant ? resolveReceiptAthlete(grant.athleteId, grant.flightTierId) : null;
+  const pkg = grant ? resolveReceiptPackage(grant.flightTierId) : null;
   const split = pkg?.split_breakdown;
   const reference = paid ? dealReference(paid.checkoutSessionId, paid.grant.athleteId, paid.grant.flightTierId) : '';
   const locality = [athlete?.grassroots_club.suburb ?? '', athlete?.grassroots_club.state ?? '']
