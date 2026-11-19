@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { BrandLockup } from '../../components/BrandLockup';
-import {
-  getCommercialPackage,
-  mockDeliverables,
-  toCommercialAthlete,
-  type CommercialAthlete,
-  type CommercialPackage,
-} from '../../data/mockDeliverables';
 import { CHECKOUT_SUCCESS_PATH, releaseEscrowMilestoneTranche } from '../../lib/checkout';
 import { formatAud } from '../../lib/formatMoney';
 import { fetchPaidWhitelistingGrant, type PaidWhitelistingGrant } from '../../lib/whitelisting';
-import { ROSTER_DATA } from '../../data/roster';
+import { resolveReceiptAthlete, type ReceiptAthlete } from './receiptAthlete';
+import { resolveReceiptPackage, type ReceiptPackage } from './receiptPackage';
 
 export { CHECKOUT_SUCCESS_PATH };
 
@@ -25,15 +19,6 @@ const MILESTONES = [
   { id: 'content', label: 'Content Scheduled', detail: 'Production window locks after brand kit confirmation.', done: false },
 ] as const;
 
-function resolveAthlete(athleteId: string): CommercialAthlete | null {
-  if (athleteId && athleteId === mockDeliverables.athlete.id) {
-    return mockDeliverables.athlete;
-  }
-  const roster = athleteId ? ROSTER_DATA.find((entry) => entry.id === athleteId) : undefined;
-  if (roster) return toCommercialAthlete(roster.record);
-  return null;
-}
-
 function dealReference(sessionId: string | null, athleteId: string, tierId: string): string {
   const sessionTail = (sessionId ?? 'DEMO').replace(/[^a-zA-Z0-9]/g, '').slice(-8).toUpperCase();
   const athleteTail = athleteId.replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase();
@@ -43,8 +28,8 @@ function dealReference(sessionId: string | null, athleteId: string, tierId: stri
 
 function downloadRcti(args: {
   reference: string;
-  athlete: CommercialAthlete;
-  pkg: CommercialPackage;
+  athlete: ReceiptAthlete;
+  pkg: ReceiptPackage;
 }) {
   const { reference, athlete, pkg } = args;
   const gst = Math.round(pkg.price_aud * 0.1 * 100) / 100;
@@ -115,7 +100,7 @@ function Milestone({ label, detail, done, live, children }: {
       <span
         aria-hidden="true"
         className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold ${
-          done ? 'bg-[#CCFF00] text-[#0F0F11]' : 'border border-neutral-200 text-[#666666]'
+          done ? 'bg-volt text-[#0F0F11]' : 'border border-neutral-200 text-[#666666]'
         }`}
       >
         {done ? '✓' : ''}
@@ -163,7 +148,7 @@ function MilestoneRelease({ checkoutSessionId, athleteId }: { checkoutSessionId:
             type="button"
             disabled={pending}
             onClick={() => void approveDelivery()}
-            className="rounded-full border-0 bg-[#CCFF00] px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-[#dfff66] disabled:opacity-50"
+            className="rounded-full border-0 bg-volt px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-volt disabled:opacity-50"
           >
             {pending ? 'Confirming release…' : 'Approve deliverables & release'}
           </button>
@@ -196,8 +181,8 @@ export const CheckoutSuccessPage: React.FC = () => {
   }, [sessionId, attempt]);
 
   const grant = paid?.grant;
-  const athlete = grant ? resolveAthlete(grant.athleteId) : null;
-  const pkg = grant ? getCommercialPackage(grant.flightTierId) : null;
+  const athlete = grant ? resolveReceiptAthlete(grant.athleteId, grant.flightTierId) : null;
+  const pkg = grant ? resolveReceiptPackage(grant.flightTierId) : null;
   const split = pkg?.split_breakdown;
   const reference = paid ? dealReference(paid.checkoutSessionId, paid.grant.athleteId, paid.grant.flightTierId) : '';
   const locality = [athlete?.grassroots_club.suburb ?? '', athlete?.grassroots_club.state ?? '']
@@ -223,7 +208,7 @@ export const CheckoutSuccessPage: React.FC = () => {
           <div className="mt-4" role="status">
             <p className="m-0 text-sm text-[#666666]">{error ?? 'Waiting for Stripe and the activation ledger.'}</p>
             {error && /^cs_(test|live)_/.test(sessionId) && (
-              <button type="button" onClick={() => setAttempt((value) => value + 1)} className="mt-4 rounded-full bg-[#CCFF00] px-5 py-2 text-sm font-bold">
+              <button type="button" onClick={() => setAttempt((value) => value + 1)} className="mt-4 rounded-full bg-volt px-5 py-2 text-sm font-bold">
                 Check again
               </button>
             )}
@@ -357,7 +342,7 @@ export const CheckoutSuccessPage: React.FC = () => {
           <button
             type="button"
             onClick={() => downloadRcti({ reference, athlete, pkg })}
-            className="mt-6 rounded-full border-0 bg-[#CCFF00] px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-[#dfff66] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] focus-visible:ring-offset-2"
+            className="mt-6 rounded-full border-0 bg-volt px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-volt focus:outline-none focus-visible:ring-2 focus-visible:ring-volt focus-visible:ring-offset-2"
           >
             Download RCTI specimen
           </button>

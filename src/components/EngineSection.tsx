@@ -80,7 +80,7 @@ export const EngineSection: React.FC = () => {
               <span
                 key={position}
                 aria-hidden="true"
-                className={`pointer-events-none absolute z-20 font-mono text-[12px] leading-none text-[#D2FF00] ${position}`}
+                className={`pointer-events-none absolute z-20 font-mono text-[12px] leading-none text-volt ${position}`}
               >
                 +
               </span>
@@ -97,12 +97,12 @@ export const EngineSection: React.FC = () => {
         {/* Right plane: columns 6-12 */}
         <div className="lg:col-span-7">
           <motion.p
-            className="m-0 mb-5 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.24em] text-[#D2FF00]"
+            className="m-0 mb-5 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.24em] text-volt"
             {...reveal(0.05)}
           >
             <span
               aria-hidden="true"
-              className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#D2FF00] shadow-[0_0_10px_2px_rgba(210,255,0,0.7)]"
+              className="h-1.5 w-1.5 shrink-0 rounded-full bg-volt shadow-[0_0_10px_2px_rgba(184,255,0,0.7)]"
             />
             THE ENGINE // CONNECTING SUBURBAN ATHLETES
           </motion.p>
@@ -112,7 +112,7 @@ export const EngineSection: React.FC = () => {
             className="m-0 font-sans text-[clamp(2.25rem,4.6vw,4.5rem)] font-extrabold uppercase leading-[0.92] tracking-[-0.04em] text-white"
             {...reveal(0.12)}
           >
-            CONNECTING LOCAL ATHLETES WITH LOCAL BUSINESS<span className="text-[#D2FF00]">.</span>
+            CONNECTING LOCAL ATHLETES WITH LOCAL BUSINESS<span className="text-volt">.</span>
           </motion.h2>
 
           <motion.p
@@ -128,7 +128,7 @@ export const EngineSection: React.FC = () => {
           <ol className="m-0 w-full list-none divide-y divide-solid divide-white/10 border-0 border-y border-solid border-white/10 p-0">
             {LEDGER_STEPS.map((step, i) => (
               <motion.li key={step.index} className="flex items-start gap-8 py-6" {...reveal(0.28 + i * 0.1)}>
-                <span className="shrink-0 pt-0.5 font-mono text-[20px] font-bold leading-none text-[#D2FF00]">
+                <span className="shrink-0 pt-0.5 font-mono text-[20px] font-bold leading-none text-volt">
                   {step.index}
                 </span>
                 <div>
