@@ -81,7 +81,7 @@ import { ObsidianWipe } from './components/ObsidianWipe';
 import { CheckoutSuccessPage, CHECKOUT_SUCCESS_PATH } from './pages/checkout/success';
 import { CANVAS_OBSIDIAN, CANVAS_WHITE, mixHex, syndicateProgress } from './lib/canvasTone';
 import { AthleteCommercialDashboard } from './components/AthleteCommercialDashboard';
-import { CartDrawer } from './components/CartDrawer.tsx';
+import { CartDrawer, dispatchOpenCapsuleDrawer } from './components/CartDrawer.tsx';
 import { supabase } from './lib/supabaseClient';
 import {
   fetchAthletes,
@@ -339,6 +339,7 @@ export function MarketplaceApp() {
       const packageId =
         (event as CustomEvent<{ packageId?: string }>).detail?.packageId ?? 'storefront';
       setRequestedPackage(packageId);
+      dispatchOpenCapsuleDrawer({ initialView: 'capsules' });
       setIsCartOpen(true);
     };
     window.addEventListener(OPEN_SEARCH_OVERLAY_EVENT, openSearch);
@@ -497,6 +498,7 @@ export function MarketplaceApp() {
 
   function openSponsorDrawer(athlete: Athlete | null) {
     setSelectedAthlete(athlete);
+    dispatchOpenCapsuleDrawer({ initialView: 'capsules' });
     setIsCartOpen(true);
   }
 
@@ -749,7 +751,12 @@ export function MarketplaceApp() {
           setIsMenuOpen((v) => !v);
         }}
         onCloseOverlays={closeOverlays}
-        onNavigateSection={navigateSection}
+        onNavigateSection={navigateToHeading}
+        onOpenBag={() => {
+          closeOverlays();
+          dispatchOpenCapsuleDrawer({ initialView: 'empty' });
+          setIsCartOpen(true);
+        }}
         tone={frameTone}
         compact={view !== 'sponsor' && (view !== 'landing' || pastLandingCover)}
         activeSection={activeNav}
@@ -946,10 +953,7 @@ export function MarketplaceApp() {
             <SponsorDirectory
               sponsors={sponsors}
               athletes={athletes}
-              onSponsorAthlete={(athlete) => {
-                setSelectedAthlete(athlete);
-                setIsCartOpen(true);
-              }}
+              onSponsorAthlete={openSponsorDrawer}
             />
           </>
         )}

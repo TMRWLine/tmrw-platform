@@ -8,15 +8,20 @@
 
   .tmrw-navigation nav { display: none; }
   .nav-brand { flex-shrink: 0; min-height: 44px; justify-content: center; }
+  .nav-brand > span { width: clamp(76px, 26vw, 92px); }
   .nav-utilities { flex-shrink: 0; }
+  .nav-phone-roster { display: inline-flex; min-width: 44px; min-height: 44px; }
   .nav-utilities > button {
     min-width: 44px;
     min-height: 44px;
     margin: 0;
     padding: 8px;
   }
-  .nav-portal > span { display: none; }
-  .nav-portal .nav-portal-icon { display: block; }
+  .nav-utilities > .nav-portal,
+  .nav-menu-trigger > svg,
+  .nav-active-roster { display: none; }
+  .nav-menu-label { display: inline; }
+  .tmrw-navigation:has(.nav-active-roster) > div { transform: translateY(-7px); }
 
   .roster-toolbar { gap: 8px; }
   .roster-toolbar button { min-height: 44px; min-width: 44px; }
