@@ -240,7 +240,7 @@
   .cover-stage[data-intro='true'] .cover-court line {
     transform-box: fill-box;
     transform-origin: center;
-    animation: cover-court-across .44s var(--cover-ease) var(--line-delay) both;
+    animation: cover-court-across var(--cover-line-draw) var(--cover-ease) var(--line-delay) both;
   }
   .cover-court line:nth-of-type(1) { --line-delay: var(--cover-line-1); }
   .cover-court line:nth-of-type(2) { --line-delay: var(--cover-line-2); }
@@ -254,13 +254,12 @@
     transform-origin: top center;
     animation-name: cover-court-down;
   }
-  .cover-stage[data-intro='true'] .cover-actions { visibility: hidden; }
-  .cover-stage[data-intro='false'] .cover-actions .cover-pill {
-    animation: cover-release-pill .65s var(--cover-ease) both;
+  .cover-stage[data-intro='true'] .cover-actions .cover-pill {
+    animation: cover-release-pill var(--cover-cta-slide) var(--cover-ease) var(--cover-cta-start) both;
   }
   .cover-actions .cover-pill:first-child { --cover-pill-start: calc(50% + var(--cover-action-gap)); }
   .cover-actions .cover-pill:last-child { --cover-pill-start: calc(-50% - var(--cover-action-gap)); }
-  .cover-stage[data-intro='false'] .cover-actions .cover-pill:focus-visible { animation: none; }
+  .cover-stage[data-intro='true'] .cover-actions .cover-pill:focus-visible { animation: none; }
   .cover-stage[data-intro='true'] .cover-dot-drop {
     animation: cover-dot-drop .53s ease-out var(--cover-last-beat) both;
   }
@@ -320,9 +319,9 @@
   to { opacity: 1; transform: none; }
 }
 @keyframes cover-release-pill {
-  0% { opacity: 0; transform: translateX(var(--cover-pill-start)); }
+  0% { visibility: hidden; opacity: 0; transform: translateX(var(--cover-pill-start)); }
   32% { opacity: .22; }
-  100% { opacity: 1; transform: none; }
+  100% { visibility: visible; opacity: 1; transform: none; }
 }
 @keyframes cover-dot-drop {
   0% { opacity: 0; transform: translateY(-105%); animation-timing-function: ease-in; }

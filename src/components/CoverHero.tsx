@@ -1,6 +1,9 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { flushSync } from 'react-dom';
-import { COVER_LINE_DELAYS, COVER_SETTLE_MS, COVER_WORD_DELAYS, coverWordTransform } from '../lib/coverMotion';
+import {
+  COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_LINE_DELAYS, COVER_LINE_DRAW_MS,
+  COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_WORD_DELAYS, coverWordTransform,
+} from '../lib/coverMotion';
 import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
 import { useReducedMotion } from '../lib/useReducedMotion';
 import type { LandingSectionId } from './Navigation';
@@ -36,10 +39,12 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
 }) {
   const reduced = useReducedMotion();
   const [settled, setSettled] = useState(false);
+  const [introComplete, setIntroComplete] = useState(false);
   const [pulsePaused, setPulsePaused] = useState(false);
   const [pastCover, setPastCover] = useState(false);
   const [wide, setWide] = useState(false);
-  const intro = !reduced && !settled;
+  const intro = !reduced && !introComplete;
+  const openingTitle = !reduced && !settled;
   const cover = useRef<HTMLElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const introLayout = useRef<HTMLSpanElement>(null);
@@ -50,21 +55,29 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
   const animations = useRef<Animation[]>([]);
   const pointer = useRef({ x: 0, y: 0, targetX: 0, targetY: 0, frame: 0 });
 
-  const settle = useCallback(() => {
+  const settleTitle = useCallback((startTime: number) => {
     const title = heading.current;
     if (!title) return;
     const words = Array.from(title.querySelectorAll<HTMLElement>('.cover-word'));
     const before = words.map(node => node.style.transform);
-    const returnFocus = document.activeElement === skip.current;
     flushSync(() => setSettled(true));
     animations.current = words.flatMap((node, index) => {
       if (!before[index] || typeof node.animate !== 'function') return [];
-      return [node.animate([
+      const animation = node.animate([
         { transform: before[index] },
         { transform: node.style.transform },
-      ], { duration: 1000, easing: EASE })];
+      ], { duration: COVER_TITLE_MORPH_MS, easing: EASE });
+      animation.startTime = startTime;
+      return [animation];
     });
-    if (returnFocus) title.focus({ preventScroll: true });
+  }, []);
+
+  const finishIntro = useCallback(() => {
+    const returnFocus = document.activeElement === skip.current;
+    animations.current.forEach(animation => animation.cancel());
+    setSettled(true);
+    setIntroComplete(true);
+    if (returnFocus) heading.current?.focus({ preventScroll: true });
   }, []);
 
   useLayoutEffect(() => {
@@ -77,7 +90,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
     const finalBoxes = Array.from(finalSample.querySelectorAll('.cover-word-sample'));
     const positionWords = () => {
       const origin = title.getBoundingClientRect();
-      const targetBoxes = intro ? introBoxes : finalBoxes;
+      const targetBoxes = openingTitle ? introBoxes : finalBoxes;
       const transforms = targetBoxes.map((sample, index) => {
         const box = finalBoxes[index].getBoundingClientRect();
         return box.width && box.height
@@ -90,13 +103,19 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
     const observer = new ResizeObserver(positionWords);
     [...introBoxes, ...finalBoxes, title].forEach(node => observer.observe(node));
     return () => observer.disconnect();
-  }, [intro]);
+  }, [openingTitle]);
 
   useEffect(() => {
     if (!intro) return;
-    const timer = window.setTimeout(settle, COVER_SETTLE_MS);
-    return () => window.clearTimeout(timer);
-  }, [intro, settle]);
+    const morphDelay = COVER_SETTLE_MS - COVER_TITLE_MORPH_MS;
+    const morphStart = performance.now() + morphDelay;
+    const morphTimer = window.setTimeout(() => settleTitle(morphStart), morphDelay);
+    const finishTimer = window.setTimeout(finishIntro, COVER_SETTLE_MS);
+    return () => {
+      window.clearTimeout(morphTimer);
+      window.clearTimeout(finishTimer);
+    };
+  }, [intro, settleTitle, finishIntro]);
 
   useEffect(() => {
     if (reduced) animations.current.forEach(animation => animation.cancel());
@@ -210,6 +229,9 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
   const sceneTiming = Object.fromEntries([
     ...COVER_LINE_DELAYS.map((delay, index) => [`--cover-line-${index + 1}`, `${delay}ms`]),
     ['--cover-last-beat', `${COVER_WORD_DELAYS[3]}ms`],
+    ['--cover-line-draw', `${COVER_LINE_DRAW_MS}ms`],
+    ['--cover-cta-start', `${COVER_CTA_START_MS}ms`],
+    ['--cover-cta-slide', `${COVER_CTA_SLIDE_MS}ms`],
     ['--cover-settle', `${COVER_SETTLE_MS}ms`],
   ]) as CSSProperties;
 
@@ -287,7 +309,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
               </Fragment>
             ))}
           </h1>
-          {intro && <button ref={skip} type="button" className="cover-skip" onClick={settle}><span className="sr-only">Skip cover animation</span></button>}
+          {intro && <button ref={skip} type="button" className="cover-skip" onClick={finishIntro}><span className="sr-only">Skip cover animation</span></button>}
         </div>
         <div className="cover-actions">
           {links}

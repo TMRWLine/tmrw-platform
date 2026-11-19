@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { COVER_LINE_DELAYS, COVER_SETTLE_MS, COVER_WORD_DELAYS, coverWordTransform, isPastedCover } from '../src/lib/coverMotion.ts';
+import {
+  COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_LINE_DELAYS, COVER_LINE_DRAW_MS,
+  COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_WORD_DELAYS, coverWordTransform, isPastedCover,
+} from '../src/lib/coverMotion.ts';
 
 test('only cover=pasted opts into the unmodified cover', () => {
   assert.equal(isPastedCover('?cover=pasted'), true);
@@ -26,4 +29,10 @@ test('court strokes use the four word beats and the bottom centre line draws las
   assert.equal(COVER_LINE_DELAYS.length, 8);
   assert.equal(COVER_LINE_DELAYS[6], Math.max(...COVER_LINE_DELAYS));
   assert.equal(COVER_LINE_DELAYS.filter(delay => delay === COVER_LINE_DELAYS[6]).length, 1);
+});
+
+test('the CTA release follows the final stroke and the title morph fits inside the intro', () => {
+  assert.equal(COVER_CTA_START_MS, COVER_LINE_DELAYS[6] + COVER_LINE_DRAW_MS);
+  assert.ok(COVER_CTA_START_MS + COVER_CTA_SLIDE_MS <= COVER_SETTLE_MS);
+  assert.ok(COVER_SETTLE_MS - COVER_TITLE_MORPH_MS >= COVER_CTA_START_MS);
 });
