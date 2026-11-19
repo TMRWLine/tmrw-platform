@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { flushSync } from 'react-dom';
-import { COVER_SETTLE_MS, COVER_WORD_DELAYS, coverWordTransform } from '../lib/coverMotion';
+import { COVER_LINE_DELAYS, COVER_SETTLE_MS, COVER_WORD_DELAYS, coverWordTransform } from '../lib/coverMotion';
 import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
 import { useReducedMotion } from '../lib/useReducedMotion';
 import type { LandingSectionId } from './Navigation';
@@ -12,10 +12,22 @@ import './CoverHero.css';
 const WORDS = ['Line', 'up', 'your', 'future'] as const;
 const FINE_POINTER = '(hover: hover) and (pointer: fine)';
 const EASE = 'cubic-bezier(.16, 1, .3, 1)';
+const IMAGE_SIZES = '(max-width: 420px) 100vw, 612px';
 const LINKS = [
   { id: 'roster', href: THE_ROSTER_PATH, label: 'Explore the Roster', variant: 'primary' },
   { id: 'syndicate', href: BRISBANE_RUNWAY_PATH, label: 'Brisbane 2032 Runway', variant: 'glass' },
 ] as const;
+
+function CoverPhoto({ soft = false }: { soft?: boolean }) {
+  return (
+    <picture>
+      <source type="image/avif" srcSet="/coverpage-420.avif 420w, /coverpage-612.avif 612w" sizes={IMAGE_SIZES} />
+      <source type="image/webp" srcSet="/coverpage-420.webp 420w, /coverpage-612.webp 612w" sizes={IMAGE_SIZES} />
+      <img className={`cover-photo${soft ? ' cover-photo-soft' : ''}`} src="/coverpage.jpg" alt=""
+        width={612} height={407} draggable={false} {...{ fetchpriority: 'high' }} />
+    </picture>
+  );
+}
 
 export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFocus }: {
   onNavigateSection: (id: LandingSectionId) => void;
@@ -195,9 +207,16 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
     </RollingPillButton>
   ));
 
+  const sceneTiming = Object.fromEntries([
+    ...COVER_LINE_DELAYS.map((delay, index) => [`--cover-line-${index + 1}`, `${delay}ms`]),
+    ['--cover-last-beat', `${COVER_WORD_DELAYS[3]}ms`],
+    ['--cover-settle', `${COVER_SETTLE_MS}ms`],
+  ]) as CSSProperties;
+
   return (
     <>
       <section ref={cover} aria-label="tmrw cover" className="cover-stage" data-intro={intro} data-wide={wide}
+        style={sceneTiming}
         onPointerMove={movePointer}
         onPointerLeave={() => {
           if (!pointer.current.x && !pointer.current.y && !pointer.current.frame) return;
@@ -207,12 +226,19 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
         <span ref={marker} className="cover-marker" aria-hidden="true" />
         <div className="cover-edge" aria-hidden="true">
           <div className="cover-image-plane">
-            <picture>
-              <source type="image/avif" srcSet="/coverpage-420.avif 420w, /coverpage-612.avif 612w" sizes="(max-width: 420px) 100vw, 612px" />
-              <source type="image/webp" srcSet="/coverpage-420.webp 420w, /coverpage-612.webp 612w" sizes="(max-width: 420px) 100vw, 612px" />
-              <img className="cover-photo" src="/coverpage.jpg" alt="" width={612} height={407} draggable={false}
-                {...{ fetchpriority: 'high' }} />
-            </picture>
+            <div className="cover-camera">
+              <div className="cover-photo-stack">
+                <CoverPhoto />
+                {!reduced && <CoverPhoto soft />}
+              </div>
+              {!reduced && (
+                <div className="cover-lamp-plane">
+                  {COVER_WORD_DELAYS.map(delay => (
+                    <span key={delay} style={{ '--word-delay': `${delay}ms` } as CSSProperties} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="cover-red-glow" />
           <div className="cover-scrim" />
@@ -247,7 +273,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
                     {word}
                     {index === 3 && (
                       <span className="cover-dot" data-paused={pulsePaused}>
-                        <span className="cover-dot-core" aria-hidden="true" />
+                        <span className="cover-dot-drop" aria-hidden="true"><span className="cover-dot-core" /></span>
                         {!intro && !reduced && (
                           <button type="button" className="cover-dot-toggle"
                             aria-label={pulsePaused ? 'Resume dot animation' : 'Pause dot animation'}
