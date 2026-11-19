@@ -1,0 +1,49 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mockDeliverables } from '../src/data/mockDeliverables.ts';
+import { resolveReceiptAthlete } from '../src/pages/checkout/receiptAthlete.ts';
+import { resolveReceiptPackage } from '../src/pages/checkout/receiptPackage.ts';
+
+test('Olympic checkout receipts use the correct packages, prices and 70/15/15 splits', () => {
+  for (const [tierId, name, price, display, athlete, club, platform] of [
+    ['olympic_1yr_50k', 'LA 2028 Qualifier Partnership', 50000, 'A$50,000', 35000, 7500, 7500],
+    ['olympic_2yr_110k', 'LA 2028 Games Partnership', 110000, 'A$110,000', 77000, 16500, 16500],
+    ['olympic_4yr_250k', 'Brisbane 2032 Home Games Quadrennial', 250000, 'A$250,000', 175000, 37500, 37500],
+  ]) {
+    assert.deepEqual(resolveReceiptPackage(tierId), {
+      tier_id: tierId,
+      name,
+      price_aud: price,
+      price_display: display,
+      split_breakdown: {
+        athlete_amount: athlete, athlete_percent: 70,
+        club_amount: club, club_percent: 15,
+        platform_amount: platform, platform_percent: 15,
+      },
+    });
+  }
+});
+
+test('existing receipt packages stay unchanged and unknown tiers do not get a default', () => {
+  for (const pkg of mockDeliverables.packages) {
+    assert.equal(resolveReceiptPackage(pkg.tier_id), pkg);
+  }
+  assert.equal(resolveReceiptPackage('unknown'), undefined);
+});
+
+test('Olympic receipt IDs resolve the chosen contender and grassroots club', () => {
+  for (const tierId of ['olympic_1yr_50k', 'olympic_2yr_110k', 'olympic_4yr_250k']) {
+    for (const [athleteId, name, club] of [
+      ['chloe-vance', 'Chloe Vance', 'Balmoral Cycling Club'],
+      ['lara-mercer', 'Lara Mercer', 'Sydney University Para Athletics'],
+    ]) {
+      const athlete = resolveReceiptAthlete(athleteId, tierId);
+      assert.equal(athlete.id, athleteId);
+      assert.equal(athlete.full_name, name);
+      assert.equal(athlete.grassroots_club.name, club);
+      assert.equal(resolveReceiptAthlete(athleteId, 'local_merchant'), null);
+    }
+  }
+  assert.equal(resolveReceiptAthlete('unknown-athlete', 'olympic_1yr_50k'), null);
+  assert.equal(resolveReceiptAthlete(mockDeliverables.athlete.id, 'local_merchant'), mockDeliverables.athlete);
+});

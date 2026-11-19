@@ -277,7 +277,7 @@ export const RosterCatchmentMap: React.FC<RosterCatchmentMapProps> = ({
               aria-pressed={active}
               className={`rounded-full px-4 py-1.5 text-xs font-mono font-medium shadow-sm transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F0F11] focus-visible:ring-offset-2 ${
                 active
-                  ? 'border border-[#CCFF00] bg-[#CCFF00] text-black'
+                  ? 'border border-volt bg-volt text-black'
                   : 'border border-neutral-200 bg-white text-neutral-700 hover:border-black'
               }`}
             >

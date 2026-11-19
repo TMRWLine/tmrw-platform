@@ -1,3 +1,5 @@
+import { currentAccessToken } from './sessionToken';
+
 export const CHECKOUT_SUCCESS_PATH = '/checkout/success';
 
 export interface CheckoutAthleteSnapshot {
@@ -36,7 +38,7 @@ export interface CheckoutSessionRequest {
 
 export interface CheckoutSessionResponse {
   checkoutUrl: string | null;
-  sessionId: string;
+  sessionId?: string;
   idempotencyKey: string;
   transferGroup: string;
   chargeId: string;
@@ -147,11 +149,13 @@ export async function createCheckoutSession(
     payload.escrowMode === 'upfront_100' ? null : `tr_ath_escrow_hold_${suffix}`;
 
   try {
+    const token = await currentAccessToken(AbortSignal.timeout(8000));
     const response = await fetch('/api/checkout/create-session', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Idempotency-Key': idempotencyKey,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
         ...payload,
@@ -162,15 +166,15 @@ export async function createCheckoutSession(
     });
 
     const data = (await response.json().catch(() => null)) as
-      | { checkoutUrl?: string; url?: string; sessionId?: string }
+      | { checkoutUrl?: string; url?: string; sessionId?: string; transferGroup?: string }
       | null;
 
     if (response.ok && (data?.checkoutUrl || data?.url)) {
       return {
         checkoutUrl: data.checkoutUrl ?? data.url ?? null,
-        sessionId: data.sessionId ?? `cs_live_${idempotencyKey}`,
+        sessionId: data.sessionId,
         idempotencyKey,
-        transferGroup: splitLedger.transferGroup,
+        transferGroup: data.transferGroup ?? splitLedger.transferGroup,
         chargeId,
         platformRetainedId,
         athleteTransferId,
@@ -179,50 +183,43 @@ export async function createCheckoutSession(
         splitLedger,
       };
     }
-  } catch {
-    // Offline or embedded execution
+    throw new Error(`Unable to initialise secure checkout (HTTP ${response.status}): ${data && 'error' in data ? String(data.error) : 'checkout URL not supplied.'}`);
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Unable to initialise secure checkout. Check your connection and try again.');
   }
-
-  return {
-    checkoutUrl: null,
-    sessionId: `cs_embedded_${idempotencyKey}`,
-    idempotencyKey,
-    transferGroup: splitLedger.transferGroup,
-    chargeId,
-    platformRetainedId,
-    athleteTransferId,
-    clubTransferId,
-    escrowTransferId,
-    splitLedger,
-  };
 }
 
 export async function releaseEscrowMilestoneTranche(params: {
-  transferGroup: string;
+  checkoutSessionId: string;
+  transferGroup?: string;
   athleteId: string;
-  escrowHoldCents: number;
+  escrowHoldCents?: number;
 }): Promise<EscrowReleaseResult> {
-  const releaseKey = `idemp_release_${params.transferGroup}_${Date.now()}`;
-  const escrowTransferId = `tr_ath_final50_${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
-
-  try {
-    await fetch('/api/checkout/release-escrow', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Idempotency-Key': releaseKey,
-      },
-      body: JSON.stringify(params),
-    });
-  } catch {
-    // Local sandbox fallback
+  if (!params.checkoutSessionId) throw new Error('Unable to release escrow: a real Checkout Session ID is required.');
+  const token = await currentAccessToken(AbortSignal.timeout(8000));
+  const releaseKey = `idemp_release_${params.checkoutSessionId}_${Date.now()}`;
+  const response = await fetch('/api/checkout/release-escrow', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': releaseKey,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(params),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || data?.released !== true || typeof data?.escrowTransferId !== 'string' || !data.escrowTransferId.trim() ||
+      !Number.isSafeInteger(data?.releasedAmountCents) || data.releasedAmountCents <= 0 ||
+      typeof data?.releasedAt !== 'string' || !Number.isFinite(Date.parse(data.releasedAt))) {
+    throw new Error(`Unable to release escrow (HTTP ${response.status}): ${data?.error || 'release not confirmed.'}`);
   }
+  const escrowTransferId = data.escrowTransferId;
 
   try {
     const ledger = JSON.parse(localStorage.getItem('tmrw_escrow_ledger') || '[]');
     const updated = ledger.map((item: Record<string, unknown>) =>
-      item.transferGroup === params.transferGroup
-        ? { ...item, escrowReleased: true, finalTransferId: escrowTransferId }
+      item.checkoutSessionId === params.checkoutSessionId
+        ? { ...item, escrowReleased: true, finalTransferId: escrowTransferId, releasedAmountCents: data.releasedAmountCents, releasedAt: data.releasedAt }
         : item,
     );
     localStorage.setItem('tmrw_escrow_ledger', JSON.stringify(updated));
@@ -233,7 +230,7 @@ export async function releaseEscrowMilestoneTranche(params: {
   return {
     released: true,
     escrowTransferId,
-    releasedAmountCents: params.escrowHoldCents,
-    releasedAt: new Date().toISOString(),
+    releasedAmountCents: data.releasedAmountCents,
+    releasedAt: data.releasedAt,
   };
 }

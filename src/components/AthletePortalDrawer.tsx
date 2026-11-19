@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useState } from 'react';
-import { BrandLockup } from './BrandLockup';
+import { AthleteAccessHeader, AthleteAccessTabs, AthleteAccessHero } from './AthleteAccessShell';
 import { dispatchOpenCapsuleDrawer } from './CartDrawer';
 import { ROSTER_DATA, suburbForPostcode } from '../data/roster';
 import type { LiveAthleteOverride } from './AthleteDossierDrawer';
@@ -147,11 +147,6 @@ const POSTCODE_CLUB_OVERRIDES: Record<string, Record<string, string>> = {
   },
 };
 
-const MODE_TABS: ReadonlyArray<{ mode: PortalMode; label: string }> = [
-  { mode: 'authenticate', label: 'SIGN IN' },
-  { mode: 'claim', label: 'CLAIM PROFILE' },
-];
-
 const ALL_SECTORS = [
   'Apparel',
   'Footwear',
@@ -177,7 +172,7 @@ const WIZARD_INPUT =
   'w-full rounded-xl bg-[#F2F2F0] border border-black/10 px-3.5 py-2.5 font-sans text-base sm:text-xs font-semibold text-[#080808] placeholder-neutral-400 focus:bg-white focus:border-[#080808] outline-none transition-colors';
 
 const LIT_OBSIDIAN_BTN =
-  'bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-black/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.25),0_0_15px_rgba(204,255,0,0.18)] hover:bg-[#080808] hover:border-[#CCFF00] hover:text-[#CCFF00] active:translate-y-[1px]';
+  'bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-black/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.25),0_0_15px_rgba(184,255,0,0.18)] hover:bg-[#080808] hover:border-volt hover:text-volt active:translate-y-[1px]';
 
 const PROTOCOL_ROWS: ReadonlyArray<{ label: string; value: string }> = [
   { label: 'Identity & Auth', value: 'SMS OTP & League ID Verified' },
@@ -594,7 +589,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
     <div
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-[105] selection:bg-[#CCFF00] selection:text-[#0F0F11]"
+      className="fixed inset-0 z-[105] selection:bg-volt selection:text-[#0F0F11]"
     >
       <button
         type="button"
@@ -621,60 +616,16 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
             className="flex-1 overflow-y-auto p-6 sm:p-8 md:p-10 flex flex-col justify-between"
           >
             <div>
-              <div className="flex items-center justify-between border-b border-black/10 pb-5">
-                <BrandLockup onClick={onClose} />
-                <button
-                  type="button"
-                  onClick={onClose}
-                  title="Close [ESC]"
-                  aria-label="Close portal"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/25 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
-                >
-                  <span>Close</span>
-                  <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">
-                    ✕
-                  </span>
-                </button>
-              </div>
+              <AthleteAccessHeader onClose={onClose} />
+              <AthleteAccessTabs mode={mode} panelId={panelId} onChange={(nextMode) => {
+                setMode(nextMode);
+                setOtpChallengeSent(false);
+              }} />
 
-              <div
-                role="tablist"
-                aria-label="Portal access mode"
-                className="grid grid-cols-2 p-1 bg-[#EAEAE6] rounded-full my-6 border border-black/10"
-              >
-                {MODE_TABS.map((tab) => {
-                  const active = tab.mode === mode;
-                  return (
-                    <button
-                      key={tab.mode}
-                      type="button"
-                      role="tab"
-                      aria-selected={active}
-                      onClick={() => {
-                        setMode(tab.mode);
-                        setOtpChallengeSent(false);
-                      }}
-                      className={`py-2.5 text-[10px] font-mono font-bold tracking-[0.18em] uppercase rounded-full transition-all duration-200 cursor-pointer border-0 ${
-                        active
-                          ? 'bg-[#0F0F11] text-[#CCFF00] shadow-sm'
-                          : 'bg-transparent text-neutral-600 hover:text-[#0F0F11]'
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mb-6 rounded-[24px] bg-[#0F0F11] text-white p-6 sm:p-7 space-y-4 shadow-xl">
-                <h2 className="m-0 font-sans font-black text-3xl sm:text-4xl uppercase tracking-[-0.03em] text-white leading-[1.02]">
-                  Your career<span className="text-[#CCFF00]">.</span>
-                  <br />
-                  Your terms<span className="text-[#CCFF00]">.</span>
-                </h2>
+              <AthleteAccessHero lines={['Your career', 'Your terms']} headingLevel="h2">
                 <p className="m-0 font-sans text-xs text-neutral-300 leading-relaxed">
                   Zero agency commissions. Lock your postcode, back your junior club with a hardwired{' '}
-                  <span className="bg-[#CCFF00] text-[#0F0F11] font-bold px-1.5 py-0.5 rounded-[3px]">
+                  <span className="bg-volt text-[#0F0F11] font-bold px-1.5 py-0.5 rounded-[3px]">
                     70/15/15 split
                   </span>
                   , and access your AI Highlight Cutter.
@@ -687,12 +638,12 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                       setStep(1);
                       setDrawerView('wizard');
                     }}
-                    className="w-full rounded-full bg-[#CCFF00] hover:bg-white text-[#0F0F11] font-mono text-[10px] font-bold uppercase tracking-widest py-3 border-0 cursor-pointer transition-colors shadow-sm"
+                    className="w-full rounded-full bg-volt hover:bg-white text-[#0F0F11] font-mono text-[10px] font-bold uppercase tracking-widest py-3 border-0 cursor-pointer transition-colors shadow-sm"
                   >
                     Bypass → Open 5-Tab Athlete Studio
                   </button>
                 </div>
-              </div>
+              </AthleteAccessHero>
 
               <div role="tabpanel" id={panelId} className="w-full space-y-4 mb-6">
                 <div className="w-full">
@@ -759,7 +710,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                       <span className="font-bold text-[#0F0F11]">
                         ● 6-DIGIT SMS SECURITY CODE DISPATCHED
                       </span>
-                      <span className="bg-[#CCFF00] text-[#080808] px-2 py-0.5 rounded font-bold">
+                      <span className="bg-volt text-[#080808] px-2 py-0.5 rounded font-bold">
                         DEMO CODE: 202632
                       </span>
                     </div>
@@ -781,7 +732,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                   <span className="font-mono text-[9.5px] font-bold uppercase tracking-widest text-neutral-600">
                     ATHLETE COMMERCE STUDIO
                   </span>
-                  <span className="rounded-full bg-[#0F0F11] text-[#CCFF00] px-2 py-0.5 font-mono text-[9px] font-bold">
+                  <span className="rounded-full bg-[#0F0F11] text-volt px-2 py-0.5 font-mono text-[9px] font-bold">
                     ZERO-INVENTORY
                   </span>
                 </div>
@@ -802,7 +753,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                       postcode: postcode || '2200',
                     });
                   }}
-                  className="w-full rounded-full bg-[#0F0F11] hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] font-mono text-[10px] font-bold uppercase tracking-widest py-3 transition-colors cursor-pointer border-0 shadow-xs"
+                  className="w-full rounded-full bg-[#0F0F11] hover:bg-volt text-white hover:text-[#0F0F11] font-mono text-[10px] font-bold uppercase tracking-widest py-3 transition-colors cursor-pointer border-0 shadow-xs"
                 >
                   + Launch Merch Capsule Studio →
                 </button>
@@ -823,7 +774,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                 type="button"
                 disabled={authLoading}
                 onClick={handleTriggerOtpOrVerify}
-                className="w-full rounded-full bg-[#0F0F11] hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] font-mono font-bold text-xs uppercase tracking-widest py-4 transition-colors duration-200 cursor-pointer shadow-md border-0 disabled:opacity-50"
+                className="w-full rounded-full bg-[#0F0F11] hover:bg-volt text-white hover:text-[#0F0F11] font-mono font-bold text-xs uppercase tracking-widest py-4 transition-colors duration-200 cursor-pointer shadow-md border-0 disabled:opacity-50"
               >
                 {authLoading
                   ? 'Verifying Sovereign Token...'
@@ -855,14 +806,14 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                         SOVEREIGN COMMAND CENTRE
                       </span>
                       {authSession && (
-                        <span className="rounded-full bg-[#CCFF00] text-[#080808] px-2 py-0.5 font-mono text-[8.5px] font-bold uppercase">
+                        <span className="rounded-full bg-volt text-[#080808] px-2 py-0.5 font-mono text-[8.5px] font-bold uppercase">
                           ● RLS SESSION VERIFIED ({authSession.stripeExpressId})
                         </span>
                       )}
                     </div>
                     <h2 className="m-0 font-display text-2xl sm:text-3xl font-black uppercase tracking-tight text-[#080808]">
                       {fullName}
-                      <span className="text-[#CCFF00]">.</span>{' '}
+                      <span className="text-volt">.</span>{' '}
                       <span className="font-sans text-xs font-bold text-neutral-500 normal-case">
                         Postcode {postcode} ({suburb}) · 15% Club: {juniorClub}
                       </span>
@@ -894,7 +845,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-4 py-1.5 font-sans text-xs font-bold border-0 cursor-pointer transition-colors"
+                    className="rounded-full bg-[#080808] hover:bg-volt text-white hover:text-[#080808] px-4 py-1.5 font-sans text-xs font-bold border-0 cursor-pointer transition-colors"
                   >
                     Close ✕
                   </button>
@@ -908,7 +859,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                     onClick={() => setWizardMode('edit_existing')}
                     className={`rounded-lg px-3 py-1 font-sans text-xs font-bold cursor-pointer border-0 transition-colors ${
                       wizardMode === 'edit_existing'
-                        ? 'bg-[#080808] text-[#CCFF00]'
+                        ? 'bg-[#080808] text-volt'
                         : 'bg-transparent text-neutral-600'
                     }`}
                   >
@@ -919,7 +870,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                     onClick={() => setWizardMode('new_signup')}
                     className={`rounded-lg px-3 py-1 font-sans text-xs font-bold cursor-pointer border-0 transition-colors ${
                       wizardMode === 'new_signup'
-                        ? 'bg-[#080808] text-[#CCFF00]'
+                        ? 'bg-[#080808] text-volt'
                         : 'bg-transparent text-neutral-600'
                     }`}
                   >
@@ -959,7 +910,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                     onClick={() => setStep(idx)}
                     className={`shrink-0 rounded-xl border px-3 py-2 text-left cursor-pointer transition-all ${
                       step === idx
-                        ? 'border-[#080808] bg-[#080808] text-[#CCFF00]'
+                        ? 'border-[#080808] bg-[#080808] text-volt'
                         : 'border-black/10 bg-[#F2F2F0] text-[#080808]'
                     }`}
                   >
@@ -977,12 +928,12 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
               className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-5 sm:px-8 space-y-4 bg-[#FFFFFF]"
             >
               {savedBanner && (
-                <div className="rounded-2xl bg-[#080808] text-[#CCFF00] p-4 font-mono text-xs font-bold flex items-center justify-between gap-4">
+                <div className="rounded-2xl bg-[#080808] text-volt p-4 font-mono text-xs font-bold flex items-center justify-between gap-4">
                   <span>{savedBanner}</span>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="shrink-0 rounded-full bg-[#CCFF00] text-[#080808] px-4 py-1.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer"
+                    className="shrink-0 rounded-full bg-volt text-[#080808] px-4 py-1.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer"
                   >
                     Inspect on Roster →
                   </button>
@@ -994,7 +945,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                 <div className="space-y-4">
                   <div className="rounded-2xl bg-[#080808] text-white px-4 py-3 flex flex-wrap items-center justify-between gap-2 font-mono text-[10px]">
                     <span>
-                      <strong className="text-[#CCFF00]">● AUTO-MATCH ENGINE ACTIVE:</strong> Type any Sport or Postcode to auto-populate your League, Junior Club, Governing Body & TPA Deed.
+                      <strong className="text-volt">● AUTO-MATCH ENGINE ACTIVE:</strong> Type any Sport or Postcode to auto-populate your League, Junior Club, Governing Body & TPA Deed.
                     </span>
                     <span className="text-neutral-400">
                       {governingBody}
@@ -1148,7 +1099,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                 <div className="space-y-4">
                   <div className="rounded-2xl bg-[#080808] text-white p-5 space-y-3">
                     <div className="flex items-center justify-between font-mono text-[10px] uppercase">
-                      <span className="text-[#CCFF00] font-bold">
+                      <span className="text-volt font-bold">
                         LIVE 70 / 15 / 15 STRIPE CONNECT ROUTING (PKG 01: A${pkg01Gross})
                       </span>
                       <span className="text-neutral-400">7000 / 1500 / 1500 BPS</span>
@@ -1157,13 +1108,13 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                       <div className="rounded-xl bg-white/[0.06] p-3">
                         <span className="block text-[9px] text-neutral-400">70% ATHLETE</span>
                         <strong className="text-lg text-white">A${pkg01Athlete70}</strong>
-                        <span className="block text-[9px] text-[#CCFF00] mt-0.5">
+                        <span className="block text-[9px] text-volt mt-0.5">
                           {maskBsbAndAccount(payoutBsbAccount)}
                         </span>
                       </div>
                       <div className="rounded-xl bg-white/[0.06] p-3">
                         <span className="block text-[9px] text-neutral-400">15% JUNIOR CLUB</span>
-                        <strong className="text-lg text-[#CCFF00]">A${pkg01Club15}</strong>
+                        <strong className="text-lg text-volt">A${pkg01Club15}</strong>
                         <span className="block text-[9px] text-neutral-300 mt-0.5 truncate">
                           {juniorClub}
                         </span>
@@ -1245,7 +1196,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                     <button
                       type="button"
                       onClick={() => setStripeExpressLinked(true)}
-                      className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-4 py-1.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer transition-colors"
+                      className="rounded-full bg-[#080808] hover:bg-volt text-white hover:text-[#080808] px-4 py-1.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer transition-colors"
                     >
                       {stripeExpressLinked ? '✓ STRIPE EXPRESS LINKED' : 'LAUNCH STRIPE ONBOARDING →'}
                     </button>
@@ -1260,7 +1211,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           onClick={() => setAbnStatus('abn_gst')}
                           className={`rounded-xl border py-2.5 px-3 font-sans text-xs font-bold cursor-pointer ${
                             abnStatus === 'abn_gst'
-                              ? 'border-[#080808] bg-[#080808] text-[#CCFF00]'
+                              ? 'border-[#080808] bg-[#080808] text-volt'
                               : 'border-black/10 bg-[#F2F2F0] text-neutral-600'
                           }`}
                         >
@@ -1271,7 +1222,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           onClick={() => setAbnStatus('supplier_statement')}
                           className={`rounded-xl border py-2.5 px-3 font-sans text-xs font-bold cursor-pointer ${
                             abnStatus === 'supplier_statement'
-                              ? 'border-[#080808] bg-[#080808] text-[#CCFF00]'
+                              ? 'border-[#080808] bg-[#080808] text-volt'
                               : 'border-black/10 bg-[#F2F2F0] text-neutral-600'
                           }`}
                         >
@@ -1287,7 +1238,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           onClick={() => setClubCadence('quarterly_batch')}
                           className={`rounded-xl border py-2.5 px-3 font-sans text-xs font-bold cursor-pointer ${
                             clubCadence === 'quarterly_batch'
-                              ? 'border-[#080808] bg-[#080808] text-[#CCFF00]'
+                              ? 'border-[#080808] bg-[#080808] text-volt'
                               : 'border-black/10 bg-[#F2F2F0] text-neutral-600'
                           }`}
                         >
@@ -1298,7 +1249,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           onClick={() => setClubCadence('immediate_t0')}
                           className={`rounded-xl border py-2.5 px-3 font-sans text-xs font-bold cursor-pointer ${
                             clubCadence === 'immediate_t0'
-                              ? 'border-[#080808] bg-[#080808] text-[#CCFF00]'
+                              ? 'border-[#080808] bg-[#080808] text-volt'
                               : 'border-black/10 bg-[#F2F2F0] text-neutral-600'
                           }`}
                         >
@@ -1317,7 +1268,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                   <div className="rounded-2xl bg-[#080808] text-white p-5 space-y-3 shadow-md">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <span className="font-mono text-[9.5px] font-bold uppercase text-[#080808] bg-[#CCFF00] px-2.5 py-0.5 rounded">
+                        <span className="font-mono text-[9.5px] font-bold uppercase text-[#080808] bg-volt px-2.5 py-0.5 rounded">
                           ZERO-UPLOAD SOCIAL REEL SYNC
                         </span>
                         <h3 className="m-0 mt-1.5 font-sans text-sm font-black text-white">
@@ -1331,12 +1282,12 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                         value={socialReelImportInput}
                         onChange={(e) => setSocialReelImportInput(e.target.value)}
                         placeholder="https://www.instagram.com/reel/... or https://www.tiktok.com/@..."
-                        className="flex-1 rounded-xl bg-white/10 border border-white/15 px-3.5 py-2.5 font-mono text-xs text-white placeholder-neutral-400 outline-none focus:border-[#CCFF00]"
+                        className="flex-1 rounded-xl bg-white/10 border border-white/15 px-3.5 py-2.5 font-mono text-xs text-white placeholder-neutral-400 outline-none focus:border-volt"
                       />
                       <button
                         type="button"
                         onClick={handleOneClickSocialReelImport}
-                        className="shrink-0 rounded-xl bg-[#CCFF00] hover:bg-white text-[#080808] px-5 py-2.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer transition-colors"
+                        className="shrink-0 rounded-xl bg-volt hover:bg-white text-[#080808] px-5 py-2.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer transition-colors"
                       >
                         Sync Existing Reel →
                       </button>
@@ -1347,7 +1298,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                   <div className="rounded-2xl border-2 border-[#080808] bg-[#F2F2F0] p-5 space-y-4 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <span className="font-mono text-[9.5px] font-bold uppercase text-[#080808] bg-[#CCFF00] px-2.5 py-1 rounded">
+                        <span className="font-mono text-[9.5px] font-bold uppercase text-[#080808] bg-volt px-2.5 py-1 rounded">
                           PLAYER CARD & DOSSIER MEDIA
                         </span>
                         <h3 className="m-0 mt-1.5 font-sans text-base font-black text-[#080808]">
@@ -1362,7 +1313,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           <label className="font-mono text-[9.5px] tracking-[0.18em] text-neutral-500 uppercase font-bold">
                             01 Studio Plate (Primary Card)
                           </label>
-                          <label className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer">
+                          <label className="rounded-full bg-[#080808] hover:bg-volt text-white hover:text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer">
                             ↑ Upload
                             <input
                               type="file"
@@ -1385,7 +1336,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           <label className="font-mono text-[9.5px] tracking-[0.18em] text-neutral-500 uppercase font-bold">
                             02 Action Plate (Slide 2/4)
                           </label>
-                          <label className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer">
+                          <label className="rounded-full bg-[#080808] hover:bg-volt text-white hover:text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer">
                             ↑ Upload
                             <input
                               type="file"
@@ -1408,7 +1359,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           <label className="font-mono text-[9.5px] tracking-[0.18em] text-neutral-500 uppercase font-bold">
                             03 Precinct Plate (Slide 3/4)
                           </label>
-                          <label className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer">
+                          <label className="rounded-full bg-[#080808] hover:bg-volt text-white hover:text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer">
                             ↑ Upload
                             <input
                               type="file"
@@ -1431,7 +1382,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           <label className="font-mono text-[9.5px] tracking-[0.18em] text-neutral-500 uppercase font-bold">
                             04 Training Plate (Slide 4/4)
                           </label>
-                          <label className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer">
+                          <label className="rounded-full bg-[#080808] hover:bg-volt text-white hover:text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer">
                             ↑ Upload
                             <input
                               type="file"
@@ -1457,7 +1408,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           <label className="font-mono text-[9.5px] tracking-[0.18em] text-neutral-500 uppercase font-bold">
                             9:16 Vertical Highlight Reel (MP4 Upload or Link)
                           </label>
-                          <label className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer">
+                          <label className="rounded-full bg-[#080808] hover:bg-volt text-white hover:text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer">
                             ↑ Upload MP4 / MOV
                             <input
                               type="file"
@@ -1480,7 +1431,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           <label className="font-mono text-[9.5px] tracking-[0.18em] text-neutral-500 uppercase font-bold">
                             Clean Broadcast Stem
                           </label>
-                          <label className="rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer">
+                          <label className="rounded-full bg-[#080808] hover:bg-volt text-white hover:text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer">
                             ↑ Upload Stem
                             <input
                               type="file"
@@ -1580,7 +1531,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           onChange={(e) => setClearanceDocName(e.target.value)}
                           className={WIZARD_INPUT}
                         />
-                        <label className="shrink-0 rounded-xl bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-3.5 py-2.5 font-mono text-[10px] font-bold uppercase cursor-pointer">
+                        <label className="shrink-0 rounded-xl bg-[#080808] hover:bg-volt text-white hover:text-[#080808] px-3.5 py-2.5 font-mono text-[10px] font-bold uppercase cursor-pointer">
                           ↑ Upload PDF
                           <input
                             type="file"
@@ -1613,7 +1564,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                             }`}
                           >
                             <div className="flex items-center justify-between font-mono text-[9px]">
-                              <span className={isLocked ? 'text-[#CCFF00]' : 'text-neutral-500'}>
+                              <span className={isLocked ? 'text-volt' : 'text-neutral-500'}>
                                 {isLocked ? 'LOCKED' : 'OPEN'}
                               </span>
                               <span>{isLocked ? '✕' : '✓'}</span>
@@ -1640,7 +1591,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                         onClick={() => setUnder18Guardian(!under18Guardian)}
                         className={`rounded-full px-4 py-1.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer ${
                           under18Guardian
-                            ? 'bg-[#CCFF00] text-[#080808]'
+                            ? 'bg-volt text-[#080808]'
                             : 'bg-white text-neutral-600 border border-black/15'
                         }`}
                       >
@@ -1669,7 +1620,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                   <div className="rounded-2xl bg-[#080808] text-white p-5 space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <span className="font-mono text-[9.5px] uppercase text-[#CCFF00] font-bold block">
+                        <span className="font-mono text-[9.5px] uppercase text-volt font-bold block">
                           AI MATCH FOOTAGE CUTTER · AUTO 9:16 REELS
                         </span>
                         <h4 className="m-0 font-sans text-sm font-bold text-white">
@@ -1679,7 +1630,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                       <button
                         type="button"
                         onClick={runTwelveLabsCut}
-                        className="rounded-full bg-[#CCFF00] hover:bg-white text-[#080808] px-4 py-1.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer transition-colors"
+                        className="rounded-full bg-volt hover:bg-white text-[#080808] px-4 py-1.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer transition-colors"
                       >
                         {aiProcessing ? 'INDEXING MATCH FOOTAGE...' : '+ GENERATE 9:16 AI STEM →'}
                       </button>
@@ -1693,7 +1644,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                         type="text"
                         value={semanticQuery}
                         onChange={(e) => setSemanticQuery(e.target.value)}
-                        className="w-full rounded-xl bg-white/10 border border-white/15 px-3.5 py-2 font-mono text-xs text-white outline-none focus:border-[#CCFF00]"
+                        className="w-full rounded-xl bg-white/10 border border-white/15 px-3.5 py-2 font-mono text-xs text-white outline-none focus:border-volt"
                       />
                     </div>
 
@@ -1703,7 +1654,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           key={`${clip.time}-${idx}`}
                           className="rounded-xl bg-white/[0.06] border border-white/10 p-3 font-mono text-[10px] space-y-1"
                         >
-                          <div className="flex items-center justify-between text-[#CCFF00]">
+                          <div className="flex items-center justify-between text-volt">
                             <span>[{clip.time}] {clip.label}</span>
                             <span>{clip.views}</span>
                           </div>
@@ -1719,7 +1670,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                       <span className="font-mono text-[9.5px] uppercase text-[#080808]">
                         AUTOMATED DEAL RULES · MINIMUM FEE & TURF GUARDRAILS
                       </span>
-                      <span className="rounded-full bg-[#CCFF00] text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold">
+                      <span className="rounded-full bg-volt text-[#080808] px-2.5 py-0.5 font-mono text-[9px] font-bold">
                         ● AGENT ONLINE
                       </span>
                     </div>
@@ -1749,7 +1700,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                           <span>
                             <strong>{log.id}:</strong> {log.obligation}
                           </span>
-                          <span className="bg-[#CCFF00] text-[#080808] px-2 py-0.5 rounded font-bold">
+                          <span className="bg-volt text-[#080808] px-2 py-0.5 rounded font-bold">
                             ✓ {log.status}
                           </span>
                         </div>

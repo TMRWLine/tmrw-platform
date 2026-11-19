@@ -50,7 +50,7 @@
 
   .capsule-mobile-nav button[aria-pressed='true'] {
     background: #080808;
-    color: #ccff00;
+    color: #b8ff00;
   }
 
   .capsule-shop-content {
@@ -74,7 +74,7 @@
   .capsule-shop :is(button, input, [role='button']):focus-visible {
     outline: 2px solid #080808;
     outline-offset: 3px;
-    box-shadow: 0 0 0 3px #ccff00;
+    box-shadow: 0 0 0 3px #b8ff00;
   }
 
   .capsule-shop :is([class*='text-[9'], [class*='text-[10'], [class*='text-[11']) {
