@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { LEGENDS_FLICK_MS, LEGENDS_PATH, legendsReelTimeline, type LegendsTile } from '../lib/internalLegends';
+import { LEGENDS_FLICK_MS, LEGENDS_PATH, LEGENDS_PHONE_SIZE, legendsReelTimeline, type LegendsTile } from '../lib/internalLegends';
 import './LegendsReel.css';
 
 const SOLO_SHOTS = 5;
@@ -9,10 +9,11 @@ function ActionPhoto({ frame }: { frame: LegendsTile }) {
 }
 
 function Stills({ frames }: { frames: LegendsTile[] }) {
+  const stagger = frames.length > LEGENDS_PHONE_SIZE ? 18 : 22;
   return (
     <div className="legends-wall">
       {frames.map((frame, index) => (
-        <figure key={frame.filename} style={{ '--legend-delay': `${index * 22}ms` } as CSSProperties}>
+        <figure key={frame.filename} style={{ '--legend-delay': `${index * stagger}ms` } as CSSProperties}>
           <ActionPhoto frame={frame} />
           <figcaption>{frame.name}</figcaption>
         </figure>
