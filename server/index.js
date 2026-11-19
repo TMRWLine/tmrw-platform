@@ -18,6 +18,7 @@ import {
   setGrantAccessCookie,
 } from './whitelisting.js';
 import { requireUser } from './auth.js';
+import { supabaseHeaders, supabasePublicKey, supabaseSecretKey } from './supabase-keys.js';
 
 // Load .env / .env.local
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -34,8 +35,6 @@ for (const name of ['.env', '.env.local']) {
 }
 
 const PORT = process.env.PROXY_PORT || 3001;
-const SUPABASE_ANON_KEY =
-  process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 const app = express();
 if (process.env.VERCEL) app.set('trust proxy', 1);
@@ -131,7 +130,8 @@ app.get('/api/match-sponsors', async (req, res) => {
     if (!supabaseRestUrl) {
       return res.status(500).json({ error: 'Supabase URL not configured on the server' });
     }
-    if (!SUPABASE_ANON_KEY) {
+    const supabasePublishableKey = supabasePublicKey();
+    if (!supabasePublishableKey) {
       return res.status(500).json({ error: 'Supabase anon key not configured on the server' });
     }
 
@@ -158,8 +158,7 @@ app.get('/api/match-sponsors', async (req, res) => {
       `${supabaseRestUrl}/rest/v1/athletes?id=eq.${encodeURIComponent(athleteId)}&select=*`,
       {
         headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          ...supabaseHeaders(supabasePublishableKey),
           Accept: 'application/json',
         },
       },
@@ -188,8 +187,7 @@ app.get('/api/match-sponsors', async (req, res) => {
     const rpcRes = await fetch(`${supabaseRestUrl}/rest/v1/rpc/match_sponsors_for_athlete`, {
       method: 'POST',
       headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        ...supabaseHeaders(supabasePublishableKey),
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
@@ -309,7 +307,8 @@ function resolveCheckoutAthlete(athleteId, reqBody) {
 
 async function hydrateAthleteFromSupabase(athlete) {
   const supabaseRestUrl = (process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-  if (!supabaseRestUrl || !SUPABASE_ANON_KEY) return athlete;
+  const supabasePublishableKey = supabasePublicKey();
+  if (!supabaseRestUrl || !supabasePublishableKey) return athlete;
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(athlete.id)) {
     return athlete;
   }
@@ -321,8 +320,7 @@ async function hydrateAthleteFromSupabase(athlete) {
       `${supabaseRestUrl}/rest/v1/athletes?id=eq.${encodeURIComponent(athlete.id)}&select=*`,
       {
         headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          ...supabaseHeaders(supabasePublishableKey),
           Accept: 'application/json',
         },
       },
@@ -634,10 +632,10 @@ app.post('/api/checkout/release-escrow', async (req, res) => {
     const success = (transfer, alreadyReleased) => res.json({ released: true, escrowTransferId: transfer.id, releasedAmountCents: transfer.amount, releasedAt: new Date(transfer.created * 1000).toISOString(), alreadyReleased });
     if (existing) return success(existing, true);
     const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const key = supabaseSecretKey();
     if (!url || !key) return res.status(503).json({ error: 'payout lookup not configured' });
     const response = await fetch(`${url}/rest/v1/athlete_profiles?${new URLSearchParams({ id: `eq.${athleteId}`, select: 'stripe_account_id' })}`, {
-      headers: { apikey: key, Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(8000),
+      headers: supabaseHeaders(key), signal: AbortSignal.timeout(8000),
     });
     if (!response.ok) return res.status(502).json({ error: 'Unable to look up athlete payout account' });
     const athletes = await response.json();

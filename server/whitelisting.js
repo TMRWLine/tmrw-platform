@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { supabaseHeaders, supabaseSecretKey } from './supabase-keys.js';
 
 export const grantPath = '/api/checkout/whitelisting-grant';
 const termDays = 90;
@@ -45,15 +46,14 @@ function radiusForTier(tierId) {
 
 function grantStorage() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = supabaseSecretKey();
   if (!url || !key) throw new Error('Whitelisting storage is not configured');
 
   return async (params, body) => {
     const response = await fetch(`${url.replace(/\/$/, '')}/rest/v1/whitelisting_grants?${new URLSearchParams(params)}`, {
       method: body ? 'POST' : 'GET',
       headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
+        ...supabaseHeaders(key),
         ...(body && {
           'Content-Type': 'application/json',
           Prefer: 'resolution=ignore-duplicates,return=minimal',
