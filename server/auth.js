@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
+import { supabasePublicKey } from './supabase-keys.js';
 
 export async function requireUser(req, res, next) {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  const key = supabasePublicKey();
   const token = /^Bearer (\S{1,8192})$/i.exec(req.get('Authorization') || '')?.[1];
   if (!token) return res.status(401).json({ error: 'A Supabase access token is required' });
   if (!url || !key) return res.status(503).json({ error: 'Supabase authentication is not configured' });
