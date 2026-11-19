@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import Lenis from '@studio-freight/lenis';
 import {
@@ -155,6 +155,16 @@ export function MarketplaceApp() {
   const [landingSection, setLandingSection] = useState<LandingSectionId | null>(null);
   const [canvasProgress, setCanvasProgress] = useState(0);
   const lenisRef = useRef<Lenis | null>(null);
+  const scrollForKeyboardFocus = useCallback((top?: number) => {
+    const lenis = lenisRef.current;
+    if (lenis) {
+      if (top !== undefined || lenis.isScrolling) {
+        lenis.scrollTo(top ?? window.scrollY, { immediate: true });
+      }
+    } else if (top !== undefined) {
+      window.scrollTo({ top, behavior: 'instant' });
+    }
+  }, []);
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>('all');
   const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
   const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
@@ -783,6 +793,7 @@ export function MarketplaceApp() {
             <div className="pt-20">
               <CoverHero
                 onNavigateSection={navigateToHeading}
+                scrollForKeyboardFocus={scrollForKeyboardFocus}
                 overlayOpen={isMenuOpen || isCartOpen || isSearchOpen || isPortalDrawerOpen || isAuthModalOpen || isSyndicateEnquiryOpen}
               />
             </div>

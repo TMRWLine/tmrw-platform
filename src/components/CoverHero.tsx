@@ -22,9 +22,10 @@ function moveLight(event: PointerEvent<HTMLElement>) {
   target.style.setProperty('--cover-light-y', `${((event.clientY - top) / height - 0.5) * 12}px`);
 }
 
-export function CoverHero({ onNavigateSection, overlayOpen }: {
+export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFocus }: {
   onNavigateSection: (id: LandingSectionId) => void;
   overlayOpen: boolean;
+  scrollForKeyboardFocus: (top?: number) => void;
 }) {
   const reducedMotion = useReducedMotion();
   const cover = useRef<HTMLElement>(null);
@@ -66,7 +67,9 @@ export function CoverHero({ onNavigateSection, overlayOpen }: {
     let frame = 0;
     const keepFocusVisible = (event: FocusEvent) => {
       const target = event.target;
-      if (!(target instanceof HTMLElement) || bar.contains(target) || !target.matches(':focus-visible')) return;
+      if (!(target instanceof HTMLElement) || !target.matches(':focus-visible') || !bar.offsetHeight) return;
+      scrollForKeyboardFocus();
+      if (bar.contains(target)) return;
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         frame = requestAnimationFrame(() => {
@@ -75,7 +78,7 @@ export function CoverHero({ onNavigateSection, overlayOpen }: {
           const targetRect = target.getBoundingClientRect();
           const overlap = targetRect.bottom + focusGap - barRect.top;
           if (barRect.height > 0 && overlap > 0 && targetRect.top < barRect.bottom) {
-            window.scrollBy({ top: overlap, behavior: 'instant' });
+            scrollForKeyboardFocus(window.scrollY + Math.ceil(overlap));
           }
         });
       });
@@ -87,7 +90,7 @@ export function CoverHero({ onNavigateSection, overlayOpen }: {
       resizeObserver?.disconnect();
       rootStyle.removeProperty('--cover-quick-links-height');
     };
-  }, [pastCover, overlayOpen]);
+  }, [pastCover, overlayOpen, scrollForKeyboardFocus]);
 
   const links = LINKS.map(({ id, href, label, variant }) => (
     <RollingPillButton key={id} href={href} variant={variant} className={variant === 'glass' ? 'bg-black/85' : ''}
