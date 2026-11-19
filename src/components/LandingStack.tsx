@@ -55,7 +55,7 @@ export function BrandLockup({
     size === 'header'
       ? 'font-black text-3xl md:text-4xl tracking-tight leading-none'
       : 'font-black text-2xl tracking-tight leading-none';
-  const voltClass = `${wordClass} text-[#D2FF00] drop-shadow-[0_0_10px_rgba(210,255,0,0.6)]`;
+  const voltClass = `${wordClass} text-volt drop-shadow-[0_0_10px_rgba(184,255,0,0.6)]`;
 
   return (
     <button

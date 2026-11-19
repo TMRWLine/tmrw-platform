@@ -308,25 +308,15 @@ export const RosterPage: React.FC<RosterPageProps> = ({
       : ROSTER_DATA.length;
 
   type RosterCard = (typeof visibleCards)[number];
-  const renderSpecimen = (card: RosterCard, index: number) => {
-    const { athlete, specimen, record, hasLocalOverride } = card;
+  const renderSpecimen = (card: RosterCard) => {
+    const { athlete, specimen, record } = card;
     if (!specimen || !record) return null;
-
-    const isUpdatedCard = hasLocalOverride || index === 3 || index === 7;
-    const badge = isUpdatedCard
-      ? 'Updated'
-      : index === 0 || index === 1 || index === 2 || index === 4 || index === 5
-      ? 'New'
-      : '';
-    const badgeVariant: 'green' | 'yellow' | 'black' | 'outline' = isUpdatedCard
-      ? 'yellow'
-      : 'green';
 
     return (
       <RosterSpecimenCard
         athlete={athlete.record}
-        badgeText={badge}
-        badgeVariant={badgeVariant}
+        badgeText="Illustrative profile"
+        badgeVariant="black"
         onOpenDossier={(selectedRecord, mode) => {
           setHighlightedCardId(athlete.id);
           onOpenDossier(selectedRecord, mode ?? 'audit');
@@ -354,7 +344,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                   id="roster-heading"
                   className="m-0 font-display text-5xl sm:text-6xl xl:text-[74px] font-black tracking-[-0.04em] leading-[0.86] uppercase text-[#080808]"
                 >
-                  THE ROSTER<span className="text-[#CCFF00]">.</span>
+                  THE ROSTER<span className="text-[#080808]">.</span>
                 </h2>
               </div>
 
@@ -363,17 +353,17 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                   Algorithms don’t win premierships. Followers don’t fund the runway.
                 </p>
                 <p className="m-0 mt-1 font-sans text-[12px] leading-[1.45] text-neutral-600">
-                  <strong className="text-[#080808] font-semibold">tmrw/.</strong> backs the next generation of icons with direct commercial capital from local businesses and major brands before the whistle blows.
+                  Local sponsorship can help cover the work that gets athletes to game day. These sample profiles show how the roster works. They are not offers or endorsements.
                 </p>
               </div>
 
               <div className="lg:border-l lg:border-black/10 lg:pl-5">
                 <p className="m-0 font-sans text-[12px] leading-[1.45] text-neutral-600">
-                  No ninety-day invoice traps or agency middlemen. Every package locks exclusive postcode rights for partners and triggers an instant{' '}
-                  <span className="bg-[#CCFF00] text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">
+                  One sponsorship example uses a{' '}
+                  <span className="bg-neutral-200 text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">
                     70/15/15 split
                   </span>{' '}
-                  between the athlete, their junior club, and clearinghouse operations.
+                  between the athlete, their grassroots club and TMRWLine. Rights, amounts and timing depend on the agreement.
                 </p>
               </div>
             </div>
@@ -416,7 +406,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 }`}
               >
                 <svg
-                  className={`w-5 h-5 shrink-0 ${viewMode === 'grid' ? 'text-[#CCFF00]' : 'text-neutral-400'}`}
+                  className={`w-5 h-5 shrink-0 ${viewMode === 'grid' ? 'text-[#080808]' : 'text-neutral-400'}`}
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   stroke="#080808"
@@ -430,7 +420,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 <span
                   className={
                     viewMode === 'grid'
-                      ? 'bg-[#CCFF00] text-[#080808] px-2 py-0.5 rounded-[4px] font-bold'
+                      ? 'bg-neutral-200 text-[#080808] px-2 py-0.5 rounded-[4px] font-bold'
                       : ''
                   }
                 >
@@ -460,7 +450,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 <span
                   className={
                     viewMode === 'directory'
-                      ? 'bg-[#CCFF00] text-[#080808] px-2 py-0.5 rounded-[4px] font-bold'
+                      ? 'bg-neutral-200 text-[#080808] px-2 py-0.5 rounded-[4px] font-bold'
                       : ''
                   }
                 >
@@ -523,7 +513,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                         setDiscipline(tempDiscipline);
                         setActiveDropdown(null);
                       }}
-                      className="w-full rounded-full bg-[#CCFF00] hover:bg-black hover:text-white text-black font-mono font-bold text-xs uppercase tracking-widest py-3 transition-colors cursor-pointer shadow-sm"
+                      className="w-full rounded-full bg-[#080808] hover:bg-neutral-700 text-white font-mono font-bold text-xs uppercase tracking-widest py-3 transition-colors cursor-pointer shadow-sm"
                     >
                       Apply
                     </button>
@@ -594,7 +584,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                           setActiveSort(tempSort);
                           setActiveDropdown(null);
                         }}
-                        className="w-full rounded-xl bg-[#CCFF00] hover:bg-black hover:text-white text-black font-mono font-bold text-[11px] uppercase tracking-widest py-2.5 transition-colors cursor-pointer shadow-sm"
+                        className="w-full rounded-xl bg-[#080808] hover:bg-neutral-700 text-white font-mono font-bold text-[11px] uppercase tracking-widest py-2.5 transition-colors cursor-pointer shadow-sm"
                       >
                         Apply Sort
                       </button>
@@ -608,10 +598,10 @@ export const RosterPage: React.FC<RosterPageProps> = ({
           {tierNotice ? (
             <div
               role="status"
-              className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-[#CCFF00] bg-[#CCFF00]/15 px-5 py-2.5"
+              className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-neutral-400 bg-neutral-100 px-5 py-2.5"
             >
               <p className="m-0 font-mono text-[11px] leading-relaxed text-[#080808]">
-                Showing athletes pre-cleared for {tierNotice}. Select an athlete to fund this flight.
+                Showing example profiles for {tierNotice}. Availability and campaign rights are not confirmed here.
               </p>
               <button
                 type="button"
@@ -632,7 +622,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
           >
             {visibleCards.length === 0 ? (
               <p className="m-0 font-mono text-xs uppercase tracking-widest text-[#666666]">
-                No verified athletes match this filter.
+                No example profiles match this filter.
               </p>
             ) : viewMode === 'directory' ? (
               <div className="roster-directory border-t border-neutral-200">
@@ -708,7 +698,7 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenDossier(athlete.record, 'audit')}
-                          className="justify-self-start rounded-full border-0 bg-[#0F0F11] px-4 py-2 font-mono text-[10px] font-medium uppercase tracking-widest text-white transition-colors hover:bg-[#CCFF00] hover:text-black cursor-pointer md:justify-self-end"
+                          className="justify-self-start rounded-full border-0 bg-[#0F0F11] px-4 py-2 font-mono text-[10px] font-medium uppercase tracking-widest text-white transition-colors hover:bg-neutral-700 cursor-pointer md:justify-self-end"
                         >
                           Open Athlete Dossier →
                         </button>
@@ -719,9 +709,9 @@ export const RosterPage: React.FC<RosterPageProps> = ({
               </div>
             ) : (
               <ul className="m-0 grid list-none grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch gap-x-5 gap-y-7 p-0 pt-3">
-                {visibleCards.map((card, index) => (
+                {visibleCards.map((card) => (
                   <li key={card.athlete.id} className="m-0 flex min-w-0 flex-col p-0">
-                    {renderSpecimen(card, index)}
+                    {renderSpecimen(card)}
                   </li>
                 ))}
               </ul>
