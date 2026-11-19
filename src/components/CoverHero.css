@@ -43,6 +43,24 @@
 .cover-camera { transform: scale(1.04); }
 .cover-photo { display: block; object-fit: cover; object-position: center; }
 .cover-photo-soft { opacity: 0; filter: blur(3px); }
+.cover-lens {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  visibility: hidden;
+}
+.cover-stage[data-lens='active'] .cover-lens { visibility: visible; }
+.cover-stage[data-lens] :is(.cover-bloom, .cover-parallax-glow, .cover-scrim) { display: none; }
+.cover-stage[data-lens] .cover-red-glow { opacity: .48; }
+.cover-stage[data-lens] .cover-edge > .cover-photo { transform: scale(1.08); }
+.cover-stage[data-lens='pending'] .cover-edge > .cover-photo { filter: brightness(.24); }
+.cover-stage[data-lens='pending'] :is(.cover-title, .cover-actions, .cover-court) { opacity: 0; }
+.cover-stage[data-lens='pending'] :is(.cover-title, .cover-actions):focus-within { opacity: 1; }
+.cover-stage[data-lens='active'][data-intro='true'] .cover-court { animation: cover-lens-court var(--cover-settle) linear both; }
+.cover-stage[data-lens='active'][data-intro='true'] .cover-court line { animation: none; }
+.cover-stage[data-lens='still'] :is(.cover-dot-core, .cover-title, .cover-edge, .cover-court-handoff) { animation: none; }
+@keyframes cover-lens-court { 0%, 73% { opacity: 0; } 96%, 100% { opacity: 1; } }
 .cover-lamp-plane {
   position: absolute;
   top: 50%;

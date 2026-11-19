@@ -13,6 +13,17 @@ export function isPastedCover(search: string): boolean {
   return new URLSearchParams(search).get('cover') === 'pasted';
 }
 
+export function isWebGLCover(search: string): boolean {
+  return new URLSearchParams(search).get('cover') === 'webgl';
+}
+
+export function canAnimateCoverLens(
+  reduced: boolean,
+  device: { deviceMemory?: number; connection?: { saveData?: boolean } },
+): boolean {
+  return !reduced && !device.connection?.saveData && (device.deviceMemory ?? 4) >= 4;
+}
+
 type WordBox = Pick<DOMRectReadOnly, 'left' | 'top' | 'width' | 'height'>;
 
 export function coverWordTransform(start: WordBox, end: WordBox): string {

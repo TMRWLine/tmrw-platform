@@ -3,7 +3,8 @@ import test from 'node:test';
 import {
   COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_GRAZE_DELAY_MS, COVER_GRAZE_MS,
   COVER_LAMP_CUE_MS, COVER_LINE_DELAYS, COVER_LINE_DRAW_MS,
-  COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_WORD_DELAYS, coverWordTransform, isPastedCover,
+  COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_WORD_DELAYS, canAnimateCoverLens, coverWordTransform,
+  isPastedCover, isWebGLCover,
 } from '../src/lib/coverMotion.ts';
 
 test('only cover=pasted opts into the unmodified cover', () => {
@@ -11,6 +12,16 @@ test('only cover=pasted opts into the unmodified cover', () => {
   for (const query of ['', '?cover=polished', '?concept=a', '?cover=unknown']) {
     assert.equal(isPastedCover(query), false);
   }
+});
+
+test('the WebGL cover is opt-in and low-power or reduced-motion devices get the still', () => {
+  assert.equal(isWebGLCover('?cover=webgl'), true);
+  for (const query of ['', '?cover=pasted', '?cover=polished']) assert.equal(isWebGLCover(query), false);
+  assert.equal(canAnimateCoverLens(false, {}), true);
+  assert.equal(canAnimateCoverLens(false, { deviceMemory: 4 }), true);
+  assert.equal(canAnimateCoverLens(false, { deviceMemory: 2 }), false);
+  assert.equal(canAnimateCoverLens(true, { deviceMemory: 8 }), false);
+  assert.equal(canAnimateCoverLens(false, { deviceMemory: 8, connection: { saveData: true } }), false);
 });
 
 test('the four reveal beats and settle retain the original timings', () => {

@@ -30,14 +30,15 @@ function Preview({ title, url, width, height }: { title: string; url: string; wi
 export default function CoverComparison() {
   const [replay, setReplay] = useState(0);
   const variants = [
-    { title: 'Your cover (as pasted)', url: '/?cover=pasted' },
     { title: 'Your cover, polished', url: '/' },
+    { title: 'Your cover, Floodlight Film', url: '/?cover=webgl' },
+    { title: 'Your cover (as pasted)', url: '/?cover=pasted' },
   ];
   return (
     <main className="cover-comparison">
       <h1>Compare your cover</h1>
-      <p>Same court card, photo and headline. Compare the original motion with the polished version.</p>
-      <button type="button" onClick={() => setReplay(previous => previous + 1)}>Replay both</button>
+      <p>Same court card, photo and headline. Compare the original, polished and WebGL openings.</p>
+      <button type="button" onClick={() => setReplay(previous => previous + 1)}>Replay all</button>
       {DEVICES.map(({ name, width, height }) => (
         <section key={name} aria-labelledby={`comparison-${name}`}>
           <h2 id={`comparison-${name}`}>{name} · {width}px</h2>

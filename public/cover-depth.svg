@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="612" height="407" viewBox="0 0 612 407">
+  <defs>
+    <linearGradient id="field" x2="0" y2="1">
+      <stop offset=".29" stop-color="#121212"/>
+      <stop offset=".48" stop-color="#242424"/>
+      <stop offset="1" stop-color="#929292"/>
+    </linearGradient>
+    <linearGradient id="figure" x2="0" y2="1">
+      <stop stop-color="#a5a5a5"/>
+      <stop offset="1" stop-color="#bcbcbc"/>
+    </linearGradient>
+    <filter id="edge" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="4"/></filter>
+  </defs>
+  <rect width="612" height="407" fill="url(#field)"/>
+  <path d="M225 407v-87c0-40 8-81 19-93 11-13 36-16 41-24l4-18-5-7-4-10 4-6c-3-17 7-32 22-32 17 0 27 15 23 32l4 6-5 12-5 7 6 17c8 7 31 12 41 23 13 15 19 52 19 93v87z" fill="url(#figure)" filter="url(#edge)"/>
+</svg>

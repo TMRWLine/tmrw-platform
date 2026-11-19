@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom';
 import {
   COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_GRAZE_DELAY_MS, COVER_GRAZE_MS,
   COVER_LAMP_CUE_MS, COVER_LINE_DELAYS, COVER_LINE_DRAW_MS,
-  COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_WORD_DELAYS, coverWordTransform,
+  COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_WORD_DELAYS, canAnimateCoverLens, coverWordTransform,
 } from '../lib/coverMotion';
 import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
 import { useReducedMotion } from '../lib/useReducedMotion';
@@ -33,10 +33,11 @@ function CoverPhoto({ soft = false }: { soft?: boolean }) {
   );
 }
 
-export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFocus }: {
+export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFocus, webgl = false }: {
   onNavigateSection: (id: LandingSectionId) => void;
   overlayOpen: boolean;
   scrollForKeyboardFocus: (top?: number) => void;
+  webgl?: boolean;
 }) {
   const reduced = useReducedMotion();
   const [settled, setSettled] = useState(false);
@@ -44,9 +45,13 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
   const [pulsePaused, setPulsePaused] = useState(false);
   const [pastCover, setPastCover] = useState(false);
   const [wide, setWide] = useState(false);
-  const intro = !reduced && !introComplete;
-  const openingTitle = !reduced && !settled;
+  const [lens, setLens] = useState<'pending' | 'active' | 'still'>(() =>
+    webgl && canAnimateCoverLens(reduced, navigator as Parameters<typeof canAnimateCoverLens>[1]) ? 'pending' : 'still');
+  const intro = !reduced && !introComplete && (!webgl || lens === 'active');
+  const openingTitle = intro && !settled;
   const cover = useRef<HTMLElement>(null);
+  const poster = useRef<HTMLImageElement>(null);
+  const canvas = useRef<HTMLCanvasElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const introLayout = useRef<HTMLSpanElement>(null);
   const finalLayout = useRef<HTMLSpanElement>(null);
@@ -80,6 +85,69 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
     setIntroComplete(true);
     if (returnFocus) heading.current?.focus({ preventScroll: true });
   }, []);
+
+  useEffect(() => {
+    const stage = cover.current;
+    const image = poster.current;
+    const surface = canvas.current;
+    if (!webgl || !stage || !image || !surface) return;
+    if (!canAnimateCoverLens(reduced, navigator as Parameters<typeof canAnimateCoverLens>[1])) {
+      setLens('still');
+      return;
+    }
+    let cancelled = false;
+    let dispose: (() => void) | undefined;
+    let paint = 0;
+    let deadline = 0;
+    let observer: PerformanceObserver | undefined;
+    const fallback = () => {
+      if (cancelled) return;
+      cancelled = true;
+      window.clearTimeout(deadline);
+      observer?.disconnect();
+      dispose?.();
+      finishIntro();
+      setLens('still');
+    };
+    const start = async () => {
+      if (cancelled) return;
+      try {
+        const { mountCoverLens } = await import('./coverLens');
+        if (!cancelled) {
+          dispose = mountCoverLens(surface, stage, () => {
+            if (cancelled) return;
+            window.clearTimeout(deadline);
+            setLens('active');
+          }, fallback);
+        }
+      } catch {
+        fallback();
+      }
+    };
+    deadline = window.setTimeout(fallback, 3200);
+    if (window === window.top && typeof PerformanceObserver !== 'undefined'
+      && PerformanceObserver.supportedEntryTypes.includes('largest-contentful-paint')) {
+      observer = new PerformanceObserver(list => {
+        if (!list.getEntries().some(entry => (entry as LargestContentfulPaint).element === image)) return;
+        observer?.disconnect();
+        paint = requestAnimationFrame(() => { void start(); });
+      });
+      observer.observe({ type: 'largest-contentful-paint', buffered: true });
+    } else {
+      void image.decode().catch(() => undefined).then(() => {
+        if (!cancelled) paint = requestAnimationFrame(() => {
+          paint = requestAnimationFrame(() => { void start(); });
+        });
+      });
+    }
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(paint);
+      window.clearTimeout(deadline);
+      observer?.disconnect();
+      dispose?.();
+    };
+  }, [webgl, reduced, finishIntro]);
 
   useLayoutEffect(() => {
     const title = heading.current;
@@ -209,7 +277,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
   }, [reduced]);
 
   const movePointer = (event: PointerEvent<HTMLElement>) => {
-    if (intro || reduced || event.pointerType !== 'mouse' || !window.matchMedia(FINE_POINTER).matches) return;
+    if (webgl || intro || reduced || event.pointerType !== 'mouse' || !window.matchMedia(FINE_POINTER).matches) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     pointer.current.targetX = ((event.clientX - bounds.left) / bounds.width - .5) * 32;
     pointer.current.targetY = ((event.clientY - bounds.top) / bounds.height - .5) * 32;
@@ -242,6 +310,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
   return (
     <>
       <section ref={cover} aria-label="tmrw cover" className="cover-stage" data-intro={intro} data-wide={wide}
+        data-lens={webgl ? lens : undefined}
         style={sceneTiming}
         onPointerMove={movePointer}
         onPointerLeave={() => {
@@ -251,7 +320,14 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
         }}>
         <span ref={marker} className="cover-marker" aria-hidden="true" />
         <div className="cover-edge" aria-hidden="true">
-          <div className="cover-image-plane">
+          {webgl ? (
+            <>
+              <img ref={poster} className="cover-photo" src="/cover-webgl-poster.webp" alt="" width={612} height={407}
+                onError={event => { if (!event.currentTarget.src.endsWith('/coverpage.jpg')) event.currentTarget.src = '/coverpage.jpg'; }}
+                {...{ fetchpriority: 'high' }} />
+              <canvas ref={canvas} className="cover-lens" />
+            </>
+          ) : <div className="cover-image-plane">
             <div className="cover-camera">
               <div className="cover-photo-stack">
                 <CoverPhoto />
@@ -265,7 +341,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
                 </div>
               )}
             </div>
-          </div>
+          </div>}
           <div className="cover-red-glow" />
           <div className="cover-scrim" />
           <div className="cover-parallax-glow" />
@@ -299,12 +375,12 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
                   <span className="cover-word-mask"><span className="cover-word-rise">
                     <span className="cover-word-lit">
                       {word}
-                      {!reduced && <span className="cover-word-graze" aria-hidden="true"><span>{word}</span></span>}
+                      {!reduced && (!webgl || lens === 'active') && <span className="cover-word-graze" aria-hidden="true"><span>{word}</span></span>}
                     </span>
                     {index === 3 && (
                       <span className="cover-dot" data-paused={pulsePaused}>
                         <span className="cover-dot-drop" aria-hidden="true"><span className="cover-dot-core" /></span>
-                        {!intro && !reduced && (
+                        {!intro && !reduced && (!webgl || lens === 'active') && (
                           <button type="button" className="cover-dot-toggle"
                             aria-label={pulsePaused ? 'Resume dot animation' : 'Pause dot animation'}
                             title={pulsePaused ? 'Resume dot animation' : 'Pause dot animation'}
