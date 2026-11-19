@@ -24,12 +24,11 @@ test('Olympic checkout receipts use the correct packages, prices and 70/15/15 sp
   }
 });
 
-test('existing receipt packages and the unknown-tier fallback are unchanged', () => {
+test('existing receipt packages stay unchanged and unknown tiers do not get a default', () => {
   for (const pkg of mockDeliverables.packages) {
     assert.equal(resolveReceiptPackage(pkg.tier_id), pkg);
   }
-  assert.equal(resolveReceiptPackage('unknown'), mockDeliverables.packages[0]);
-  assert.equal(resolveReceiptPackage(null), mockDeliverables.packages[0]);
+  assert.equal(resolveReceiptPackage('unknown'), undefined);
 });
 
 test('Olympic receipt IDs resolve the chosen contender and grassroots club', () => {
@@ -42,8 +41,9 @@ test('Olympic receipt IDs resolve the chosen contender and grassroots club', () 
       assert.equal(athlete.id, athleteId);
       assert.equal(athlete.full_name, name);
       assert.equal(athlete.grassroots_club.name, club);
-      assert.equal(resolveReceiptAthlete(athleteId, 'local_merchant'), mockDeliverables.athlete);
+      assert.equal(resolveReceiptAthlete(athleteId, 'local_merchant'), null);
     }
   }
+  assert.equal(resolveReceiptAthlete('unknown-athlete', 'olympic_1yr_50k'), null);
   assert.equal(resolveReceiptAthlete(mockDeliverables.athlete.id, 'local_merchant'), mockDeliverables.athlete);
 });

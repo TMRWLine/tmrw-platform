@@ -1,11 +1,11 @@
-import { getCommercialPackage, mockDeliverables, type CommercialPackage } from '../../data/mockDeliverables';
+import { getCommercialPackage, type CommercialPackage } from '../../data/mockDeliverables';
 import { OLYMPIC_HORIZONS } from '../../data/olympicHorizons';
 
 export type ReceiptPackage = Pick<CommercialPackage, 'tier_id' | 'name' | 'price_aud' | 'price_display' | 'split_breakdown'>;
 
-export function resolveReceiptPackage(tierId: string | null): ReceiptPackage {
+export function resolveReceiptPackage(tierId: string): ReceiptPackage | undefined {
   const olympic = OLYMPIC_HORIZONS.find((horizon) => horizon.tierId === tierId);
-  if (!olympic) return getCommercialPackage(tierId) ?? mockDeliverables.packages[0];
+  if (!olympic) return getCommercialPackage(tierId);
 
   return {
     tier_id: olympic.tierId,

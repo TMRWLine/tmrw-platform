@@ -5,7 +5,7 @@ import { ROSTER_DATA } from '../../data/roster';
 
 export type ReceiptAthlete = Pick<CommercialAthlete, 'id' | 'full_name' | 'display_name' | 'sport' | 'grassroots_club'>;
 
-export function resolveReceiptAthlete(athleteId: string | null, tierId: string | null): ReceiptAthlete {
+export function resolveReceiptAthlete(athleteId: string, tierId: string): ReceiptAthlete | null {
   if (OLYMPIC_HORIZONS.some((horizon) => horizon.tierId === tierId)) {
     const contender = Object.values(OLYMPIC_CONTENDERS).find((entry) => entry.athleteId === athleteId);
     if (contender) {
@@ -24,5 +24,5 @@ export function resolveReceiptAthlete(athleteId: string | null, tierId: string |
   }
   const roster = athleteId ? ROSTER_DATA.find((entry) => entry.id === athleteId) : undefined;
   if (roster) return toCommercialAthlete(roster.record);
-  return mockDeliverables.athlete;
+  return null;
 }

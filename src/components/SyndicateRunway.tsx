@@ -5,12 +5,9 @@ import { OLYMPIC_CONTENDERS } from '../data/olympicContenders';
 import { OLYMPIC_HORIZONS, type OlympicHorizonSpec } from '../data/olympicHorizons';
 import type { LandingSectionId } from './Navigation';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
-import { issuePostcodeWhitelistingGrant, type WhitelistingGrant } from '../lib/whitelisting';
-import { WhitelistingLaunchModal } from './WhitelistingLaunchModal';
 import {
   StripeEscrowCheckoutModal,
   type StripeCheckoutPayload,
-  type StripeEscrowReceipt,
 } from './StripeEscrowCheckoutModal';
 
 interface SyndicateRunwayProps {
@@ -578,10 +575,6 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isCertificateOpen, setIsCertificateOpen] = useState(false);
   const [stripePayload, setStripePayload] = useState<StripeCheckoutPayload | null>(null);
-  const [lastReceipt, setLastReceipt] = useState<StripeEscrowReceipt | null>(null);
-  const [lastPaidPriceAud, setLastPaidPriceAud] = useState<number>(50000);
-  const [lastPaidClubName, setLastPaidClubName] = useState<string>('Balmoral Cycling Club');
-  const [unlockedGrant, setUnlockedGrant] = useState<WhitelistingGrant | null>(null);
 
   const activeContender =
     CONTENDER_SPECIMENS.find((c) => c.id === selectedContenderId) ?? CONTENDER_SPECIMENS[0];
@@ -594,8 +587,6 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
     sectorLabel = 'Telco & Technology',
   ) => {
     const c = CONTENDER_SPECIMENS.find((item) => item.id === contenderId) ?? CONTENDER_SPECIMENS[0];
-    setLastPaidPriceAud(horizon.priceAud);
-    setLastPaidClubName(c.club);
     setStripePayload({
       athleteId: c.athleteId,
       athleteName: `${c.fullName} (${sectorLabel})`,
@@ -648,8 +639,6 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
               el.dataset.stripeBound = 'true';
               el.addEventListener('click', (ev) => {
                 ev.stopPropagation();
-                setLastPaidPriceAud(spec.price);
-                setLastPaidClubName('Bankstown Bruins');
                 setStripePayload({
                   athleteId: 'marcus-thorne',
                   athleteName: 'Marcus Thorne',
@@ -976,32 +965,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
       <StripeEscrowCheckoutModal
         payload={stripePayload}
         onClose={() => setStripePayload(null)}
-        onSuccess={async (receipt) => {
-          if (!stripePayload) return;
-          const currentPayload = stripePayload;
-          setLastReceipt(receipt);
-          setLastPaidPriceAud(currentPayload.priceAud);
-          setLastPaidClubName(currentPayload.clubName);
-          setStripePayload(null);
-          const grant = await issuePostcodeWhitelistingGrant({
-            athleteId: currentPayload.athleteId,
-            athleteName: currentPayload.athleteName,
-            flightTierId: currentPayload.tierId,
-            postcode: currentPayload.postcode,
-          });
-          setUnlockedGrant(grant);
-        }}
       />
-
-      {unlockedGrant && (
-        <WhitelistingLaunchModal
-          grant={unlockedGrant}
-          receipt={lastReceipt}
-          priceAud={lastPaidPriceAud}
-          clubName={lastPaidClubName}
-          onClose={() => setUnlockedGrant(null)}
-        />
-      )}
     </div>
   );
 }
