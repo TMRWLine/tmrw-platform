@@ -714,13 +714,8 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
           color: #B8FF00 !important;
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.9), 0 15px 30px rgba(0, 0, 0, 0.6), 0 0 28px rgba(184, 255, 0, 0.35) !important;
         }
-        body:has(#tmrw-locked-runway-footer) footer:not(#tmrw-locked-runway-footer) {
+        body:has(#tmrw-locked-runway-footer) footer[data-site-footer] {
           display: none !important;
-        }
-        @media (min-width: 768px) {
-          body:has(#tmrw-locked-runway-footer) footer:not(#tmrw-locked-runway-footer)[data-syndicate-checkout-actions] {
-            display: block !important;
-          }
         }
       `}</style>
 
