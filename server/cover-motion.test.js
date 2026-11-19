@@ -7,6 +7,7 @@ import {
   isPastedCover, isWebGLCover,
 } from '../src/lib/coverMotion.ts';
 import { isWallCover, releasedWallPhoto, wallTileTiming, wallTimeline } from '../src/lib/coverWall.ts';
+import { isInternalLegendsCover, readLegendsTiles } from '../src/lib/internalLegends.ts';
 
 test('only cover=pasted opts into the unmodified cover', () => {
   assert.equal(isPastedCover('?cover=pasted'), true);
@@ -55,6 +56,19 @@ test('the desktop and phone walls finish populating before flipping from the cen
     assert.equal(corner.flipDelay + 465, timeline.waveMs);
     assert.equal(corner.flipDelay, last.flipDelay);
     assert.ok(centre.flipDelay < corner.flipDelay);
+  }
+});
+
+test('the legends mockup requires a private build and is restricted to local manifest photos', () => {
+  assert.equal(isInternalLegendsCover('?cover=wall&legends=1', false), false);
+  assert.equal(isInternalLegendsCover('?cover=webgl&legends=1', true), false);
+  assert.equal(isInternalLegendsCover('?cover=wall', true), false);
+  assert.equal(isInternalLegendsCover('?cover=wall&legends=1', true), true);
+  const tile = { name: 'Test athlete', sport: 'Netball', filename: 'test-athlete.webp' };
+  assert.equal(readLegendsTiles(Array.from({ length: 24 }, () => tile)).length, 24);
+  assert.throws(() => readLegendsTiles([tile]));
+  for (const filename of ['https://example.org/face.webp', '../face.webp']) {
+    assert.throws(() => readLegendsTiles(Array.from({ length: 24 }, () => ({ ...tile, filename }))));
   }
 });
 

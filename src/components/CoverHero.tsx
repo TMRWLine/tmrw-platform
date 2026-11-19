@@ -6,12 +6,14 @@ import {
   COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_WORD_DELAYS, canAnimateCoverLens, coverWordTransform,
 } from '../lib/coverMotion';
 import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
+import { isInternalLegendsCover } from '../lib/internalLegends';
 import { useReducedMotion } from '../lib/useReducedMotion';
 import type { LandingSectionId } from './Navigation';
 import { CourtLinesOverlay } from './CourtLinesOverlay';
 import { CoverWall } from './CoverWall';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
 import { RollingPillButton } from './RollingPillButton';
+import { useInternalLegends } from './useInternalLegends';
 import './CoverHero.css';
 
 const WORDS = ['Line', 'up', 'your', 'future'] as const;
@@ -52,6 +54,8 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
   const wallAborted = wall && lens === 'still';
   const wallOpen = wall && !reduced && (lens === 'pending' || lens === 'primed');
   const wallSkippable = wall && !reduced && !wallAborted && !introComplete;
+  const legendsRequested = wall && isInternalLegendsCover(window.location.search, import.meta.env.VITE_INTERNAL_LEGENDS === '1');
+  const legends = useInternalLegends(legendsRequested && wallOpen);
   const intro = !reduced && !introComplete && (!webgl || lens === 'active');
   const openingTitle = intro && !settled;
   const cover = useRef<HTMLElement>(null);
@@ -376,7 +380,9 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
           <div className="cover-bloom" />
           <FilmGrainOverlay />
           <CourtLinesOverlay className="cover-court" />
-          {wallOpen && <CoverWall ready={lens === 'primed'} onFlipped={revealWall} />}
+          {wallOpen && (!legendsRequested || legends !== undefined) && (
+            <CoverWall ready={lens === 'primed'} onFlipped={revealWall} legends={legends ?? undefined} />
+          )}
         </div>
         <span className="cover-court-handoff" aria-hidden="true" />
         <div className="cover-title">
@@ -429,6 +435,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
           {links}
         </div>
       </section>
+      {legendsRequested && <div className="cover-legends-notice">Internal mockup · not for publication · photos via Wikimedia Commons</div>}
       {pastCover && !overlayOpen && (
         <nav ref={quickLinks} className="cover-quick-links" aria-label="Quick links">
           {links}
