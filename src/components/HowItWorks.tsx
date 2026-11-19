@@ -25,10 +25,9 @@ const GATES: readonly ProtocolGate[] = [
   },
 ];
 
-export function HowItWorksStrip({ courtHandoff = false }: { courtHandoff?: boolean }) {
+export function HowItWorksStrip() {
   return (
     <section aria-labelledby="cover-story-heading" className="mx-auto max-w-[1600px] px-4 pb-16 text-[#080808] sm:px-6 md:px-8 md:pb-24">
-      {courtHandoff && <span className="cover-story-rule" aria-hidden="true" />}
       <h2 id="cover-story-heading" className="mb-6 text-center font-display text-4xl font-extrabold tracking-tight">
         How it works
       </h2>
