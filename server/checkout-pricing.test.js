@@ -93,6 +93,7 @@ test('capsule prices, costs, royalties, identity and product images come only fr
   assert.ok(body.get('line_items[0][price_data][product_data][name]').includes('MT-22 Heavyweight Contrast Hood'));
   assert.ok(!body.toString().includes('forged'));
   assert.ok(!body.toString().includes('attacker.invalid'));
+  assert.equal(body.has('line_items[0][price_data][product_data][images][0]'), false);
 }));
 
 test('unknown SKUs, invalid quantities and malformed baskets fail before any provider call', () => fixture(async ({ post, calls }) => {
