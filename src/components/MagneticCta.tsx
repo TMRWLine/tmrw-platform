@@ -45,7 +45,7 @@ export const MagneticCta: React.FC<MagneticCtaProps> = ({
         x: reduced ? 0 : springX,
         y: reduced ? 0 : springY,
       }}
-      className={`flagship-gpu relative cursor-pointer border-0 font-mono text-[11px] font-medium uppercase tracking-telemetry focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] ${className}`}
+      className={`flagship-gpu relative cursor-pointer border-0 font-mono text-[11px] font-medium uppercase tracking-telemetry focus:outline-none focus-visible:ring-2 focus-visible:ring-volt ${className}`}
     >
       {children}
     </motion.button>

@@ -111,7 +111,7 @@ function Milestone({ label, detail, done, live, children }: {
       <span
         aria-hidden="true"
         className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold ${
-          done ? 'bg-[#CCFF00] text-[#0F0F11]' : 'border border-neutral-200 text-[#666666]'
+          done ? 'bg-volt text-[#0F0F11]' : 'border border-neutral-200 text-[#666666]'
         }`}
       >
         {done ? '✓' : ''}
@@ -159,7 +159,7 @@ function MilestoneRelease({ checkoutSessionId, athleteId }: { checkoutSessionId:
             type="button"
             disabled={pending}
             onClick={() => void approveDelivery()}
-            className="rounded-full border-0 bg-[#CCFF00] px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-[#dfff66] disabled:opacity-50"
+            className="rounded-full border-0 bg-volt px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-volt disabled:opacity-50"
           >
             {pending ? 'Confirming release…' : 'Approve deliverables & release'}
           </button>
@@ -219,7 +219,7 @@ export const CheckoutSuccessPage: React.FC = () => {
           <div className="mt-4" role="status">
             <p className="m-0 text-sm text-[#666666]">{error ?? 'Waiting for Stripe and the activation ledger.'}</p>
             {error && /^cs_(test|live)_/.test(sessionId) && (
-              <button type="button" onClick={() => setAttempt((value) => value + 1)} className="mt-4 rounded-full bg-[#CCFF00] px-5 py-2 text-sm font-bold">
+              <button type="button" onClick={() => setAttempt((value) => value + 1)} className="mt-4 rounded-full bg-volt px-5 py-2 text-sm font-bold">
                 Check again
               </button>
             )}
@@ -353,7 +353,7 @@ export const CheckoutSuccessPage: React.FC = () => {
           <button
             type="button"
             onClick={() => downloadRcti({ reference, athlete, pkg })}
-            className="mt-6 rounded-full border-0 bg-[#CCFF00] px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-[#dfff66] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] focus-visible:ring-offset-2"
+            className="mt-6 rounded-full border-0 bg-volt px-6 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#0F0F11] cursor-pointer hover:bg-volt focus:outline-none focus-visible:ring-2 focus-visible:ring-volt focus-visible:ring-offset-2"
           >
             Download RCTI specimen
           </button>

@@ -81,5 +81,6 @@ Pick one thing to repeat, one opening to test and one cut to pause. After four w
 ## Launch files
 
 - [Account setup, week one and moderation](account-setup.md)
+- [Accounts to follow at launch](follow-list.md)
 - [19 November 2026 launch scripts](../daily-campaigns/2026-11-19.md)
 - [Launch assets](assets/), including the [end card](assets/end-card.svg), [LinkedIn banner](assets/linkedin-banner.png) and [sample receipt still](assets/linkedin-receipt.png)

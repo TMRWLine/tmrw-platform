@@ -17,7 +17,7 @@ interface AgreementData {
   club: string;
   league: string;
   guardian_email: string;
-  status: string;
+  mou_status: string;
   is_minor: boolean;
   mou_text: string;
 }
@@ -29,20 +29,13 @@ export const GuardianVerify: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSigned, setIsSigned] = useState<boolean>(false);
 
-  const getEffectiveToken = (): string => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const token = searchParams.get('token');
-    if (!token || token === 'demo-token') {
-      return '99999999-9999-9999-9999-000000000001';
-    }
-    return token;
-  };
+  const token = new URLSearchParams(window.location.search).get('token');
 
   useEffect(() => {
     const fetchAgreement = async () => {
       try {
         if (!supabase) throw new Error('Verification service is not configured.');
-        const token = getEffectiveToken();
+        if (!token) throw new Error('Open the private link for the agreement you were asked to review.');
         const { data: agreement, error } = await supabase.rpc('get_guardian_agreement', {
           lookup_token: token
         });
@@ -51,7 +44,7 @@ export const GuardianVerify: React.FC = () => {
         if (!agreement) throw new Error('No agreement record found for this token.');
 
         setData(agreement);
-        if (agreement.status === 'signed') {
+        if (agreement.mou_status === 'signed') {
           setIsSigned(true);
         }
       } catch (err: any) {
@@ -62,23 +55,22 @@ export const GuardianVerify: React.FC = () => {
     };
 
     fetchAgreement();
-  }, []);
+  }, [token]);
 
   const handleCountersign = async () => {
+    if (data?.mou_status !== 'pending_guardian' || !token || token === 'demo-token') return;
     setSubmitting(true);
     setErrorMessage(null);
 
     try {
       if (!supabase) throw new Error('Verification service is not configured.');
-      const token = getEffectiveToken();
       const { data: response, error } = await supabase.rpc('countersign_guardian_mou', {
         lookup_token: token,
-        token: token
       });
 
       if (error) throw error;
-      if (response && response.success === false) {
-        throw new Error(response.error || 'Failed to record signature.');
+      if (response?.mou_status !== 'signed') {
+        throw new Error('We could not record your signature.');
       }
 
       setIsSigned(true);
@@ -114,31 +106,34 @@ export const GuardianVerify: React.FC = () => {
       <div className="guardian-verify-card max-w-lg w-full border border-zinc-800 bg-zinc-950 p-8 rounded-lg shadow-2xl">
         <div className="mb-6">
           <p className="text-xs text-lime-400 uppercase tracking-widest mb-1">// GUARDIAN VERIFICATION</p>
-          <h1 className="text-xl font-bold uppercase tracking-tight">Parental Countersignature</h1>
+          <h1 className="text-xl font-bold uppercase tracking-tight">Review a separate sponsorship licence</h1>
+          <p className="mt-2 text-xs leading-relaxed text-zinc-300">This is not permission to show a profile to sponsors. An athlete and their guardian decide separately whether to grant commercial rights and whether to let a campaign use their photos or video.</p>
         </div>
 
         <div className="guardian-verify-details border border-zinc-800 bg-zinc-900/50 p-4 rounded mb-6 space-y-2 text-xs">
           <div className="flex justify-between">
             <span className="text-zinc-500">ATHLETE (MINOR):</span>
-            <span className="text-white font-medium">{data?.athlete_name} ({data?.full_name})</span>
+            <span className="text-white font-medium">{data?.athlete_name}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-zinc-500">DISCIPLINE:</span>
             <span className="text-white font-medium">{data?.sport}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-zinc-500">CLUB / LEAGUE:</span>
-            <span className="text-white font-medium">{data?.club} ({data?.league})</span>
+            <span className="text-zinc-500">CLUB:</span>
+            <span className="text-white font-medium">{data?.club}</span>
           </div>
         </div>
 
-        <div className="guardian-verify-terms border border-zinc-800 bg-black p-4 rounded text-xs text-zinc-400 leading-relaxed mb-6 space-y-3">
-          <p className="text-zinc-200 font-semibold uppercase">// 2-YEAR MASTER LICENCE TERMS</p>
-          <p>{data?.mou_text}</p>
-          <p className="text-zinc-500 italic">
-            By countersigning, you affirm legal guardianship and grant commercial clearance under Australian and New Zealand minor protection legislation.
-          </p>
-        </div>
+        {data && (data.mou_status === 'pending_guardian' || isSigned) ? (
+          <div className="guardian-verify-terms border border-zinc-800 bg-black p-4 rounded text-xs text-zinc-300 leading-relaxed mb-6 space-y-3">
+            <p className="text-zinc-200 font-semibold uppercase">Master Licence terms</p>
+            <p className="whitespace-pre-line">{data.mou_text}</p>
+            <p>Only countersign if you are the legal guardian and agree to the terms above. This does not approve a specific campaign or its use of photos or video.</p>
+          </div>
+        ) : (
+          <p className="mb-6 text-xs leading-relaxed text-zinc-300">There is no separate licence awaiting your signature. To approve profile visibility, use the private profile review link instead.</p>
+        )}
 
         {errorMessage && (
           <div className="mb-4 p-3 bg-red-950/40 border border-red-900 text-red-400 text-xs rounded text-center">
@@ -148,18 +143,18 @@ export const GuardianVerify: React.FC = () => {
 
         {isSigned ? (
           <div className="p-4 border border-lime-500/30 bg-lime-950/20 text-center rounded">
-            <p className="text-xs text-lime-400 font-bold tracking-widest uppercase">// LEGAL CLEARANCE ACTIVE</p>
-            <p className="text-xs text-zinc-400 mt-1">Agreement countersigned and archived on the platform audit ledger.</p>
+            <p className="text-xs text-lime-400 font-bold tracking-widest uppercase">Licence countersigned</p>
+            <p className="text-xs text-zinc-400 mt-1">Your signature is recorded for this agreement only.</p>
           </div>
-        ) : (
+        ) : data?.mou_status === 'pending_guardian' && token !== 'demo-token' ? (
           <button
             onClick={handleCountersign}
             disabled={submitting}
             className="w-full bg-white text-black font-semibold py-3 px-4 rounded text-xs uppercase tracking-wider hover:bg-zinc-200 disabled:opacity-50 transition-colors"
           >
-            {submitting ? 'RECORDING AUDIT LOG...' : 'COUNTERSIGN AS LEGAL GUARDIAN'}
+            {submitting ? 'Recording signature…' : 'Countersign this licence'}
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );

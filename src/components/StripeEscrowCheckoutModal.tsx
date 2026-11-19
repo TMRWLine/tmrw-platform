@@ -48,7 +48,7 @@ interface StripeEscrowCheckoutModalProps {
 }
 
 const LIT_OBSIDIAN_BTN =
-  'bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-black/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.25),0_0_15px_rgba(204,255,0,0.18)] hover:bg-[#080808] hover:border-[#CCFF00] hover:text-[#CCFF00] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.35),0_0_28px_rgba(204,255,0,0.35)] active:translate-y-[1px]';
+  'bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-black/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.25),0_0_15px_rgba(184,255,0,0.18)] hover:bg-[#080808] hover:border-volt hover:text-volt hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.35),0_0_28px_rgba(184,255,0,0.35)] active:translate-y-[1px]';
 
 function formatAbn(raw: string): string {
   const digits = stripNonDigits(raw).slice(0, 11);
@@ -149,7 +149,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
       onClick={() => !openingCheckout && onClose()}
-      className="fixed inset-0 z-[110] bg-black/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
+      className="fixed inset-0 z-[110] bg-black/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 selection:bg-volt selection:text-[#080808] animate-fadeIn"
     >
       <div
         data-lenis-prevent="true"
@@ -161,9 +161,9 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 font-sans text-xs tracking-tight">
               <span className="font-display font-black text-sm tracking-[-0.04em] text-[#080808]">
-                tmrw<span className="text-[#CCFF00]">/.</span>
+                tmrw<span className="text-volt">/.</span>
               </span>
-              <span className="bg-[#CCFF00] text-[#080808] font-bold px-2 py-0.5 rounded-[4px] text-[11px]">
+              <span className="bg-volt text-[#080808] font-bold px-2 py-0.5 rounded-[4px] text-[11px]">
                 70/15/15 Separate Charges & Transfers
               </span>
               <span className="text-neutral-500 font-mono text-[10px] uppercase">
@@ -171,7 +171,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
               </span>
             </div>
             <h2 className="m-0 mt-2 font-display text-3xl sm:text-4xl font-black uppercase tracking-[-0.03em] leading-none text-[#080808]">
-              {formatAudFromCents(split.grossCents)} AUD<span className="text-[#CCFF00]">.</span>{' '}
+              {formatAudFromCents(split.grossCents)} AUD<span className="text-volt">.</span>{' '}
               <span className="text-neutral-500 font-sans text-sm sm:text-base font-bold normal-case tracking-tight">
                 {payload.packageName}
               </span>
@@ -185,7 +185,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
             type="button"
             disabled={openingCheckout}
             onClick={onClose}
-            className="shrink-0 rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-4 py-1.5 font-sans text-xs font-bold border-0 cursor-pointer transition-colors"
+            className="shrink-0 rounded-full bg-[#080808] hover:bg-volt text-white hover:text-[#080808] px-4 py-1.5 font-sans text-xs font-bold border-0 cursor-pointer transition-colors"
           >
             Close ✕
           </button>
@@ -200,7 +200,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
           <div className="rounded-2xl border border-black/10 bg-[#F2F2F0] p-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2 font-sans text-xs">
               <span className="font-bold text-[#080808]">
-                3-Party Settlement Schedule (`source_transaction` Locked)<span className="text-[#CCFF00]">.</span>
+                3-Party Settlement Schedule (`source_transaction` Locked)<span className="text-volt">.</span>
               </span>
               <span className="font-mono text-[10px] text-neutral-600 uppercase">
                 +{formatAudFromCents(split.gstCents)} GST (100% RCTI Credit)
@@ -213,7 +213,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                 <strong className="text-base sm:text-lg text-white">
                   {formatAudFromCents(split.athlete70Cents)}
                 </strong>
-                <span className="block text-[8px] text-[#CCFF00] mt-0.5">
+                <span className="block text-[8px] text-volt mt-0.5">
                   {escrowMode === 'milestone_50_50'
                     ? `${formatAudFromCents(split.athleteT0AdvanceCents)} T+0 / 50% Escrow`
                     : '100% T+0 Direct'}
@@ -237,7 +237,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                 <strong className="text-base sm:text-lg text-[#080808]">
                   {formatAudFromCents(split.ops15Cents)}
                 </strong>
-                <span className="block text-[8px] text-[#080808] bg-[#CCFF00] px-1 rounded inline-block font-bold mt-0.5">
+                <span className="block text-[8px] text-[#080808] bg-volt px-1 rounded inline-block font-bold mt-0.5">
                   RETAINED T+0 IN PLATFORM
                 </span>
               </div>
@@ -255,10 +255,10 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="bg-[#CCFF00] text-[#080808] font-sans text-[10px] font-bold px-1.5 py-0.5 rounded-[3px]">
+                  <span className="bg-volt text-[#080808] font-sans text-[10px] font-bold px-1.5 py-0.5 rounded-[3px]">
                     01. Athlete 50/50 Escrow
                   </span>
-                  <span className="font-mono text-[10px] text-[#CCFF00]">
+                  <span className="font-mono text-[10px] text-volt">
                     {escrowMode === 'milestone_50_50' ? '●' : '○'}
                   </span>
                 </div>
@@ -283,7 +283,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                 <div className="flex items-center justify-between">
                   <span
                     className={`font-sans text-[10px] font-bold ${
-                      escrowMode === 'upfront_100' ? 'text-[#CCFF00]' : 'text-neutral-500'
+                      escrowMode === 'upfront_100' ? 'text-volt' : 'text-neutral-500'
                     }`}
                   >
                     02. Athlete 100% Upfront
@@ -313,7 +313,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                   onClick={() => setClubCadence('quarterly_batch')}
                   className={`rounded-md px-2.5 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer transition-colors ${
                     clubCadence === 'quarterly_batch'
-                      ? 'bg-[#080808] text-[#CCFF00]'
+                      ? 'bg-[#080808] text-volt'
                       : 'bg-transparent text-neutral-500 hover:text-[#080808]'
                   }`}
                 >
@@ -324,7 +324,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
                   onClick={() => setClubCadence('immediate_t0')}
                   className={`rounded-md px-2.5 py-1 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer transition-colors ${
                     clubCadence === 'immediate_t0'
-                      ? 'bg-[#080808] text-[#CCFF00]'
+                      ? 'bg-[#080808] text-volt'
                       : 'bg-transparent text-neutral-500 hover:text-[#080808]'
                   }`}
                 >
