@@ -88,6 +88,7 @@ function storageFailure(operation, status, code, errorClass = 'StorageError') {
     AbortError: 'Grant storage request was aborted',
     TypeError: 'Grant storage URL or network request failed',
     SyntaxError: 'Grant storage returned invalid JSON',
+    PersistenceError: 'The activation grant was not persisted',
   };
   const details = { operation, table: 'whitelisting_grants', httpStatus: status, postgrestCode: code,
     message: messages[code] || messages[errorClass] || 'Grant storage request failed', errorClass };
@@ -202,7 +203,7 @@ export async function issuePaidWhitelistingGrant(req, res) {
       });
       [grant] = await records(query);
     }
-    if (!grant) throw new Error('The activation grant was not persisted');
+    if (!grant) throw storageFailure('write', null, null, 'PersistenceError');
 
     const holdCents = Number(metadata.athleteEscrowHoldCents);
     return res.json({

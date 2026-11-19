@@ -106,7 +106,7 @@ for (const scenario of [{ name: 'healthy' }, { name: 'VITE-only fallback', env: 
   }));
 }
 
-test('grant write errors log only sanitised storage detail and keep the public response generic', () => fixture({}, async ({ logs }) => {
+for (const persistedResponse of [403, 204]) test(`grant write ${persistedResponse} failure logs only sanitised detail and keeps the public response generic`, () => fixture({}, async ({ logs }) => {
   const proof = 'a'.repeat(64);
   globalThis.fetch = async (input, options) => {
     if (String(input).startsWith('https://api.stripe.com/')) return Response.json({
@@ -114,7 +114,7 @@ test('grant write errors log only sanitised storage detail and keep the public r
       metadata: { grantAccessHash: createHash('sha256').update(proof).digest('hex'), orderType: 'sponsorship_tier',
         athleteId: 'chloe-vance', athleteName: 'Private Name', tierId: 'local_merchant', postcode: '4171' },
     });
-    if (options.method === 'POST') return Response.json({ code: '42501', message: secret + proof, details: options.body }, { status: 403 });
+    if (options.method === 'POST') return persistedResponse === 204 ? new Response(null, { status: 204 }) : Response.json({ code: '42501', message: secret + proof, details: options.body }, { status: 403 });
     return Response.json([]);
   };
   let status, body;
@@ -124,8 +124,9 @@ test('grant write errors log only sanitised storage detail and keep the public r
   assert.deepEqual(body, { error: 'The activation grant is temporarily unavailable. Try again without paying again.' });
   assert.equal(logs.length, 1);
   assert.equal(logs[0][1].operation, 'write');
-  assert.equal(logs[0][1].httpStatus, 403);
-  assert.equal(logs[0][1].postgrestCode, '42501');
+  assert.equal(logs[0][1].httpStatus, persistedResponse === 403 ? 403 : null);
+  assert.equal(logs[0][1].postgrestCode, persistedResponse === 403 ? '42501' : null);
+  assert.equal(logs[0][1].errorClass, persistedResponse === 403 ? 'StorageError' : 'PersistenceError');
   for (const value of [secret, proof, 'Private Name', 'TMRW-TT-', 'TMRW-META-']) assert.ok(!JSON.stringify(logs).includes(value));
 }));
 
