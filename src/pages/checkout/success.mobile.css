@@ -1,0 +1,55 @@
+/* Phone layouts only. Desktop and print retain the original presentation. */
+@media screen and (max-width: 767px),
+  screen and (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+  .checkout-success-page {
+    overflow-wrap: anywhere;
+  }
+
+  .checkout-success-page header > div {
+    height: auto;
+    min-height: 74px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .checkout-success-page button,
+  .checkout-success-page a {
+    min-width: 44px;
+    min-height: 48px;
+  }
+
+  .checkout-success-page main > dl > div,
+  .checkout-success-page main > section {
+    min-width: 0;
+    padding: 24px 20px;
+  }
+
+  .checkout-success-page dt,
+  .checkout-success-page .font-mono {
+    font-size: 0.75rem;
+  }
+
+  .checkout-success-page main p.text-sm {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .checkout-success-page .checkout-success-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .checkout-success-page li > div {
+    min-width: 0;
+  }
+
+  .checkout-success-page main button {
+    width: 100%;
+    line-height: 1.5;
+    white-space: normal;
+  }
+
+  .checkout-success-page main a {
+    padding: 12px 0;
+    line-height: 1.5;
+  }
+}

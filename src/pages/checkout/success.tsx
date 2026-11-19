@@ -5,6 +5,7 @@ import { formatAud } from '../../lib/formatMoney';
 import { fetchPaidWhitelistingGrant, type PaidWhitelistingGrant } from '../../lib/whitelisting';
 import { resolveReceiptAthlete, type ReceiptAthlete } from './receiptAthlete';
 import { resolveReceiptPackage, type ReceiptPackage } from './receiptPackage';
+import './success.mobile.css';
 
 export { CHECKOUT_SUCCESS_PATH };
 
@@ -47,6 +48,7 @@ function downloadRcti(args: {
 <html lang="en-AU">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RCTI ${reference}</title>
   <style>
     body { font-family: Inter, Helvetica, Arial, sans-serif; color: #0F0F11; background: #F8F9FA; padding: 48px; }
@@ -57,6 +59,15 @@ function downloadRcti(args: {
     dl { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
     dt { color: #666; margin: 0; } dd { margin: 4px 0 0; font-weight: 700; }
     .note { margin-top: 28px; font-size: 11px; color: #666; }
+    @media screen and (max-width: 767px),
+      screen and (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+      body { margin: 0; padding: 16px; }
+      main { box-sizing: border-box; width: 100%; padding: 24px 20px; overflow-wrap: anywhere; }
+      h1 { font-size: 20px; }
+      p, dt, dd { font-size: 14px; line-height: 1.6; }
+      dl { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+      .meta, .note { font-size: 12px; }
+    }
   </style>
 </head>
 <body>
@@ -190,7 +201,7 @@ export const CheckoutSuccessPage: React.FC = () => {
     .join(', ');
 
   return (
-    <div className="min-h-screen w-full bg-[#F8F9FA] text-[#0F0F11] font-sans">
+    <div className="checkout-success-page min-h-screen w-full bg-[#F8F9FA] text-[#0F0F11] font-sans">
       <header className="border-b border-[#EAEAEA] bg-[#F8F9FA]">
         <div className="max-w-[960px] mx-auto px-4 md:px-8 h-[74px] flex items-center">
           <BrandLockup tone="light" onClick={() => window.location.assign('/')} />
@@ -285,7 +296,7 @@ export const CheckoutSuccessPage: React.FC = () => {
             <span className="h-full bg-[#666666]" style={{ width: `${split.club_percent}%` }} />
             <span className="h-full bg-neutral-300" style={{ width: `${split.platform_percent}%` }} />
           </div>
-          <dl className="m-0 mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <dl className="checkout-success-split m-0 mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <dt className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#666666]">
                 Athlete {split.athlete_percent}%

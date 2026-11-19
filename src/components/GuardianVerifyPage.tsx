@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import './GuardianVerifyPage.mobile.css';
 
 export const GUARDIAN_VERIFY_PATH = '/guardian-verify';
 
@@ -82,7 +83,7 @@ export const GuardianVerify: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center font-mono">
+      <div className="guardian-verify-page min-h-screen bg-black text-white flex items-center justify-center font-mono">
         <p className="text-sm tracking-widest text-zinc-400">// VERIFYING CREDENTIALS...</p>
       </div>
     );
@@ -90,8 +91,8 @@ export const GuardianVerify: React.FC = () => {
 
   if (errorMessage && !data) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 font-mono">
-        <div className="max-w-md w-full border border-red-900 bg-red-950/20 p-6 rounded text-center">
+      <div className="guardian-verify-page min-h-screen bg-black text-white flex items-center justify-center p-6 font-mono">
+        <div className="guardian-verify-card max-w-md w-full border border-red-900 bg-red-950/20 p-6 rounded text-center">
           <p className="text-xs uppercase tracking-widest text-red-500 mb-2">// ACCESS RESTRICTED</p>
           <p className="text-sm text-zinc-300 mb-6">{errorMessage}</p>
           <a href="/" className="text-xs text-zinc-400 hover:text-white underline">RETURN TO HOME</a>
@@ -101,15 +102,15 @@ export const GuardianVerify: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 font-mono">
-      <div className="max-w-lg w-full border border-zinc-800 bg-zinc-950 p-8 rounded-lg shadow-2xl">
+    <div className="guardian-verify-page min-h-screen bg-black text-white flex items-center justify-center p-4 font-mono">
+      <div className="guardian-verify-card max-w-lg w-full border border-zinc-800 bg-zinc-950 p-8 rounded-lg shadow-2xl">
         <div className="mb-6">
           <p className="text-xs text-lime-400 uppercase tracking-widest mb-1">// GUARDIAN VERIFICATION</p>
           <h1 className="text-xl font-bold uppercase tracking-tight">Review a separate sponsorship licence</h1>
           <p className="mt-2 text-xs leading-relaxed text-zinc-300">This is not permission to show a profile to sponsors. An athlete and their guardian decide separately whether to grant commercial rights and whether to let a campaign use their photos or video.</p>
         </div>
 
-        <div className="border border-zinc-800 bg-zinc-900/50 p-4 rounded mb-6 space-y-2 text-xs">
+        <div className="guardian-verify-details border border-zinc-800 bg-zinc-900/50 p-4 rounded mb-6 space-y-2 text-xs">
           <div className="flex justify-between">
             <span className="text-zinc-500">ATHLETE (MINOR):</span>
             <span className="text-white font-medium">{data?.athlete_name}</span>
@@ -125,7 +126,7 @@ export const GuardianVerify: React.FC = () => {
         </div>
 
         {data && (data.mou_status === 'pending_guardian' || isSigned) ? (
-          <div className="border border-zinc-800 bg-black p-4 rounded text-xs text-zinc-300 leading-relaxed mb-6 space-y-3">
+          <div className="guardian-verify-terms border border-zinc-800 bg-black p-4 rounded text-xs text-zinc-300 leading-relaxed mb-6 space-y-3">
             <p className="text-zinc-200 font-semibold uppercase">Master Licence terms</p>
             <p className="whitespace-pre-line">{data.mou_text}</p>
             <p>Only countersign if you are the legal guardian and agree to the terms above. This does not approve a specific campaign or its use of photos or video.</p>
