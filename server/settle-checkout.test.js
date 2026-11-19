@@ -1,16 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import Stripe from 'stripe';
 import ts from 'typescript';
 import app from './index.js';
 
+const athleteId = '11111111-1111-4111-8111-111111111111';
+const proof = 'a'.repeat(64);
+
 async function fixture(run) {
   const values = { STRIPE_SECRET_KEY: 'sk_test_fixture', STRIPE_WEBHOOK_SECRET: 'whsec_fixture', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'test-service', SUPABASE_ANON_KEY: 'test-anon' };
   const previous = Object.fromEntries(Object.keys(values).map((name) => [name, process.env[name]]));
   Object.assign(process.env, values);
-  const metadata = { athleteId: 'athlete', orderType: 'sponsorship_tier', escrowMode: 'milestone_50_50', athleteCutCents: '52500', athleteEscrowHoldCents: '26250', clubCutCents: '11250', clubCadence: 'quarterly_batch' };
+  const metadata = { athleteId, grantAccessHash: createHash('sha256').update(proof).digest('hex'), orderType: 'sponsorship_tier', escrowMode: 'milestone_50_50', athleteCutCents: '52500', athleteEscrowHoldCents: '26250', clubCutCents: '11250', clubCadence: 'quarterly_batch' };
   const charge = { id: 'ch_order', created: Date.parse('2026-12-15T12:00:00Z') / 1000, status: 'succeeded', paid: true, captured: true, currency: 'aud', amount: 75000 };
   const session = { id: 'cs_order', payment_status: 'paid', metadata, payment_intent: { transfer_group: 'TG_order', latest_charge: charge } };
   const state = { session, charge, metadata, account: 'acct_athlete', transfers: [], creates: [], clubRows: new Map(), upserts: 0, retrievals: 0 };
@@ -19,7 +23,8 @@ async function fixture(run) {
     const url = new URL(input instanceof Request ? input.url : input);
     if (url.pathname === '/auth/v1/user') return Response.json({ id: 'sponsor' });
     if (url.pathname === '/rest/v1/athlete_profiles') {
-      assert.equal(url.searchParams.get('id'), 'eq.athlete');
+      assert.notEqual(state.metadata.athleteId, 'marcus-thorne', 'slug must not reach Supabase');
+      assert.equal(url.searchParams.get('id'), `eq.${athleteId}`);
       assert.equal(options.headers.apikey, 'test-service');
       return Response.json([{ stripe_account_id: state.account, current_club: 'Fixture Club' }]);
     }
@@ -33,12 +38,13 @@ async function fixture(run) {
       if (!state.clubRows.has(row.charge_id)) state.clubRows.set(row.charge_id, row);
       return Response.json([state.clubRows.get(row.charge_id)]);
     }
+    if (url.pathname === '/rest/v1/whitelisting_grants') return Response.json([]);
     if (url.hostname !== 'api.stripe.com') throw new Error('Unexpected network request');
     if (state.stripeFailure) return Response.json({ error: { message: 'Stripe down' } }, { status: 500 });
     if (url.pathname === '/v1/checkout/sessions/cs_order') { state.retrievals++; return Response.json(session); }
     if (url.pathname === '/v1/checkout/sessions' && options.method === 'POST') {
       state.checkout = new URLSearchParams(options.body);
-      return Response.json({ id: 'cs_order', url: 'https://checkout.invalid' });
+      return Response.json({ id: 'cs_test_created', url: 'https://checkout.invalid' });
     }
     if (url.pathname === '/v1/transfers' && options.method === 'GET') return Response.json({ data: state.transfers });
     if (url.pathname === '/v1/transfers' && options.method === 'POST') {
@@ -52,7 +58,7 @@ async function fixture(run) {
   };
   const server = createServer(app);
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  const post = (body = { checkoutSessionId: 'cs_order' }, route = 'checkout/settle', headers = {}) => originalFetch(`http://127.0.0.1:${server.address().port}/api/${route}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: typeof body === 'string' ? body : JSON.stringify(body) });
+  const post = (body = { checkoutSessionId: 'cs_order' }, route = 'checkout/settle', headers = {}) => originalFetch(`http://127.0.0.1:${server.address().port}/api/${route}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: `tmrw_grant_cs_order=${proof}`, ...headers }, body: typeof body === 'string' ? body : JSON.stringify(body) });
   const webhook = (valid = true) => {
     const payload = JSON.stringify({ id: 'evt_fixture', type: 'checkout.session.completed', data: { object: { id: 'cs_order', metadata: { athleteCutCents: '1' } } } });
     return post(payload, 'v1/webhooks/stripe', { 'stripe-signature': valid ? Stripe.webhooks.generateTestHeaderString({ payload, secret: values.STRIPE_WEBHOOK_SECRET }) : 'invalid' });
@@ -80,12 +86,22 @@ test('milestone settlement pays athlete T+0, queues club once and does not colli
   assert.equal(state.upserts, 2);
   assert.equal(state.clubRows.get('ch_order').club_name, 'Fixture Club');
   assert.equal(state.clubRows.get('ch_order').stripe_transfer_id, null);
-  const release = await post({ checkoutSessionId: 'cs_order', athleteId: 'athlete' }, 'checkout/release-escrow');
+  const release = await post({ checkoutSessionId: 'cs_order', athleteId }, 'checkout/release-escrow');
   assert.equal(release.status, 200);
   assert.equal((await release.json()).alreadyReleased, false);
   assert.equal(state.creates.length, 2);
   assert.equal(state.creates[1].body.get('metadata[escrowReleaseFor]'), 'ch_order');
   assert.equal((await (await post()).json()).athleteT0.transferId, 'tr_1');
+}));
+
+test('settlement requires initiating browser proof for anonymous orders', () => fixture(async ({ state, post }) => {
+  for (const Cookie of ['', `tmrw_grant_cs_order=${'b'.repeat(64)}`]) {
+    assert.equal((await post(undefined, 'checkout/settle', { Cookie })).status, 403);
+  }
+  delete state.metadata.grantAccessHash;
+  assert.equal((await post()).status, 403);
+  assert.equal(state.creates.length, 0);
+  assert.equal(state.clubRows.size, 0);
 }));
 
 test('upfront settles full athlete share and records immediate club as awaiting account', () => fixture(async ({ state, post }) => {
@@ -156,13 +172,14 @@ for (const [name, change, status] of [
   ['refunded', (s) => { s.charge.amount_refunded = 1; }, 404],
   ['disputed', (s) => { s.charge.disputed = true; }, 404],
   ['missing athlete account', (s) => { s.account = null; }, 409],
+  ['catalogue slug', (s) => { s.metadata.athleteId = 'marcus-thorne'; }, 409],
   ['invalid athlete cut', (s) => { s.metadata.athleteCutCents = '52501'; }, 409],
   ['invalid club cut', (s) => { s.metadata.clubCutCents = '11251'; }, 409],
   ...['', null, 'quarterly', 1].map((cadence) => [`invalid club cadence ${cadence}`, (s) => { s.metadata.clubCadence = cadence; }, 409]),
   ['missing service key', () => { delete process.env.SUPABASE_SERVICE_ROLE_KEY; }, 503],
   ['Stripe failure', (s) => { s.stripeFailure = true; }, 502],
   ['owned order without bearer', (s) => { s.metadata.sponsorUserId = 'sponsor'; }, 401],
-  ['missing metadata', (s) => { s.session.metadata = {}; }, 404],
+  ['missing metadata', (s) => { s.session.metadata = {}; }, 403],
 ]) test(`settlement refuses ${name}`, () => fixture(async ({ state, post }) => {
   change(state);
   const response = await post();
@@ -173,7 +190,7 @@ for (const [name, change, status] of [
 }));
 
 test('checkout validates and stamps club cadence on session and payment intent', () => fixture(async ({ state, post }) => {
-  const order = { athleteId: 'athlete', tierId: 'local_merchant' };
+  const order = { athleteId, tierId: 'local_merchant', postcode: '2000' };
   for (const clubCadence of ['immediate_t0', 'quarterly_batch']) {
     assert.equal((await post({ ...order, clubCadence }, 'checkout/create-session')).status, 200);
     assert.equal(state.checkout.get('metadata[clubCadence]'), clubCadence);
@@ -183,7 +200,7 @@ test('checkout validates and stamps club cadence on session and payment intent',
 }));
 
 test('club payout migration restricts access and enforces one row per charge', () => {
-  const sql = readFileSync(new URL('../supabase/migrations/20261120000003_club_payouts.sql', import.meta.url), 'utf8');
+  const sql = readFileSync(new URL('../supabase/migrations/20261120000004_club_payouts.sql', import.meta.url), 'utf8');
   assert.match(sql, /charge_id text not null unique/);
   assert.match(sql, /enable row level security/);
   assert.match(sql, /revoke all .* from anon, authenticated/);
