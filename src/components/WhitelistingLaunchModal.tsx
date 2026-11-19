@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { WhitelistingGrant } from '../lib/whitelisting';
 import {
@@ -29,6 +29,14 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
   const [metaAuthorised, setMetaAuthorised] = useState(false);
   const [tiktokSynced, setTiktokSynced] = useState(false);
   const [specExported, setSpecExported] = useState(false);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
 
   const [releasingEscrow, setReleasingEscrow] = useState(false);
   const [releaseError, setReleaseError] = useState<string | null>(null);
@@ -196,7 +204,7 @@ export const WhitelistingLaunchModal: React.FC<WhitelistingLaunchModalProps> = (
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
       onClick={onClose}
-      className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-volt selection:text-[#080808] animate-fadeIn"
+      className="mobile-overlay whitelisting-backdrop fixed inset-0 z-[120] bg-black/70 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-volt selection:text-[#080808] animate-fadeIn"
     >
       <div
         data-lenis-prevent="true"

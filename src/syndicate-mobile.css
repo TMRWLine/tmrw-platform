@@ -1,0 +1,108 @@
+/* These overrides deliberately leave desktop, including its existing footer
+   behaviour, unchanged. Short landscape applies only to coarse pointers. */
+@media (max-width: 767px), (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+  /* The board's global footer suppression must not hide modal actions. */
+  body:has(#tmrw-locked-runway-footer) .syndicate-application footer:not(#tmrw-locked-runway-footer),
+  body:has(#tmrw-locked-runway-footer) .checkout-backdrop footer:not(#tmrw-locked-runway-footer) {
+    display: flex !important;
+  }
+
+  .syndicate-board button,
+  .syndicate-application [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  :is(.syndicate-board, .syndicate-application, .checkout-backdrop, .whitelisting-backdrop) :is(button, [role="button"], input):focus-visible {
+    outline: 2px solid #CCFF00;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px #080808;
+  }
+
+  .syndicate-board .syndicate-horizons { grid-template-columns: minmax(0, 1fr); }
+  .syndicate-board .syndicate-horizons button { padding: 16px; }
+  .syndicate-board .syndicate-contenders { flex-direction: column; min-height: 0; gap: 28px; }
+  .syndicate-board .syndicate-contenders > article { flex: none !important; min-height: 320px; padding: 24px; }
+  .syndicate-board .syndicate-contender-details { display: block; opacity: 1; }
+  .syndicate-board .syndicate-contender-actions {
+    position: relative;
+    height: auto;
+    padding: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: 16px;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+  .syndicate-contender-actions button { justify-content: center; white-space: normal; }
+  .syndicate-contender-actions .truncate { overflow: visible; white-space: normal; }
+
+  .syndicate-application aside { padding-top: env(safe-area-inset-top); }
+  .syndicate-application header { padding: 12px; }
+  .syndicate-application h2 { font-size: 20px; line-height: 1.15; overflow-wrap: anywhere; }
+  .syndicate-application header > .grid { gap: 4px; }
+  .syndicate-application header .truncate { white-space: normal; overflow-wrap: anywhere; }
+  .syndicate-application header button { padding-inline: 8px; }
+  .syndicate-application ol > li { display: flex; align-items: center; padding: 8px; }
+  .syndicate-application aside > [data-lenis-prevent] { padding: 16px 12px; }
+  .syndicate-application footer {
+    gap: 8px;
+    padding: 12px 12px max(12px, env(safe-area-inset-bottom));
+  }
+  .syndicate-application footer button { padding: 12px; letter-spacing: 0.04em; }
+  .syndicate-application footer button:last-child { min-width: 0; }
+  .syndicate-application label { font-size: 11px; letter-spacing: 0.08em; }
+
+  .checkout-backdrop header { position: relative; }
+  .checkout-backdrop header > div { width: 100%; padding-top: 48px; }
+  .checkout-backdrop header > button { position: absolute; right: 12px; top: 12px; }
+  .checkout-backdrop header h2 { font-size: 28px; overflow-wrap: anywhere; }
+  .checkout-backdrop header p { white-space: normal; overflow-wrap: anywhere; }
+  .checkout-backdrop footer { padding: 12px; }
+  .checkout-backdrop footer button { padding: 12px; letter-spacing: 0.04em; }
+  .checkout-backdrop .inline-flex:has(button) { flex-wrap: wrap; gap: 4px; }
+  .checkout-backdrop .flex:has(> button) { min-width: 0; }
+  .checkout-backdrop .flex:has(> span) { flex-wrap: wrap; gap: 6px; }
+  .checkout-backdrop input { min-width: 0; max-width: 100%; }
+  .checkout-backdrop label { font-size: 11px; }
+
+  .whitelisting-backdrop { padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
+  .whitelisting-backdrop > div { max-height: 100%; }
+  .whitelisting-backdrop header { padding: 12px; }
+  .whitelisting-backdrop header > div { width: 100%; min-width: 0; }
+  .whitelisting-backdrop header > div:last-child { flex-wrap: wrap; }
+  .whitelisting-backdrop header button { flex: 1; padding: 10px; }
+  .whitelisting-backdrop header span { overflow-wrap: anywhere; }
+  .whitelisting-backdrop .grid { grid-template-columns: minmax(0, 1fr); }
+  .whitelisting-backdrop .grid > div { min-width: 0; padding: 20px; }
+  .whitelisting-backdrop .flex:not(.flex-col):has(> span),
+  .whitelisting-backdrop .flex:not(.flex-col):has(> div) { flex-wrap: wrap; gap: 8px; }
+  .whitelisting-backdrop .flex > div { min-width: 0; }
+  .whitelisting-backdrop button { min-width: 44px; max-width: 100%; white-space: normal; }
+  .whitelisting-backdrop :is(strong, span, button) { overflow-wrap: anywhere; }
+  .whitelisting-backdrop label { font-size: 11px; }
+  .whitelisting-backdrop input[type="range"] { min-height: 44px; }
+}
+
+@media (max-width: 359px) {
+  /* Browser zoom can reduce a phone's CSS viewport below its device width. */
+  .syndicate-application header > div:first-child { flex-direction: column; gap: 8px; }
+  .syndicate-application header > div:first-child > button { align-self: flex-end; }
+  .syndicate-application header > .grid,
+  .checkout-backdrop .grid { grid-template-columns: minmax(0, 1fr); }
+  .syndicate-application footer { flex-direction: column; }
+  .syndicate-application footer button { width: 100%; }
+  .syndicate-application aside { display: block; overflow-y: auto; overscroll-behavior: contain; }
+  .syndicate-application aside > [data-lenis-prevent] { overflow: visible; }
+}
+
+@media (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+  /* Scroll the entire sheet so fixed chrome cannot consume a short viewport. */
+  .syndicate-application aside,
+  .checkout-backdrop > div,
+  .whitelisting-backdrop > div { display: block; overflow-y: auto; overscroll-behavior: contain; }
+  .syndicate-application aside > [data-lenis-prevent],
+  .checkout-backdrop > div > [data-lenis-prevent],
+  .whitelisting-backdrop > div > [data-lenis-prevent] { overflow: visible; }
+}
