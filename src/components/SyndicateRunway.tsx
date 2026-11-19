@@ -792,6 +792,11 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
         body:has(#tmrw-locked-runway-footer) footer:not(#tmrw-locked-runway-footer) {
           display: none !important;
         }
+        @media (min-width: 768px) {
+          body:has(#tmrw-locked-runway-footer) footer:not(#tmrw-locked-runway-footer)[data-syndicate-checkout-actions] {
+            display: block !important;
+          }
+        }
       `}</style>
 
       <div className={`relative z-10 w-full bg-[#080808] ${wrapperPadding}`}>
@@ -1039,6 +1044,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
 
       <StripeEscrowCheckoutModal
         payload={stripePayload}
+        isSyndicateCheckout
         onClose={() => setStripePayload(null)}
       />
     </div>
