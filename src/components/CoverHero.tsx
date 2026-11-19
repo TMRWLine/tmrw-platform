@@ -1,15 +1,9 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { useReducedMotion } from '../lib/useReducedMotion';
-import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
 import type { LandingSectionId } from './Navigation';
 import { CourtLinesOverlay } from './CourtLinesOverlay';
-import { RollingPillButton } from './RollingPillButton';
+import { CoverCtas } from './CoverCtas';
 import './CoverHero.css';
-
-const LINKS = [
-  { id: 'roster', href: THE_ROSTER_PATH, label: 'Explore the Roster', variant: 'primary' },
-  { id: 'syndicate', href: BRISBANE_RUNWAY_PATH, label: 'Brisbane 2032 Runway', variant: 'glass' },
-] as const;
 
 const SIZES = '(max-width: 420px) 100vw, 612px';
 const FINE_POINTER = '(hover: hover) and (pointer: fine)';
@@ -92,17 +86,6 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
     };
   }, [pastCover, overlayOpen, scrollForKeyboardFocus]);
 
-  const links = LINKS.map(({ id, href, label, variant }) => (
-    <RollingPillButton key={id} href={href} variant={variant} className={variant === 'glass' ? 'bg-black/85' : ''}
-      onClick={(event) => {
-        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        event.preventDefault();
-        onNavigateSection(id);
-      }}>
-      {label}
-    </RollingPillButton>
-  ));
-
   return (
     <>
       <section
@@ -140,12 +123,12 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
           </div>
         </div>
         <div className="cover-actions relative z-20">
-          {links}
+          <CoverCtas onNavigate={onNavigateSection} />
         </div>
       </section>
       {pastCover && !overlayOpen && (
         <nav ref={quickLinks} className="cover-quick-links" aria-label="Quick links">
-          {links}
+          <CoverCtas onNavigate={onNavigateSection} />
         </nav>
       )}
     </>
