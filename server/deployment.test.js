@@ -34,6 +34,7 @@ test('Vercel keeps API paths out of the SPA rewrite and includes the runtime cat
   assert.ok(pattern.test('/'));
   assert.ok(pattern.test('/checkout/success'));
   assert.ok(!pattern.test('/api/checkout/create-session'));
+  assert.ok(!pattern.test('/api/auth/instagram/start'));
   assert.ok(!pattern.test('/api'));
   assert.equal(config.buildCommand, 'npm run build');
   assert.equal(config.outputDirectory, 'dist');
@@ -42,6 +43,46 @@ test('Vercel keeps API paths out of the SPA rewrite and includes the runtime cat
   assert.ok(Array.isArray(catalogue.packages) && catalogue.packages.length > 0);
   assert.ok(catalogue.packages.every((entry) => typeof entry.tier_id === 'string' && Number.isFinite(entry.price_aud)));
 });
+
+test('Instagram OAuth starts through the Vercel handler or returns a JSON configuration error', () => withServer(async (request) => {
+  const names = ['INSTAGRAM_APP_ID', 'INSTAGRAM_APP_SECRET', 'INSTAGRAM_REDIRECT_URI'];
+  const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
+  for (const name of names) delete process.env[name];
+  try {
+    const missingApp = await request('/api/auth/instagram/start');
+    assert.equal(missingApp.status, 501);
+    assert.match((await missingApp.json()).error, /not configured/);
+    process.env.INSTAGRAM_APP_ID = 'fixture-app-id';
+    process.env.INSTAGRAM_APP_SECRET = 'fixture-app-secret';
+    const missingCallback = await request('/api/auth/instagram/start');
+    assert.equal(missingCallback.status, 501);
+    assert.match((await missingCallback.json()).error, /callback is not configured/);
+    process.env.INSTAGRAM_REDIRECT_URI = 'https://fixture.invalid/api/auth/instagram/callback';
+    const started = await request('/api/auth/instagram/start?token=fixture-token');
+    assert.equal(started.status, 200);
+    const body = await started.json();
+    const url = new URL(body.url);
+    assert.equal(url.origin, 'https://www.instagram.com');
+    assert.equal(url.pathname, '/oauth/authorize');
+    assert.equal(url.searchParams.get('client_id'), 'fixture-app-id');
+    assert.equal(url.searchParams.get('redirect_uri'), process.env.INSTAGRAM_REDIRECT_URI);
+    assert.equal(url.searchParams.get('response_type'), 'code');
+    assert.equal(url.searchParams.get('scope'), 'instagram_business_basic');
+    const state = url.searchParams.get('state');
+    assert.match(state, /^[a-f0-9]{64}$/);
+    assert.ok(!JSON.stringify(body).includes(process.env.INSTAGRAM_APP_SECRET));
+    const cookie = started.headers.get('set-cookie');
+    assert.ok(cookie.includes('tmrw_instagram_state=' + state));
+    assert.match(cookie, /HttpOnly/);
+    assert.match(cookie, /Secure/);
+    assert.match(cookie, /SameSite=Lax/);
+    assert.match(cookie, /Path=\/api\/auth\/instagram/);
+  } finally {
+    for (const [name, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[name]; else process.env[name] = value;
+    }
+  }
+}));
 
 test('all four current Marcus packages initialise demo checkout with resolvable receipt identifiers', () => withServer(async (request) => {
   const names = ['STRIPE_SECRET_KEY', 'VITE_SUPABASE_URL', 'SUPABASE_URL'];

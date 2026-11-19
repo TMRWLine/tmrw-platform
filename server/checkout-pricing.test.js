@@ -4,18 +4,20 @@ import { createServer } from 'node:http';
 import app from './index.js';
 
 async function fixture(run) {
-  const names = ['STRIPE_SECRET_KEY', 'SUPABASE_URL', 'VITE_SUPABASE_URL', 'APP_BASE_URL'];
+  const names = ['STRIPE_SECRET_KEY', 'SUPABASE_URL', 'VITE_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'APP_BASE_URL'];
   const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
   process.env.STRIPE_SECRET_KEY = 'test-only-checkout-key';
   process.env.APP_BASE_URL = 'https://fixture.invalid';
-  delete process.env.SUPABASE_URL;
+  process.env.SUPABASE_URL = 'https://db.fixture.invalid';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'fixture-service-role';
   delete process.env.VITE_SUPABASE_URL;
   const originalFetch = globalThis.fetch;
   const calls = [];
   globalThis.fetch = async (url, options) => {
+    if (String(url).startsWith('https://db.fixture.invalid/rest/v1/whitelisting_grants?')) return Response.json([]);
     if (String(url) !== 'https://api.stripe.com/v1/checkout/sessions') throw new Error('Unexpected external request');
     calls.push(new URLSearchParams(options.body));
-    return Response.json({ id: 'cs_fixture', url: 'https://checkout.stripe.invalid/fixture' });
+    return Response.json({ id: 'cs_test_fixture', url: 'https://checkout.stripe.invalid/fixture' });
   };
   const server = createServer(app);
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -37,7 +39,7 @@ async function fixture(run) {
 test('flight prices, currency and splits ignore every buyer-supplied economic override', () => fixture(async ({ post, calls }) => {
   for (const [tierId, cents] of [['local_merchant', 75000], ['pathway_contender', 350000], ['pathway_flight', 350000], ['national_challenger', 1250000], ['world_class', 2500000]]) {
     const response = await post({
-      athleteId: '11111111-1111-1111-1111-111111111111', tierId,
+      athleteId: '11111111-1111-1111-1111-111111111111', tierId, postcode: '0220',
       priceAud: 1, amount: 1, unit_amount: 1, currency: 'usd', qty: 999, collabRoyaltyPct: 100,
       line_items: [{ quantity: 1, price_data: { unit_amount: 1 } }],
     });
@@ -49,6 +51,28 @@ test('flight prices, currency and splits ignore every buyer-supplied economic ov
     assert.equal(body.get('metadata[athleteCutCents]'), String(Math.round(cents * 0.7)));
     assert.equal(body.get('metadata[clubCutCents]'), String(Math.round(cents * 0.15)));
   }
+}));
+
+test('Olympic horizon tiers create Stripe sessions at their advertised AUD prices', () => fixture(async ({ post, calls }) => {
+  const tiers = [
+    ['olympic_1yr_50k', '5000000'],
+    ['olympic_2yr_110k', '11000000'],
+    ['olympic_4yr_250k', '25000000'],
+  ];
+  for (const [tierId, cents] of tiers) {
+    const response = await post({ athleteId: 'fixture', tierId, amountAud: 1 });
+    assert.equal(response.status, 200, tierId);
+    assert.deepEqual(await response.json(), { checkoutUrl: 'https://checkout.stripe.invalid/fixture' });
+    const body = calls.at(-1);
+    assert.equal(body.get('metadata[tierId]'), tierId);
+    assert.equal(body.get('line_items[0][price_data][unit_amount]'), cents);
+    assert.equal(body.get('line_items[0][price_data][currency]'), 'aud');
+  }
+  assert.equal(calls.length, tiers.length);
+
+  const unknown = await post({ athleteId: 'fixture', tierId: 'olympic_3yr_unknown' });
+  assert.equal(unknown.status, 400);
+  assert.equal(calls.length, tiers.length);
 }));
 
 test('capsule prices, costs, royalties, identity and product images come only from the server catalogue', () => fixture(async ({ post, calls }) => {
