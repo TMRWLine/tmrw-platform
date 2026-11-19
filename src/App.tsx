@@ -251,11 +251,15 @@ export function MarketplaceApp() {
   const isOverlayActive = isSearchOpen || isMenuOpen;
   useEffect(() => {
     if (!isOverlayActive) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const { documentElement, body } = document;
+    const previousRootOverflow = documentElement.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    documentElement.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
     lenisRef.current?.stop();
     return () => {
-      document.body.style.overflow = previousOverflow;
+      documentElement.style.overflow = previousRootOverflow;
+      body.style.overflow = previousBodyOverflow;
       lenisRef.current?.start();
     };
   }, [isOverlayActive, view]);
