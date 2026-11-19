@@ -44,7 +44,7 @@ export const OLYMPIC_HORIZONS: readonly OlympicHorizonSpec[] = [
     clubNet: 16500,
     opsNet: 16500,
     exclusivitySummary:
-      'Locks your industry category through the LA 2028 Games window with Rule 40 pre-cleared campaign stems, global paid social OAuth, and protected 2032 renewal terms.',
+      'Explore a partnership through the LA 2028 Games window. Discuss campaign permissions, paid social and renewal terms before committing.',
     txId: 'TX-2026-OLYMPIC-2YR-110K',
   },
   {
@@ -60,7 +60,7 @@ export const OLYMPIC_HORIZONS: readonly OlympicHorizonSpec[] = [
     clubNet: 37500,
     opsNet: 37500,
     exclusivitySummary:
-      'Full quadrennial category exclusivity across Australia & New Zealand into the Brisbane 2032 Home Games. Blocks every direct competitor for 4 years on a single tax-deductible RCTI.',
+      'Explore a longer partnership across Australia and New Zealand into the Brisbane 2032 Games. Any exclusivity, invoicing and tax treatment need separate review.',
     txId: 'TX-2026-OLYMPIC-4YR-250K',
   },
 ] as const;

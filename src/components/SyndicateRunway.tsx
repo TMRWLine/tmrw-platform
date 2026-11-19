@@ -28,7 +28,7 @@ const CARBON_BLADE_WARM_CROP =
   'absolute inset-0 h-full w-full object-cover contrast-[1.24] brightness-[0.92] sepia-[0.28] hue-rotate-[-10deg] saturate-[1.4] select-none transition-transform duration-1000 ease-out origin-bottom';
 
 export const LIT_OBSIDIAN_BTN =
-  'bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-white/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.45),0_0_15px_rgba(204,255,0,0.18)] hover:bg-neutral-900 hover:border-[#CCFF00]/60 hover:text-[#CCFF00] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.6),0_0_28px_rgba(204,255,0,0.35)] active:translate-y-[1px]';
+  'bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-white/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.45),0_0_15px_rgba(184,255,0,0.18)] hover:bg-neutral-900 hover:border-volt/60 hover:text-volt hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.6),0_0_28px_rgba(184,255,0,0.35)] active:translate-y-[1px]';
 
 const INDUSTRIES = [
   { id: 'banking', name: 'Banking & Wealth', slot: '1 of 1 AU/NZ Slot Open', lock: 'Locks out all rival retail, private & institutional banks' },
@@ -45,7 +45,7 @@ const BESPOKE_PILLARS = [
     name: 'Rule 40 Broadcast & Paid Social Whitelisting (OAuth)',
     kicker: '0% agency markup · Ad spend billed direct to your Meta/TikTok',
     summary:
-      'Pre-cleared 4K campaign stems registered prior to the AOC/IPC Rule 40 blackout window, plus direct Meta Partnership & TikTok Spark handle linking.',
+      'Discuss campaign footage and paid social with each athlete. Check permissions and applicable sporting rules before running ads.',
   },
   {
     id: 'executive_esg',
@@ -85,7 +85,7 @@ const CONTENDER_SPECIMENS = [
     initials: 'LM',
     club: `${OLYMPIC_CONTENDERS.mercer.clubName} (Postcode ${OLYMPIC_CONTENDERS.mercer.postcode})`,
     pathway: 'LA 2028 & Brisbane 2032 Paralympic Contender',
-    badge: 'Rule 40 Pre-Cleared',
+    badge: 'Rules and permissions review',
     badgeTone: 'yellow' as const,
     src: CARBON_BLADE_CLOSEUP_IMAGE,
     fallbackSrc: '/portraits/marcus_thorne.jpg',
@@ -101,7 +101,7 @@ type IndustryId = (typeof INDUSTRIES)[number]['id'];
 
 const FIELD_LABEL = 'font-mono text-[9px] tracking-[0.2em] text-white/45 uppercase block mb-1.5';
 const FIELD_INPUT =
-  'w-full bg-[#0B0B0D] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/30 outline-none focus:border-[#CCFF00] caret-[#CCFF00]';
+  'w-full bg-[#0B0B0D] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/30 outline-none focus:border-volt caret-volt';
 
 function EditorialDiptych({
   activeHorizon,
@@ -148,7 +148,7 @@ function EditorialDiptych({
               <span
                 className={`absolute -top-2.5 right-5 z-30 inline-flex items-center rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs ${
                   specimen.badgeTone === 'green'
-                    ? 'bg-[#CCFF00] text-[#080808]'
+                    ? 'bg-volt text-[#080808]'
                     : 'bg-[#F5B800] text-[#080808]'
                 }`}
               >
@@ -185,7 +185,7 @@ function EditorialDiptych({
                   <h3 className="m-0 font-sans text-[18px] xl:text-[19px] font-bold tracking-[-0.025em] leading-[1.25] text-white whitespace-nowrap">
                     <span
                       className={`inline-block rounded-[4px] px-1.5 -ml-1.5 mr-1 transition-colors duration-200 ${
-                        active ? 'bg-[#CCFF00] text-[#080808]' : 'bg-transparent text-white'
+                        active ? 'bg-volt text-[#080808]' : 'bg-transparent text-white'
                       }`}
                     >
                       {specimen.firstInitial}
@@ -237,7 +237,7 @@ function EditorialDiptych({
                   <button
                     type="button"
                     onClick={() => onDirectStripeLock(specimen.id)}
-                    className="h-7 rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-3.5 font-sans text-[11.5px] font-bold tracking-tight flex items-center gap-1.5 shrink-0 cursor-pointer border-0 transition-colors"
+                    className="h-7 rounded-full bg-[#080808] hover:bg-volt text-white hover:text-[#080808] px-3.5 font-sans text-[11.5px] font-bold tracking-tight flex items-center gap-1.5 shrink-0 cursor-pointer border-0 transition-colors"
                   >
                     <span>Lock {activeHorizon.priceFormatted}</span>
                     <span className="text-[10px]">→</span>
@@ -331,7 +331,7 @@ function SyndicateApplicationDrawer({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <h2 id={titleId} className="m-0 font-display text-2xl font-bold tracking-tight text-white uppercase">
-                {selectedHorizon.priceFormatted} · {selectedHorizon.horizonTag}<span className="text-[#CCFF00]">.</span>
+                {selectedHorizon.priceFormatted} · {selectedHorizon.horizonTag}<span className="text-volt">.</span>
               </h2>
             </div>
             <button
@@ -354,7 +354,7 @@ function SyndicateApplicationDrawer({
                   onClick={() => onSelectHorizon(t)}
                   className={`rounded-xl border p-2.5 text-left cursor-pointer transition-all ${
                     isSelected
-                      ? 'border-[#CCFF00] bg-white/[0.08] text-white'
+                      ? 'border-volt bg-white/[0.08] text-white'
                       : 'border-white/10 bg-black/30 text-neutral-400 hover:border-white/25'
                   }`}
                 >
@@ -382,7 +382,7 @@ function SyndicateApplicationDrawer({
                   key={index}
                   onClick={() => setStep(index)}
                   className={`rounded-xl border px-3 py-2 cursor-pointer transition-colors ${
-                    active ? 'border-[#CCFF00] bg-[#CCFF00]/10 text-white' : 'border-white/10 bg-black/20 text-neutral-400'
+                    active ? 'border-volt bg-volt/10 text-white' : 'border-white/10 bg-black/20 text-neutral-400'
                   }`}
                 >
                   <span className="block font-sans text-xs font-bold truncate">{label}</span>
@@ -412,11 +412,11 @@ function SyndicateApplicationDrawer({
                       }}
                       className={`cursor-pointer rounded-2xl border p-3.5 text-left transition-colors ${
                         active
-                          ? 'border-[#CCFF00] bg-white/[0.06]'
+                          ? 'border-volt bg-white/[0.06]'
                           : 'border-white/10 bg-black/25 hover:border-white/25'
                       }`}
                     >
-                      <span className="block font-mono text-[9px] uppercase text-[#CCFF00]">
+                      <span className="block font-mono text-[9px] uppercase text-volt">
                         {item.slot}
                       </span>
                       <span className="mt-1 block font-sans text-sm font-bold text-white">
@@ -457,11 +457,11 @@ function SyndicateApplicationDrawer({
                         onClick={() => onSelectContenderId(item.id)}
                         className={`cursor-pointer rounded-2xl border p-3.5 text-left transition-colors ${
                           active
-                            ? 'border-[#CCFF00] bg-white/[0.06]'
+                            ? 'border-volt bg-white/[0.06]'
                             : 'border-white/10 bg-black/25 hover:border-white/25'
                         }`}
                       >
-                        <span className="block font-mono text-[9px] uppercase text-[#CCFF00]">
+                        <span className="block font-mono text-[9px] uppercase text-volt">
                           {item.initials} · {item.badge}
                         </span>
                         <span className="mt-1 block font-sans text-sm font-bold text-white">
@@ -490,12 +490,12 @@ function SyndicateApplicationDrawer({
                         onClick={() => togglePillar(pillar.id)}
                         className={`w-full cursor-pointer rounded-2xl border p-3.5 text-left transition-colors ${
                           active
-                            ? 'border-[#CCFF00] bg-white/[0.06]'
+                            ? 'border-volt bg-white/[0.06]'
                             : 'border-white/10 bg-black/25 hover:border-white/25'
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#CCFF00]">
+                          <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-volt">
                             {pillar.kicker}
                           </span>
                           <span className="font-mono text-[10px] text-white">
@@ -706,13 +706,13 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
           color: #FFFFFF !important;
           border: 1px solid rgba(255, 255, 255, 0.15) !important;
           border-radius: 12px !important;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -2px 0 rgba(0, 0, 0, 0.8), 0 10px 25px rgba(0, 0, 0, 0.45), 0 0 15px rgba(204, 255, 0, 0.18) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -2px 0 rgba(0, 0, 0, 0.8), 0 10px 25px rgba(0, 0, 0, 0.45), 0 0 15px rgba(184, 255, 0, 0.18) !important;
           transition: all 0.25s ease !important;
         }
         #commercial-tiers button:hover {
-          border-color: rgba(204, 255, 0, 0.65) !important;
-          color: #CCFF00 !important;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.9), 0 15px 30px rgba(0, 0, 0, 0.6), 0 0 28px rgba(204, 255, 0, 0.35) !important;
+          border-color: rgba(184, 255, 0, 0.65) !important;
+          color: #B8FF00 !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.9), 0 15px 30px rgba(0, 0, 0, 0.6), 0 0 28px rgba(184, 255, 0, 0.35) !important;
         }
         body:has(#tmrw-locked-runway-footer) footer:not(#tmrw-locked-runway-footer) {
           display: none !important;
@@ -732,7 +732,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
                 id="syndicate-heading"
                 className="font-display text-4xl sm:text-6xl xl:text-[68px] font-black tracking-[-0.04em] uppercase text-white leading-[0.88] m-0"
               >
-                The podium is funded<span className="text-[#CCFF00]">.</span> The preparation is not<span className="text-[#CCFF00]">.</span>
+                The podium is funded<span className="text-volt">.</span> The preparation is not<span className="text-volt">.</span>
               </h2>
 
               <motion.p
@@ -747,7 +747,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
                 rights on the road to LA 2028 and Brisbane 2032. Lock in a{' '}
                 <strong className="text-white">1-Year LA28 Qualifier (A$50,000)</strong> or{' '}
                 <strong className="text-white">2-Year LA28 Games Partnership (A$110,000)</strong> today, and secure
-                contractual <strong className="text-[#CCFF00]">First Right of Refusal</strong> to roll into the{' '}
+                contractual <strong className="text-volt">First Right of Refusal</strong> to roll into the{' '}
                 <strong className="text-white">4-Year Brisbane 2032 Home Games Quadrennial (A$250,000)</strong> before
                 your competitors can bid.
               </motion.p>
@@ -764,14 +764,14 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
                       onClick={() => setSelectedHorizon(horizon)}
                       className={`rounded-2xl border p-4 text-left cursor-pointer transition-all ${
                         active
-                          ? 'border-[#CCFF00]/60 bg-[#141418] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_14px_34px_rgba(0,0,0,0.5),0_0_20px_rgba(204,255,0,0.14)]'
+                          ? 'border-volt/60 bg-[#141418] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_14px_34px_rgba(0,0,0,0.5),0_0_20px_rgba(184,255,0,0.14)]'
                           : 'border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/25 hover:text-white'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span
                           className={`font-sans text-[11px] font-bold px-1.5 py-0.5 rounded-[4px] ${
-                            active ? 'bg-[#CCFF00] text-[#080808]' : 'text-neutral-500'
+                            active ? 'bg-volt text-[#080808]' : 'text-neutral-500'
                           }`}
                         >
                           {horizon.numeral}.
@@ -796,13 +796,13 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
                     <strong className="text-white">A${selectedHorizon.athleteNet.toLocaleString()}</strong>
                   </span>
                   <span>
-                    15% Junior club: <strong className="text-[#CCFF00]">A${selectedHorizon.clubNet.toLocaleString()}</strong>
+                    15% Junior club: <strong className="text-volt">A${selectedHorizon.clubNet.toLocaleString()}</strong>
                   </span>
                   <span className="text-neutral-400">15% Ops: A${selectedHorizon.opsNet.toLocaleString()}</span>
                 </div>
                 <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden flex">
                   <div className="w-[70%] bg-white h-full" />
-                  <div className="w-[15%] bg-[#CCFF00] h-full" />
+                  <div className="w-[15%] bg-volt h-full" />
                   <div className="w-[15%] bg-white/25 h-full" />
                 </div>
                 <p className="m-0 font-sans text-[12.5px] text-neutral-300 leading-relaxed">
@@ -855,8 +855,8 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
           >
             <span className="font-display text-2xl font-black tracking-[-0.04em] leading-none text-white">
               tmrw
-              <span className="transition-colors duration-300 group-hover:text-[#CCFF00]">/</span>
-              <span className="text-[#CCFF00]">.</span>
+              <span className="transition-colors duration-300 group-hover:text-volt">/</span>
+              <span className="text-volt">.</span>
             </span>
             <span className="font-mono text-[8px] uppercase tracking-[0.22em] text-neutral-400 mt-1 transition-colors duration-300 group-hover:text-white">
               LINE UP YOUR FUTURE
@@ -867,8 +867,8 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
             © 2026{' '}
             <span className="inline-block font-semibold text-white group cursor-pointer">
               tmrw
-              <span className="transition-colors duration-300 hover:text-[#CCFF00]">/</span>
-              <span className="text-[#CCFF00]">.</span>
+              <span className="transition-colors duration-300 hover:text-volt">/</span>
+              <span className="text-volt">.</span>
             </span>{' '}
             All rights reserved. Sovereign sports commercialisation infrastructure for Australia and New Zealand.
           </p>
@@ -882,7 +882,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
             onClick={() => setIsCertificateOpen(false)}
           >
             <div
-              className="bg-white border-2 border-black max-w-xl w-full p-8 md:p-10 shadow-[8px_8px_0px_0px_rgba(204,255,0,1)] relative z-10 text-black"
+              className="bg-white border-2 border-black max-w-xl w-full p-8 md:p-10 shadow-[8px_8px_0px_0px_rgba(184,255,0,1)] relative z-10 text-black"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-start mb-8 pb-4 border-b-2 border-black">
