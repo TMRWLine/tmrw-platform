@@ -48,7 +48,7 @@ test('Vercel applies anti-framing, HTTPS and a scoped script policy to pages and
   const config = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url)));
   const { source, headers } = config.headers[0];
   const path = new RegExp(`^${source}$`);
-  for (const route of ['/', '/the-roster', '/api/health']) assert.ok(path.test(route));
+  for (const route of ['/', '/the-roster', '/api/health', '/sw.js']) assert.ok(path.test(route));
   const values = Object.fromEntries(headers.map(({ key, value }) => [key, value]));
   const directives = Object.fromEntries(values['Content-Security-Policy'].split(';').map(directive => {
     const [key, ...sources] = directive.trim().split(/\s+/);
@@ -57,7 +57,9 @@ test('Vercel applies anti-framing, HTTPS and a scoped script policy to pages and
   assert.deepEqual(directives['frame-ancestors'], ["'none'"]);
   assert.deepEqual(directives['object-src'], ["'none'"]);
   assert.deepEqual(directives['script-src'], ["'self'", 'https://vercel.live']);
-  assert.ok(directives['connect-src'].includes('https://*.supabase.co'));
+  for (const source of ['https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://*.supabase.co', 'https://unpkg.com']) {
+    assert.ok(directives['connect-src'].includes(source), `Workbox must be able to fetch ${source}`);
+  }
   assert.match(values['Strict-Transport-Security'], /max-age=31536000/);
   assert.equal(values['X-Content-Type-Options'], 'nosniff');
   assert.equal(values['Referrer-Policy'], 'strict-origin-when-cross-origin');
