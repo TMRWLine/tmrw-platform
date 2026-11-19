@@ -227,7 +227,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   selectedAthlete,
   onExploreRoster,
 }) => {
-  const [view, setView] = useState<'empty' | 'capsules' | 'creator' | 'checkout_success'>('capsules');
+  const [view, setView] = useState<'empty' | 'capsules' | 'creator' | 'checkout_demo'>('capsules');
   const [capsules, setCapsules] = useState<CartCapsuleItem[]>(() =>
     typeof window !== 'undefined' ? loadAllCapsules() : [...DEFAULT_CAPSULE_DROPS],
   );
@@ -241,7 +241,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [sponsorBulkMode, setSponsorBulkMode] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [lastSessionId, setLastSessionId] = useState<string | null>(null);
+  const [demoReceipt, setDemoReceipt] = useState<{
+    sessionId: string;
+    split: { athleteAud: number; clubAud: number; partnerAud: number } | null;
+  } | null>(null);
 
   // Studio State
   const [selectedChassisId, setSelectedChassisId] = useState<string>('hoodie_420');
@@ -377,8 +380,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         return;
       }
 
-      setLastSessionId(data.sessionId || `cs_test_${Date.now()}`);
-      setView('checkout_success');
+      const sessionId = data.sessionId;
+      if (typeof sessionId !== 'string' || !sessionId.startsWith('cs_demo_capsule_')) {
+        throw new Error('Checkout did not return a payment link.');
+      }
+      const { athleteAud, clubAud, partnerAud } = data.splits ?? {};
+      const split = [athleteAud, clubAud, partnerAud].every(Number.isFinite)
+        ? { athleteAud, clubAud, partnerAud }
+        : null;
+      setDemoReceipt({ sessionId, split });
+      setView('checkout_demo');
     } catch (err: any) {
       setCheckoutError(err?.message || 'Unable to connect to checkout server on port 3001.');
     } finally {
@@ -435,16 +446,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   };
 
   const grossTotal = cartItems.reduce((sum, entry) => sum + entry.item.priceAud * entry.qty, 0);
-  const netMarginPool = cartItems.reduce(
-    (sum, entry) => sum + (entry.item.priceAud - entry.item.baseCostAud) * entry.qty,
-    0,
-  );
-  const athleteCutTotal = cartItems.reduce((sum, entry) => {
-    const unitNet = entry.item.priceAud - entry.item.baseCostAud;
-    const athletePct = entry.item.collabRoyaltyPct ? 0.55 : 0.7;
-    return sum + Math.round(unitNet * athletePct) * entry.qty;
-  }, 0);
-  const clubCut15 = Math.round(netMarginPool * 0.15);
+  const formatAud = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', currencyDisplay: 'narrowSymbol' });
 
   const hasPartnerActive = newCollabPartner.trim().length > 0 && enablePartnerRoyaltySplit;
   const athletePctPreview = hasPartnerActive ? 0.55 : 0.7;
@@ -1091,22 +1093,22 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             </section>
           )}
 
-          {view === 'checkout_success' && (
+          {view === 'checkout_demo' && demoReceipt && (
             <div className="max-w-lg mx-auto text-center my-auto py-12 space-y-5">
-              <span className="inline-block rounded-full bg-volt text-[#0F0F11] font-mono text-[10px] font-bold uppercase tracking-widest px-4 py-1.5">
-                ✓ ORDER LOCKED · ROYALTY CLEARED
-              </span>
               <h2 className="m-0 font-sans text-4xl font-black uppercase tracking-tight text-[#0F0F11]">
-                Backed the contender<span className="text-volt">.</span>
+                Demo order
               </h2>
               <p className="m-0 font-sans text-sm text-neutral-700 leading-relaxed">
-                A${athleteCutTotal.toLocaleString()} net royalties routed to the athlete and A${clubCut15.toLocaleString()} to their junior club.
+                No payment was taken, no order was placed, and no funds were transferred.
               </p>
-              {lastSessionId && (
-                <p className="m-0 font-mono text-[11px] text-neutral-500">
-                  SESSION REF: {lastSessionId}
+              {demoReceipt.split && (
+                <p className="m-0 font-sans text-sm text-neutral-700">
+                  Example split (AUD): {formatAud.format(demoReceipt.split.athleteAud)} for athletes,
+                  {' '}{formatAud.format(demoReceipt.split.clubAud)} for clubs
+                  {demoReceipt.split.partnerAud > 0 && `, and ${formatAud.format(demoReceipt.split.partnerAud)} for collaborators`}.
                 </p>
               )}
+              <p className="m-0 font-mono text-[11px] text-neutral-500">Demo session: {demoReceipt.sessionId}</p>
               <div className="pt-4 flex justify-center gap-3">
                 <button
                   type="button"
