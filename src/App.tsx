@@ -56,6 +56,7 @@ import {
 import { AdminDrawer } from './components/AdminDrawer';
 import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { CoverHero } from './components/CoverHero';
+import { LineUpWall } from './components/CoverConceptScene';
 import { ManifestoTrail } from './components/ManifestoTrail';
 import { BroadcastMatrix } from './components/BroadcastMatrix';
 import { RosterGrid } from './components/RosterGrid';
@@ -96,6 +97,7 @@ import {
 import MapView from './MapView';
 import { athleteInitials, athleteDisplayName } from './lib/formatName';
 import { BRISBANE_RUNWAY_PATH, COMMERCIAL_TIERS_PATH, HOW_IT_WORKS_PATH, THE_ROSTER_PATH } from './lib/routes';
+import { readCoverConcept } from './lib/coverConcept';
 
 type AppView = 'landing' | 'sponsor' | 'how-it-works' | 'the-roster' | 'commercial-tiers' | 'brisbane-runway';
 
@@ -125,6 +127,7 @@ type OutreachState = {
 type ProfileTab = 'overview' | 'brandkit' | 'agreement';
 
 export function MarketplaceApp() {
+  const [coverConcept] = useState(() => readCoverConcept(window.location.search));
   const [view, setView] = useState<AppView>(viewFromLocation);
   const routeTransition = useRef<ViewTransition | null>(null);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
@@ -574,7 +577,9 @@ export function MarketplaceApp() {
       nextView = 'brisbane-runway';
     }
     if (path !== nextPath) {
-      window.history.pushState(null, '', nextView === 'landing' && id !== 'top' ? `/#${landingSectionElementId(id)}` : nextPath);
+      const previewQuery = coverConcept ? `?concept=${coverConcept}` : '';
+      const sectionHash = nextView === 'landing' && id !== 'top' ? `#${landingSectionElementId(id)}` : '';
+      window.history.pushState(null, '', `${nextPath}${previewQuery}${sectionHash}`);
     }
     const update = () => {
       setView(nextView);
@@ -789,15 +794,18 @@ export function MarketplaceApp() {
         </div>
       ) : view === 'landing' ? (
         <div className="landing-scroll relative z-10 w-full bg-[#FFFFFF]">
-          <main className="bg-[#FFFFFF]">
+          <main className="bg-[#FFFFFF]" data-cover-concept={coverConcept ?? undefined}>
             <div className="pt-20">
               <CoverHero
+                concept={coverConcept}
                 onNavigateSection={navigateToHeading}
                 scrollForKeyboardFocus={scrollForKeyboardFocus}
                 overlayOpen={isMenuOpen || isCartOpen || isSearchOpen || isPortalDrawerOpen || isAuthModalOpen || isSyndicateEnquiryOpen}
               />
             </div>
+            {coverConcept === 'ac' && <LineUpWall onNavigate={navigateToHeading} />}
             <HowItWorksStrip />
+            {coverConcept === 'c' && <LineUpWall onNavigate={navigateToHeading} />}
             <ManifestoTrail onNavigateSection={navigateSection} />
             <BroadcastMatrix />
             <SettlementLedger />

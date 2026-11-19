@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { useReducedMotion } from '../lib/useReducedMotion';
+import type { CoverConcept } from '../lib/coverConcept';
 import type { LandingSectionId } from './Navigation';
 import { CourtLinesOverlay } from './CourtLinesOverlay';
 import { CoverCtas } from './CoverCtas';
+import ConceptScene from './CoverConceptScene';
 import './CoverHero.css';
 
 const SIZES = '(max-width: 420px) 100vw, 612px';
@@ -16,7 +18,8 @@ function moveLight(event: PointerEvent<HTMLElement>) {
   target.style.setProperty('--cover-light-y', `${((event.clientY - top) / height - 0.5) * 12}px`);
 }
 
-export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFocus }: {
+export function CoverHero({ concept, onNavigateSection, overlayOpen, scrollForKeyboardFocus }: {
+  concept?: CoverConcept | null;
   onNavigateSection: (id: LandingSectionId) => void;
   overlayOpen: boolean;
   scrollForKeyboardFocus: (top?: number) => void;
@@ -92,15 +95,18 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
         ref={cover}
         aria-label="tmrw cover"
         className="cover-stage relative isolate grid bg-white"
+        data-concept={concept ?? undefined}
         data-wide={wide}
-        onPointerMove={reducedMotion ? undefined : moveLight}
+        onPointerMove={reducedMotion || concept ? undefined : moveLight}
         onPointerLeave={(event) => {
           event.currentTarget.style.removeProperty('--cover-light-x');
           event.currentTarget.style.removeProperty('--cover-light-y');
         }}
       >
         <span ref={marker} className="cover-marker" aria-hidden="true" />
-        <div className="cover-edge" aria-hidden="true">
+        {concept ? (
+          <ConceptScene concept={concept} onNavigate={onNavigateSection} />
+        ) : <div className="cover-edge" aria-hidden="true">
           <picture>
             <source type="image/avif" srcSet="/coverpage-420.avif 420w, /coverpage-612.avif 612w" sizes={SIZES} />
             <source type="image/webp" srcSet="/coverpage-420.webp 420w, /coverpage-612.webp 612w" sizes={SIZES} />
@@ -112,15 +118,16 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
           </div>
           <div className="cover-scrim" />
           <CourtLinesOverlay className="cover-court" />
-        </div>
+        </div>}
         <div className="cover-title relative z-10 grid place-items-center text-center font-display font-extrabold tracking-tight text-[#F7F7F6]">
-          <h1 id="cover-heading" className="cover-settled m-0" aria-label="Line up your future">
-            Line up your <span className="whitespace-nowrap">future<span className="cover-dot" aria-hidden="true" /></span>
+          <h1 id="cover-heading" className={concept ? 'concept-headline m-0' : 'cover-settled m-0'} aria-label="Line up your future">
+            {concept ? <><span>Line up</span>{' '}<span>your future<span className="cover-dot" aria-hidden="true" /></span></> :
+              <>Line up your <span className="whitespace-nowrap">future<span className="cover-dot" aria-hidden="true" /></span></>}
           </h1>
-          <div className="cover-intro" aria-hidden="true">
+          {!concept && <div className="cover-intro" aria-hidden="true">
             <div><span>Line</span>{' '}<span>up</span></div>
             <div><span>your</span>{' '}<span>future</span></div>
-          </div>
+          </div>}
         </div>
         <div className="cover-actions relative z-20">
           <CoverCtas onNavigate={onNavigateSection} />
