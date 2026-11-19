@@ -77,7 +77,7 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
         const name = /^metadata\[(.+)\]$/.exec(key)?.[1];
         return name ? [[name, value]] : [];
       }));
-      const amount = Number(params.get('line_items[0][price_data][unit_amount]'));
+      const amount = [0, 1].reduce((sum, index) => sum + Number(params.get(`line_items[${index}][price_data][unit_amount]`)) * Number(params.get(`line_items[${index}][quantity]`)), 0);
       assert.equal(params.get('payment_intent_data[transfer_group]'), transferGroup);
       assert.equal(metadata.escrowMode, 'milestone_50_50');
       stripeSession = {
@@ -190,7 +190,7 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
     assert.deepEqual(repeated, issued);
     assert.equal(issued.checkoutSessionId, sessionId);
     assert.equal(issued.milestoneReleaseAvailable, true);
-    assert.equal(issued.amountPaidCents, 350000);
+    assert.equal(issued.amountPaidCents, 385000);
     assert.equal(issued.grant.athleteId, athleteId);
     assert.equal(issued.grant.athleteName, 'Chloe Vance');
     assert.equal(issued.grant.flightTierId, 'pathway_flight');
