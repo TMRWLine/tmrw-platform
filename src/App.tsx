@@ -257,8 +257,8 @@ export function MarketplaceApp() {
   }, [view, landingSection]);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [view]);
+    if (!routeTransition.current) scrollForKeyboardFocus(0);
+  }, [view, scrollForKeyboardFocus]);
 
   const isOverlayActive = isSearchOpen || isMenuOpen;
   useEffect(() => {
@@ -587,8 +587,8 @@ export function MarketplaceApp() {
       const transition = document.startViewTransition(() => {
         if (routeTransition.current !== transition) return;
         flushSync(update);
-        window.scrollTo({ top: 0, behavior: 'instant' });
-        notify();
+        scrollForKeyboardFocus(0);
+        afterNavigate?.();
       });
       routeTransition.current = transition;
       void transition.finished.then(() => {
@@ -610,7 +610,7 @@ export function MarketplaceApp() {
       ledger: 'ledger-heading',
     };
     const focusHeading = () => {
-      if (view === viewFromLocation() && id !== 'ledger') window.scrollTo({ top: 0, behavior: 'instant' });
+      if (view === viewFromLocation() && id !== 'ledger') scrollForKeyboardFocus(0);
       const heading = document.getElementById(headingId[id] ?? '');
       if (!heading) return;
       heading.tabIndex = -1;
