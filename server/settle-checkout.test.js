@@ -11,7 +11,7 @@ const athleteId = '11111111-1111-4111-8111-111111111111';
 const proof = 'a'.repeat(64);
 
 async function fixture(run) {
-  const values = { STRIPE_SECRET_KEY: 'sk_test_fixture', STRIPE_WEBHOOK_SECRET: 'whsec_fixture', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'test-service', SUPABASE_ANON_KEY: 'test-anon' };
+  const values = { STRIPE_SECRET_KEY: 'sk_test_fixture', STRIPE_WEBHOOK_SECRET: 'whsec_fixture', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_SECRET_KEY: '', SUPABASE_SERVICE_ROLE_KEY: 'test-service', SUPABASE_ANON_KEY: 'test-anon' };
   const previous = Object.fromEntries(Object.keys(values).map((name) => [name, process.env[name]]));
   Object.assign(process.env, values);
   const metadata = { athleteId, grantAccessHash: createHash('sha256').update(proof).digest('hex'), orderType: 'sponsorship_tier', escrowMode: 'milestone_50_50', athleteCutCents: '52500', athleteEscrowHoldCents: '26250', clubCutCents: '11250', clubCadence: 'quarterly_batch' };
@@ -25,13 +25,15 @@ async function fixture(run) {
     if (url.pathname === '/rest/v1/athlete_profiles') {
       assert.notEqual(state.metadata.athleteId, 'marcus-thorne', 'slug must not reach Supabase');
       assert.equal(url.searchParams.get('id'), `eq.${athleteId}`);
-      assert.equal(options.headers.apikey, 'test-service');
+      assert.equal(options.headers.apikey, process.env.SUPABASE_SECRET_KEY || 'test-service');
+      assert.equal(options.headers.Authorization, process.env.SUPABASE_SECRET_KEY ? undefined : 'Bearer test-service');
       return Response.json([{ stripe_account_id: state.account, current_club: 'Fixture Club' }]);
     }
     if (url.pathname === '/rest/v1/club_payouts') {
       assert.equal(url.searchParams.get('on_conflict'), 'charge_id');
       assert.match(options.headers.Prefer, /resolution=ignore-duplicates/);
-      assert.equal(options.headers.apikey, 'test-service');
+      assert.equal(options.headers.apikey, process.env.SUPABASE_SECRET_KEY || 'test-service');
+      assert.equal(options.headers.Authorization, process.env.SUPABASE_SECRET_KEY ? undefined : 'Bearer test-service');
       if (state.clubFailure) return Response.json({}, { status: 500 });
       const row = JSON.parse(options.body);
       state.upserts++;
@@ -92,6 +94,14 @@ test('milestone settlement pays athlete T+0, queues club once and does not colli
   assert.equal(state.creates.length, 2);
   assert.equal(state.creates[1].body.get('metadata[escrowReleaseFor]'), 'ch_order');
   assert.equal((await (await post()).json()).athleteT0.transferId, 'tr_1');
+}));
+
+test('settlement uses the preferred Supabase secret key without a Bearer copy', () => fixture(async ({ state, post }) => {
+  process.env.SUPABASE_SECRET_KEY = 'sb_secret_fixture';
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  assert.equal((await post()).status, 200);
+  assert.equal(state.creates.length, 1);
+  assert.equal(state.clubRows.size, 1);
 }));
 
 test('settlement requires initiating browser proof for anonymous orders', () => fixture(async ({ state, post }) => {
@@ -200,7 +210,7 @@ test('checkout validates and stamps club cadence on session and payment intent',
 }));
 
 test('club payout migration restricts access and enforces one row per charge', () => {
-  const sql = readFileSync(new URL('../supabase/migrations/20261120000004_club_payouts.sql', import.meta.url), 'utf8');
+  const sql = readFileSync(new URL('../supabase/migrations/20261120000005_club_payouts.sql', import.meta.url), 'utf8');
   assert.match(sql, /charge_id text not null unique/);
   assert.match(sql, /enable row level security/);
   assert.match(sql, /revoke all .* from anon, authenticated/);
