@@ -686,10 +686,6 @@ export function MarketplaceApp() {
         onNavigateSection={navigateFromMenu}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenPortal={() => setIsPortalDrawerOpen(true)}
-        onOpenBag={() => {
-          setSelectedAthlete(null);
-          setIsCartOpen(true);
-        }}
       />
 
       {view === 'sponsor' && (

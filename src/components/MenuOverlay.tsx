@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
+import { OPEN_DEPLOY_DRAWER_EVENT, emitOverlayEvent } from '../lib/overlayEvents';
 import { PRIMARY_LINKS, isPlainLinkActivation } from '../lib/routes';
 import { BrandLockup } from './BrandLockup';
 import { SITE_MENU_ID, SITE_MENU_TRIGGER_ID, type LandingSectionId } from './Navigation';
@@ -11,13 +12,12 @@ interface MenuOverlayProps {
   onNavigateSection: (id: LandingSectionId, headingId: string) => void;
   onOpenSearch: () => void;
   onOpenPortal: () => void;
-  onOpenBag: () => void;
 }
 
 const FOCUS = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt';
 const UTILITY = `flex min-h-11 w-fit items-center border-0 bg-transparent text-left text-base text-[#F7F7F6] underline-offset-4 hover:underline active:opacity-75 ${FOCUS}`;
 
-export function MenuOverlay({ isOpen, currentPath, onClose, onNavigateSection, onOpenSearch, onOpenPortal, onOpenBag }: MenuOverlayProps) {
+export function MenuOverlay({ isOpen, currentPath, onClose, onNavigateSection, onOpenSearch, onOpenPortal }: MenuOverlayProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -102,7 +102,13 @@ export function MenuOverlay({ isOpen, currentPath, onClose, onNavigateSection, o
             <h2 id="site-menu-tools" className="mb-2 mt-0 font-mono text-xs uppercase tracking-widest text-neutral-400">Tools</h2>
             <button type="button" aria-haspopup="dialog" className={UTILITY} onClick={() => finish(onOpenSearch)}>Search the roster</button>
             <button type="button" aria-haspopup="dialog" className={UTILITY} onClick={() => finish(onOpenPortal)}>Athlete access</button>
-            <button type="button" className={UTILITY} onClick={() => finish(onOpenBag)}>Merchandise bag</button>
+            <button
+              type="button"
+              className={UTILITY}
+              onClick={() => finish(() => emitOverlayEvent(OPEN_DEPLOY_DRAWER_EVENT))}
+            >
+              Deploy Capital
+            </button>
             <p className="mb-0 mt-4 max-w-[36ch] text-sm leading-relaxed text-neutral-300">
               Parents and guardians: use the private verification link sent to you.
             </p>
