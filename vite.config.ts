@@ -60,6 +60,9 @@ function spaFallback(): PluginOption {
 
 export default defineConfig({
   envPrefix: ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'VITE_SUPABASE_ANON_KEY'],
+  define: {
+    'import.meta.env.VITE_INTERNAL_LEGENDS': JSON.stringify(process.env.VITE_INTERNAL_LEGENDS === '1' ? '1' : ''),
+  },
   plugins: [
     react(),
     startApiServer(),
