@@ -261,15 +261,14 @@ export function MarketplaceApp() {
   }, [isOverlayActive, view]);
 
   useEffect(() => {
-    if (!isOverlayActive) return;
+    if (!isSearchOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       setIsSearchOpen(false);
-      setIsMenuOpen(false);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOverlayActive]);
+  }, [isSearchOpen]);
 
   useEffect(() => {
     const openSearch = () => {
@@ -447,12 +446,6 @@ export function MarketplaceApp() {
     setIsCartOpen(true);
   }
 
-  function enterSponsorWorkspace() {
-    const path = window.location.pathname.replace(/\/+$/, '') || '/';
-    if (path !== THE_ROSTER_PATH) window.history.pushState(null, '', THE_ROSTER_PATH);
-    setView('the-roster');
-  }
-
   async function routeAthleteEntry() {
     if (routingAthlete) return;
     setRoutingAthlete(true);
@@ -569,6 +562,16 @@ export function MarketplaceApp() {
     setLandingSection(id);
   }
 
+  function navigateFromMenu(id: LandingSectionId, headingId: string) {
+    navigateSection(id);
+    requestAnimationFrame(() => {
+      const heading = document.getElementById(headingId);
+      if (!heading) return;
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    });
+  }
+
   useEffect(() => {
     const applyRosterHash = () => {
       if (!window.location.hash.startsWith('#roster')) return;
@@ -635,6 +638,7 @@ export function MarketplaceApp() {
           ? '#080808'
           : CANVAS_WHITE;
   const inkClass = frameTone === 'dark' ? 'text-white' : 'text-[#080808]';
+  const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
 
   return (
     <div
@@ -646,6 +650,7 @@ export function MarketplaceApp() {
       <Navigation
         isSearchOpen={isSearchOpen}
         isMenuOpen={isMenuOpen}
+        currentPath={currentPath}
         onToggleSearch={() => {
           setIsMenuOpen(false);
           setIsSearchOpen((v) => !v);
@@ -676,12 +681,15 @@ export function MarketplaceApp() {
 
       <MenuOverlay
         isOpen={isMenuOpen}
+        currentPath={currentPath}
         onClose={() => setIsMenuOpen(false)}
-        onHome={goHome}
-        onNavigateSection={navigateSection}
+        onNavigateSection={navigateFromMenu}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenPortal={() => setIsPortalDrawerOpen(true)}
-        onOpenSponsorWorkspace={enterSponsorWorkspace}
+        onOpenBag={() => {
+          setSelectedAthlete(null);
+          setIsCartOpen(true);
+        }}
       />
 
       {view === 'sponsor' && (

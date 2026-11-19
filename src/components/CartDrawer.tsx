@@ -523,6 +523,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             onClick={onClose}
             title="Close [ESC]"
             aria-label="Close bag"
+            autoFocus
             className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/20 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
           >
             <span>Close</span>

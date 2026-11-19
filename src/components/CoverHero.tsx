@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { useReducedMotion } from '../lib/useReducedMotion';
+import type { MouseEvent } from 'react';
+import { COMMERCIAL_TIERS_PATH, HOW_IT_WORKS_PATH, isPlainLinkActivation } from '../lib/routes';
 import type { LandingSectionId } from './Navigation';
-import { CourtLinesOverlay } from './CourtLinesOverlay';
-import { RollingPillButton } from './RollingPillButton';
+import './CoverHero.css';
 
 export const PAGE_SHELL = 'max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full';
 
@@ -10,226 +9,62 @@ interface CoverHeroProps {
   onNavigateSection?: (id: LandingSectionId) => void;
 }
 
-const INTRO_WORDS = ['Line', 'up', 'your', 'future'];
+const ACTIONS = [
+  { id: 'how-it-works', href: HOW_IT_WORKS_PATH, label: 'Athletes: See how it works' },
+  { id: 'commercial-tiers', href: COMMERCIAL_TIERS_PATH, label: 'Businesses: View sponsorship options' },
+] as const;
 
-const PULSE_BLINK_CSS =
-  '@keyframes tmrwPulseBlink {' +
-  '0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 18px rgba(184, 255, 0, 0.95); }' +
-  '50% { opacity: 0.15; transform: scale(0.82); box-shadow: 0 0 4px rgba(184, 255, 0, 0.2); }' +
-  '}' +
-  '@media (prefers-reduced-motion: no-preference) { .tmrw-dot-blink { animation: tmrwPulseBlink 1.05s cubic-bezier(0.4, 0, 0.6, 1) 4; } }';
-
-export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
-  const reducedMotion = useReducedMotion();
-  const [pointer, setMousePos] = useState({ x: 0, y: 0 });
-  const mousePos = reducedMotion ? { x: 0, y: 0 } : pointer;
-  const [phase, setPhase] = useState<'intro' | 'settled'>('intro');
-  const [visibleWords, setVisibleWords] = useState<number>(0);
-
-  useEffect(() => {
-    if (reducedMotion) {
-      setPhase('settled');
-      setMousePos({ x: 0, y: 0 });
-      return;
-    }
-    const timers: number[] = [];
-
-    INTRO_WORDS.forEach((_, idx) => {
-      const t = window.setTimeout(() => {
-        setVisibleWords(idx + 1);
-      }, 260 + idx * 340);
-      timers.push(t);
-    });
-
-    const settleTimer = window.setTimeout(() => {
-      setPhase('settled');
-    }, 2800);
-    timers.push(settleTimer);
-
-    return () => {
-      timers.forEach((t) => window.clearTimeout(t));
-    };
-  }, [reducedMotion]);
-
-  const isIntro = !reducedMotion && phase === 'intro';
-
-  const navigate = (id: 'how-it-works' | 'commercial-tiers') => {
-    if (onNavigateSection) {
-      onNavigateSection(id);
-      return;
-    }
-    window.location.assign(`/${id}`);
-  };
+export function CoverHero({ onNavigateSection }: CoverHeroProps) {
+  function follow(event: MouseEvent<HTMLAnchorElement>, id: LandingSectionId) {
+    if (!onNavigateSection || !isPlainLinkActivation(event)) return;
+    event.preventDefault();
+    onNavigateSection(id);
+  }
 
   return (
-    <div className="pb-12 md:pb-20">
-      <section
-        aria-label="tmrw cover"
-        className="relative flex min-h-[82vh] w-full select-none flex-col justify-between overflow-hidden rounded-[28px] border border-[#EAEAEA] bg-[#080808] p-8 shadow-sm md:rounded-[32px] md:p-14"
-        onMouseMove={(e) => {
-          if (isIntro || reducedMotion) return;
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = (e.clientX - rect.left) / rect.width - 0.5;
-          const y = (e.clientY - rect.top) / rect.height - 0.5;
-          setMousePos({ x: x * 32, y: y * 32 });
-        }}
-        onMouseLeave={() => {
-          setMousePos({ x: 0, y: 0 });
-        }}
-      >
-        <style>{PULSE_BLINK_CSS}</style>
-
-        <img
-          src="/coverpage.jpg"
-          alt=""
-          aria-hidden="true"
-          fetchPriority="high"
-          draggable={false}
-          className={[
-            'pointer-events-none absolute inset-0 h-full w-full select-none object-cover object-center motion-safe:transition-all duration-1000 ease-out',
-            isIntro ? 'opacity-30 blur-[3px] scale-110' : 'opacity-100 blur-0 scale-[1.04]',
-          ].join(' ')}
-          style={{
-            transform: isIntro
-              ? 'scale(1.1)'
-              : 'scale(1.04) translate3d(' +
-                -mousePos.x * 0.25 +
-                'px, ' +
-                -mousePos.y * 0.25 +
-                'px, 0)',
-          }}
-        />
-
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_20%_40%,rgba(235,59,48,0.28)_0%,transparent_60%)]"
-        />
-
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-black/35"
-        />
-
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 motion-safe:transition-transform duration-500 ease-out"
-          style={{
-            transform: 'translate3d(' + mousePos.x * 0.6 + 'px, ' + mousePos.y * 0.6 + 'px, 0)',
-            background:
-              'radial-gradient(ellipse 70% 50% at 50% 65%, rgba(255,255,255,0.07) 0%, rgba(0,0,0,0.45) 80%, transparent 100%)',
-          }}
-        />
-
-        <CourtLinesOverlay />
-
-        {/* Pure Central Headline */}
-        <div className="relative z-10 my-auto flex h-[56vh] w-full items-center justify-center">
-          <div
-            onClick={() => {
-              if (isIntro) setPhase('settled');
-            }}
-            style={{
-              transform: isIntro
-                ? 'scale(1.12)'
-                : 'translate3d(' + mousePos.x * 0.18 + 'px, ' + mousePos.y * 0.18 + 'px, 0) scale(1)',
-            }}
-            className="motion-safe:transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform"
-          >
-            {isIntro ? (
-              <h1 className="m-0 block text-center font-display font-extrabold leading-[0.92] tracking-tight text-[#F7F7F6] drop-shadow-[0_8px_36px_rgba(0,0,0,0.9)] text-7xl sm:text-8xl md:text-[7.5rem] lg:text-[9.2rem]">
-                <span className="block">
-                  <span
-                    className={[
-                      'inline-block transition-all duration-300',
-                      visibleWords >= 1
-                        ? 'opacity-100 translate-y-0 blur-0'
-                        : 'opacity-0 translate-y-3 blur-sm',
-                    ].join(' ')}
-                  >
-                    Line
-                  </span>{' '}
-                  <span
-                    className={[
-                      'inline-block transition-all duration-300',
-                      visibleWords >= 2
-                        ? 'opacity-100 translate-y-0 blur-0'
-                        : 'opacity-0 translate-y-3 blur-sm',
-                    ].join(' ')}
-                  >
-                    up
-                  </span>
-                </span>
-                <span className="block">
-                  <span
-                    className={[
-                      'inline-block transition-all duration-300',
-                      visibleWords >= 3
-                        ? 'opacity-100 translate-y-0 blur-0'
-                        : 'opacity-0 translate-y-3 blur-sm',
-                    ].join(' ')}
-                  >
-                    your
-                  </span>{' '}
-                  <span
-                    className={[
-                      'inline-block whitespace-nowrap transition-all duration-300',
-                      visibleWords >= 4
-                        ? 'opacity-100 translate-y-0 blur-0'
-                        : 'opacity-0 translate-y-3 blur-sm',
-                    ].join(' ')}
-                  >
-                    future
-                    <span
-                      aria-hidden="true"
-                      className="tmrw-dot-blink ml-2.5 inline-block h-4 w-4 rounded-full bg-volt align-baseline shadow-[0_0_24px_rgba(184,255,0,1)] md:h-6 md:w-6"
-                    />
-                  </span>
-                </span>
-              </h1>
-            ) : (
-              <div className="flex flex-col items-center gap-4">
-              <h1 className="m-0 block max-w-[12ch] text-center font-display font-extrabold leading-[0.96] tracking-tight text-[#F7F7F6] drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)] text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem]">
-                Line up your{' '}
-                <span className="whitespace-nowrap">
-                  future
-                  <span
-                    aria-hidden="true"
-                    className="tmrw-dot-blink ml-2 inline-block h-3.5 w-3.5 shrink-0 rounded-full bg-volt align-baseline opacity-100 shadow-[0_0_16px_rgba(184,255,0,0.95)] md:h-4 md:w-4"
-                  />
-                </span>
-              </h1>
-              <p className="m-0 rounded bg-black/75 px-3 py-1 text-center text-sm font-medium text-white sm:text-base">
-                Local businesses back athletes and the clubs behind them.
-              </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Buttons Split Perfectly Across Either Side of the Center Guideline */}
-        {!isIntro && <div
-          className={[
-            'relative z-20 flex w-full flex-wrap items-center justify-center gap-3 pb-2 sm:justify-between md:px-12',
-          ].join(' ')}
-        >
-          <div className="flex justify-start">
-            <RollingPillButton variant="primary" onClick={() => navigate('how-it-works')}>
-              Athletes: How it works
-            </RollingPillButton>
-          </div>
-          <div className="flex justify-end">
-            <RollingPillButton
-              variant="glass"
-              className="bg-black/75"
-              onClick={() => navigate('commercial-tiers')}
+    <section
+      aria-label="tmrw cover"
+      className="relative isolate mb-12 flex min-h-[min(720px,78svh)] items-end overflow-hidden border border-white/10 bg-[#080808] px-5 pb-10 pt-44 text-[#F7F7F6] sm:mb-20 sm:px-10 sm:pb-14 lg:px-16"
+    >
+      <img
+        src="/coverpage.jpg"
+        alt=""
+        width={612}
+        height={407}
+        fetchPriority="high"
+        className="cover-hero-still pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover"
+      />
+      <div aria-hidden="true" className="cover-hero-scrim pointer-events-none absolute inset-0 -z-10" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-5 top-8 border-t border-white/25 sm:inset-x-10 lg:inset-x-16" />
+      <div className="max-w-3xl">
+        <h1 id="cover-heading" className="m-0 font-display text-[clamp(2.5rem,9vw,7.25rem)] font-extrabold leading-[0.92] tracking-[-0.065em]">
+          <span className="block overflow-hidden pb-[0.1em]"><span className="cover-hero-line block">Line up your</span></span>{' '}
+          <span className="block overflow-hidden pb-[0.12em]">
+            <span className="cover-hero-line cover-hero-line-next block">
+              future<span aria-hidden="true" className="cover-hero-dot ml-[0.1em] inline-block size-[0.14em] rounded-full bg-volt" />
+            </span>
+          </span>
+        </h1>
+        <p className="m-0 mt-4 max-w-[37ch] text-base leading-relaxed sm:text-lg">
+          Local businesses back athletes and the clubs behind them.
+        </p>
+        <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap">
+          {ACTIONS.map(({ id, href, label }, index) => (
+            <a
+              key={id}
+              href={href}
+              onClick={(event) => follow(event, id)}
+              className={`cover-hero-action flex min-h-11 items-center justify-between gap-4 border px-4 py-2.5 text-sm font-semibold leading-tight no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-volt active:underline ${
+                index === 0
+                  ? 'border-[#F7F7F6] bg-[#F7F7F6] text-[#080808] hover:bg-white'
+                  : 'border-[#F7F7F6]/70 bg-[#080808] text-[#F7F7F6] hover:border-white hover:bg-white hover:text-[#080808]'
+              }`}
             >
-              Businesses: See sponsorship options
-            </RollingPillButton>
-          </div>
-        </div>}
-      </section>
-    </div>
+              {label}<span aria-hidden="true" className="cover-hero-arrow shrink-0">↗</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
   );
-};
-
-export default CoverHero;
+}

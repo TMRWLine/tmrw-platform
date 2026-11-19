@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { AthleteAccessHeader, AthleteAccessTabs, AthleteAccessHero } from './AthleteAccessShell';
 import { dispatchOpenCapsuleDrawer } from './CartDrawer';
 import { ROSTER_DATA, suburbForPostcode } from '../data/roster';
@@ -185,6 +185,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
   onClose,
 }) => {
   const baseId = useId();
+  const dialogRef = useRef<HTMLElement>(null);
   const identifierId = `${baseId}-identifier`;
   const leagueId = `${baseId}-league`;
   const postcodeId = `${baseId}-postcode`;
@@ -331,6 +332,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
 
   useEffect(() => {
     if (!isOpen) return;
+    dialogRef.current?.focus({ preventScroll: true });
     const existingSession = getActiveAthleteSession();
     setAuthSession(existingSession);
     setOtpChallengeSent(false);
@@ -600,6 +602,8 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
       />
 
       <aside
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label="Athlete portal"

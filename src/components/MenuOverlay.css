@@ -1,0 +1,31 @@
+.site-menu-header {
+  padding-top: max(.75rem, env(safe-area-inset-top));
+}
+
+.site-menu-content {
+  padding-bottom: max(2rem, env(safe-area-inset-bottom));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-menu[open] {
+    animation: site-menu-in 220ms cubic-bezier(.16, 1, .3, 1);
+  }
+
+  .site-menu[open] .site-menu-link {
+    animation: site-menu-link-in 140ms ease-out both;
+  }
+
+  .site-menu[open] .site-menu-link:focus-within {
+    animation: none;
+  }
+}
+
+@keyframes site-menu-in {
+  from { clip-path: inset(0 0 12% 0); }
+  to { clip-path: inset(0); }
+}
+
+@keyframes site-menu-link-in {
+  from { opacity: .8; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
