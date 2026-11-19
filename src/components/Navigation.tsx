@@ -52,11 +52,14 @@ interface NavigationProps {
   onOpenPortal: () => void;
   /** Light gallery chrome, or the institutional runway canvas. */
   tone?: 'light' | 'dark';
+  compact?: boolean;
+  activeSection?: LandingSectionId | null;
+  activeLocation?: 'location' | 'page';
 }
 
 const NAV_LINKS: ReadonlyArray<{ label: string; id: Exclude<LandingSectionId, 'top'> }> = [
   { label: 'The Roster', id: 'roster' },
-  { label: 'How It Works', id: 'how-it-works' },
+  { label: 'How it works', id: 'how-it-works' },
   { label: 'Commercial Tiers', id: 'commercial-tiers' },
   { label: 'LA 28 / Brisbane 32 Runway', id: 'syndicate' },
 ];
@@ -114,8 +117,12 @@ export const Navigation: React.FC<NavigationProps> = ({
   onNavigateSection,
   onOpenPortal,
   tone = 'light',
+  compact = false,
+  activeSection,
+  activeLocation = 'page',
 }) => {
-  const dark = tone === 'dark';
+  const dark = tone === 'dark' && !compact;
+  const activeLabel = NAV_LINKS.find(link => link.id === activeSection)?.label;
   const scrollTo = (id: Exclude<LandingSectionId, 'top'>) => {
     if (onNavigateSection) {
       onNavigateSection(id);
@@ -137,7 +144,9 @@ export const Navigation: React.FC<NavigationProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const headerClass = dark
+  const headerClass = compact
+    ? 'fixed top-0 left-0 right-0 z-50 h-[60px] bg-[#F7F7F6]/95 backdrop-blur-md border-b border-[#EAEAEA]'
+    : dark
     ? 'fixed top-0 left-0 right-0 z-50 h-[74px] bg-[#0A0A0A]/92 backdrop-blur-md border-b border-white/10'
     : 'fixed top-0 left-0 right-0 z-50 h-[74px] bg-[#F7F7F6]/95 backdrop-blur-md border-b border-[#EAEAEA]';
   const linkClass = dark
@@ -151,9 +160,9 @@ export const Navigation: React.FC<NavigationProps> = ({
     : ICON_BUTTON;
 
   return (
-    <header className={`tmrw-navigation ${headerClass}`}>
+    <header className={`tmrw-navigation ${headerClass}`} data-compact={compact}>
       {/* Grid container: shares the 1600px plumb line of the showcase cards below. */}
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full h-full flex items-center justify-between">
+      <div className={`max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full h-[74px] flex items-center justify-between ${compact ? '-translate-y-[7px]' : ''} ${compact && activeLabel ? 'max-lg:-translate-y-[13px]' : ''}`}>
         <BrandLockup tone={dark ? 'dark' : 'light'} onClick={goHome} className="nav-brand shrink-0 max-sm:[&>span]:w-[92px]" />
 
         {/* Centre links */}
@@ -178,6 +187,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               <a
                 key={link.id}
                 href={href}
+                aria-current={activeSection === link.id ? activeLocation : undefined}
                 onClick={(event) => {
                   event.preventDefault();
                   if (isRoute) {
@@ -193,7 +203,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                   }
                   scrollTo(link.id);
                 }}
-                className={`${linkClass} ${focusRing} no-underline`}
+                className={`${linkClass} ${focusRing} no-underline ${compact && activeSection === link.id ? 'after:absolute after:inset-x-2.5 after:bottom-0 after:h-px after:bg-current' : ''}`}
               >
                 <span>{link.label}</span>
                 <span
@@ -218,13 +228,12 @@ export const Navigation: React.FC<NavigationProps> = ({
                 : 'border-[#080808]/20 bg-[#080808]/[0.03] hover:bg-[#080808] hover:border-[#080808]'
             }`}
           >
-            {/* Live status telemetry beacon */}
             <svg className="nav-portal-icon hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
               <circle cx="12" cy="8" r="3.5" />
               <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
             </svg>
+            {/* Portal dot */}
             <span className="relative flex h-2 w-2" aria-hidden="true">
-              {dark && <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-volt opacity-75" />}
               <span className={`relative inline-flex rounded-full h-2 w-2 ${dark ? 'bg-volt group-hover:bg-black' : 'bg-[#080808] group-hover:bg-white'}`} />
             </span>
 
@@ -272,6 +281,11 @@ export const Navigation: React.FC<NavigationProps> = ({
           </button>
         </div>
       </div>
+      {compact && activeLabel && (
+        <span key={activeSection} aria-current={activeLocation} className="absolute bottom-0.5 inset-x-0 text-center text-[10px] leading-none text-[#080808] underline underline-offset-2 lg:hidden">
+          {activeLabel}
+        </span>
+      )}
     </header>
   );
 };

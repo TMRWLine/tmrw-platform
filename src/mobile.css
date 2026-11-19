@@ -30,7 +30,6 @@
   .landing-scroll:has(#settlement-ledger .certificate-backdrop) { z-index: 60; }
 
   .mobile-overlay button:not([tabindex="-1"]),
-  .site-menu a,
   .dossier-panel button {
     min-height: 44px;
     min-width: 44px;
@@ -38,15 +37,6 @@
   .mobile-overlay :is(input, select, textarea) { font-size: 16px; min-height: 44px; }
   .search-overlay { padding: max(20px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom)); }
   .search-overlay h1 { font-size: clamp(2.5rem, 10vw, 3.75rem); overflow-wrap: anywhere; }
-  .site-menu-panel {
-    height: 100dvh;
-    min-height: 0;
-    max-height: 100dvh;
-    padding: max(20px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
-    overscroll-behavior: contain;
-  }
-  .site-menu-panel > div:first-child { flex-shrink: 0; }
-  .site-menu a, .site-menu nav button { display: inline-flex; align-items: center; }
 
   .dossier-backdrop {
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));

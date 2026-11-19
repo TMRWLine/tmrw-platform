@@ -12,12 +12,6 @@ interface BroadcastRegister {
   showRadiusBar?: boolean;
 }
 
-interface BroadcastCarrier {
-  kind: string;
-  name: string;
-  Mark: React.FC;
-}
-
 const REGISTERS: readonly BroadcastRegister[] = [
   {
     figure: 'LOCAL',
@@ -56,88 +50,6 @@ const REGISTERS: readonly BroadcastRegister[] = [
     showRadiusBar: true,
   },
 ];
-
-const MARK_IMG = 'w-auto object-contain object-left';
-
-const ChannelNineMark: React.FC = () => (
-  <img
-    src="/logos/National_Nine_Network_Logo_1969.svg"
-    alt="Channel 9"
-    className={'h-5 ' + MARK_IMG}
-  />
-);
-
-const StanSportMark: React.FC = () => (
-  <img
-    src="/logos/stan-sport-mono.png"
-    alt="Stan Sport"
-    className={'h-6 ' + MARK_IMG + ' brightness-0'}
-  />
-);
-
-const KayoMark: React.FC = () => (
-  <img
-    src="/logos/kayo-sports-mono.png"
-    alt="Kayo"
-    className="h-5 w-auto object-contain object-left"
-  />
-);
-
-const TenPlayMark: React.FC = () => (
-  <svg
-    viewBox="0 0 1569.37 623.62"
-    className="h-5 w-auto"
-    xmlns="http://www.w3.org/2000/svg"
-    role="img"
-    aria-label="10 Play"
-  >
-    <title>10 Play</title>
-    <path
-      d="M968.87 139.64v267.69a6.73 6.73 0 0 1-6.74 6.68H910a6.73 6.73 0 0 1-6.74-6.68V139.64A6.73 6.73 0 0 1 910 133h52.14a6.73 6.73 0 0 1 6.73 6.64zm-82 172.17c0 69.46-38.4 105.83-85.78 105.83a72.63 72.63 0 0 1-38.61-11.33V484a6.73 6.73 0 0 1-6.74 6.68h-52.18a6.74 6.74 0 0 1-6.75-6.68V216.3a6.74 6.74 0 0 1 6.75-6.69h52.14a6.73 6.73 0 0 1 6.74 6.69v1a72.55 72.55 0 0 1 38.61-11.3c47.38 0 85.78 38.88 85.78 105.81zm-65.63 0c-1.08-35.2-17-50.59-34.69-51.59-17.06-1-24.07 9.61-24.07 23.3v56.59c0 13.69 7 24.27 24.07 23.3 17.62-1 33.57-16.41 34.65-51.6zm354.1-25.15v120.61a6.76 6.76 0 0 1-6.74 6.74h-52.14a6.76 6.76 0 0 1-6.74-6.74v-1a72.63 72.63 0 0 1-38.61 11.33c-47.38 0-85.78-36.37-85.78-105.83 0-48.18 27.56-105.83 95-105.83s94.97 38.65 94.97 80.72zm-65.62-3.14c0-13.69-7-24.28-24.07-23.3-17.66 1-33.61 16.39-34.69 51.59 1.08 35.2 17 50.6 34.69 51.6 17.06 1 24.07-9.61 24.07-23.3zm258.11-73.91h-57.16a7.63 7.63 0 0 0-7 5.45s-28.9 113.13-29 113.43c-.12-.28-29-113.43-29-113.43a7.63 7.63 0 0 0-7-5.45h-57.27c-3.71 0-5.84 2.9-4.72 6.44l62.39 198c-1.83 21.68-16.52 23.35-48.63 23.35a6.74 6.74 0 0 0-6.69 6.75v39.82a6.73 6.73 0 0 0 6.69 6.74c78.71 0 101.56-20.11 119.68-76.69l62.39-197.93c1.12-3.58-1.01-6.48-4.72-6.48z"
-      fill="#0F0F11"
-    />
-    <path
-      d="M1563.23 321c8.19-5.06 8.19-13.34 0-18.4l-147.07-90.74c-8.2-5.06-14.91-1.32-14.91 8.31v183.27c0 9.63 6.71 13.38 14.91 8.32z"
-      fill="#0F0F11"
-    />
-    <circle cx="311.81" cy="311.81" r="311.81" fill="#0F0F11" />
-    <path
-      fill="#FFFFFF"
-      d="M376.3 165.26a146.52 146.52 0 0 0-129 76.9v-70.88h-91.58v281.06h91.61v-70.88a146.56 146.56 0 1 0 129-216.2zm0 201.5a54.95 54.95 0 1 1 54.95-54.95 54.95 54.95 0 0 1-54.96 54.95z"
-    />
-    <path
-      fill="#FFFFFF"
-      d="M100.78 226.23v91.6a146.55 146.55 0 0 0 146.55-146.55h-91.61a55 55 0 0 1-54.94 54.95z"
-    />
-  </svg>
-);
-
-const SevenPlusMark: React.FC = () => (
-  <img
-    src="/logos/7plus-wordmark.svg"
-    alt="7plus"
-    className={'h-5 ' + MARK_IMG}
-  />
-);
-
-const SkySportNzMark: React.FC = () => (
-  <img
-    src="/logos/Sky_Sport_NZ_2019.svg.webp"
-    alt="Sky Sport NZ"
-    className={'h-4 ' + MARK_IMG + ' brightness-0'}
-  />
-);
-
-const CARRIERS: readonly BroadcastCarrier[] = [
-  { kind: 'FREE-TO-AIR · AU', name: 'CHANNEL 9', Mark: ChannelNineMark },
-  { kind: 'STREAMING · AU', name: 'STAN SPORT', Mark: StanSportMark },
-  { kind: 'STREAMING · AU', name: 'KAYO SPORTS', Mark: KayoMark },
-  { kind: 'FREE-TO-AIR · AU', name: '10 PLAY', Mark: TenPlayMark },
-  { kind: 'FREE-TO-AIR · AU', name: '7PLUS', Mark: SevenPlusMark },
-  { kind: 'PAY TV · NZ', name: 'SKY SPORT NZ', Mark: SkySportNzMark },
-];
-
-const MARK_WRAP = 'h-6 flex items-center justify-start w-full overflow-hidden';
 
 export const BroadcastMatrix: React.FC = () => (
   <section
@@ -230,32 +142,6 @@ export const BroadcastMatrix: React.FC = () => (
       ))}
     </div>
 
-    {/* Broadcast Network Strip */}
-    <div className="pt-4 border-t border-neutral-200">
-      <div className="flex items-center justify-between mb-3">
-        <p className="m-0 text-[10px] font-mono font-semibold uppercase tracking-[0.16em] text-neutral-500">
-          CARRIED LIVE ON
-        </p>
-        <p className="m-0 text-[10px] font-mono uppercase tracking-[0.16em] text-neutral-400">
-          6 NATIONAL BROADCAST CARRIERS · AU &amp; NZ
-        </p>
-      </div>
-      <ul className="m-0 p-0 list-none grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
-        {CARRIERS.map((carrier) => (
-          <li
-            key={carrier.name}
-            className="h-16 bg-[#FAFAFA] border border-neutral-200 rounded-lg px-3.5 py-2.5 flex flex-col justify-between hover:border-[#0F0F11] hover:bg-white transition-all"
-          >
-            <span className="text-[9px] font-mono text-neutral-500 uppercase tracking-wider">
-              {carrier.kind}
-            </span>
-            <div className={MARK_WRAP}>
-              <carrier.Mark />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
   </section>
 );
 
