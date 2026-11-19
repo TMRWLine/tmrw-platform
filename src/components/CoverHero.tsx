@@ -1,69 +1,124 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
-import { useReducedMotion } from '../lib/useReducedMotion';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { flushSync } from 'react-dom';
+import { COVER_SETTLE_MS, COVER_WORD_DELAYS, coverWordTransform } from '../lib/coverMotion';
 import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
+import { useReducedMotion } from '../lib/useReducedMotion';
 import type { LandingSectionId } from './Navigation';
 import { CourtLinesOverlay } from './CourtLinesOverlay';
+import { FilmGrainOverlay } from './FilmGrainOverlay';
 import { RollingPillButton } from './RollingPillButton';
 import './CoverHero.css';
 
+const WORDS = ['Line', 'up', 'your', 'future'] as const;
+const FINE_POINTER = '(hover: hover) and (pointer: fine)';
+const EASE = 'cubic-bezier(.16, 1, .3, 1)';
 const LINKS = [
   { id: 'roster', href: THE_ROSTER_PATH, label: 'Explore the Roster', variant: 'primary' },
   { id: 'syndicate', href: BRISBANE_RUNWAY_PATH, label: 'Brisbane 2032 Runway', variant: 'glass' },
 ] as const;
-
-const SIZES = '(max-width: 420px) 100vw, 612px';
-const FINE_POINTER = '(hover: hover) and (pointer: fine)';
-
-function moveLight(event: PointerEvent<HTMLElement>) {
-  if (event.pointerType !== 'mouse' || !window.matchMedia(FINE_POINTER).matches) return;
-  const target = event.currentTarget;
-  const { left, top, width, height } = target.getBoundingClientRect();
-  target.style.setProperty('--cover-light-x', `${((event.clientX - left) / width - 0.5) * 18}px`);
-  target.style.setProperty('--cover-light-y', `${((event.clientY - top) / height - 0.5) * 12}px`);
-}
 
 export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFocus }: {
   onNavigateSection: (id: LandingSectionId) => void;
   overlayOpen: boolean;
   scrollForKeyboardFocus: (top?: number) => void;
 }) {
-  const reducedMotion = useReducedMotion();
-  const cover = useRef<HTMLElement>(null);
-  const marker = useRef<HTMLSpanElement>(null);
-  const quickLinks = useRef<HTMLElement>(null);
+  const reduced = useReducedMotion();
+  const [settled, setSettled] = useState(false);
+  const [pulsePaused, setPulsePaused] = useState(false);
   const [pastCover, setPastCover] = useState(false);
   const [wide, setWide] = useState(false);
+  const intro = !reduced && !settled;
+  const cover = useRef<HTMLElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const introLayout = useRef<HTMLSpanElement>(null);
+  const finalLayout = useRef<HTMLSpanElement>(null);
+  const skip = useRef<HTMLButtonElement>(null);
+  const quickLinks = useRef<HTMLElement>(null);
+  const marker = useRef<HTMLSpanElement>(null);
+  const animations = useRef<Animation[]>([]);
+  const pointer = useRef({ x: 0, y: 0, targetX: 0, targetY: 0, frame: 0 });
+
+  const settle = useCallback(() => {
+    const title = heading.current;
+    if (!title) return;
+    const words = Array.from(title.querySelectorAll<HTMLElement>('.cover-word'));
+    const before = words.map(node => node.style.transform);
+    const returnFocus = document.activeElement === skip.current;
+    flushSync(() => setSettled(true));
+    animations.current = words.flatMap((node, index) => {
+      if (!before[index] || typeof node.animate !== 'function') return [];
+      return [node.animate([
+        { transform: before[index] },
+        { transform: node.style.transform },
+      ], { duration: 1000, easing: EASE })];
+    });
+    if (returnFocus) title.focus({ preventScroll: true });
+  }, []);
+
+  useLayoutEffect(() => {
+    const title = heading.current;
+    const introSample = introLayout.current;
+    const finalSample = finalLayout.current;
+    if (!title || !introSample || !finalSample) return;
+    const words = Array.from(title.querySelectorAll<HTMLElement>('.cover-word'));
+    const introBoxes = Array.from(introSample.querySelectorAll('.cover-word-sample'));
+    const finalBoxes = Array.from(finalSample.querySelectorAll('.cover-word-sample'));
+    const positionWords = () => {
+      const origin = title.getBoundingClientRect();
+      const targetBoxes = intro ? introBoxes : finalBoxes;
+      const transforms = targetBoxes.map((sample, index) => {
+        const box = finalBoxes[index].getBoundingClientRect();
+        return box.width && box.height
+          ? coverWordTransform(sample.getBoundingClientRect(), { left: origin.left, top: origin.top, width: box.width, height: box.height })
+          : '';
+      });
+      words.forEach((node, index) => { node.style.transform = transforms[index]; });
+    };
+    positionWords();
+    const observer = new ResizeObserver(positionWords);
+    [...introBoxes, ...finalBoxes, title].forEach(node => observer.observe(node));
+    return () => observer.disconnect();
+  }, [intro]);
 
   useEffect(() => {
-    if (!cover.current || !('IntersectionObserver' in window)) return;
+    if (!intro) return;
+    const timer = window.setTimeout(settle, COVER_SETTLE_MS);
+    return () => window.clearTimeout(timer);
+  }, [intro, settle]);
+
+  useEffect(() => {
+    if (reduced) animations.current.forEach(animation => animation.cancel());
+    return () => animations.current.forEach(animation => animation.cancel());
+  }, [reduced]);
+
+  useEffect(() => {
+    const stage = cover.current;
+    if (!stage || !('IntersectionObserver' in window)) return;
     const observer = new IntersectionObserver(([entry]) => {
       setPastCover(!entry.isIntersecting && entry.boundingClientRect.bottom <= 0);
     });
-    observer.observe(cover.current);
+    observer.observe(stage);
     return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
-    if (reducedMotion || CSS.supports('animation-timeline: scroll(root block)') || !marker.current || !('IntersectionObserver' in window)) return;
+    const edgeMarker = marker.current;
+    if (reduced || CSS.supports('animation-timeline: scroll(root block)') || !edgeMarker || !('IntersectionObserver' in window)) return;
     const observer = new IntersectionObserver(([entry]) => {
       setWide(!entry.isIntersecting && entry.boundingClientRect.top < 0);
     });
-    observer.observe(marker.current);
+    observer.observe(edgeMarker);
     return () => observer.disconnect();
-  }, [reducedMotion]);
+  }, [reduced]);
 
   useEffect(() => {
     const bar = quickLinks.current;
     if (!bar) return;
-    const rootStyle = document.documentElement.style;
-    const syncBarHeight = () => {
-      rootStyle.setProperty('--cover-quick-links-height', `${bar.getBoundingClientRect().height}px`);
-    };
-    syncBarHeight();
-    const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(syncBarHeight) : null;
+    const style = document.documentElement.style;
+    const sync = () => style.setProperty('--cover-quick-links-height', `${bar.getBoundingClientRect().height}px`);
+    sync();
+    const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(sync) : null;
     resizeObserver?.observe(bar, { box: 'border-box' });
-
-    const focusGap = 8;
     let frame = 0;
     const keepFocusVisible = (event: FocusEvent) => {
       const target = event.target;
@@ -76,7 +131,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
           if (document.activeElement !== target) return;
           const barRect = bar.getBoundingClientRect();
           const targetRect = target.getBoundingClientRect();
-          const overlap = targetRect.bottom + focusGap - barRect.top;
+          const overlap = targetRect.bottom + 8 - barRect.top;
           if (barRect.height > 0 && overlap > 0 && targetRect.top < barRect.bottom) {
             scrollForKeyboardFocus(window.scrollY + Math.ceil(overlap));
           }
@@ -88,9 +143,46 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
       document.removeEventListener('focusin', keepFocusVisible);
       cancelAnimationFrame(frame);
       resizeObserver?.disconnect();
-      rootStyle.removeProperty('--cover-quick-links-height');
+      style.removeProperty('--cover-quick-links-height');
     };
   }, [pastCover, overlayOpen, scrollForKeyboardFocus]);
+
+  const glide = useCallback(() => {
+    const state = pointer.current;
+    if (state.frame) return;
+    const tick = () => {
+      const stage = cover.current;
+      if (!stage) return;
+      const dx = state.targetX - state.x;
+      const dy = state.targetY - state.y;
+      const atRest = Math.abs(dx) + Math.abs(dy) < .045;
+      state.x = atRest ? state.targetX : state.x + dx * .13;
+      state.y = atRest ? state.targetY : state.y + dy * .13;
+      stage.style.setProperty('--cover-x', `${state.x}px`);
+      stage.style.setProperty('--cover-y', `${state.y}px`);
+      state.frame = atRest ? 0 : requestAnimationFrame(tick);
+    };
+    state.frame = requestAnimationFrame(tick);
+  }, []);
+
+  useEffect(() => {
+    const state = pointer.current;
+    const stage = cover.current;
+    return () => {
+      cancelAnimationFrame(state.frame);
+      Object.assign(state, { x: 0, y: 0, targetX: 0, targetY: 0, frame: 0 });
+      stage?.style.removeProperty('--cover-x');
+      stage?.style.removeProperty('--cover-y');
+    };
+  }, [reduced]);
+
+  const movePointer = (event: PointerEvent<HTMLElement>) => {
+    if (intro || reduced || event.pointerType !== 'mouse' || !window.matchMedia(FINE_POINTER).matches) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    pointer.current.targetX = ((event.clientX - bounds.left) / bounds.width - .5) * 32;
+    pointer.current.targetY = ((event.clientY - bounds.top) / bounds.height - .5) * 32;
+    glide();
+  };
 
   const links = LINKS.map(({ id, href, label, variant }) => (
     <RollingPillButton key={id} href={href} variant={variant} className={variant === 'glass' ? 'bg-black/85' : ''}
@@ -105,41 +197,73 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
 
   return (
     <>
-      <section
-        ref={cover}
-        aria-label="tmrw cover"
-        className="cover-stage relative isolate grid bg-white"
-        data-wide={wide}
-        onPointerMove={reducedMotion ? undefined : moveLight}
-        onPointerLeave={(event) => {
-          event.currentTarget.style.removeProperty('--cover-light-x');
-          event.currentTarget.style.removeProperty('--cover-light-y');
-        }}
-      >
+      <section ref={cover} aria-label="tmrw cover" className="cover-stage" data-intro={intro} data-wide={wide}
+        onPointerMove={movePointer}
+        onPointerLeave={() => {
+          if (!pointer.current.x && !pointer.current.y && !pointer.current.frame) return;
+          pointer.current.targetX = pointer.current.targetY = 0;
+          glide();
+        }}>
         <span ref={marker} className="cover-marker" aria-hidden="true" />
         <div className="cover-edge" aria-hidden="true">
-          <picture>
-            <source type="image/avif" srcSet="/coverpage-420.avif 420w, /coverpage-612.avif 612w" sizes={SIZES} />
-            <source type="image/webp" srcSet="/coverpage-420.webp 420w, /coverpage-612.webp 612w" sizes={SIZES} />
-            <img className="cover-photo" src="/coverpage.jpg" alt="" width={612} height={407}
-              draggable={false} {...{ fetchpriority: 'high' }} />
-          </picture>
-          <div className="cover-lamps">
-            <span /><span /><span />
+          <div className="cover-image-plane">
+            <picture>
+              <source type="image/avif" srcSet="/coverpage-420.avif 420w, /coverpage-612.avif 612w" sizes="(max-width: 420px) 100vw, 612px" />
+              <source type="image/webp" srcSet="/coverpage-420.webp 420w, /coverpage-612.webp 612w" sizes="(max-width: 420px) 100vw, 612px" />
+              <img className="cover-photo" src="/coverpage.jpg" alt="" width={612} height={407} draggable={false}
+                {...{ fetchpriority: 'high' }} />
+            </picture>
           </div>
+          <div className="cover-red-glow" />
           <div className="cover-scrim" />
+          <div className="cover-parallax-glow" />
+          <div className="cover-bloom" />
+          <FilmGrainOverlay />
           <CourtLinesOverlay className="cover-court" />
         </div>
-        <div className="cover-title relative z-10 grid place-items-center text-center font-display font-extrabold tracking-tight text-[#F7F7F6]">
-          <h1 id="cover-heading" className="cover-settled m-0" aria-label="Line up your future">
-            Line up your <span className="whitespace-nowrap">future<span className="cover-dot" aria-hidden="true" /></span>
-          </h1>
-          <div className="cover-intro" aria-hidden="true">
-            <div><span>Line</span>{' '}<span>up</span></div>
-            <div><span>your</span>{' '}<span>future</span></div>
+        <div className="cover-title">
+          <div className="cover-type-measure font-display" aria-hidden="true">
+            {[true, false].map(opening => (
+              <span key={String(opening)} className={opening ? 'cover-measure-intro' : 'cover-measure-final'}
+                ref={opening ? introLayout : finalLayout}>
+                {WORDS.map((word, index) => (
+                  <Fragment key={word}>
+                    {index > 0 && ' '}
+                    <span className="cover-word-sample">
+                      {word}{index === 3 && <span className="cover-dot" />}
+                    </span>
+                    {index === 1 && opening && <br />}
+                  </Fragment>
+                ))}
+              </span>
+            ))}
           </div>
+          <h1 ref={heading} id="cover-heading" className="font-display" tabIndex={-1} aria-label="Line up your future">
+            {WORDS.map((word, index) => (
+              <Fragment key={word}>
+                {index > 0 && ' '}
+                <span className="cover-word" style={{ '--word-delay': `${COVER_WORD_DELAYS[index]}ms` } as CSSProperties}>
+                  <span className="cover-word-mask"><span className="cover-word-rise">
+                    {word}
+                    {index === 3 && (
+                      <span className="cover-dot" data-paused={pulsePaused}>
+                        <span className="cover-dot-core" aria-hidden="true" />
+                        {!intro && !reduced && (
+                          <button type="button" className="cover-dot-toggle"
+                            aria-label={pulsePaused ? 'Resume dot animation' : 'Pause dot animation'}
+                            title={pulsePaused ? 'Resume dot animation' : 'Pause dot animation'}
+                            onClick={() => setPulsePaused(value => !value)} />
+                        )}
+                      </span>
+                    )}
+                  </span></span>
+                </span>
+              </Fragment>
+            ))}
+          </h1>
+          {intro && <button ref={skip} type="button" className="cover-skip" onClick={settle}><span className="sr-only">Skip cover animation</span></button>}
         </div>
-        <div className="cover-actions relative z-20">
+        <div className="cover-actions">
           {links}
         </div>
       </section>

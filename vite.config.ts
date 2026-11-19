@@ -65,6 +65,7 @@ export default defineConfig({
     startApiServer(),
     spaFallback(),
     VitePWA({
+      disable: process.env.VITE_DISABLE_SW === '1',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {

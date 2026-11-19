@@ -56,6 +56,8 @@ import {
 import { AdminDrawer } from './components/AdminDrawer';
 import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { CoverHero } from './components/CoverHero';
+import { CoverHero as PastedCoverHero, PAGE_SHELL as PASTED_PAGE_SHELL } from './components/pasted/CoverHero';
+import { isPastedCover } from './lib/coverMotion';
 import { ManifestoTrail } from './components/ManifestoTrail';
 import { BroadcastMatrix } from './components/BroadcastMatrix';
 import { RosterGrid } from './components/RosterGrid';
@@ -790,13 +792,17 @@ export function MarketplaceApp() {
       ) : view === 'landing' ? (
         <div className="landing-scroll relative z-10 w-full bg-[#FFFFFF]">
           <main className="bg-[#FFFFFF]">
-            <div className="pt-20">
+            {isPastedCover(window.location.search) ? (
+              <div className={`${PASTED_PAGE_SHELL} pt-20`}>
+                <PastedCoverHero onNavigateSection={navigateToHeading} />
+              </div>
+            ) : <div className="pt-20">
               <CoverHero
                 onNavigateSection={navigateToHeading}
                 scrollForKeyboardFocus={scrollForKeyboardFocus}
                 overlayOpen={isMenuOpen || isCartOpen || isSearchOpen || isPortalDrawerOpen || isAuthModalOpen || isSyndicateEnquiryOpen}
               />
-            </div>
+            </div>}
             <HowItWorksStrip />
             <ManifestoTrail onNavigateSection={navigateSection} />
             <BroadcastMatrix />
