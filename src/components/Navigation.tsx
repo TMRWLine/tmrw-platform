@@ -210,6 +210,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           <button
             type="button"
             onClick={onOpenPortal}
+            aria-label="Athlete Portal"
             aria-haspopup="dialog"
             className={`group relative inline-flex items-center gap-1 sm:gap-2 rounded-full px-2 sm:px-4 py-1.5 border transition-all duration-200 mr-1 sm:mr-4 cursor-pointer select-none ${focusRing} ${
               dark
@@ -229,7 +230,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 dark ? 'text-white group-hover:text-black' : 'text-[#080808] group-hover:text-[#F7F7F6]'
               }`}
             >
-              Athlete Portal
+              <span className="hidden sm:inline">Athlete </span>Portal
             </span>
           </button>
 

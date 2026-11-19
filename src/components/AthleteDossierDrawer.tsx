@@ -337,27 +337,27 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-[1840px] h-[94dvh] rounded-[24px] bg-[#FFFFFF] text-[#080808] shadow-[0_30px_90px_rgba(0,0,0,0.28)] border border-black/10 flex flex-col overflow-hidden"
       >
-        <header className="shrink-0 z-30 grid grid-cols-3 items-center px-4 sm:px-6 md:px-10 py-3.5 bg-[#FFFFFF]/95 backdrop-blur-md border-b border-black/10">
-          <div className="flex items-center gap-2">
+        <header className="shrink-0 z-30 grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-3 items-center gap-y-3 sm:gap-y-0 px-4 sm:px-6 md:px-10 py-3.5 bg-[#FFFFFF]/95 backdrop-blur-md border-b border-black/10">
+          <div className="flex max-sm:min-w-0 items-center gap-2">
             <button
               type="button"
               onClick={() => prevEntry && onSelectAthlete?.(prevEntry.record)}
-              className="inline-flex items-center gap-2 rounded-full bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white px-4 py-1.5 font-sans text-xs font-medium transition-colors cursor-pointer border-0"
+              className="inline-flex max-sm:min-w-0 items-center gap-2 rounded-full bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white px-3 sm:px-4 py-1.5 font-sans text-xs font-medium transition-colors cursor-pointer border-0"
             >
               <span>←</span>
-              <span className="font-bold">{prevEntry?.name ?? 'Previous'}</span>
+              <span className="max-sm:truncate font-bold">{prevEntry?.name ?? 'Previous'}</span>
             </button>
             <button
               type="button"
               onClick={() => nextEntry && onSelectAthlete?.(nextEntry.record)}
-              className="inline-flex items-center gap-2 rounded-full bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white px-4 py-1.5 font-sans text-xs font-medium transition-colors cursor-pointer border-0"
+              className="inline-flex max-sm:min-w-0 items-center gap-2 rounded-full bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white px-3 sm:px-4 py-1.5 font-sans text-xs font-medium transition-colors cursor-pointer border-0"
             >
-              <span className="font-bold">{nextEntry?.name ?? 'Next'}</span>
+              <span className="max-sm:truncate font-bold">{nextEntry?.name ?? 'Next'}</span>
               <span>→</span>
             </button>
           </div>
 
-          <div className="flex items-center justify-center gap-7 font-sans text-[13px] tracking-tight">
+          <div className="col-span-2 row-start-2 sm:col-span-1 sm:row-start-auto flex items-center justify-center gap-3 sm:gap-7 font-sans text-[13px] tracking-tight">
             <button
               type="button"
               onClick={() => setDrawerMode('audit')}
