@@ -12,6 +12,7 @@ import type { LandingSectionId } from './Navigation';
 import { CourtLinesOverlay } from './CourtLinesOverlay';
 import { CoverWall } from './CoverWall';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
+import { LegendsReel } from './LegendsReel';
 import { RollingPillButton } from './RollingPillButton';
 import { useInternalLegends } from './useInternalLegends';
 import './CoverHero.css';
@@ -36,7 +37,7 @@ function CoverPhoto({ soft = false }: { soft?: boolean }) {
   );
 }
 
-export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFocus, webgl = false, wall = false }: {
+export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFocus, webgl: lensRequested = false, wall = false }: {
   onNavigateSection: (id: LandingSectionId) => void;
   overlayOpen: boolean;
   scrollForKeyboardFocus: (top?: number) => void;
@@ -44,19 +45,25 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
   wall?: boolean;
 }) {
   const reduced = useReducedMotion();
+  const legendsRequested = wall && isInternalLegendsCover(window.location.search, import.meta.env.VITE_INTERNAL_LEGENDS === '1');
+  const webgl = lensRequested && !legendsRequested;
+  const capable = canAnimateCoverLens(reduced, navigator as Parameters<typeof canAnimateCoverLens>[1]);
+  const [reelPhase, setReelPhase] = useState<'open' | 'reveal' | 'done'>('open');
   const [settled, setSettled] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
   const [pulsePaused, setPulsePaused] = useState(false);
   const [pastCover, setPastCover] = useState(false);
   const [wide, setWide] = useState(false);
   const [lens, setLens] = useState<'pending' | 'primed' | 'active' | 'still'>(() =>
-    webgl && canAnimateCoverLens(reduced, navigator as Parameters<typeof canAnimateCoverLens>[1]) ? 'pending' : 'still');
-  const wallAborted = wall && lens === 'still';
-  const wallOpen = wall && !reduced && (lens === 'pending' || lens === 'primed');
-  const wallSkippable = wall && !reduced && !wallAborted && !introComplete;
-  const legendsRequested = wall && isInternalLegendsCover(window.location.search, import.meta.env.VITE_INTERNAL_LEGENDS === '1');
-  const legends = useInternalLegends(legendsRequested && wallOpen);
-  const intro = !reduced && !introComplete && (!webgl || lens === 'active');
+    webgl && capable ? 'pending' : 'still');
+  const wallAborted = wall && webgl && lens === 'still';
+  const wallOpen = wall && webgl && !reduced && (lens === 'pending' || lens === 'primed');
+  const reelActive = legendsRequested && capable && !introComplete;
+  const reelCovering = reelActive && reelPhase === 'open';
+  const wallSkippable = wall && capable && !wallAborted && !introComplete;
+  const legends = useInternalLegends(reelCovering);
+  const intro = !reduced && !introComplete && (!webgl || lens === 'active')
+    && (!legendsRequested || (capable && !reelCovering));
   const openingTitle = intro && !settled;
   const cover = useRef<HTMLElement>(null);
   const poster = useRef<HTMLImageElement>(null);
@@ -105,6 +112,8 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
     playLens.current?.();
     setLens('active');
   }, []);
+  const revealReel = useCallback(() => setReelPhase('reveal'), []);
+  const endReel = useCallback(() => setReelPhase('done'), []);
 
   useEffect(() => {
     if (!wallSkippable) return;
@@ -343,6 +352,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
       <section ref={cover} aria-label="tmrw cover" className="cover-stage" data-intro={intro} data-wide={wide}
         data-lens={webgl ? lens : undefined}
         data-wall={wall || undefined}
+        data-legends-static={legendsRequested && (!capable || (introComplete && reelPhase !== 'done')) || undefined}
         style={sceneTiming}
         onPointerMove={movePointer}
         onPointerLeave={() => {
@@ -380,9 +390,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
           <div className="cover-bloom" />
           <FilmGrainOverlay />
           <CourtLinesOverlay className="cover-court" />
-          {wallOpen && (!legendsRequested || legends !== undefined) && (
-            <CoverWall ready={lens === 'primed'} onFlipped={revealWall} legends={legends ?? undefined} />
-          )}
+          {wallOpen && <CoverWall ready={lens === 'primed'} onFlipped={revealWall} />}
         </div>
         <span className="cover-court-handoff" aria-hidden="true" />
         <div className="cover-title">
@@ -415,7 +423,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
                     {index === 3 && (
                       <span className="cover-dot" data-paused={pulsePaused}>
                         <span className="cover-dot-drop" aria-hidden="true"><span className="cover-dot-core" /></span>
-                        {!intro && !reduced && (!webgl || lens === 'active') && (
+                        {!intro && !reduced && !reelCovering && (!legendsRequested || capable) && (!webgl || lens === 'active') && (
                           <button type="button" className="cover-dot-toggle"
                             aria-label={pulsePaused ? 'Resume dot animation' : 'Pause dot animation'}
                             title={pulsePaused ? 'Resume dot animation' : 'Pause dot animation'}
@@ -430,8 +438,9 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
           </h1>
           {intro && !wall && <button ref={skip} type="button" className="cover-skip" onClick={finishIntro}><span className="sr-only">Skip cover animation</span></button>}
         </div>
+        {reelActive && reelPhase !== 'done' && <LegendsReel frames={legends} onReveal={revealReel} onEnd={endReel} />}
         {wallSkippable && <button ref={skip} type="button" className="cover-wall-skip" onClick={skipWall}>Skip intro</button>}
-        <div className="cover-actions" {...(wallOpen ? { inert: '' } : {})}>
+        <div className="cover-actions" {...(wallOpen || reelCovering ? { inert: '' } : {})}>
           {links}
         </div>
       </section>

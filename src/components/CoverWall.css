@@ -66,20 +66,6 @@
   text-transform: uppercase;
 }
 .cover-wall-caption small { display: block; color: #d1d1c7; font-size: .625rem; text-transform: none; }
-.cover-wall[data-legends] img { object-position: center 28%; }
-.cover-wall[data-legends] .cover-wall-caption { font-size: clamp(.625rem, 1.15vw, .9rem); }
-.cover-legends-notice {
-  position: fixed;
-  z-index: 45;
-  bottom: .5rem;
-  left: .5rem;
-  max-width: calc(100vw - 1rem);
-  padding: .375rem .5rem;
-  background: #080808;
-  color: #f7f7f6;
-  font: .625rem/1.3 'JetBrains Mono', monospace;
-  pointer-events: none;
-}
 .cover-wall-skip {
   position: absolute;
   z-index: 21;

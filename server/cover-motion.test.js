@@ -7,7 +7,7 @@ import {
   isPastedCover, isWebGLCover,
 } from '../src/lib/coverMotion.ts';
 import { isWallCover, releasedWallPhoto, wallTileTiming, wallTimeline } from '../src/lib/coverWall.ts';
-import { isInternalLegendsCover, readLegendsTiles } from '../src/lib/internalLegends.ts';
+import { LEGENDS_FLICK_MS, LEGENDS_MANIFEST_SIZE, LEGENDS_PHONE_SIZE, isInternalLegendsCover, legendsReelTimeline, readLegendsTiles } from '../src/lib/internalLegends.ts';
 
 test('only cover=pasted opts into the unmodified cover', () => {
   assert.equal(isPastedCover('?cover=pasted'), true);
@@ -65,10 +65,23 @@ test('the legends mockup requires a private build and is restricted to local man
   assert.equal(isInternalLegendsCover('?cover=wall', true), false);
   assert.equal(isInternalLegendsCover('?cover=wall&legends=1', true), true);
   const tile = { name: 'Test athlete', sport: 'Netball', filename: 'test-athlete.webp' };
-  assert.equal(readLegendsTiles(Array.from({ length: 24 }, () => tile)).length, 24);
+  assert.equal(readLegendsTiles(Array.from({ length: LEGENDS_MANIFEST_SIZE }, () => tile)).length, LEGENDS_MANIFEST_SIZE);
   assert.throws(() => readLegendsTiles([tile]));
   for (const filename of ['https://example.org/face.webp', '../face.webp']) {
-    assert.throws(() => readLegendsTiles(Array.from({ length: 24 }, () => ({ ...tile, filename }))));
+    assert.throws(() => readLegendsTiles(Array.from({ length: LEGENDS_MANIFEST_SIZE }, () => ({ ...tile, filename }))));
+  }
+});
+
+test('the private reel accelerates into the wall and leaves time for the unchanged settle', () => {
+  assert.equal(LEGENDS_MANIFEST_SIZE, 16);
+  assert.equal(LEGENDS_PHONE_SIZE, 8);
+  assert.ok(LEGENDS_FLICK_MS < COVER_WORD_DELAYS[0]);
+  for (const count of [LEGENDS_MANIFEST_SIZE, LEGENDS_PHONE_SIZE]) {
+    const timeline = legendsReelTimeline(count);
+    assert.equal(timeline.length, count + 1);
+    assert.ok(timeline.slice(1, count).every((hold, i) => hold <= timeline[i]));
+    const reelTime = timeline.reduce((sum, hold) => sum + hold, 0);
+    assert.ok(reelTime + COVER_SETTLE_MS >= 5000 && reelTime + COVER_SETTLE_MS <= 6100);
   }
 });
 

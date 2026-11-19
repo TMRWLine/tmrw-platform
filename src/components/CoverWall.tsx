@@ -1,6 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { releasedWallPhoto, wallTileTiming, wallTimeline, type WallTile } from '../lib/coverWall';
-import { LEGENDS_PATH, type LegendsTile } from '../lib/internalLegends';
 import './CoverWall.css';
 
 const poses = {
@@ -35,12 +34,8 @@ const tiles: IllustratedTile[] = ([
   ['Surf', 'Bodyboard', 'surf'], ['Netball', 'Attack', 'shot'], ['Swimming', 'Medley', 'swim'], ['Climbing', 'Speed', 'climb'],
 ] as const).map(([sport, caption, pose]) => ({ sport, caption, pose }));
 
-export function CoverWall({ ready, onFlipped, legends }: { ready: boolean; onFlipped: () => void; legends?: LegendsTile[] }) {
-  const [timeline] = useState(() => {
-    const phone = matchMedia('(max-width: 640px)').matches;
-    const timing = wallTimeline(phone);
-    return legends ? { ...timing, columns: phone ? 4 : 6, rows: phone ? 3 : 4 } : timing;
-  });
+export function CoverWall({ ready, onFlipped }: { ready: boolean; onFlipped: () => void }) {
+  const [timeline] = useState(() => wallTimeline(matchMedia('(max-width: 640px)').matches));
   const [full, setFull] = useState(false);
   const flipping = full && ready;
 
@@ -57,14 +52,11 @@ export function CoverWall({ ready, onFlipped, legends }: { ready: boolean; onFli
 
   const grid = { '--wall-columns': timeline.columns, '--wall-rows': timeline.rows } as CSSProperties;
   return (
-    <div className="cover-wall" data-wall-phase={flipping ? 'flip' : full ? 'full' : 'fill'} data-legends={legends ? true : undefined} style={grid}>
+    <div className="cover-wall" data-wall-phase={flipping ? 'flip' : full ? 'full' : 'fill'} style={grid}>
       {tiles.slice(0, timeline.columns * timeline.rows).map((tile, index) => {
         const [head, path, prop] = poses[tile.pose] as [string, string, string?];
         const [cx, cy] = head.split(' ');
-        const legend = legends?.[index];
-        const photo = legend
-          ? { src: LEGENDS_PATH + 'photos/' + legend.filename, alt: legend.name }
-          : releasedWallPhoto(tile);
+        const photo = releasedWallPhoto(tile);
         const { populateDelay, flipDelay } = wallTileTiming(index, timeline);
         const timing = { '--wall-fill-delay': `${populateDelay}ms`, '--wall-flip-delay': `${flipDelay}ms` } as CSSProperties;
         return (
@@ -80,7 +72,7 @@ export function CoverWall({ ready, onFlipped, legends }: { ready: boolean; onFli
                 </svg>
               )}
               <span className="cover-wall-index">{String(index + 1).padStart(2, '0')}</span>
-              <span className="cover-wall-caption">{legend?.name ?? tile.sport}<small>{legend?.sport ?? tile.caption}</small></span>
+              <span className="cover-wall-caption">{tile.sport}<small>{tile.caption}</small></span>
             </div>
           </div>
         );
