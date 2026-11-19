@@ -93,6 +93,26 @@ test('a shared receipt, wrong cookie or legacy anonymous order cannot release es
   assert.equal(state.creates.length, 0);
 }));
 
+test('GST-inclusive orders release only the ex-GST hold', () => fixture(async ({ state, post }) => {
+  Object.assign(state.session.metadata, { exGstCents: '75000', gstCents: '7500', totalIncGstCents: '82500' });
+  state.charge.amount = 82500;
+  assert.equal((await post({}, null)).status, 200);
+  assert.equal(state.creates[0].body.get('amount'), '26250');
+}));
+
+for (const [name, metadata, chargeAmount] of [
+  ['mismatched total', { exGstCents: '75000', gstCents: '7500' }, 75000],
+  ['GST-inflated hold', { exGstCents: '75000', gstCents: '7500', athleteEscrowHoldCents: '28000' }, 82500],
+  ['missing GST', { exGstCents: '75000' }, 82500],
+  ['missing base', { gstCents: '7500' }, 82500],
+  ['invalid base', { exGstCents: 'invalid', gstCents: '7500' }, 82500],
+]) test(`GST escrow rejects ${name}`, () => fixture(async ({ state, post }) => {
+  Object.assign(state.session.metadata, metadata);
+  state.charge.amount = chargeAmount;
+  assert.equal((await post({}, null)).status, 404);
+  assert.equal(state.creates.length, 0);
+}));
+
 for (const [name, change, status, body = {}, token = 'valid-token'] of [
   ['no token for owned order', (s) => { s.session.metadata.sponsorUserId = 'sponsor'; }, 401, {}, null],
   ['bad token for owned order', (s) => { s.session.metadata.sponsorUserId = 'sponsor'; }, 401, {}, 'invalid'],

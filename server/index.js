@@ -83,6 +83,8 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), a
       case 'checkout.session.completed': {
         const session = event.data.object;
         const totalAud = (session.amount_total ?? 0) / 100;
+        const gstAud = Number(session.metadata?.gstCents || 0) / 100;
+        const exGstAud = session.metadata?.exGstCents === undefined ? totalAud - gstAud : Number(session.metadata.exGstCents) / 100;
         const orderType = session.metadata?.orderType || 'sponsorship_tier';
         const athleteCutCents = Number(session.metadata?.athleteCutCents || 0);
         const clubCutCents = Number(session.metadata?.clubCutCents || 0);
@@ -90,7 +92,7 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), a
 
         console.log(`[stripe webhook] ✓ Checkout Session Completed: ${session.id}`);
         console.log(
-          `[stripe webhook]   Type: ${orderType} | Gross: A$${totalAud.toFixed(2)} | Athlete: A$${(athleteCutCents / 100).toFixed(2)} | Club: A$${(clubCutCents / 100).toFixed(2)} | Partner: A$${(partnerCutCents / 100).toFixed(2)}`,
+          `[stripe webhook]   Type: ${orderType} | Ex-GST: A$${exGstAud.toFixed(2)} | GST: A$${gstAud.toFixed(2)} | Total: A$${totalAud.toFixed(2)} | Athlete: A$${(athleteCutCents / 100).toFixed(2)} | Club: A$${(clubCutCents / 100).toFixed(2)} | Partner: A$${(partnerCutCents / 100).toFixed(2)}`,
         );
         break;
       }
@@ -505,6 +507,7 @@ app.post('/api/checkout/create-session', (req, res, next) => {
       }
       const grantAccess = createGrantAccess();
       const unitCents = Math.round(pkg.price_aud * 100);
+      const gstCents = Math.round(unitCents * 0.1);
       const body = new URLSearchParams();
       body.set('mode', 'payment');
       body.set('success_url', successUrl);
@@ -524,6 +527,13 @@ app.post('/api/checkout/create-session', (req, res, next) => {
         body.set('line_items[0][price_data][product_data][images][0]', productImage);
       }
       body.set('metadata[orderType]', 'sponsorship_tier');
+      body.set('line_items[1][quantity]', '1');
+      body.set('line_items[1][price_data][currency]', 'aud');
+      body.set('line_items[1][price_data][unit_amount]', String(gstCents));
+      body.set('line_items[1][price_data][product_data][name]', 'GST (10%)');
+      body.set('metadata[exGstCents]', String(unitCents));
+      body.set('metadata[gstCents]', String(gstCents));
+      body.set('metadata[totalIncGstCents]', String(unitCents + gstCents));
       body.set('metadata[athleteId]', athleteId);
       body.set('metadata[tierId]', tierId);
       body.set('metadata[athleteName]', athlete.full_name.slice(0, 500));
@@ -624,8 +634,17 @@ app.post('/api/checkout/release-escrow', async (req, res) => {
       m?.orderType === 'sponsorship_tier' && m.athleteId === athleteId && typeof group === 'string' && transferGroupPattern.test(group) && (transferGroup === undefined || group === transferGroup) &&
       Number.isSafeInteger(c.amount) && c.amount > 0)) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
     if (m.escrowMode === 'upfront_100') return res.status(409).json({ error: 'Upfront order has no held escrow to release' });
+    let exGstCents = c.amount;
+    if (m.exGstCents !== undefined || m.gstCents !== undefined) {
+      exGstCents = Number(m.exGstCents);
+      const gstCents = Number(m.gstCents);
+      if (!(typeof m.exGstCents === 'string' && /^[1-9][0-9]*$/.test(m.exGstCents) &&
+        typeof m.gstCents === 'string' && /^[0-9]+$/.test(m.gstCents) &&
+        Number.isSafeInteger(exGstCents) && Number.isSafeInteger(gstCents) &&
+        c.amount === exGstCents + gstCents)) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
+    }
     if (!(m.escrowMode === 'milestone_50_50' && typeof m.athleteEscrowHoldCents === 'string' && /^[1-9][0-9]*$/.test(m.athleteEscrowHoldCents) &&
-      Number.isSafeInteger(amount) && amount <= escrowHold(c.amount))) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
+      Number.isSafeInteger(amount) && amount <= escrowHold(exGstCents))) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
     const transfers = await escrowList('transfers', group);
     if (escrowHoldCents !== undefined && escrowHoldCents !== amount) return res.status(409).json({ error: 'Escrow amount does not match the order' });
     const existing = transfers.find((t) => [order.id, order.charge.id].includes(t.metadata?.escrowReleaseFor));
