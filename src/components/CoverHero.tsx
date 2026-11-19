@@ -54,17 +54,39 @@ export function CoverHero({ onNavigateSection, overlayOpen }: {
   useEffect(() => {
     const bar = quickLinks.current;
     if (!bar) return;
+    const rootStyle = document.documentElement.style;
+    const syncBarHeight = () => {
+      rootStyle.setProperty('--cover-quick-links-height', `${bar.getBoundingClientRect().height}px`);
+    };
+    syncBarHeight();
+    const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(syncBarHeight) : null;
+    resizeObserver?.observe(bar, { box: 'border-box' });
+
+    const focusGap = 8;
+    let frame = 0;
     const keepFocusVisible = (event: FocusEvent) => {
       const target = event.target;
       if (!(target instanceof HTMLElement) || bar.contains(target) || !target.matches(':focus-visible')) return;
-      const barTop = bar.getBoundingClientRect().top;
-      const bottom = target.getBoundingClientRect().bottom;
-      if (barTop > 0 && bottom > barTop && bottom <= window.innerHeight) {
-        window.scrollBy({ top: bottom - barTop + 8, behavior: 'instant' });
-      }
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => {
+          if (document.activeElement !== target) return;
+          const barRect = bar.getBoundingClientRect();
+          const targetRect = target.getBoundingClientRect();
+          const overlap = targetRect.bottom + focusGap - barRect.top;
+          if (barRect.height > 0 && overlap > 0 && targetRect.top < barRect.bottom) {
+            window.scrollBy({ top: overlap, behavior: 'instant' });
+          }
+        });
+      });
     };
     document.addEventListener('focusin', keepFocusVisible);
-    return () => document.removeEventListener('focusin', keepFocusVisible);
+    return () => {
+      document.removeEventListener('focusin', keepFocusVisible);
+      cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      rootStyle.removeProperty('--cover-quick-links-height');
+    };
   }, [pastCover, overlayOpen]);
 
   const links = LINKS.map(({ id, href, label, variant }) => (

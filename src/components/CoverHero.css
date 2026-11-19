@@ -175,8 +175,10 @@
   .cover-quick-links .cover-pill > span > span { white-space: normal; transform: none; }
   .cover-quick-links .cover-pill [aria-hidden='true'] { display: none; }
 
-  html:has(.cover-quick-links) { scroll-padding-bottom: calc(56px + max(8px, env(safe-area-inset-bottom))); }
-  .landing-scroll { padding-bottom: calc(56px + max(8px, env(safe-area-inset-bottom))); }
+  html:has(.cover-quick-links) {
+    scroll-padding-bottom: var(--cover-quick-links-height, calc(53px + max(8px, env(safe-area-inset-bottom))));
+  }
+  .landing-scroll { padding-bottom: var(--cover-quick-links-height, calc(53px + max(8px, env(safe-area-inset-bottom)))); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
