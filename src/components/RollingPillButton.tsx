@@ -19,7 +19,7 @@ export const RollingPillButton: React.FC<RollingPillButtonProps> = ({
   const variantStyles =
     variant === 'glass'
       ? 'bg-transparent text-white border border-white/60 hover:bg-white hover:text-[#080808] hover:border-white backdrop-blur-sm'
-      : 'bg-white text-[#080808] border border-white hover:bg-[#B8FF00] hover:border-[#B8FF00] hover:text-[#080808] shadow-sm';
+      : 'bg-white text-[#080808] border border-white hover:bg-volt hover:border-volt hover:text-[#080808] shadow-sm';
 
   return (
     <button

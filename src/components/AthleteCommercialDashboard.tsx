@@ -134,17 +134,17 @@ export const AthleteCommercialDashboard: React.FC<AthleteCommercialDashboardProp
         type="button"
         onClick={onExit}
         data-testid="dashboard-back-to-roster"
-        className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#D2FF00] hover:text-[#D2FF00] transition-colors"
+        className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-volt hover:text-volt transition-colors"
       >
         ← Back to Roster [ESC]
       </button>
-      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#D2FF00]">
+      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-volt">
         ATHLETE COMMERCIAL DASHBOARD
       </span>
       <button
         type="button"
         onClick={onEditProfile}
-        className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#D2FF00] hover:text-[#D2FF00] transition-colors"
+        className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-volt hover:text-volt transition-colors"
       >
         Edit Talent Profile
       </button>
@@ -176,7 +176,7 @@ export const AthleteCommercialDashboard: React.FC<AthleteCommercialDashboardProp
           <button
             type="button"
             onClick={() => void load()}
-            className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#D2FF00] hover:text-[#D2FF00] transition-colors"
+            className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-volt hover:text-volt transition-colors"
           >
             Retry
           </button>
@@ -197,7 +197,7 @@ export const AthleteCommercialDashboard: React.FC<AthleteCommercialDashboardProp
   ];
 
   return (
-    <div className="min-h-screen bg-[#060709] text-white selection:bg-[#D2FF00] selection:text-black">
+    <div className="min-h-screen bg-[#060709] text-white selection:bg-volt selection:text-black">
       {topBar}
       <div className="max-w-6xl mx-auto px-6 py-10 lg:px-16 space-y-8">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white/10 border border-white/10">
@@ -214,7 +214,7 @@ export const AthleteCommercialDashboard: React.FC<AthleteCommercialDashboardProp
           <button
             type="button"
             onClick={() => setFocus('overview')}
-            className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-[#D2FF00] hover:text-[#D2FF00] transition-colors"
+            className="font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 border border-white/20 text-white hover:border-volt hover:text-volt transition-colors"
           >
             ← Back to overview
           </button>

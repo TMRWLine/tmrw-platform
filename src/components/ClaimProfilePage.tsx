@@ -175,14 +175,14 @@ export function ClaimProfilePage() {
               <ClaimHero label="(01) Private preview" lines={['Backed by your', 'postcode']}>
                 <p className="m-0 font-sans text-xs text-white/75 leading-relaxed">Local businesses want to back local talent. We’ve built you a private starting profile. Nobody sees it unless you say yes.</p>
                 <button className={ATHLETE_VOLT_CTA} onClick={() => setStep('signin')}>Claim my profile <span aria-hidden="true">↗</span></button>
-                <p className="m-0 font-sans text-xs text-white/75">Free. No contract. No agent fees.</p>
+                <p className="m-0 font-sans text-xs text-white/75">Free. Claiming sets up your profile. It doesn’t sign a sponsorship agreement or give permission to use your photos or video.</p>
               </ClaimHero>
               <section className={PANEL} aria-label="Private profile preview">
                 <div className="flex items-center justify-between gap-2">
                   <span className={`${META} text-neutral-500`}>Private profile preview</span>
                   <span className={`${META} rounded-full bg-carbon text-volt px-2 py-1 whitespace-nowrap`}>Not live</span>
                 </div>
-                <h2 className="m-0 font-sans font-black uppercase text-2xl tracking-tight leading-tight">{lead.full_name}<span className="text-volt">.</span></h2>
+                <h2 className="m-0 font-sans font-black uppercase text-2xl tracking-tight leading-tight">{lead.full_name}.</h2>
                 <dl className="m-0 border-t border-black/10">
                   {(['sport', 'league', 'club'] as const).map(field => <div key={field} className={`flex justify-between items-start gap-4 border-b border-black/10 py-3 ${ATHLETE_MONO} text-[10px]`}>
                     <dt className="uppercase tracking-wider text-neutral-500">{FIELD_LABELS[field]}</dt>
@@ -192,7 +192,7 @@ export function ClaimProfilePage() {
               </section>
               <section className="mb-6">
                 <div className="flex items-center justify-between gap-3 mb-3">
-                  <h2 className={SECTION_HEADING}>In your corner<span className="text-volt">.</span></h2>
+                  <h2 className={SECTION_HEADING}>In your corner.</h2>
                   <span className={`${META} text-neutral-500 text-right`}>Local sponsors</span>
                 </div>
                 <p className={COPY}>A few businesses in your region. Examples of potential connections, not offers or endorsements.</p>
@@ -206,7 +206,7 @@ export function ClaimProfilePage() {
               <button className={LINK} aria-expanded={info} onClick={() => setInfo(!info)}>Why am I seeing this? / Sponsorship, not representation</button>
               {info && <div className={`${PANEL} ${COPY}`}>
                 <p>We found you via {lead.where_found}. We recorded public sporting facts only, for private research.</p>
-                <p>tmrw/. is not an agent. This is a sponsorship platform, not representation or an agency agreement. No master licence is requested here; any agreement comes later, only if there is a real sponsor match.</p>
+                <p>tmrw/. helps you explore sponsorship. Claiming a profile does not grant rights to your name, image and likeness (NIL), sign a Master Licence or give us permission to use your photos or videos. If a sponsor match comes up, you can decide separately whether to accept the deal and approve any media use.</p>
                 {lead.verification_source_url && <a className={LINK} href={lead.verification_source_url} target="_blank" rel="noreferrer">View public source ↗</a>}
               </div>}
               {privacyActions}
@@ -246,7 +246,7 @@ export function ClaimProfilePage() {
                 <label className={CHECK}><input className={CHECK_INPUT} type="checkbox" checked={under18} onChange={e => setUnder18(e.target.checked)} /><span>I’m under 18 / require guardian consent</span></label>
                 {minor && <section className={PANEL}>
                   <span className={`${META} rounded-full bg-volt text-carbon px-3 py-1 inline-block`}>Still private</span>
-                  <h2 className={SECTION_HEADING}>A parent in your corner<span className="text-volt">.</span></h2>
+                  <h2 className={SECTION_HEADING}>A parent in your corner.</h2>
                   <p className={COPY}>Your profile stays private until your parent or guardian consents.</p>
                   <div><label className={ATHLETE_FIELD_LABEL} htmlFor="claim-guardian-email">Parent / guardian email</label>
                     <div className={`${ATHLETE_FIELD_SHELL} !bg-[var(--canvas)]`}><input className={ATHLETE_FIELD_INPUT} id="claim-guardian-email" type="email" required value={guardianEmail} onChange={e => setGuardianEmail(e.target.value)} /></div></div>
@@ -254,7 +254,7 @@ export function ClaimProfilePage() {
                 </section>}
                 <p className={COPY}>You can get independent advice before you say yes, and change your mind any time.</p>
                 <section aria-label="Consent choices" className="rounded-2xl border border-black/10 p-5 space-y-4">
-                  <h2 className={SECTION_HEADING}>Before you go live<span className="text-volt">.</span></h2>
+                  <h2 className={SECTION_HEADING}>Before you go live.</h2>
                   {[
                     'tmrw/. can store and use my details to run my sponsorship profile.',
                     'Sponsors can see only the fields I’ve marked Public.',
@@ -290,7 +290,7 @@ export function ClaimProfilePage() {
               </section>
               <form className="space-y-5" onSubmit={e => { e.preventDefault(); void act(async () => { await rpc('consent_claim_guardian', { p_token: guardianToken, p_consent: guardianConsent }); setPendingGuardian(false); setStep('done'); }); }}>
                 <label className={CHECK}><input className={CHECK_INPUT} type="checkbox" required checked={guardianConsent} onChange={e => setGuardianConsent(e.target.checked)} /><span>I’m this athlete’s parent or legal guardian. tmrw/. can use their details, show sponsors only their chosen Public fields, and contact them about sponsorship.</span></label>
-                <p className={COPY}>tmrw/. is not an agent. This is not a representation agreement or master licence.</p>
+                <p className={COPY}>This approval only covers the chosen profile fields and contact about sponsorship. It does not grant commercial rights or approve use of photos or video. Any sponsorship agreement, Master Licence and media release require separate review.</p>
                 <button className={ATHLETE_PRIMARY} disabled={busy}>Approve profile publication ↗</button>
               </form>
             </>}
