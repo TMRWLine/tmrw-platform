@@ -111,7 +111,7 @@ test('sponsorship checkout returns a grant only to the initiating browser after 
       return Response.json(transfer);
     }
     if (url.origin === 'https://db.fixture.invalid' && url.pathname === '/rest/v1/athlete_profiles' &&
-        url.searchParams.get('select') === 'stripe_account_id') {
+        url.searchParams.get('select') === 'stripe_account_id,current_club') {
       assert.equal(url.searchParams.get('id'), `eq.${athleteId}`);
       assert.equal(options.headers.apikey, 'fixture-service-key');
       return Response.json([{ stripe_account_id: 'acct_fixture' }]);

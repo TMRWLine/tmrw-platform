@@ -28,7 +28,7 @@ async function fixture(run) {
     if (url.pathname === '/rest/v1/athlete_profiles') {
       assert.notEqual(state.session.metadata.athleteId, 'marcus-thorne', 'slug must not reach Supabase');
       assert.equal(url.searchParams.get('id'), `eq.${athleteId}`);
-      assert.equal(url.searchParams.get('select'), 'stripe_account_id');
+      assert.equal(url.searchParams.get('select'), 'stripe_account_id,current_club');
       assert.equal(options.headers.apikey, 'test-service');
       return Response.json(state.noProfile ? [] : [{ stripe_account_id: state.account }]);
     }
@@ -183,7 +183,7 @@ test('checkout stamps verified sponsor and copies escrow metadata to the payment
   assert.equal(result.transferGroup, 'TG_fixture');
   const body = state.checkouts[0];
   assert.equal(body.get('payment_intent_data[transfer_group]'), 'TG_fixture');
-  for (const [key, value] of Object.entries({ sponsorUserId: 'sponsor', escrowMode: 'milestone_50_50', athleteEscrowHoldCents: '26250', athleteId, tierId: 'local_merchant', orderType: 'sponsorship_tier' })) {
+  for (const [key, value] of Object.entries({ sponsorUserId: 'sponsor', clubCadence: 'quarterly_batch', escrowMode: 'milestone_50_50', athleteEscrowHoldCents: '26250', athleteId, tierId: 'local_merchant', orderType: 'sponsorship_tier' })) {
     assert.equal(body.get(`metadata[${key}]`), value);
     assert.equal(body.get(`payment_intent_data[metadata][${key}]`), value);
   }
