@@ -27,17 +27,6 @@ export const RollingPillButton: React.FC<RollingPillButtonProps> = ({
     <a
       href={href}
       onClick={onClick}
-      onPointerMove={(event) => {
-        if (event.pointerType !== 'mouse' || !window.matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)').matches) return;
-        const { offsetX, offsetY } = event.nativeEvent;
-        const target = event.currentTarget;
-        target.style.setProperty('--pill-x', `${(offsetX / target.offsetWidth - 0.5) * 8}px`);
-        target.style.setProperty('--pill-y', `${(offsetY / target.offsetHeight - 0.5) * 6}px`);
-      }}
-      onPointerLeave={(event) => {
-        event.currentTarget.style.removeProperty('--pill-x');
-        event.currentTarget.style.removeProperty('--pill-y');
-      }}
       className={`cover-pill ${baseStyles} ${variantStyles} ${className}`}
     >
       {/* Precision height container matching font line-height */}
