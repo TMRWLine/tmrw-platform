@@ -30,7 +30,7 @@ export const AssetImage: React.FC<AssetImageProps> = ({
         const target = e.target as HTMLImageElement;
         if (fallbackFiles.length > 0) {
           const nextFile = fallbackFiles[0];
-          target.src = nextFile.startsWith('/') ? nextFile : `/${nextFile}`;
+          target.src = nextFile.startsWith('http') || nextFile.startsWith('/') ? nextFile : `/${nextFile}`;
         }
       }}
       {...props}
