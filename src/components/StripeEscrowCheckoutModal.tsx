@@ -23,6 +23,7 @@ export interface StripeCheckoutPayload {
 }
 
 export interface StripeEscrowReceipt {
+  checkoutSessionId?: string;
   txId: string;
   transferGroup: string;
   chargeId: string;
@@ -43,11 +44,7 @@ export interface StripeEscrowReceipt {
 interface StripeEscrowCheckoutModalProps {
   payload: StripeCheckoutPayload | null;
   onClose: () => void;
-  onSuccess: (receipt: StripeEscrowReceipt) => void;
 }
-
-type PaymentMethodTab = 'apple_pay' | 'payto_becs' | 'card';
-type ClearingStage = 'idle' | 'apple_biometric' | 'stage_1_charge' | 'stage_2_transfers' | 'stage_3_rcti';
 
 const LIT_OBSIDIAN_BTN =
   'bg-[#0F0F11] text-white font-mono font-bold text-xs py-4 px-7 rounded-xl border border-black/15 transition-all uppercase tracking-wider text-center cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.8),0_10px_25px_rgba(0,0,0,0.25),0_0_15px_rgba(204,255,0,0.18)] hover:bg-[#080808] hover:border-[#CCFF00] hover:text-[#CCFF00] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-2px_0_rgba(0,0,0,0.9),0_15px_30px_rgba(0,0,0,0.35),0_0_28px_rgba(204,255,0,0.35)] active:translate-y-[1px]';
@@ -65,9 +62,7 @@ function sanitizeInput(raw: string): string {
 export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps> = ({
   payload,
   onClose,
-  onSuccess,
 }) => {
-  const [method, setMethod] = useState<PaymentMethodTab>('apple_pay');
   const [escrowMode, setEscrowMode] = useState<'milestone_50_50' | 'upfront_100'>('milestone_50_50');
   const [clubCadence, setClubCadence] = useState<ClubPayoutCadence>('quarterly_batch');
 
@@ -75,24 +70,14 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
   const [abn, setAbn] = useState('51 824 753 556');
   const [email, setEmail] = useState('finance@corporatepartner.com.au');
 
-  const [cardNumber, setCardNumber] = useState('4532 •••• •••• 8841');
-  const [cardExpiry, setCardExpiry] = useState('09/29');
-  const [cardCvc, setCardCvc] = useState('842');
-  const [payToId, setPayToId] = useState('treasury@corporatepartner.com.au');
-
-  const [clearingStage, setClearingStage] = useState<ClearingStage>('idle');
+  const [openingCheckout, setOpeningCheckout] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!payload) return;
-    setClearingStage('idle');
+    setOpeningCheckout(false);
     setErrorMsg(null);
     setClubCadence('quarterly_batch');
-    if (payload.priceAud >= 50000) {
-      setMethod('payto_becs');
-    } else {
-      setMethod('apple_pay');
-    }
   }, [payload]);
 
   useEffect(() => {
@@ -100,14 +85,14 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && clearingStage === 'idle') onClose();
+      if (e.key === 'Escape' && !openingCheckout) onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener('keydown', onKey);
     };
-  }, [payload, clearingStage, onClose]);
+  }, [payload, openingCheckout, onClose]);
 
   if (!payload) return null;
 
@@ -122,75 +107,46 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
   const abnDigits = stripNonDigits(abn);
   const canAuthorise = legalName.trim().length > 1 && abnReady && email.includes('@');
 
-  const runInAppStripeClearingSequence = async (selectedMethodLabel: string) => {
-    if (clearingStage !== 'idle' && clearingStage !== 'apple_biometric') return;
+  const openStripeCheckout = async () => {
+    if (openingCheckout) return;
     if (!canAuthorise) {
       setErrorMsg(ABN_ERROR_MESSAGE);
       return;
     }
     setErrorMsg(null);
-
-    const sessionPromise = createCheckoutSession({
-      athleteId: payload.athleteId,
-      tierId: payload.tierId,
-      amountAud: payload.priceAud,
-      postcode: payload.postcode,
-      sponsorLegalName: sanitizeInput(legalName.trim()),
-      sponsorAbn: abn,
-      sponsorEmail: sanitizeInput(email.trim()),
-      escrowMode,
-      clubCadence,
-      athlete: {
-        full_name: payload.athleteName,
-        grassroots_club_name: payload.clubName,
-        image_url: payload.athleteImage,
-      },
-    }).catch(() => null);
-
-    setClearingStage('stage_1_charge');
-    await new Promise((r) => setTimeout(r, 650));
-    setClearingStage('stage_2_transfers');
-    await new Promise((r) => setTimeout(r, 750));
-    setClearingStage('stage_3_rcti');
-    await new Promise((r) => setTimeout(r, 650));
-
-    const sessionResult = await sessionPromise;
-    const txId = `TX-2026-${payload.postcode}-${Math.floor(100000 + Math.random() * 900000)}`;
-    const receipt: StripeEscrowReceipt = {
-      txId,
-      transferGroup: split.transferGroup,
-      chargeId: sessionResult?.chargeId ?? `py_${txId}`,
-      platformRetainedId: sessionResult?.platformRetainedId ?? `fee_tmrw_t0_${txId}`,
-      athleteTransferId: sessionResult?.athleteTransferId ?? `tr_ath_${txId}`,
-      clubTransferId: sessionResult?.clubTransferId ?? `q_batch_club_${txId}`,
-      clubCadence,
-      nextQuarterSweepDate: split.nextQuarterSweepDate,
-      idempotencyKey: sessionResult?.idempotencyKey ?? `idemp_${txId}`,
-      legalName: sanitizeInput(legalName.trim()),
-      abn,
-      email: sanitizeInput(email.trim()),
-      paymentMethod: selectedMethodLabel,
-      escrowMode,
-      paidAt: new Date().toISOString(),
-    };
-
+    setOpeningCheckout(true);
     try {
-      const existing = JSON.parse(localStorage.getItem('tmrw_escrow_ledger') || '[]');
-      existing.unshift({ ...receipt, payload, split });
-      localStorage.setItem('tmrw_escrow_ledger', JSON.stringify(existing.slice(0, 30)));
-    } catch {
-      // ignore storage quota errors
+      const { checkoutUrl, sessionId } = await createCheckoutSession({
+        athleteId: payload.athleteId,
+        tierId: payload.tierId,
+        amountAud: payload.priceAud,
+        postcode: payload.postcode,
+        sponsorLegalName: sanitizeInput(legalName.trim()),
+        sponsorAbn: abn,
+        sponsorEmail: sanitizeInput(email.trim()),
+        escrowMode,
+        clubCadence,
+        athlete: {
+          full_name: payload.athleteName,
+          grassroots_club_name: payload.clubName,
+          image_url: payload.athleteImage,
+        },
+      });
+      if (!checkoutUrl || !sessionId || !/^cs_(test|live)_[a-zA-Z0-9]+$/.test(sessionId)) {
+        throw new Error('Secure Stripe Checkout is unavailable.');
+      }
+      window.location.assign(checkoutUrl);
+    } catch (error) {
+      setOpeningCheckout(false);
+      setErrorMsg(error instanceof Error ? error.message : 'Unable to open Stripe Checkout.');
     }
-
-    setClearingStage('idle');
-    onSuccess(receipt);
   };
 
   return createPortal(
     <div
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
-      onClick={() => clearingStage === 'idle' && onClose()}
+      onClick={() => !openingCheckout && onClose()}
       className="mobile-overlay checkout-backdrop fixed inset-0 z-[110] bg-black/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
     >
       <div
@@ -225,7 +181,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
 
           <button
             type="button"
-            disabled={clearingStage !== 'idle'}
+            disabled={openingCheckout}
             onClick={onClose}
             className="shrink-0 rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-4 py-1.5 font-sans text-xs font-bold border-0 cursor-pointer transition-colors"
           >
@@ -410,7 +366,7 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
 
           <div>
             <label className="font-mono text-[9px] uppercase tracking-wider text-neutral-500 block mb-1">
-              Corporate Email (Receives 3-Part RCTI & Meta/TikTok OAuth Tokens)
+              Corporate email
             </label>
             <input
               type="email"
@@ -422,172 +378,9 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
             />
           </div>
 
-          <div>
-            <div className="grid grid-cols-3 gap-2 mb-3">
-              {(
-                [
-                  ['apple_pay', ' Apple Pay / Link'],
-                  ['payto_becs', 'PayTo / BECS (0% Fee)'],
-                  ['card', 'Corporate Card'],
-                ] as const
-              ).map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setMethod(id)}
-                  className={`rounded-xl border py-2.5 px-2 font-sans text-xs font-bold cursor-pointer transition-all ${
-                    method === id
-                      ? 'border-[#080808] bg-[#080808] text-white'
-                      : 'border-black/10 bg-[#F2F2F0] text-neutral-600 hover:text-[#080808]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {method === 'apple_pay' && (
-              <div className="rounded-2xl border border-black/10 bg-[#F2F2F0] p-4 text-center space-y-3">
-                <p className="m-0 font-sans text-xs text-neutral-600">
-                  Instant on-domain biometric authorisation on iPhone, iPad, and Mac via <strong className="text-[#080808]">Apple Pay</strong> or <strong className="text-[#080808]">Stripe Link</strong>.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    disabled={!canAuthorise || clearingStage !== 'idle'}
-                    onClick={() => setClearingStage('apple_biometric')}
-                    className="h-11 rounded-xl bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] font-sans text-sm font-bold flex items-center justify-center gap-2 cursor-pointer border-0 transition-colors shadow-sm disabled:opacity-40"
-                  >
-                    <span className="text-lg leading-none"></span>
-                    <span>Pay {formatAudFromCents(split.grossCents)}</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!canAuthorise || clearingStage !== 'idle'}
-                    onClick={() => runInAppStripeClearingSequence('Stripe Link Instant Wallet')}
-                    className="h-11 rounded-xl bg-white hover:bg-[#080808] text-[#080808] hover:text-white border border-black/15 font-sans text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-40"
-                  >
-                    <span className="h-2 w-2 rounded-full bg-[#080808]" />
-                    <span>Pay with Stripe Link →</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {method === 'payto_becs' && (
-              <div className="rounded-2xl border border-black/10 bg-[#F2F2F0] p-4 space-y-2.5">
-                <div className="flex items-center justify-between font-mono text-[9px] uppercase">
-                  <span className="text-[#080808] font-bold">NPP PAYTO / BECS INSTITUTIONAL ESCROW (AU & NZ)</span>
-                  <span className="bg-[#CCFF00] text-[#080808] px-1.5 py-0.5 rounded font-bold">0% CARD FEE</span>
-                </div>
-                <input
-                  type="text"
-                  value={payToId}
-                  onChange={(e) => setPayToId(sanitizeInput(e.target.value))}
-                  placeholder="PayID / ABN or Corporate BSB + Account Number"
-                  className="w-full rounded-xl bg-white border border-black/15 px-3.5 py-2.5 font-mono text-xs text-[#080808]"
-                />
-                <p className="m-0 font-sans text-[11px] text-neutral-600">
-                  Authorises an instant real-time PayTo / BECS escrow agreement with `source_transaction` transfer locking.
-                </p>
-              </div>
-            )}
-
-            {method === 'card' && (
-              <div className="rounded-2xl border border-black/10 bg-[#F2F2F0] p-4 space-y-2.5">
-                <div className="flex items-center justify-between font-mono text-[9px] uppercase text-neutral-600">
-                  <span>CORPORATE AMEX / VISA / MASTERCARD</span>
-                  <span className="text-[#080808] font-bold">PCI-DSS LEVEL 1 · 3DS2</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <input
-                    type="text"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(sanitizeInput(e.target.value))}
-                    className="sm:col-span-2 rounded-xl bg-white border border-black/15 px-3.5 py-2.5 font-mono text-xs text-[#080808]"
-                    placeholder="Card Number"
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      value={cardExpiry}
-                      onChange={(e) => setCardExpiry(sanitizeInput(e.target.value))}
-                      className="rounded-xl bg-white border border-black/15 px-2.5 py-2.5 font-mono text-xs text-[#080808]"
-                      placeholder="MM/YY"
-                    />
-                    <input
-                      type="text"
-                      value={cardCvc}
-                      onChange={(e) => setCardCvc(sanitizeInput(e.target.value))}
-                      className="rounded-xl bg-white border border-black/15 px-2.5 py-2.5 font-mono text-xs text-[#080808]"
-                      placeholder="CVC"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {clearingStage === 'apple_biometric' && (
-            <div className="rounded-2xl border-2 border-[#080808] bg-[#080808] text-white p-5 text-center space-y-3 animate-fadeIn">
-              <div className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#CCFF00] text-[#080808] text-xl font-bold">
-                
-              </div>
-              <h4 className="m-0 font-sans text-sm font-bold text-white">
-                Apple Pay Biometric Escrow · {formatAudFromCents(split.grossCents)} AUD
-              </h4>
-              <p className="m-0 font-mono text-[10px] uppercase text-neutral-300">
-                70% Athlete ({formatAudFromCents(split.athlete70Cents)}) · 15% Club ({formatAudFromCents(split.club15Cents)}) · 15% Ops ({formatAudFromCents(split.ops15Cents)} Retained T+0)
-              </p>
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setClearingStage('idle')}
-                  className="flex-1 rounded-xl border border-white/20 bg-transparent py-2.5 font-mono text-[10px] uppercase text-neutral-300 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => runInAppStripeClearingSequence('Apple Pay Biometric (iOS/macOS)')}
-                  className="flex-2 rounded-xl bg-[#CCFF00] text-[#080808] py-2.5 px-5 font-mono text-xs font-bold uppercase cursor-pointer border-0"
-                >
-                  ✓ Confirm with Face ID / Touch ID →
-                </button>
-              </div>
-            </div>
-          )}
-
-          {(clearingStage === 'stage_1_charge' ||
-            clearingStage === 'stage_2_transfers' ||
-            clearingStage === 'stage_3_rcti') && (
-            <div className="rounded-2xl bg-[#080808] text-white p-4 space-y-2.5 animate-fadeIn font-mono text-[10.5px]">
-              <div className="flex items-center justify-between text-[#CCFF00]">
-                <span>STRIPE CONNECT // {split.transferGroup}</span>
-                <span className="animate-pulse">● EXECUTING</span>
-              </div>
-              <div className="space-y-1.5 text-neutral-300">
-                <div className="flex items-center justify-between">
-                  <span>01. Retaining 15% Platform Ops ({formatAudFromCents(split.ops15Cents)}) at T+0</span>
-                  <span className="text-[#CCFF00]">✓ RETAINED</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>
-                    02. Routing Athlete ({formatAudFromCents(split.athleteT0AdvanceCents)}) & Club ({clubCadence === 'quarterly_batch' ? split.nextQuarterSweepDate : 'T+0'})
-                  </span>
-                  <span className="text-[#CCFF00]">
-                    {clearingStage === 'stage_1_charge' ? 'ROUTING...' : '✓ LOCKED'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>03. Minting 3-Part ATO/IRD RCTI & Meta/TikTok OAuth</span>
-                  <span className="text-[#CCFF00]">
-                    {clearingStage === 'stage_3_rcti' ? '✓ UNLOCKED' : 'MINTING...'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+          <p className="m-0 rounded-2xl border border-black/10 bg-[#F2F2F0] p-4 text-xs text-neutral-600">
+            Stripe Checkout confirms the final amount and available payment methods. Enter payment details only on Stripe.
+          </p>
 
           {errorMsg && (
             <p className="m-0 font-mono text-xs text-[#FF3300] text-center">{errorMsg}</p>
@@ -597,21 +390,11 @@ export const StripeEscrowCheckoutModal: React.FC<StripeEscrowCheckoutModalProps>
         <footer className="shrink-0 border-t border-black/10 bg-[#FFFFFF] px-5 py-4 sm:px-7">
           <button
             type="button"
-            disabled={!canAuthorise || clearingStage !== 'idle'}
-            onClick={() =>
-              method === 'apple_pay'
-                ? setClearingStage('apple_biometric')
-                : runInAppStripeClearingSequence(
-                    method === 'payto_becs'
-                      ? 'Stripe PayTo / BECS Escrow'
-                      : 'Stripe Corporate Card (3DS2)',
-                  )
-            }
+            disabled={!canAuthorise || openingCheckout}
+            onClick={() => void openStripeCheckout()}
             className={`w-full ${LIT_OBSIDIAN_BTN} disabled:opacity-40`}
           >
-            {clearingStage !== 'idle'
-              ? 'EXECUTING 70/15/15 STRIPE TRANSFERS...'
-              : `AUTHORISE ${formatAudFromCents(split.grossCents)} VIA STRIPE ESCROW & UNLOCK OAUTH →`}
+            {openingCheckout ? 'OPENING STRIPE CHECKOUT…' : 'CONTINUE TO STRIPE CHECKOUT →'}
           </button>
         </footer>
       </div>

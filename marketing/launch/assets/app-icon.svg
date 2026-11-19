@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 128 128" role="img">
+  <title>tmrw/. app icon</title>
+  <rect data-background="true" width="128" height="128" fill="#F7F7F6"/>
+  <rect x="14" y="14" width="100" height="100" rx="25" fill="none" stroke="#080808" stroke-width="2.5"/>
+  <g fill="#080808">
+    <polygon points="42,92 56.5,92 80.271,36 65.771,36"/>
+    <circle cx="78" cy="83.7" r="8.3"/>
+  </g>
+</svg>

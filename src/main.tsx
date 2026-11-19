@@ -1,13 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import { ClaimProfilePage } from './components/ClaimProfilePage';
 import './index.css';
 import './mobile.css';
 import { registerSW } from 'virtual:pwa-register';
 
+const App = React.lazy(() => import('./App'));
+const isClaim = window.location.pathname.replace(/\/+$/, '') === '/claim';
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <React.Suspense fallback={<div role="status">Loading TMRW…</div>}>
+      {isClaim ? <ClaimProfilePage /> : <App />}
+    </React.Suspense>
   </React.StrictMode>
 );
 

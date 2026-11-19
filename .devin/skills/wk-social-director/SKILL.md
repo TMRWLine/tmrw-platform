@@ -1,12 +1,25 @@
 ---
 name: wk-social-director
-description: Generate daily 500k-follower-optimized social campaigns (IG, TikTok, LinkedIn) inspired by All Blacks, Warriors, and Overtime aesthetics, enforcing zero em-dashes and NZ English.
+description: Generate daily TMRWLine social campaigns for Instagram, TikTok and LinkedIn, optimised for growth towards 500,000 real followers and written in New Zealand English.
 ---
 1. Checkout `release/v1-stable-launch` and branch into `marketing/campaigns-[YYYY-MM-DD]`.
-2. Read `src/data/roster.ts` and previous campaigns in `/marketing/daily-campaigns/` to select fresh athletes and postcodes.
-3. Write 3 high-impact social scripts to `/marketing/daily-campaigns/[YYYY-MM-DD].md` using the 2026 NIL growth pillars:
-   - The All Blacks / Overtime Visual Hook: Raw, high-contrast monochrome framing (`#080808` background, `#F7F7F6` text, volt green `#B8FF00` period on `tmrw/.`). No corporate fluff.
-   - The 6 AM Shift vs. Matchday Reality: Highlighting the athlete balancing casual work with elite state/national league broadcasts.
-   - The Transparent Receipt: Publishing exact dollar splits (e.g., $1,750 athlete / $375 grassroots club) to trigger viral commentary and trust.
-4. MANDATORY FORMATTING: Strict New Zealand English spelling (optimise, prioritising, programme), zero em-dashes, and zero technical jargon (never mention PostGIS, Supabase, or APIs).
-5. Run `grep -n "—" /marketing/daily-campaigns/[YYYY-MM-DD].md` to verify zero em-dashes exist, then open a Pull Request and post the summary to Slack.
+2. Read the [TMRWLine social media strategy](../../../marketing/launch/social-strategy.md), `src/data/roster.ts` and previous campaigns in `/marketing/daily-campaigns/`. Use the strategy's benchmark playbook, format mix, current growth phase and latest weekly review when planning each daily campaign. Only feature an athlete if their written consent and the media rights for the proposed use are documented. A signed master licence (`master_licence_signed: true`) can help locate that documentation; the flag alone is not clearance. Never name example athletes, scouted prospects or anyone without both permissions in campaign drafts or published posts. Use only verified postcodes for eligible athletes. If no athlete qualifies, write athlete-free brand posts.
+3. Write scripts to `/marketing/daily-campaigns/[YYYY-MM-DD].md` for the slots in the weekly plan, using only the three hero series:
+   - **Postcode People:** Open with a cleared adult or the founder speaking to camera. Use the Friday Postcode Call-Out and ask for a postcode in private before any identifying details. Write a useful reply video when there is a safe question to answer.
+   - **Before the Whistle:** Show a real local pre-game ritual through action and natural sound. Clear the people and footage first. If the cast is not cleared, shoot anonymous details or use a clearly labelled, unbranded dramatisation.
+   - **The Local Receipt:** Show the whole split, including TMRWLine's share. Label samples as not payments. Cite dated, relevant evidence for real figures and claims about cost or participation. Write in plain language and invite a useful question.
+   - Plan one shoot for 10 to 15 edits and use it to support 5 to 7 TikToks, 4 to 5 Instagram Reels plus Stories daily and 3 LinkedIn posts each week (2 founder, 1 Company Page). Prepare early club and creator collaborations, subject to documented permission. No money is spent and no ad account is touched without the user's separate go-ahead.
+4. Use `TMRWLine` as the company name and the identity manual's heavy lowercase `tmrw/.` wordmark with a 23° slash and round dot. Keep `Line up your Future` in copy. In the lockup, centre `LINE UP YOUR FUTURE` in bold, slightly condensed sans-serif capitals directly below the wordmark, with no rule. Allow at least 0.4em of clear space on every side. Use the primary dark or light SVG in `marketing/launch/assets/` for campaigns rather than retyping the logo. The primary light lockup uses ink for the entire mark. Keep `logo-web-*.svg` as web references only; use spaced monospace for data captions rather than as part of the social logo. Use the rounded-square slash-and-dot app icon for social avatars. Study these benchmark accounts for look, feel and engagement. Use them for reference only: never copy their assets, music or copy, and never tag them.
+   - Overtime: Capture raw emotion, the stakes of grassroots games and the human story behind the athlete.
+   - House of Highlights: Use quick cuts, punchy score and time captions, and moving type to draw the community into local games.
+   - Formula 1: Make the build-up feel cinematic with high-contrast frames, deliberate pacing and quiet details before the action.
+   - Red Bull Racing: Use behind-the-scenes craft and precise data overlays to make the work behind performance worth watching.
+   - Andscape: Explain the money and access gaps in sport in plain language, with people at the centre.
+   - All Blacks: Let restraint, rituals and natural sound build intensity before the first whistle.
+   - NZ Warriors: Make local supporters feel part of the story through shared rituals and community pride.
+5. Include an asset brief for every post:
+   - List the shots or slide visuals. Specify one cleared real action photo and one large headline for the cover, with legible type in the phone crop. Use `#080808`, `#F7F7F6` and only `#B8FF00` for volt on dark. Close every end card with `Every postcode has a tomorrow` and keep the primary lockup separate. No team logos, club emblems or trademarked jerseys.
+   - Give a music brief with mood, BPM and search terms. Select audio in-app from each platform's commercial-use music library for Instagram and TikTok. Never specify a named copyrighted track or reuse library audio on a different platform. A LinkedIn document post stays silent; give a music brief for a video adaptation only, using original audio or audio cleared for LinkedIn.
+   - List relevant hashtags, any planned @ mentions and a reason to share. Tag only subjects or partners with documented permission for the post; otherwise write `None`. Never tag benchmark accounts. Give three-second hold as the first video measure, or label the closest available measure if not reported.
+6. MANDATORY FORMATTING: Strict New Zealand English spelling (optimise, prioritising, programme), zero em-dashes or en-dashes, and zero technical jargon (never mention PostGIS, Supabase, or APIs in campaign drafts).
+7. Run `rg -n '[\x{2013}\x{2014}]' marketing/daily-campaigns/[YYYY-MM-DD].md marketing/launch/social-strategy.md .devin/skills/wk-social-director/SKILL.md`. Expect no matches (exit code 1). Then open a Pull Request and post the summary to Slack.
