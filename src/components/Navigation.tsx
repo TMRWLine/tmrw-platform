@@ -248,6 +248,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             type="button"
             onClick={() => emitOverlayEvent(OPEN_DEPLOY_DRAWER_EVENT)}
             aria-label="Open capital deployment drawer"
+            aria-haspopup="dialog"
             className={`${iconButton} max-sm:p-1.5 sm:ml-1 ${focusRing}`}
           >
             <BagIcon />

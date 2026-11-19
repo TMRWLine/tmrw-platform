@@ -232,7 +232,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     typeof window !== 'undefined' ? loadAllCapsules() : [...DEFAULT_CAPSULE_DROPS],
   );
   const [cartItems, setCartItems] = useState<{ item: CartCapsuleItem; qty: number; size: string }[]>([]);
-  const drawerRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLDialogElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const demoHeadingRef = useRef<HTMLHeadingElement>(null);
   const [bagUpdate, setBagUpdate] = useState('');
   const [selectedSize, setSelectedSize] = useState<Record<string, string>>({
     drop_mt_2200: 'L',
@@ -308,16 +310,23 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+    const drawer = drawerRef.current;
+    if (!isOpen || !drawer) return;
+    const trigger = document.activeElement;
+    drawer.showModal();
+    closeRef.current?.focus();
+    return () => {
+      drawer.close();
+      if (document.activeElement === document.body && trigger instanceof HTMLElement && trigger.getClientRects().length) {
+        trigger.focus({ preventScroll: true });
+      }
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen) drawerRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+    if (!isOpen) return;
+    drawerRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+    if (view === 'checkout_demo') demoHeadingRef.current?.focus({ preventScroll: true });
   }, [isOpen, view]);
 
   if (!isOpen) return null;
@@ -457,10 +466,30 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const previewClubUnit = Math.round(previewNetMargin * 0.15);
 
   return createPortal(
-    <div
+    <dialog
       ref={drawerRef}
+      aria-label="Merchandise showroom and bag"
       data-lenis-prevent="true"
-      className="fixed inset-0 z-[90] bg-[#FFFFFF] text-[#0F0F11] flex flex-col overflow-y-auto overscroll-contain selection:bg-volt selection:text-[#0F0F11] motion-safe:animate-fadeIn"
+      onCancel={event => {
+        event.preventDefault();
+        onClose();
+      }}
+      onKeyDown={event => {
+        if (event.key !== 'Tab') return;
+        const controls = [...event.currentTarget.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]',
+        )].filter(control => control.tabIndex >= 0 && control.getClientRects().length);
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }}
+      className="fixed inset-0 m-0 h-full w-full max-h-none max-w-none border-0 bg-white p-0 text-[#0F0F11] open:flex flex-col overflow-y-auto overscroll-contain selection:bg-volt selection:text-[#0F0F11] motion-safe:animate-fadeIn"
     >
       <header className="shrink-0 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-5 flex items-center justify-between border-b border-black/10">
         <BrandLockup onClick={onHome} />
@@ -509,6 +538,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             Bag ({cartItems.reduce((s, i) => s + i.qty, 0)})
           </button>
           <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
             title="Close [ESC]"
@@ -1095,7 +1125,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
           {view === 'checkout_demo' && demoReceipt && (
             <div className="max-w-lg mx-auto text-center my-auto py-12 space-y-5">
-              <h2 className="m-0 font-sans text-4xl font-black uppercase tracking-tight text-[#0F0F11]">
+              <h2 ref={demoHeadingRef} tabIndex={-1} className="m-0 font-sans text-4xl font-black uppercase tracking-tight text-[#0F0F11]">
                 Demo order
               </h2>
               <p className="m-0 font-sans text-sm text-neutral-700 leading-relaxed">
@@ -1132,7 +1162,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           )}
         </div>
       </div>
-    </div>,
+    </dialog>,
     document.body,
   );
 };
