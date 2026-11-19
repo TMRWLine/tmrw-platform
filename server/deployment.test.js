@@ -44,17 +44,19 @@ test('Vercel keeps API paths out of the SPA rewrite and includes the runtime cat
   assert.ok(catalogue.packages.every((entry) => typeof entry.tier_id === 'string' && Number.isFinite(entry.price_aud)));
 });
 
-test('Vercel applies anti-framing, HTTPS and a scoped script policy to pages and API responses', () => {
+test('Vercel permits same-origin cover previews but blocks third-party framing and keeps the scoped script policy', () => {
   const config = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url)));
   const { source, headers } = config.headers[0];
   const path = new RegExp(`^${source}$`);
-  for (const route of ['/', '/the-roster', '/api/health', '/sw.js']) assert.ok(path.test(route));
+  for (const route of ['/', '/concepts', '/the-roster', '/api/health', '/sw.js']) assert.ok(path.test(route));
   const values = Object.fromEntries(headers.map(({ key, value }) => [key, value]));
   const directives = Object.fromEntries(values['Content-Security-Policy'].split(';').map(directive => {
     const [key, ...sources] = directive.trim().split(/\s+/);
     return [key, sources];
   }));
-  assert.deepEqual(directives['frame-ancestors'], ["'none'"]);
+  assert.deepEqual(directives['frame-ancestors'], ["'self'"]);
+  assert.deepEqual(directives['frame-src'], ["'self'", 'https://vercel.live']);
+  assert.equal(values['X-Frame-Options'], 'SAMEORIGIN');
   assert.deepEqual(directives['object-src'], ["'none'"]);
   assert.deepEqual(directives['script-src'], ["'self'", 'https://vercel.live']);
   for (const source of ['https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://*.supabase.co', 'https://unpkg.com']) {
