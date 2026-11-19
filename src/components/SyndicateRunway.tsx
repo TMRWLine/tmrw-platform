@@ -692,7 +692,7 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
   };
 
   return (
-    <div data-runway-root="true" className="w-full bg-[#080808]">
+    <div data-runway-root="true" className="w-full overflow-x-clip sm:overflow-visible bg-[#080808]">
       <style>{`
         #commercial-tiers [data-sovereign-board] {
           border-top: 0 !important;
