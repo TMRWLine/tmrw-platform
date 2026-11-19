@@ -240,7 +240,6 @@ export function MarketplaceApp() {
     if (view !== 'landing' || isPastedCover(window.location.search)) return;
     const cover = document.querySelector('.landing-scroll .cover-stage');
     const sections = [
-      ['how-it-works', 'cover-story-heading'],
       ['roster', 'roster'],
       ['commercial-tiers', 'commercial-tiers'],
       ['syndicate', 'brisbane-2032-runway'],
@@ -250,7 +249,7 @@ export function MarketplaceApp() {
       frame = 0;
       const past = (cover?.getBoundingClientRect().bottom ?? Infinity) <= NAV_HEIGHT_PX;
       setPastLandingCover(past);
-      let active: LandingSectionId | null = past ? 'how-it-works' : null;
+      let active: LandingSectionId | null = null;
       if (past) {
         for (const [id, anchor] of sections) {
           const section = document.getElementById(anchor);
