@@ -222,10 +222,10 @@ const RetroPixelCabinetIcon: React.FC = () => (
     <rect x="16" y="6" width="2" height="2" fill="#0F0F11" />
     <rect x="15" y="9" width="2" height="2" fill="#0F0F11" />
 
-    <rect x="10" y="15" width="12" height="15" fill="#CCFF00" stroke="#0F0F11" strokeWidth="2" />
-    <rect x="12" y="17" width="8" height="5" fill="#99CC00" stroke="#0F0F11" strokeWidth="1" />
+    <rect x="10" y="15" width="12" height="15" fill="#B8FF00" stroke="#0F0F11" strokeWidth="2" />
+    <rect x="12" y="17" width="8" height="5" fill="#B8FF00" stroke="#0F0F11" strokeWidth="1" />
     <rect x="15" y="19" width="2" height="1" fill="#FFFFFF" />
-    <rect x="12" y="23" width="8" height="5" fill="#99CC00" stroke="#0F0F11" strokeWidth="1" />
+    <rect x="12" y="23" width="8" height="5" fill="#B8FF00" stroke="#0F0F11" strokeWidth="1" />
     <rect x="15" y="25" width="2" height="1" fill="#FFFFFF" />
   </svg>
 );
@@ -460,7 +460,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   return createPortal(
     <div
       data-lenis-prevent="true"
-      className="mobile-overlay fixed inset-0 z-[90] bg-[#FFFFFF] text-[#0F0F11] flex flex-col overflow-y-auto selection:bg-[#CCFF00] selection:text-[#0F0F11] animate-fadeIn"
+      className="mobile-overlay fixed inset-0 z-[90] bg-[#FFFFFF] text-[#0F0F11] flex flex-col overflow-y-auto selection:bg-volt selection:text-[#0F0F11] animate-fadeIn"
     >
       <header className="shrink-0 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-5 flex items-center justify-between border-b border-black/10">
         <BrandLockup onClick={onClose} />
@@ -500,7 +500,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             onClick={() => setView('creator')}
             className={`rounded-full px-3.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider cursor-pointer border transition-colors ${
               view === 'creator'
-                ? 'bg-[#0F0F11] text-[#CCFF00] border-[#0F0F11]'
+                ? 'bg-[#0F0F11] text-volt border-[#0F0F11]'
                 : 'bg-[#EAEAE6] text-[#0F0F11] border-black/10 hover:bg-[#0F0F11] hover:text-white'
             }`}
           >
@@ -513,7 +513,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <button
               type="button"
               onClick={() => setView('capsules')}
-              className="rounded-full bg-[#0F0F11] text-[#CCFF00] px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer"
+              className="rounded-full bg-[#0F0F11] text-volt px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer"
             >
               {cartItems.reduce((s, i) => s + i.qty, 0)} Items · A${grossTotal.toLocaleString()}
             </button>
@@ -526,7 +526,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/20 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
           >
             <span>Close</span>
-            <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">✕</span>
+            <span className="text-[11px] text-volt group-hover:text-[#0F0F11] transition-colors">✕</span>
           </button>
         </div>
       </header>
@@ -545,7 +545,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <button
                   type="button"
                   onClick={() => setView('capsules')}
-                  className="rounded-full bg-[#CCFF00] hover:bg-[#0F0F11] text-[#0F0F11] hover:text-white px-7 py-3 font-sans text-xs font-bold tracking-tight transition-colors cursor-pointer border-0 shadow-sm"
+                  className="rounded-full bg-volt hover:bg-[#0F0F11] text-[#0F0F11] hover:text-white px-7 py-3 font-sans text-xs font-bold tracking-tight transition-colors cursor-pointer border-0 shadow-sm"
                 >
                   Explore athlete capsules
                 </button>
@@ -569,12 +569,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-600 mb-1.5">
                     <span>ZERO-INVENTORY PRE-ORDER ENGINE</span>
                     <span>·</span>
-                    <span className="rounded bg-[#0F0F11] text-[#CCFF00] px-2 py-0.5">
+                    <span className="rounded bg-[#0F0F11] text-volt px-2 py-0.5">
                       {hasPartnerActive ? '55 / 15 / 15 / 15 CO-LAB SPLIT' : '70 / 15 / 15 ROYALTY SPLIT'}
                     </span>
                   </div>
                   <h2 className="m-0 font-sans text-3xl sm:text-5xl font-black uppercase tracking-[-0.03em] text-[#0F0F11] leading-none">
-                    Athlete Capsule Creator Studio<span className="text-[#CCFF00]">.</span>
+                    Athlete Capsule Creator Studio<span className="text-volt">.</span>
                   </h2>
                 </div>
                 <button
@@ -599,7 +599,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             type="button"
                             onClick={() => setSpecimenSide('front')}
                             className={`rounded-full px-3 py-1 font-mono text-[9px] font-bold uppercase cursor-pointer border-0 transition-colors ${
-                              specimenSide === 'front' ? 'bg-[#0F0F11] text-[#CCFF00]' : 'bg-transparent text-[#0F0F11]'
+                              specimenSide === 'front' ? 'bg-[#0F0F11] text-volt' : 'bg-transparent text-[#0F0F11]'
                             }`}
                           >
                             Front
@@ -608,7 +608,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             type="button"
                             onClick={() => setSpecimenSide('back')}
                             className={`rounded-full px-3 py-1 font-mono text-[9px] font-bold uppercase cursor-pointer border-0 transition-colors ${
-                              specimenSide === 'back' ? 'bg-[#0F0F11] text-[#CCFF00]' : 'bg-transparent text-[#0F0F11]'
+                              specimenSide === 'back' ? 'bg-[#0F0F11] text-volt' : 'bg-transparent text-[#0F0F11]'
                             }`}
                           >
                             Back
@@ -642,7 +642,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                         <div className="flex items-center justify-between font-mono text-[9.5px] font-bold uppercase relative z-10 text-white">
                           <span>{activeChassis.garmentType.toUpperCase()} · {newUnitsCap} UNITS</span>
-                          <span className="bg-black/60 text-[#CCFF00] px-2.5 py-0.5 rounded-full">
+                          <span className="bg-black/60 text-volt px-2.5 py-0.5 rounded-full">
                             {specimenSide === 'back' ? 'BACK ARCHIVE' : 'FRONT SPECIMEN'}
                           </span>
                         </div>
@@ -657,10 +657,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           >
                             <div className={`text-5xl sm:text-6xl text-white drop-shadow-lg ${getLockupClass(selectedLockupStyle)}`}>
                               {newMonogram}
-                              <span className="text-[#CCFF00]">.</span>
+                              <span className="text-volt">.</span>
                             </div>
                             {newCollabPartner.trim() && (
-                              <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-black/85 text-[#CCFF00] px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-widest border border-[#CCFF00]/30 shadow-sm">
+                              <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-black/85 text-volt px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-widest border border-volt/30 shadow-sm">
                                 <span>× {newCollabPartner}</span>
                               </div>
                             )}
@@ -673,12 +673,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                                 : 'opacity-0 scale-95 pointer-events-none'
                             }`}
                           >
-                            <div className="text-[10px] uppercase text-[#CCFF00] tracking-widest">
+                            <div className="text-[10px] uppercase text-volt tracking-widest">
                               ARCHIVE // {newClubName}
                             </div>
                             <div className="text-3xl sm:text-4xl font-black tracking-tight text-white drop-shadow-md mt-1">
                               POSTCODE {newPostcode}
-                              <span className="text-[#CCFF00]">.</span>
+                              <span className="text-volt">.</span>
                             </div>
                           </div>
                         </div>
@@ -747,7 +747,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             >
                               <div className="flex items-center justify-between font-sans text-xs font-bold">
                                 <span>{chassis.code} · {chassis.name}</span>
-                                <span className={isSelected ? 'text-[#CCFF00]' : 'text-neutral-500'}>
+                                <span className={isSelected ? 'text-volt' : 'text-neutral-500'}>
                                   Base A${chassis.baseCostAud}
                                 </span>
                               </div>
@@ -773,7 +773,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               onClick={() => setSelectedSwatchId(sw.id)}
                               className={`rounded-lg py-2 px-2 font-mono text-[9px] font-bold uppercase cursor-pointer border transition-all ${
                                 selectedSwatchId === sw.id
-                                  ? 'bg-[#0F0F11] text-[#CCFF00] border-[#0F0F11]'
+                                  ? 'bg-[#0F0F11] text-volt border-[#0F0F11]'
                                   : 'bg-[#EAEAE6] text-[#0F0F11] border-black/10'
                               }`}
                             >
@@ -794,7 +794,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               onClick={() => setSelectedLockupStyle(st.id)}
                               className={`rounded-lg py-2 px-2 font-mono text-[9px] font-bold uppercase cursor-pointer border transition-all ${
                                 selectedLockupStyle === st.id
-                                  ? 'bg-[#0F0F11] text-[#CCFF00] border-[#0F0F11]'
+                                  ? 'bg-[#0F0F11] text-volt border-[#0F0F11]'
                                   : 'bg-[#EAEAE6] text-[#0F0F11] border-black/10'
                               }`}
                             >
@@ -846,7 +846,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     {newCollabPartner.trim().length > 0 && (
                       <div className="rounded-xl bg-[#0F0F11] text-white p-3.5 flex flex-wrap items-center justify-between gap-3">
                         <div className="font-mono text-[10px]">
-                          <span className="text-[#CCFF00] font-bold uppercase block">
+                          <span className="text-volt font-bold uppercase block">
                             CO-BRANDED ROYALTY RAIL ({newCollabPartner.toUpperCase()})
                           </span>
                           <span className="text-neutral-300">Route 15% partner royalty via Stripe Connect?</span>
@@ -855,10 +855,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           type="button"
                           onClick={() => setEnablePartnerRoyaltySplit((v) => !v)}
                           className={`rounded-full px-3.5 py-1.5 font-mono text-[9.5px] font-bold uppercase cursor-pointer border-0 ${
-                            enablePartnerRoyaltySplit ? 'bg-[#CCFF00] text-[#0F0F11]' : 'bg-white/15 text-white'
+                            enablePartnerRoyaltySplit ? 'bg-volt text-[#0F0F11]' : 'bg-white/15 text-white'
                           }`}
                         >
-                          {enablePartnerRoyaltySplit ? '✓ 55/15/15/15 Split' : '70/15/15 Solo Split'}
+                          {enablePartnerRoyaltySplit ? '✓ Include apparel collaborator royalty' : 'No apparel collaborator royalty'}
                         </button>
                       </div>
                     )}
@@ -909,7 +909,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         className="mt-0.5 accent-[#0F0F11]"
                       />
                       <span className="font-mono text-[10px] text-neutral-700 leading-relaxed">
-                        <strong>SPORT INTEGRITY AUSTRALIA &amp; TPA CLEARANCE:</strong> Verified sovereign athlete monogram IP.
+                        <strong>APPAREL RIGHTS:</strong> Confirm permission to use the athlete’s mark and check applicable sport rules before production.
                       </span>
                     </label>
                   </div>
@@ -917,7 +917,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <button
                     type="submit"
                     disabled={!siaCleared}
-                    className="w-full rounded-full bg-[#0F0F11] hover:bg-[#CCFF00] disabled:opacity-40 text-white hover:text-[#0F0F11] py-4 font-mono text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer border-0 shadow-md"
+                    className="w-full rounded-full bg-[#0F0F11] hover:bg-volt disabled:opacity-40 text-white hover:text-[#0F0F11] py-4 font-mono text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer border-0 shadow-md"
                   >
                     Publish Vertical Specimen to Showroom →
                   </button>
@@ -935,7 +935,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     LIMITED ATHLETE CAPSULE DROPS · ZERO INVENTORY RISK
                   </span>
                   <h2 className="m-0 font-sans text-3xl sm:text-5xl font-black uppercase tracking-[-0.03em] text-[#0F0F11] leading-none">
-                    Co-Branded Athlete Merch<span className="text-[#CCFF00]">.</span>
+                    Co-Branded Athlete Merch<span className="text-volt">.</span>
                   </h2>
                 </div>
 
@@ -944,7 +944,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     type="button"
                     onClick={() => setSponsorBulkMode(false)}
                     className={`rounded-full px-4 py-1.5 font-mono text-[10px] font-bold uppercase cursor-pointer border-0 transition-colors ${
-                      !sponsorBulkMode ? 'bg-[#0F0F11] text-[#CCFF00]' : 'bg-transparent text-[#0F0F11]'
+                      !sponsorBulkMode ? 'bg-[#0F0F11] text-volt' : 'bg-transparent text-[#0F0F11]'
                     }`}
                   >
                     Fan Drop (1x Unit)
@@ -953,7 +953,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     type="button"
                     onClick={() => setSponsorBulkMode(true)}
                     className={`rounded-full px-4 py-1.5 font-mono text-[10px] font-bold uppercase cursor-pointer border-0 transition-colors ${
-                      sponsorBulkMode ? 'bg-[#0F0F11] text-[#CCFF00]' : 'bg-transparent text-[#0F0F11]'
+                      sponsorBulkMode ? 'bg-[#0F0F11] text-volt' : 'bg-transparent text-[#0F0F11]'
                     }`}
                   >
                     Sponsor Venue Pack (25x Units)
@@ -1038,8 +1038,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             <span
                               className={`px-3.5 py-1 rounded-full backdrop-blur-sm transition-colors duration-300 ${
                                 isHovered
-                                  ? 'bg-[#CCFF00] text-[#0F0F11]'
-                                  : 'bg-black/60 text-[#CCFF00] border border-[#CCFF00]/30'
+                                  ? 'bg-volt text-[#0F0F11]'
+                                  : 'bg-black/60 text-volt border border-volt/30'
                               }`}
                             >
                               {isHovered ? '⚡ SHOWING BACK ARCHIVE' : '⚡ HOVER TO FLIP BACK'}
@@ -1060,13 +1060,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                                 )}`}
                               >
                                 {drop.monogram}
-                                <span className="text-[#CCFF00]">.</span>
+                                <span className="text-volt">.</span>
                               </div>
                               <div className="mt-2.5 font-mono text-[10px] tracking-widest uppercase text-white/90 bg-black/40 backdrop-blur-xs px-3 py-0.5 rounded-full">
                                 {drop.gsm} · {drop.fitProfile}
                               </div>
                               {drop.collabPartner && (
-                                <div className="mt-3.5 inline-flex items-center gap-1.5 rounded-full bg-black/90 text-[#CCFF00] px-3.5 py-1 font-mono text-[9.5px] font-bold uppercase tracking-widest border border-[#CCFF00]/40 shadow-lg">
+                                <div className="mt-3.5 inline-flex items-center gap-1.5 rounded-full bg-black/90 text-volt px-3.5 py-1 font-mono text-[9.5px] font-bold uppercase tracking-widest border border-volt/40 shadow-lg">
                                   <span>× {drop.collabPartner}</span>
                                 </div>
                               )}
@@ -1079,12 +1079,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                                   : 'opacity-0 translate-y-3 scale-95 pointer-events-none'
                               }`}
                             >
-                              <div className="text-[10px] uppercase text-[#CCFF00] tracking-widest font-bold">
+                              <div className="text-[10px] uppercase text-volt tracking-widest font-bold">
                                 SOVEREIGN ARCHIVE // {drop.clubName}
                               </div>
                               <div className="text-4xl sm:text-5xl font-black tracking-tight text-white drop-shadow-md mt-1.5">
                                 POSTCODE {drop.postcode}
-                                <span className="text-[#CCFF00]">.</span>
+                                <span className="text-volt">.</span>
                               </div>
                               <div className="text-[10px] uppercase text-neutral-200 pt-2">
                                 {drop.spec}
@@ -1095,9 +1095,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           <div className="flex items-center justify-between font-mono text-[9.5px] uppercase text-white/90 pt-3 border-t border-white/15 relative z-10">
                             <span>{drop.athleteName} × {drop.clubName}</span>
                             <div className="flex items-center gap-2">
-                              <span className={!isHovered ? 'text-[#CCFF00] font-bold' : 'text-white/50'}>FRONT</span>
+                              <span className={!isHovered ? 'text-volt font-bold' : 'text-white/50'}>FRONT</span>
                               <span>/</span>
-                              <span className={isHovered ? 'text-[#CCFF00] font-bold' : 'text-white/50'}>BACK</span>
+                              <span className={isHovered ? 'text-volt font-bold' : 'text-white/50'}>BACK</span>
                               <span>· {drop.gsm}</span>
                             </div>
                           </div>
@@ -1174,7 +1174,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                                 }
                                 className={`w-9 h-9 rounded-xl font-mono text-xs font-bold cursor-pointer border transition-colors ${
                                   (selectedSize[drop.id] || 'L') === sz
-                                    ? 'bg-[#0F0F11] text-[#CCFF00] border-[#0F0F11]'
+                                    ? 'bg-[#0F0F11] text-volt border-[#0F0F11]'
                                     : 'bg-[#EAEAE6] text-[#0F0F11] border-black/10 hover:bg-[#0F0F11] hover:text-white'
                                 }`}
                               >
@@ -1191,7 +1191,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <button
                           type="button"
                           onClick={() => addToCart(drop)}
-                          className="rounded-full bg-[#0F0F11] hover:bg-[#CCFF00] text-white hover:text-[#0F0F11] px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider cursor-pointer border-0 shadow-md transition-colors"
+                          className="rounded-full bg-[#0F0F11] hover:bg-volt text-white hover:text-[#0F0F11] px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider cursor-pointer border-0 shadow-md transition-colors"
                         >
                           {sponsorBulkMode
                             ? `+ Lock 25x Pack (A$${displayPrice.toLocaleString()})`
@@ -1207,7 +1207,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <div className="rounded-[24px] bg-[#0F0F11] text-white p-6 sm:p-8 flex flex-col gap-4 shadow-xl">
                   <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                     <div className="space-y-2 flex-1">
-                      <span className="font-mono text-[10px] uppercase tracking-widest text-[#CCFF00] block">
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-volt block">
                         LIVE BAG · STRIPE CONNECT ROYALTY SPLIT
                       </span>
                       <div className="flex flex-wrap gap-2">
@@ -1222,7 +1222,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             <button
                               type="button"
                               onClick={() => removeFromCart(idx)}
-                              className="bg-transparent border-0 text-[#CCFF00] cursor-pointer font-bold"
+                              className="bg-transparent border-0 text-volt cursor-pointer font-bold"
                             >
                               ✕
                             </button>
@@ -1244,7 +1244,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         type="button"
                         disabled={isCheckingOut}
                         onClick={handleStripeCheckout}
-                        className="rounded-full bg-[#CCFF00] disabled:opacity-50 text-[#0F0F11] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md hover:bg-white transition-colors"
+                        className="rounded-full bg-volt disabled:opacity-50 text-[#0F0F11] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md hover:bg-white transition-colors"
                       >
                         {isCheckingOut ? 'Initialising Stripe...' : 'Checkout via Stripe Connect →'}
                       </button>
@@ -1263,11 +1263,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
           {view === 'checkout_success' && (
             <div className="max-w-lg mx-auto text-center my-auto py-12 space-y-5">
-              <span className="inline-block rounded-full bg-[#CCFF00] text-[#0F0F11] font-mono text-[10px] font-bold uppercase tracking-widest px-4 py-1.5">
+              <span className="inline-block rounded-full bg-volt text-[#0F0F11] font-mono text-[10px] font-bold uppercase tracking-widest px-4 py-1.5">
                 ✓ ORDER LOCKED · ROYALTY CLEARED
               </span>
               <h2 className="m-0 font-sans text-4xl font-black uppercase tracking-tight text-[#0F0F11]">
-                Backed the contender<span className="text-[#CCFF00]">.</span>
+                Backed the contender<span className="text-volt">.</span>
               </h2>
               <p className="m-0 font-sans text-sm text-neutral-700 leading-relaxed">
                 A${athleteCutTotal.toLocaleString()} net royalties routed to the athlete and A${clubCut15.toLocaleString()} to their junior club.
@@ -1293,7 +1293,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   onClick={onClose}
                   className="rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/25 px-6 py-3 font-sans text-xs font-bold transition-all duration-300 cursor-pointer group"
                 >
-                  Close <span className="text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">✕</span>
+                  Close <span className="text-volt group-hover:text-[#0F0F11] transition-colors">✕</span>
                 </button>
               </div>
             </div>

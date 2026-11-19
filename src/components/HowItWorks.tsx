@@ -10,18 +10,18 @@ interface ProtocolGate {
 const GATES: readonly ProtocolGate[] = [
   {
     step: '01',
-    title: 'Selection & Spatial Lock',
-    body: 'Select an emerging talent by discipline or postcode. Secure an exclusive 15km retail perimeter or a national category lock to safeguard your brand footprint.',
+    title: 'Find the right fit',
+    body: 'Athletes choose what to share. Businesses can look for a local sponsorship by sport or postcode. A profile is not a deal.',
   },
   {
     step: '02',
-    title: 'Automated Compliance & Escrow',
-    body: 'Funds are deposited directly into a segregated Stripe Connect escrow vault. Sport Integrity Australia amateur by-laws and national sporting body Third-Party Agreements are automatically cleared.',
+    title: 'Agree what’s included',
+    body: 'Agree the work, fees and timing before committing. Check the relevant sporting rules and obtain separate permission for any campaign use of an athlete’s name, image and likeness (NIL).',
   },
   {
     step: '03',
-    title: 'Proof-of-Performance Settlement',
-    body: 'Deliverables are verified through geo-tagged content and check-in logs. Escrow releases funds immediately: 70% to the athlete, 15% to their grassroots club, and 15% to the clearinghouse, with an instant ATO-compliant tax invoice generated.',
+    title: 'Know where the money goes',
+    body: 'One example splits the sponsorship 70% to the athlete, 15% to their grassroots club and 15% to TMRWLine. Payment timing and paperwork depend on the agreement.',
   },
 ];
 
@@ -66,17 +66,16 @@ export const HowItWorks: React.FC = () => {
       <div className="mx-auto grid min-h-[calc(100vh-74px)] w-full max-w-[1640px] grid-cols-1 gap-10 px-4 py-24 md:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16 lg:py-28">
         <div className="lg:sticky lg:top-[106px] lg:self-start">
           <p className="m-0 font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-black/45">
-            The 3-step clearinghouse protocol
+            How local sponsorship works
           </p>
           <h2
             id="how-it-works-heading"
             className="m-0 mt-5 max-w-lg font-display text-4xl font-bold leading-[0.95] tracking-[-0.03em] text-black"
           >
-            Three gates. Zero friction.
+            From first conversation to game day.
           </h2>
           <p className="m-0 mt-6 max-w-md text-base leading-relaxed text-black/65">
-            Capital moves from brand allocation to athlete settlement without agency retainers,
-            invoice chasing, or eligibility risk. Each gate is automated, verified, and auditable.
+            Backing local sport starts with a good fit. Here’s what athletes and businesses can discuss before deciding to work together.
           </p>
           <ol className="m-0 mt-10 hidden list-none gap-3 p-0 lg:grid">
             {GATES.map((gate, index) => {
@@ -141,7 +140,7 @@ export const HowItWorks: React.FC = () => {
                   <div
                     aria-hidden="true"
                     className={`absolute inset-y-0 left-0 w-px transition-colors duration-500 ${
-                      on ? 'bg-[#CCFF00]' : 'bg-transparent'
+                      on ? 'bg-volt' : 'bg-transparent'
                     }`}
                   />
                   <div className="flex items-start justify-between gap-4">

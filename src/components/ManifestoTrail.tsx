@@ -92,8 +92,8 @@ export const ManifestoTrail: React.FC<ManifestoTrailProps> = () => {
         const radius = 150 * n.intensity * n.age + 45;
         const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, radius);
 
-        grad.addColorStop(0, 'rgba(204, 255, 0, ' + n.age * 0.95 + ')');
-        grad.addColorStop(0.42, 'rgba(204, 255, 0, ' + n.age * 0.55 + ')');
+        grad.addColorStop(0, 'rgba(184, 255, 0, ' + n.age * 0.95 + ')');
+        grad.addColorStop(0.42, 'rgba(184, 255, 0, ' + n.age * 0.55 + ')');
         grad.addColorStop(0.75, 'rgba(15, 15, 17, ' + n.age * 0.12 + ')');
         grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
@@ -135,13 +135,13 @@ export const ManifestoTrail: React.FC<ManifestoTrailProps> = () => {
           {/* Box 1: Carbon Black with White Text & Green Full Stop */}
           <div className="rounded-[28px] bg-[#0F0F11] p-8 sm:p-12 text-white flex flex-col justify-center shadow-2xl border border-neutral-800 relative overflow-hidden min-h-[380px]">
             <h3 className="m-0 font-sans text-4xl sm:text-5xl lg:text-[3.25rem] font-black uppercase tracking-[-0.03em] leading-[1.05] text-white">
-              You fill the broadcast slots<span className="text-[#CCFF00]">.</span>
+              You fill the broadcast slots<span className="text-volt">.</span>
             </h3>
           </div>
 
           <div className="rounded-[28px] bg-[#080808] p-8 sm:p-12 text-[#F7F7F6] flex flex-col justify-center shadow-2xl border border-[#F7F7F6]/20 relative overflow-hidden min-h-[380px]">
             <h3 className="m-0 font-sans text-4xl sm:text-5xl lg:text-[3.25rem] font-black uppercase tracking-tight text-[#F7F7F6] leading-[1.05]">
-              Now own the upside<span className="text-[#B8FF00]">.</span>
+              Now own the upside<span className="text-volt">.</span>
             </h3>
           </div>
 
@@ -156,12 +156,10 @@ export const ManifestoTrail: React.FC<ManifestoTrailProps> = () => {
             
             <div className="relative z-10">
               <p className="m-0 font-sans text-sm sm:text-base font-medium leading-[1.45] text-white tracking-[-0.01em]">
-                Networks bank the broadcast ratings while you fund the runway. tmrw
-                <span className="text-[#CCFF00] font-black">/.</span> cuts out the middleman, locking in direct brand cash, direct handle sponsorship, and a hardwired{' '}
-                <span className="bg-[#CCFF00] text-[#0F0F11] font-bold px-1 py-0.5 rounded-[2px]">
-                  70/15/15 split
-                </span>{' '}
-                straight to your bank and junior club.
+                There’s a game because someone opens the gate, checks the gear and turns the lights on. Local sponsorship can help athletes and the clubs behind them cover the work that happens before the whistle. See what that could look like in our{' '}
+                <span className="bg-volt text-[#0F0F11] font-bold px-1 py-0.5 rounded-[2px]">
+                  70/15/15 example
+                </span>.
               </p>
             </div>
           </div>

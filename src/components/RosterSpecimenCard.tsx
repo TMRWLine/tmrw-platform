@@ -122,14 +122,14 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
   const currentIdx = mediaMode === 'video' ? clipIdx : frameIdx;
 
   const hasProfileUpdate = Boolean(liveOverride);
-  const effectiveBadgeText = hasProfileUpdate
+  const effectiveBadgeText = hasProfileUpdate && badgeVariant !== 'black'
     ? 'Updated'
     : badgeText === 'Early access' || badgeText === 'Update'
     ? 'Updated'
     : badgeText;
 
   const isUpdateYellow =
-    hasProfileUpdate ||
+    (hasProfileUpdate && badgeVariant !== 'black') ||
     badgeVariant === 'yellow' ||
     effectiveBadgeText.toLowerCase().includes('update');
 
@@ -143,7 +143,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
       }}
       className="group relative isolate flex w-full flex-col justify-between p-7 xl:p-8 bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white transition-colors duration-500 cursor-pointer overflow-visible select-none"
     >
-      {/* Floating Top-Right Pill Badge — #CCFF00 Green for "New", #F5B800 Yellow for "Updated" */}
+      {/* Floating Top-Right Pill Badge — #B8FF00 Green for "New", #F5B800 Yellow for "Updated" */}
       {effectiveBadgeText && (
         <span
           className={`absolute -top-2.5 right-5 z-30 inline-flex items-center rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs ${
@@ -151,7 +151,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
               ? 'bg-[#F5B800] text-[#080808]'
               : badgeVariant === 'black'
               ? 'bg-[#080808] text-white'
-              : 'bg-[#CCFF00] text-[#080808]'
+              : 'bg-volt text-[#080808]'
           }`}
         >
           {effectiveBadgeText}
@@ -199,8 +199,8 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
             <span
               className={`inline-block rounded-[4px] px-1.5 -ml-1.5 mr-0.5 transition-colors duration-200 ${
                 mediaMode === 'video'
-                  ? 'bg-[#CCFF00] text-[#080808]'
-                  : 'bg-transparent group-hover:bg-[#CCFF00] group-hover:text-[#080808]'
+                  ? 'bg-volt text-[#080808]'
+                  : 'bg-transparent group-hover:bg-volt group-hover:text-[#080808]'
               }`}
             >
               {splitName.firstInitial}
@@ -223,7 +223,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
                 : 'text-[#666666] group-hover:text-neutral-300'
             }`}
           >
-            Postcode {displayPostcode} · From A$750
+            Postcode {displayPostcode} · Example profile
           </p>
         </div>
 
@@ -238,8 +238,8 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
           aria-label="Open Athlete Dossier"
           className={`roster-dossier-open h-7 w-7 rounded-lg bg-transparent border-0 flex items-center justify-center transition-colors cursor-pointer p-0 shrink-0 ${
             mediaMode === 'video'
-              ? 'text-white hover:text-[#CCFF00]'
-              : 'text-[#080808] group-hover:text-white hover:text-[#CCFF00]'
+              ? 'text-white hover:text-volt'
+              : 'text-[#080808] group-hover:text-white group-hover:hover:text-volt'
           }`}
         >
           <svg
@@ -290,7 +290,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
               onClick={handlePrev}
               title="Previous"
               aria-label="Previous"
-              className="h-7 w-7 rounded-full bg-transparent hover:bg-[#080808] text-[#080808] hover:text-[#CCFF00] border-0 flex items-center justify-center cursor-pointer transition-colors"
+              className="h-7 w-7 rounded-full bg-transparent hover:bg-[#080808] text-[#080808] hover:text-volt border-0 flex items-center justify-center cursor-pointer transition-colors"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6" />
@@ -308,7 +308,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
               onClick={handleNext}
               title="Next"
               aria-label="Next"
-              className="h-7 w-7 rounded-full bg-transparent hover:bg-[#080808] text-[#080808] hover:text-[#CCFF00] border-0 flex items-center justify-center cursor-pointer transition-colors"
+              className="h-7 w-7 rounded-full bg-transparent hover:bg-[#080808] text-[#080808] hover:text-volt border-0 flex items-center justify-center cursor-pointer transition-colors"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6" />
@@ -326,7 +326,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
                 aria-label={isMuted ? 'Unmute Reel Audio' : 'Mute Reel Audio'}
                 className={`h-7 w-7 rounded-full flex items-center justify-center border-0 cursor-pointer transition-colors ${
                   !isMuted
-                    ? 'bg-[#CCFF00] text-[#080808]'
+                    ? 'bg-volt text-[#080808]'
                     : 'bg-black/10 hover:bg-[#080808] text-[#080808] hover:text-white'
                 }`}
               >
@@ -351,8 +351,8 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
               onClick={toggleVideo}
               className={`h-7 rounded-full px-3 font-sans text-[11.5px] font-bold tracking-tight flex items-center gap-1.5 cursor-pointer border-0 transition-colors ${
                 mediaMode === 'video'
-                  ? 'bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808]'
-                  : 'bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808]'
+                  ? 'bg-[#080808] hover:bg-neutral-700 text-white'
+                  : 'bg-[#080808] hover:bg-neutral-700 text-white'
               }`}
             >
               <span>{mediaMode === 'video' ? 'Photos' : 'Watch reel'}</span>

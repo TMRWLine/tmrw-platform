@@ -96,11 +96,11 @@ const TRANSITION_MS = 300;
 const HEADER_CLASS =
   'm-0 mb-3 font-mono text-xs uppercase text-[#666666] tracking-widest font-normal';
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8FF00] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080808]';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-volt focus-visible:ring-offset-2 focus-visible:ring-offset-[#080808]';
 
-const PRIMARY_LINK = `block text-left p-0 bg-transparent border-0 font-display font-bold text-lg md:text-xl text-[#F7F7F6] hover:text-[#B8FF00] transition-colors duration-150 cursor-pointer mb-1.5 ${FOCUS_RING}`;
+const PRIMARY_LINK = `block text-left p-0 bg-transparent border-0 font-display font-bold text-lg md:text-xl text-[#F7F7F6] hover:text-volt transition-colors duration-150 cursor-pointer mb-1.5 ${FOCUS_RING}`;
 const SECONDARY_LINK = `block text-left p-0 bg-transparent border-0 text-xs md:text-sm text-[#CCCCCC] hover:text-white transition-colors cursor-pointer mb-1.5 ${FOCUS_RING}`;
-const SOCIAL_LINK = `block text-left p-0 bg-transparent border-0 text-xs md:text-sm text-[#CCCCCC] hover:text-[#B8FF00] transition-colors cursor-pointer mb-1.5 no-underline ${FOCUS_RING}`;
+const SOCIAL_LINK = `block text-left p-0 bg-transparent border-0 text-xs md:text-sm text-[#CCCCCC] hover:text-volt transition-colors cursor-pointer mb-1.5 no-underline ${FOCUS_RING}`;
 
 /* ---- Monochrome payment-partner badges (outline + glyphs, inherit currentColor) ---- */
 
@@ -358,7 +358,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close menu"
-            className={`inline-flex items-center justify-center p-0 bg-transparent border-0 text-white hover:text-[#B8FF00] transition-colors duration-150 cursor-pointer ${FOCUS_RING}`}
+            className={`inline-flex items-center justify-center p-0 bg-transparent border-0 text-white hover:text-volt transition-colors duration-150 cursor-pointer ${FOCUS_RING}`}
           >
             <CloseIcon />
           </button>

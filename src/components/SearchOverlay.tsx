@@ -72,7 +72,7 @@ const valuationOf = (a: Athlete): number | null => {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  active: 'Cleared',
+  active: 'Agreement on file',
   pending: 'Pending',
   expired: 'Expired',
 };
@@ -150,7 +150,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, o
     loadedRef.current = true;
     setLoading(true);
     fetchAthletes()
-      .then((rows) => setAthletes(rows))
+      .then((rows) => setAthletes(rows.filter((athlete) => !athlete.id.startsWith('fallback-'))))
       .catch(() => {
         loadedRef.current = false; // allow a retry on the next open
       })
@@ -188,7 +188,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, o
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Search verified athletes"
+      aria-label="Search athlete profiles"
       data-lenis-prevent
       className="mobile-overlay search-overlay fixed inset-0 z-50 bg-[#F7F7F6] overflow-y-auto px-6 md:px-12 py-10 animate-fadeIn"
     >
@@ -200,7 +200,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, o
             type="button"
             onClick={onClose}
             aria-label="Close search"
-            className="inline-flex items-center justify-center p-0 bg-transparent border-0 text-[#080808] hover:text-[#B8FF00] transition-colors duration-150 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#080808] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F7F7F6]"
+            className="inline-flex items-center justify-center p-0 bg-transparent border-0 text-[#080808] hover:text-neutral-600 transition-colors duration-150 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#080808] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F7F7F6]"
           >
             <CloseIcon />
           </button>
@@ -210,8 +210,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, o
           Search
         </h1>
         <p className="m-0 text-sm md:text-base text-[#666666] max-w-xl mb-8 leading-relaxed">
-          Browse, search, or discover verified suburban talent. Every profile is pre-cleared for direct
-          commercial endorsement.
+          Find athletes by sport, club or postcode. A profile is not a sponsorship offer or permission to use an athlete’s name, image or likeness.
         </p>
 
         {/* Pill input */}
@@ -248,7 +247,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, o
                 className={`rounded-full px-4 py-2 text-xs md:text-sm font-semibold border transition-colors duration-150 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#080808] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F7F7F6] ${
                   active
                     ? 'bg-[#080808] text-white border-[#080808]'
-                    : 'bg-transparent text-[#080808] border-[#080808]/25 hover:bg-[#B8FF00] hover:border-[#B8FF00]'
+                    : 'bg-transparent text-[#080808] border-[#080808]/25 hover:bg-neutral-100 hover:border-[#080808]'
                 }`}
               >
                 {f.label}
@@ -304,17 +303,17 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, o
                             <p className="m-0 mt-1 font-mono text-[10px] font-bold uppercase tracking-widest text-[#666666]">
                               {a.postcode ? `PC ${a.postcode}` : 'No postcode'}
                               {' · '}
-                              {STATUS_LABEL[a.agreement_status] ?? 'Open'}
+                              {STATUS_LABEL[a.agreement_status] ?? 'No agreement on file'}
                               {value ? ` · ${formatAud(value)}` : ''}
                             </p>
                           </div>
-                          {onSponsorAthlete && (
+                          {onSponsorAthlete && a.agreement_status === 'active' && (
                             <button
                               type="button"
                               onClick={() => onSponsorAthlete(a)}
-                              className="shrink-0 rounded-full bg-[#080808] text-[#F7F7F6] px-4 py-2 text-[11px] font-bold uppercase tracking-wider border-0 cursor-pointer hover:bg-[#B8FF00] hover:text-[#080808] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#080808] focus-visible:ring-offset-2"
+                              className="shrink-0 rounded-full bg-[#080808] text-[#F7F7F6] px-4 py-2 text-[11px] font-bold uppercase tracking-wider border-0 cursor-pointer hover:bg-neutral-700 transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#080808] focus-visible:ring-offset-2"
                             >
-                              Sponsor →
+                              View sponsorship options →
                             </button>
                           )}
                         </article>
@@ -352,7 +351,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, o
                               {s.followers > 0 && (
                                 <div>
                                   <dt className="font-mono text-[10px] uppercase tracking-widest text-[#666666]">
-                                    Combined reach
+                                    Combined follower count
                                   </dt>
                                   <dd className="m-0 mt-1 font-mono text-sm font-bold text-[#080808] tabular-nums">
                                     {String(Math.trunc(s.followers))}

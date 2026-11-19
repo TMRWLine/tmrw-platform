@@ -743,7 +743,7 @@ export function MarketplaceApp() {
       ) : (
       <main className="page bg-transparent">
         <div className="page-head editorial-copy border-b border-white/10" id="athlete-roster">
-          <p className="font-mono text-xs tracking-widest uppercase text-[#D2FF00] mb-3">
+          <p className="font-mono text-xs tracking-widest uppercase text-volt mb-3">
             // ENTERPRISE WORKSPACE
           </p>
           <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white mt-0">
