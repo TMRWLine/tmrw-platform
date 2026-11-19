@@ -334,7 +334,11 @@ Search each name on LinkedIn, then confirm through the organisation's website. N
 
 **TikTok:** `@superrugby`, `@aflw`, `@nrlw`, `@nswrl`, `@nbl1`, `@wallabies`, `@blackcapsnz`.
 
-## 10. Ideas to try after week one
+## 10. Ideas from the reels
+
+**Use in week one:** for the Day 1 and Day 7 LinkedIn founder posts, you can use the storyteller drafts in [storyteller reel ideas](reel-ideas-laraacostar.md): a real near-quit moment, the opening left unfinished before "see more", a short list, then a PS. Use them only if you can fill the brackets with something true; otherwise keep the captions above.
+
+**Try after week one:**
 
 From the "build the queue" reel Kane shared: numbered founder parts, "comment POSTCODE" with DMs sent by hand, an anonymous Postcode Queue tally in Stories, and launching one postcode at a time. See [reel ideas](reel-ideas-thatbrojonny.md).
 
