@@ -75,7 +75,7 @@ import { GuardianVerifyPage, GUARDIAN_VERIFY_PATH } from './components/GuardianV
 import { ClaimProfilePage } from './components/ClaimProfilePage';
 import { CommercialTiers } from './components/CommercialTiers';
 import { SyndicateRunway } from './components/SyndicateRunway';
-import { HowItWorks, HowItWorksStrip } from './components/HowItWorks';
+import { HowItWorks } from './components/HowItWorks';
 import { ViewportFrame } from './components/ViewportFrame';
 import { ObsidianWipe } from './components/ObsidianWipe';
 import { CheckoutSuccessPage, CHECKOUT_SUCCESS_PATH } from './pages/checkout/success';
@@ -848,7 +848,6 @@ export function MarketplaceApp() {
                 />
               </div>
             )}
-            <HowItWorksStrip />
             <ManifestoTrail onNavigateSection={navigateSection} />
             <BroadcastMatrix />
             <SettlementLedger />
