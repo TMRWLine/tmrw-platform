@@ -3,6 +3,7 @@ import { BrandLockup } from './BrandLockup';
 import type { LandingSectionId } from './Navigation';
 import { GUARDIAN_VERIFY_PATH } from './GuardianVerifyPage';
 import { OPEN_DEPLOY_DRAWER_EVENT, emitOverlayEvent } from '../lib/overlayEvents';
+import { PRIMARY_SECTION_PATHS, isUnmodifiedLinkClick } from '../lib/routes';
 import './MenuOverlay.css';
 
 interface MenuOverlayProps {
@@ -18,6 +19,7 @@ interface MenuOverlayProps {
 
 /** What a menu entry does. `none` renders the entry but has no destination yet. */
 type MenuAction =
+  | { kind: 'route'; id: keyof typeof PRIMARY_SECTION_PATHS }
   | { kind: 'section'; id: LandingSectionId }
   | { kind: 'search' }
   | { kind: 'portal' }
@@ -33,17 +35,17 @@ interface MenuItem {
 }
 
 const NAVIGATION: readonly MenuItem[] = [
-  { label: 'Roster', action: { kind: 'section', id: 'roster' } },
-  { label: 'How it works', action: { kind: 'section', id: 'how-it-works' } },
-  { label: 'Commercial Tiers', action: { kind: 'section', id: 'commercial-tiers' } },
-  { label: 'Runway', action: { kind: 'section', id: 'syndicate' } },
+  { label: 'Roster', action: { kind: 'route', id: 'roster' } },
+  { label: 'How it works', action: { kind: 'route', id: 'how-it-works' } },
+  { label: 'Commercial Tiers', action: { kind: 'route', id: 'commercial-tiers' } },
+  { label: 'Runway', action: { kind: 'route', id: 'syndicate' } },
 ];
 
 const PROTOCOL: readonly MenuItem[] = [
   { label: 'Postcode Catchment Search', action: { kind: 'search' } },
   {
     label: 'Eligibility Verification',
-    action: { kind: 'section', id: 'roster' },
+    action: { kind: 'route', id: 'roster' },
   },
   {
     label: 'Guardian Consent Framework',
@@ -95,7 +97,7 @@ const HEADER_CLASS =
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-volt focus-visible:ring-offset-2 focus-visible:ring-offset-[#080808]';
 
-const PRIMARY_LINK = `site-menu-row text-left p-0 bg-transparent border-0 font-display font-bold text-[clamp(1.875rem,4vw,4rem)] leading-[1.05] tracking-tight text-[#F7F7F6] hover:text-volt cursor-pointer ${FOCUS_RING}`;
+const PRIMARY_LINK = `site-menu-row text-left p-0 bg-transparent border-0 font-display font-bold text-[clamp(1.875rem,4vw,4rem)] leading-[1.05] tracking-tight text-[#F7F7F6] hover:text-volt cursor-pointer no-underline ${FOCUS_RING}`;
 const SECONDARY_LINK = `site-menu-row text-left p-0 bg-transparent border-0 text-sm text-[#CCCCCC] hover:text-white cursor-pointer no-underline ${FOCUS_RING}`;
 
 /* ---- Monochrome payment-partner badges (outline + glyphs, inherit currentColor) ---- */
@@ -249,6 +251,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
       case 'path':
         window.location.assign(action.path);
         return;
+      case 'route':
       case 'section':
         onClose();
         onNavigateSection(action.id);
@@ -274,31 +277,34 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
 
   const renderItems = (items: readonly MenuItem[], linkClass: string) => (
     <ul className="m-0 p-0 list-none">
-      {items.map((item) =>
-        item.action.kind === 'external' ? (
-          <li key={item.label} className="m-0 p-0">
+      {items.map(({ label, action }) => (
+        <li key={label} className="m-0 p-0">
+          {action.kind === 'external' ? (
+            <a href={action.href} target="_blank" rel="noopener noreferrer" className={linkClass}>{label}</a>
+          ) : action.kind === 'route' ? (
             <a
-              href={item.action.href}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={PRIMARY_SECTION_PATHS[action.id]}
+              onClick={event => {
+                if (!isUnmodifiedLinkClick(event)) return;
+                event.preventDefault();
+                run(action);
+              }}
               className={linkClass}
             >
-              {item.label}
+              {label}
             </a>
-          </li>
-        ) : (
-          <li key={item.label} className="m-0 p-0">
+          ) : (
             <button
               type="button"
-              onClick={() => run(item.action)}
-              aria-disabled={item.action.kind === 'none' || undefined}
+              onClick={() => run(action)}
+              aria-disabled={action.kind === 'none' || undefined}
               className={linkClass}
             >
-              {item.label}
+              {label}
             </button>
-          </li>
-        ),
-      )}
+          )}
+        </li>
+      ))}
     </ul>
   );
 

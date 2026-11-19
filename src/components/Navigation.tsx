@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrandLockup } from './BrandLockup';
-import { OPEN_DEPLOY_DRAWER_EVENT, emitOverlayEvent } from '../lib/overlayEvents';
-import { BRISBANE_RUNWAY_PATH, COMMERCIAL_TIERS_PATH, HOW_IT_WORKS_PATH, THE_ROSTER_PATH } from '../lib/routes';
+import { PRIMARY_SECTION_PATHS, THE_ROSTER_PATH, isUnmodifiedLinkClick } from '../lib/routes';
 
 /** Anchor targets on the landing page. `top` scrolls to the page origin. */
 export type LandingSectionId =
@@ -41,12 +40,10 @@ interface NavigationProps {
   onToggleSearch: () => void;
   /** Menu icon: toggles the editorial menu overlay. */
   onToggleMenu: () => void;
+  onOpenBag: () => void;
   /** Closes every active overlay (search, menu, deploy drawer, portal drawer). */
   onCloseOverlays: () => void;
-  /**
-   * Optional router for section links and the logo. The host owns smooth-scroll (Lenis), so it can
-   * land precisely under the fixed bar. Falls back to a native smooth scroll.
-   */
+  /** Optional in-app navigation for links and the logo. */
   onNavigateSection?: (id: LandingSectionId) => void;
   /** Opens the athlete portal drawer. Wired to the Athlete Portal pill. */
   onOpenPortal: () => void;
@@ -57,7 +54,7 @@ interface NavigationProps {
   activeLocation?: 'location' | 'page';
 }
 
-const NAV_LINKS: ReadonlyArray<{ label: string; id: Exclude<LandingSectionId, 'top'> }> = [
+const NAV_LINKS: ReadonlyArray<{ label: string; id: keyof typeof PRIMARY_SECTION_PATHS }> = [
   { label: 'The Roster', id: 'roster' },
   { label: 'How it works', id: 'how-it-works' },
   { label: 'Commercial Tiers', id: 'commercial-tiers' },
@@ -113,6 +110,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   isMenuOpen,
   onToggleSearch,
   onToggleMenu,
+  onOpenBag,
   onCloseOverlays,
   onNavigateSection,
   onOpenPortal,
@@ -123,14 +121,10 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const dark = tone === 'dark' && !compact;
   const activeLabel = NAV_LINKS.find(link => link.id === activeSection)?.label;
-  const scrollTo = (id: Exclude<LandingSectionId, 'top'>) => {
-    if (onNavigateSection) {
-      onNavigateSection(id);
-      return;
-    }
-    document
-      .getElementById(landingSectionElementId(id))
-      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const navigateLink = (event: React.MouseEvent<HTMLAnchorElement>, id: LandingSectionId) => {
+    if (!onNavigateSection || !isUnmodifiedLinkClick(event)) return;
+    event.preventDefault();
+    onNavigateSection(id);
   };
 
   /** Logo: dismiss every overlay, then return to the top of the application (`/`). */
@@ -167,56 +161,33 @@ export const Navigation: React.FC<NavigationProps> = ({
 
         {/* Centre links */}
         <nav className="hidden lg:flex items-center gap-1" aria-label="Primary">
-          {NAV_LINKS.map((link) => {
-            const href =
-              link.id === 'commercial-tiers'
-                ? COMMERCIAL_TIERS_PATH
-                : link.id === 'syndicate'
-                  ? BRISBANE_RUNWAY_PATH
-                  : link.id === 'how-it-works'
-                    ? HOW_IT_WORKS_PATH
-                    : link.id === 'roster'
-                      ? THE_ROSTER_PATH
-                      : `/#${landingSectionElementId(link.id)}`;
-            const isRoute =
-              link.id === 'commercial-tiers' ||
-              link.id === 'syndicate' ||
-              link.id === 'how-it-works' ||
-              link.id === 'roster';
-            return (
-              <a
-                key={link.id}
-                href={href}
-                aria-current={activeSection === link.id ? activeLocation : undefined}
-                onClick={(event) => {
-                  event.preventDefault();
-                  if (isRoute) {
-                    if (onNavigateSection) {
-                      onNavigateSection(link.id);
-                      return;
-                    }
-                    window.location.assign(href);
-                    return;
-                  }
-                  if (window.location.pathname === '/' && window.location.hash !== `#${landingSectionElementId(link.id)}`) {
-                    window.history.pushState(null, '', href);
-                  }
-                  scrollTo(link.id);
-                }}
-                className={`${linkClass} ${focusRing} no-underline ${compact && activeSection === link.id ? 'after:absolute after:inset-x-2.5 after:bottom-0 after:h-px after:bg-current' : ''}`}
-              >
-                <span>{link.label}</span>
-                <span
-                  aria-hidden="true"
-                  className={`h-1.5 w-1.5 rounded-full opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150 ease-out ${dark ? 'bg-volt' : 'bg-[#080808]'}`}
-                />
-              </a>
-            );
-          })}
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.id}
+              href={PRIMARY_SECTION_PATHS[link.id]}
+              aria-current={activeSection === link.id ? activeLocation : undefined}
+              onClick={event => navigateLink(event, link.id)}
+              className={`${linkClass} ${focusRing} no-underline ${compact && activeSection === link.id ? 'after:absolute after:inset-x-2.5 after:bottom-0 after:h-px after:bg-current' : ''}`}
+            >
+              <span>{link.label}</span>
+              <span
+                aria-hidden="true"
+                className={`h-1.5 w-1.5 rounded-full opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150 ease-out ${dark ? 'bg-volt' : 'bg-[#080808]'}`}
+              />
+            </a>
+          ))}
         </nav>
 
         {/* Right utility cluster */}
         <div className="nav-utilities flex items-center">
+          <a
+            href={THE_ROSTER_PATH}
+            aria-current={activeSection === 'roster' ? activeLocation : undefined}
+            onClick={event => navigateLink(event, 'roster')}
+            className={`nav-phone-roster hidden shrink-0 items-center justify-center whitespace-nowrap px-1.5 text-xs font-semibold ${dark ? 'text-white' : 'text-[#080808]'} ${focusRing} ${activeSection === 'roster' ? 'underline underline-offset-2' : 'no-underline'}`}
+          >
+            Roster
+          </a>
           <button
             type="button"
             onClick={onOpenPortal}
@@ -228,10 +199,6 @@ export const Navigation: React.FC<NavigationProps> = ({
                 : 'border-[#080808]/20 bg-[#080808]/[0.03] hover:bg-[#080808] hover:border-[#080808]'
             }`}
           >
-            <svg className="nav-portal-icon hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-              <circle cx="12" cy="8" r="3.5" />
-              <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
-            </svg>
             {/* Portal dot */}
             <span className="relative flex h-2 w-2" aria-hidden="true">
               <span className={`relative inline-flex rounded-full h-2 w-2 ${dark ? 'bg-volt group-hover:bg-black' : 'bg-[#080808] group-hover:bg-white'}`} />
@@ -260,8 +227,8 @@ export const Navigation: React.FC<NavigationProps> = ({
 
           <button
             type="button"
-            onClick={() => emitOverlayEvent(OPEN_DEPLOY_DRAWER_EVENT)}
-            aria-label="Open capital deployment drawer"
+            onClick={onOpenBag}
+            aria-label="Open bag"
             aria-haspopup="dialog"
             className={`${iconButton} max-sm:p-1.5 sm:ml-1 ${focusRing}`}
           >
@@ -275,14 +242,15 @@ export const Navigation: React.FC<NavigationProps> = ({
             aria-haspopup="dialog"
             aria-controls="site-menu"
             aria-expanded={isMenuOpen}
-            className={`${iconButton} max-sm:p-1.5 sm:ml-1 ${focusRing}`}
+            className={`nav-menu-trigger ${iconButton} max-sm:p-1.5 sm:ml-1 ${focusRing}`}
           >
             <MenuIcon />
+            <span className="nav-menu-label hidden text-xs font-semibold">Menu</span>
           </button>
         </div>
       </div>
       {compact && activeLabel && (
-        <span key={activeSection} aria-current={activeLocation} className="absolute bottom-0.5 inset-x-0 text-center text-[10px] leading-none text-[#080808] underline underline-offset-2 lg:hidden">
+        <span key={activeSection} aria-current={activeLocation} className={`absolute bottom-0.5 inset-x-0 text-center text-[10px] leading-none text-[#080808] underline underline-offset-2 lg:hidden ${activeSection === 'roster' ? 'nav-active-roster' : ''}`}>
           {activeLabel}
         </span>
       )}
