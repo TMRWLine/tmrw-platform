@@ -41,14 +41,14 @@ Other file names in the table below (`d2-tiktok.mp4` and so on) are what to call
 - [ ] Upload **profile-picture.png**. Add `https://[DOMAIN]` in **Edit profile > Links**. Turn on 2FA and paste this bio:
 > Line up your Future  
 > Local businesses backing athletes and grassroots clubs.  
-> Follow for local sport and real stories.
+> Nominate yourself or a mate.
 
 ## 3. Create TikTok second
 
 - [ ] Create the account with the agreed username and set **Name: TMRWLine**. In account settings, switch to **Business Account** and choose the closest available sports or recreation category, such as **Sports & Outdoors** if offered. Keep the account public.
 - [ ] Upload **profile-picture.png**, turn on 2FA, and add `https://[DOMAIN]` in the website field if it's available. If not, leave it blank and add the link later. Paste this bio:
 > Line up your Future  
-> Local sport. Nominate an athlete in your postcode.
+> Local sport. Nominate yourself or an athlete in your postcode.
 
 ## 4. Create the LinkedIn Company Page third
 
@@ -58,6 +58,14 @@ Other file names in the table below (`d2-tiktok.mp4` and so on) are what to call
 > Line up your Future
 - [ ] Paste this About:
 > TMRWLine helps local businesses back athletes and grassroots clubs through sponsorship. We show how the money is split so businesses and clubs can see where their support goes. Follow for worked sponsorship examples, stories from local sport and ways to nominate an athlete in your postcode.
+
+## Words to use and avoid
+
+- **Use:** sponsorship, backed, your postcode, sample split, nominate yourself or a mate. Speak to the athlete directly at least once a day ("you", not "athletes").
+- **Avoid "NIL":** it's a US college term most 18 to 25 year olds and local businesses here won't use. Say sponsorship.
+- **Avoid until real deals exist:** earn, get paid, guaranteed, sign today. Every dollar figure stays labelled as a sample, not a payment.
+- **Once a real deal posts:** the athlete and TMRWLine both turn on the platform's paid partnership label and put #ad or "Ad" first, in line with Ad Standards and ACCC guidance in Australia and the Advertising Standards Authority in New Zealand.
+- **NZ posts:** show NZ$ when a post targets New Zealand; A$ stays for Australia.
 
 ## 5. Connect the profiles and set up moderation
 
@@ -89,7 +97,7 @@ Other file names in the table below (`d2-tiktok.mp4` and so on) are what to call
 | [ ] | 5 Tue 6 pm | TikTok video | The Local Receipt | A$2,500 in. Who gets what? | Sample, not a payment: A$1,750 athlete, A$375 club, A$375 TMRWLine. Which part should we explain next? | #TMRWLine #SportsSponsorship | Voice and pen sound | d5-tiktok.mp4 | Write the total first, then read all three shares. Keep SAMPLE on screen. |
 | [ ] | 5 Tue 6:30 pm | Instagram Reel | The Local Receipt | Where does the money go? | A local sponsorship, as a worked example: A$1,750 athlete, A$375 grassroots club, A$375 TMRWLine. Not a payment. Save the split. | #TMRWLine #GrassrootsSport | Pen sound or light pulse, 80 BPM, library | d5-ig-reel.mp4 | Film a blank receipt being marked up; label it SAMPLE. |
 | [ ] | 6 Wed 5 pm | Instagram Story | Postcode People | Postcode first. Keep it private. | Nominate privately. Send your postcode first. Please don't share anyone's name or contact details here. | #TMRWLine | Silent | d6-ig-story.png | Make a two-step text card; no inbox screenshots. |
-| [ ] | 6 Wed 6 pm | TikTok reply video | Postcode People | Can I nominate a mate? | Yes. Send your postcode privately first and ask the adult before sharing details. For juniors, a parent or guardian can contact us. | #TMRWLine #PostcodePeople | Founder speech only | d6-tiktok.mp4 | Founder answers a general question; don't show a name or message. |
+| [ ] | 6 Wed 6 pm | TikTok reply video | Postcode People | Can I nominate a mate? | Yes, or yourself if you're 18 or over. Send your postcode privately first and ask the adult before sharing details. For juniors, a parent or guardian can contact us. | #TMRWLine #PostcodePeople | Founder speech only | d6-tiktok.mp4 | Founder answers a general question; don't show a name or message. |
 | [ ] | 7 Thu 12:15 pm | LinkedIn founder text | The Local Receipt | What would make a deal easier? | We shared a sample split this week. If you run a local business, what would you ask before backing an athlete and a club? Every postcode has a tomorrow. | #TMRWLine #SportsSponsorship | Silent | d7-linkedin.txt | Paste the caption. No graphic or filming needed. |
 | [ ] | 7 Thu 5 pm | Instagram Story | Postcode People | Who keeps the game going? | Who should we thank next? Send us your postcode privately first. No names here, please. | #TMRWLine | Silent | d7-ig-story.png | Use an anonymous theme only if verified; otherwise use this prompt. |
 | [ ] | 7 Thu 6 pm | TikTok video | Before the Whistle | One last check | Before the first whistle, someone checks the gear. Who does that at your ground? | #TMRWLine #LocalSport | Natural sound | d7-tiktok.mp4 | Tight shot of hands checking plain gear. |
