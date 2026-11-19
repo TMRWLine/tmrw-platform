@@ -765,10 +765,6 @@ export function MarketplaceApp() {
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         onHome={goHome}
-        onSponsorAthlete={(athlete) => {
-          setIsSearchOpen(false);
-          openSponsorDrawer(athlete);
-        }}
       />
 
       <MenuOverlay

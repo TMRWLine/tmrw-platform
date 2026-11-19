@@ -75,6 +75,84 @@ export function suburbForPostcode(postcode: string): string {
   return SUBURB_BY_POSTCODE[postcode] ?? `Postcode ${postcode}`;
 }
 
+export const ROSTER_COMPETITIONS = [
+  { id: 'all', label: 'All competitions' },
+  { id: 'nbl1', label: 'NBL1 Basketball' },
+  { id: 'shute', label: 'Shute Shield Rugby' },
+  { id: 'vfl', label: 'VFL (Australian rules)' },
+  { id: 'qld', label: 'Queensland Premier Rugby' },
+] as const;
+
+export type RosterCompetition = typeof ROSTER_COMPETITIONS[number]['id'];
+
+export interface RosterDiscoveryFilters {
+  query: string;
+  competition: RosterCompetition;
+  catchment: string;
+}
+
+const COMPETITION_NAMES: Readonly<Record<Exclude<RosterCompetition, 'all'>, readonly string[]>> = {
+  nbl1: ['nbl1', 'nbl1 basketball', 'nbl1 east', 'nbl1 south', 'nbl1 north', 'nbl1 central', 'nbl1 west'],
+  shute: ['shute shield', 'shute shield premier', 'shute shield rugby'],
+  vfl: ['vfl', 'vfl state league', 'victorian football league', 'smithys vfl'],
+  qld: ['queensland premier rugby', 'hospital cup'],
+};
+
+export const EMPTY_ROSTER_FILTERS: RosterDiscoveryFilters = { query: '', competition: 'all', catchment: '' };
+
+function normaliseSearch(value: string): string {
+  return value.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+    .replace(/[’']/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+}
+
+export function matchesRosterDiscovery(record: AthleteRecord, filters: RosterDiscoveryFilters): boolean {
+  const league = normaliseSearch(record.league);
+  if (filters.competition !== 'all' && !COMPETITION_NAMES[filters.competition].includes(league)) return false;
+
+  const catchment = filters.catchment.trim();
+  const suburb = normaliseSearch(SUBURB_BY_POSTCODE[record.postcode] ?? '');
+  if (catchment) {
+    if (!/^\d{4}$/.test(record.postcode)) return false;
+    if (/^\d+$/.test(catchment)) {
+      if (record.postcode !== catchment) return false;
+    } else {
+      const place = normaliseSearch(catchment);
+      if (!place || !suburb.includes(place)) return false;
+    }
+  }
+
+  const text = filters.query.trim();
+  if (/^\d+$/.test(text)) return /^\d{4}$/.test(text) && record.postcode === text;
+  const query = normaliseSearch(text);
+  if (!query) return !text;
+  const competition = ROSTER_COMPETITIONS.find(({ id }) => id !== 'all' && COMPETITION_NAMES[id].includes(league));
+  const words = [
+    record.display_name, record.full_name, record.sport, record.current_club, league,
+    ...(competition && competition.id !== 'all' ? COMPETITION_NAMES[competition.id] : []),
+    competition?.label ?? '', record.postcode, suburb,
+  ].map(normaliseSearch).join(' ').split(' ');
+  return query.split(' ').every((term) => words.some((word) => /^\d+$/.test(term) ? word === term : word.startsWith(term)));
+}
+
+export function readRosterDiscovery(params: URLSearchParams): RosterDiscoveryFilters {
+  return {
+    query: (params.get('q') ?? '').trim(),
+    competition: ROSTER_COMPETITIONS.find(({ id }) => id === params.get('competition'))?.id ?? 'all',
+    catchment: (params.get('catchment') ?? '').trim(),
+  };
+}
+
+export function writeRosterDiscovery(filters: RosterDiscoveryFilters, params = new URLSearchParams()): URLSearchParams {
+  for (const [key, value] of [
+    ['q', filters.query.trim()], ['competition', filters.competition === 'all' ? '' : filters.competition],
+    ['catchment', filters.catchment.trim()],
+  ]) {
+    if (value) params.set(key, value);
+    else params.delete(key);
+  }
+  return params;
+}
+
 /** WGS84 beacons for the catchment map. Keyed by the database athlete uuid. */
 export const ROSTER_COORDINATES: Record<string, { lat: number; lng: number }> = {
   '11111111-1111-1111-1111-111111111111': { lat: -33.9173, lng: 151.035 },
