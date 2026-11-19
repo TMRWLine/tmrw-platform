@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom';
 import {
   COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_GRAZE_DELAY_MS, COVER_GRAZE_MS,
   COVER_LAMP_CUE_MS, COVER_LINE_DELAYS, COVER_LINE_DRAW_MS,
-  COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_WORD_DELAYS, coverWordTransform,
+  COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_TRACE_DELAY_MS, COVER_TRACE_MS, COVER_WORD_DELAYS, coverWordTransform,
 } from '../lib/coverMotion';
 import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
 import { useReducedMotion } from '../lib/useReducedMotion';
@@ -234,6 +234,8 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
     ['--cover-graze-delay', `${COVER_GRAZE_DELAY_MS}ms`],
     ['--cover-graze', `${COVER_GRAZE_MS}ms`],
     ['--cover-line-draw', `${COVER_LINE_DRAW_MS}ms`],
+    ['--cover-trace-delay', `${COVER_TRACE_DELAY_MS}ms`],
+    ['--cover-trace', `${COVER_TRACE_MS}ms`],
     ['--cover-cta-start', `${COVER_CTA_START_MS}ms`],
     ['--cover-cta-slide', `${COVER_CTA_SLIDE_MS}ms`],
     ['--cover-settle', `${COVER_SETTLE_MS}ms`],
@@ -251,6 +253,15 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
         }}>
         <span ref={marker} className="cover-marker" aria-hidden="true" />
         <div className="cover-edge" aria-hidden="true">
+          <svg width="0" height="0" className="absolute" focusable="false">
+            <filter id="cover-photo-grade" colorInterpolationFilters="sRGB">
+              <feComponentTransfer>
+                <feFuncR type="table" tableValues="0 .224 .502 .774 1" />
+                <feFuncG type="table" tableValues="0 .249 .501 .752 1" />
+                <feFuncB type="table" tableValues="0 .269 .503 .718 1" />
+              </feComponentTransfer>
+            </filter>
+          </svg>
           <div className="cover-image-plane">
             <div className="cover-camera">
               <div className="cover-photo-stack">
@@ -272,6 +283,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
           <div className="cover-bloom" />
           <FilmGrainOverlay />
           <CourtLinesOverlay className="cover-court" />
+          {!reduced && <span className="cover-court-trace" />}
         </div>
         <span className="cover-court-handoff" aria-hidden="true" />
         <div className="cover-title">
