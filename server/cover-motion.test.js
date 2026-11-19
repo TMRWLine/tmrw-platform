@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_GRAZE_DELAY_MS, COVER_GRAZE_MS,
+  COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_EXPOSURE_MS, COVER_GRAZE_DELAY_MS, COVER_GRAZE_MS,
   COVER_LAMP_CUE_MS, COVER_LINE_DELAYS, COVER_LINE_DRAW_MS,
   COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_TRACE_DELAY_MS, COVER_TRACE_MS, COVER_WORD_DELAYS,
-  coverWordTransform, hasCourtLineArrived, isPastedCover,
+  coverWordTransform, hasCourtLineArrived, isPastedCover, usesCoverExposure,
 } from '../src/lib/coverMotion.ts';
 
 test('only cover=pasted opts into the unmodified cover', () => {
@@ -17,6 +17,14 @@ test('only cover=pasted opts into the unmodified cover', () => {
 test('the four reveal beats and settle retain the original timings', () => {
   assert.deepEqual(COVER_WORD_DELAYS, [260, 600, 940, 1280]);
   assert.equal(COVER_SETTLE_MS, 2800);
+});
+
+test('the short double exposure is opt-in and never alters the pasted cover', () => {
+  assert.equal(usesCoverExposure('?bg=effect'), true);
+  for (const query of ['', '?bg=reel', '?cover=pasted&bg=effect']) {
+    assert.equal(usesCoverExposure(query), false);
+  }
+  assert.ok(COVER_EXPOSURE_MS > 0 && COVER_EXPOSURE_MS < 5000);
 });
 
 test('the settle maps each final word box back over its opening box', () => {

@@ -1,14 +1,15 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type Ref } from 'react';
 import { flushSync } from 'react-dom';
 import {
   COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_GRAZE_DELAY_MS, COVER_GRAZE_MS,
   COVER_LAMP_CUE_MS, COVER_LINE_DELAYS, COVER_LINE_DRAW_MS,
-  COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_TRACE_DELAY_MS, COVER_TRACE_MS, COVER_WORD_DELAYS, coverWordTransform,
+  COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_TRACE_DELAY_MS, COVER_TRACE_MS, COVER_WORD_DELAYS, coverWordTransform, usesCoverExposure,
 } from '../lib/coverMotion';
 import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
 import { useReducedMotion } from '../lib/useReducedMotion';
 import type { LandingSectionId } from './Navigation';
 import { CourtLinesOverlay } from './CourtLinesOverlay';
+import { CoverExposure } from './CoverExposure';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
 import { RollingPillButton } from './RollingPillButton';
 import './CoverHero.css';
@@ -22,12 +23,12 @@ const LINKS = [
   { id: 'syndicate', href: BRISBANE_RUNWAY_PATH, label: 'Brisbane 2032 Runway', variant: 'glass' },
 ] as const;
 
-function CoverPhoto({ soft = false }: { soft?: boolean }) {
+function CoverPhoto({ soft = false, imageRef }: { soft?: boolean; imageRef?: Ref<HTMLImageElement> }) {
   return (
     <picture>
       <source type="image/avif" srcSet="/coverpage-420.avif 420w, /coverpage-612.avif 612w" sizes={IMAGE_SIZES} />
       <source type="image/webp" srcSet="/coverpage-420.webp 420w, /coverpage-612.webp 612w" sizes={IMAGE_SIZES} />
-      <img className={`cover-photo${soft ? ' cover-photo-soft' : ''}`} src="/coverpage.jpg" alt=""
+      <img ref={imageRef} className={`cover-photo${soft ? ' cover-photo-soft' : ''}`} src="/coverpage.jpg" alt=""
         width={612} height={407} draggable={false} {...{ fetchpriority: 'high' }} />
     </picture>
   );
@@ -47,6 +48,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
   const intro = !reduced && !introComplete;
   const openingTitle = !reduced && !settled;
   const cover = useRef<HTMLElement>(null);
+  const poster = useRef<HTMLImageElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const introLayout = useRef<HTMLSpanElement>(null);
   const finalLayout = useRef<HTMLSpanElement>(null);
@@ -265,8 +267,11 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
           <div className="cover-image-plane">
             <div className="cover-camera">
               <div className="cover-photo-stack">
-                <CoverPhoto />
+                <CoverPhoto imageRef={poster} />
                 {!reduced && <CoverPhoto soft />}
+                {!reduced && usesCoverExposure(window.location.search) && (
+                  <CoverExposure poster={poster} settled={introComplete} />
+                )}
               </div>
               {!reduced && (
                 <div className="cover-lamp-plane">

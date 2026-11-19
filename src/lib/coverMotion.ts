@@ -10,6 +10,11 @@ export const COVER_GRAZE_DELAY_MS = 95;
 export const COVER_GRAZE_MS = 490;
 export const COVER_TRACE_DELAY_MS = COVER_WORD_DELAYS[3] + 110;
 export const COVER_TRACE_MS = COVER_LINE_DRAW_MS + 80;
+export const COVER_EXPOSURE_MS = 1700;
+
+export function usesCoverExposure(search: string): boolean {
+  return !isPastedCover(search) && new URLSearchParams(search).get('bg') === 'effect';
+}
 
 export function hasCourtLineArrived(ruleTop: number, joinMarkerTop: number, viewportHeight: number, animated: boolean): boolean {
   return animated
