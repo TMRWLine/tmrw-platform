@@ -186,12 +186,12 @@
 .concept-board header h1 { margin-block: .6rem 1rem; font: 900 clamp(2.8rem, 8vw, 7rem)/.89 system-ui; letter-spacing: -.07em; }
 .concept-board header h1 span, .concept-eyebrow { color: #b8ff00; }
 .concept-board-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(.6rem, 2vw, 2rem); margin-top: 2rem; }
-.concept-card { border-top: 1px solid #f7f7f670; padding-top: 1rem; }
+.concept-card { min-width: 0; border-top: 1px solid #f7f7f670; padding-top: 1rem; }
 .concept-card h2 { font: 800 clamp(1.25rem, 2.6vw, 2.4rem)/1.05 system-ui; letter-spacing: -.04em; }
 .concept-card-links { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
 .concept-card-links button { min-height: 44px; padding-inline: .8rem; background: #b8ff00; color: #080808; border: 0; border-radius: .25rem; cursor: pointer; }
-.concept-frame { overflow: hidden; background: #191919; }
-.concept-frame iframe { display: block; border: 0; transform-origin: top left; }
+.concept-frame { position: relative; width: 100%; overflow: hidden; background: #191919; }
+.concept-frame iframe { position: absolute; inset: 0 auto auto 0; display: block; border: 0; transform-origin: top left; }
 .concept-frame-label { color: #c9c9c9; }
 
 @media (min-width: 761px) {
