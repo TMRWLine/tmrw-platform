@@ -35,7 +35,13 @@ end;
 $$;
 
 alter table public.athlete_profiles alter column id set default gen_random_uuid();
-update public.athlete_profiles set id = gen_random_uuid() where id is null;
+do $$
+begin
+  if exists (select 1 from public.athlete_profiles where id is null) then
+    update public.athlete_profiles set id = gen_random_uuid() where id is null;
+  end if;
+end;
+$$;
 alter table public.athlete_profiles alter column id set not null;
 
 do $$
