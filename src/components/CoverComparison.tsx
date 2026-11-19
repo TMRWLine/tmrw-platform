@@ -32,12 +32,13 @@ export default function CoverComparison() {
   const variants = [
     { title: 'Your cover, polished', url: '/' },
     { title: 'Your cover, Floodlight Film', url: '/?cover=webgl' },
+    { title: 'Your cover, Line-up Wall', url: '/?cover=wall' },
     { title: 'Your cover (as pasted)', url: '/?cover=pasted' },
   ];
   return (
     <main className="cover-comparison">
       <h1>Compare your cover</h1>
-      <p>Same court card, photo and headline. Compare the original, polished and WebGL openings.</p>
+      <p>Same court card, photo and headline. Compare the original, polished, Floodlight Film and Line-up Wall openings.</p>
       <button type="button" onClick={() => setReplay(previous => previous + 1)}>Replay all</button>
       {DEVICES.map(({ name, width, height }) => (
         <section key={name} aria-labelledby={`comparison-${name}`}>

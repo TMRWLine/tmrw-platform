@@ -9,6 +9,7 @@ import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
 import { useReducedMotion } from '../lib/useReducedMotion';
 import type { LandingSectionId } from './Navigation';
 import { CourtLinesOverlay } from './CourtLinesOverlay';
+import { CoverWall } from './CoverWall';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
 import { RollingPillButton } from './RollingPillButton';
 import './CoverHero.css';
@@ -33,11 +34,12 @@ function CoverPhoto({ soft = false }: { soft?: boolean }) {
   );
 }
 
-export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFocus, webgl = false }: {
+export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFocus, webgl = false, wall = false }: {
   onNavigateSection: (id: LandingSectionId) => void;
   overlayOpen: boolean;
   scrollForKeyboardFocus: (top?: number) => void;
   webgl?: boolean;
+  wall?: boolean;
 }) {
   const reduced = useReducedMotion();
   const [settled, setSettled] = useState(false);
@@ -45,8 +47,11 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
   const [pulsePaused, setPulsePaused] = useState(false);
   const [pastCover, setPastCover] = useState(false);
   const [wide, setWide] = useState(false);
-  const [lens, setLens] = useState<'pending' | 'active' | 'still'>(() =>
+  const [lens, setLens] = useState<'pending' | 'primed' | 'active' | 'still'>(() =>
     webgl && canAnimateCoverLens(reduced, navigator as Parameters<typeof canAnimateCoverLens>[1]) ? 'pending' : 'still');
+  const wallAborted = wall && lens === 'still';
+  const wallOpen = wall && !reduced && (lens === 'pending' || lens === 'primed');
+  const wallSkippable = wall && !reduced && !wallAborted && !introComplete;
   const intro = !reduced && !introComplete && (!webgl || lens === 'active');
   const openingTitle = intro && !settled;
   const cover = useRef<HTMLElement>(null);
@@ -59,6 +64,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
   const quickLinks = useRef<HTMLElement>(null);
   const marker = useRef<HTMLSpanElement>(null);
   const animations = useRef<Animation[]>([]);
+  const playLens = useRef<(() => void) | undefined>(undefined);
   const pointer = useRef({ x: 0, y: 0, targetX: 0, targetY: 0, frame: 0 });
 
   const settleTitle = useCallback((startTime: number) => {
@@ -86,11 +92,29 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
     if (returnFocus) heading.current?.focus({ preventScroll: true });
   }, []);
 
+  const skipWall = useCallback(() => {
+    finishIntro();
+    setLens('still');
+  }, [finishIntro]);
+
+  const revealWall = useCallback(() => {
+    playLens.current?.();
+    setLens('active');
+  }, []);
+
+  useEffect(() => {
+    if (!wallSkippable) return;
+    const options = { capture: true, passive: true };
+    const events = ['click', 'keydown', 'scroll', 'wheel'];
+    events.forEach(event => window.addEventListener(event, skipWall, options));
+    return () => events.forEach(event => window.removeEventListener(event, skipWall, options));
+  }, [wallSkippable, skipWall]);
+
   useEffect(() => {
     const stage = cover.current;
     const image = poster.current;
     const surface = canvas.current;
-    if (!webgl || !stage || !image || !surface) return;
+    if (!webgl || wallAborted || !stage || !image || !surface) return;
     if (!canAnimateCoverLens(reduced, navigator as Parameters<typeof canAnimateCoverLens>[1])) {
       setLens('still');
       return;
@@ -114,18 +138,20 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
       try {
         const { mountCoverLens } = await import('./coverLens');
         if (!cancelled) {
-          dispose = mountCoverLens(surface, stage, () => {
+          const controller = mountCoverLens(surface, stage, () => {
             if (cancelled) return;
             window.clearTimeout(deadline);
-            setLens('active');
-          }, fallback);
+            setLens(wall ? 'primed' : 'active');
+          }, fallback, wall);
+          playLens.current = controller.play;
+          dispose = controller.dispose;
         }
       } catch {
         fallback();
       }
     };
     deadline = window.setTimeout(fallback, 3200);
-    if (window === window.top && typeof PerformanceObserver !== 'undefined'
+    if (!wall && window === window.top && typeof PerformanceObserver !== 'undefined'
       && PerformanceObserver.supportedEntryTypes.includes('largest-contentful-paint')) {
       observer = new PerformanceObserver(list => {
         if (!list.getEntries().some(entry => (entry as LargestContentfulPaint).element === image)) return;
@@ -141,13 +167,14 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
       });
     }
     return () => {
+      playLens.current = undefined;
       cancelled = true;
       cancelAnimationFrame(paint);
       window.clearTimeout(deadline);
       observer?.disconnect();
       dispose?.();
     };
-  }, [webgl, reduced, finishIntro]);
+  }, [webgl, wall, wallAborted, reduced, finishIntro]);
 
   useLayoutEffect(() => {
     const title = heading.current;
@@ -311,6 +338,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
     <>
       <section ref={cover} aria-label="tmrw cover" className="cover-stage" data-intro={intro} data-wide={wide}
         data-lens={webgl ? lens : undefined}
+        data-wall={wall || undefined}
         style={sceneTiming}
         onPointerMove={movePointer}
         onPointerLeave={() => {
@@ -348,6 +376,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
           <div className="cover-bloom" />
           <FilmGrainOverlay />
           <CourtLinesOverlay className="cover-court" />
+          {wallOpen && <CoverWall ready={lens === 'primed'} onFlipped={revealWall} />}
         </div>
         <span className="cover-court-handoff" aria-hidden="true" />
         <div className="cover-title">
@@ -393,9 +422,10 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
               </Fragment>
             ))}
           </h1>
-          {intro && <button ref={skip} type="button" className="cover-skip" onClick={finishIntro}><span className="sr-only">Skip cover animation</span></button>}
+          {intro && !wall && <button ref={skip} type="button" className="cover-skip" onClick={finishIntro}><span className="sr-only">Skip cover animation</span></button>}
         </div>
-        <div className="cover-actions">
+        {wallSkippable && <button ref={skip} type="button" className="cover-wall-skip" onClick={skipWall}>Skip intro</button>}
+        <div className="cover-actions" {...(wallOpen ? { inert: '' } : {})}>
           {links}
         </div>
       </section>

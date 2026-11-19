@@ -59,6 +59,7 @@ export function mountCoverLens(
   stage: HTMLElement,
   onReady: () => void,
   onFallback: () => void,
+  waitForWall = false,
 ) {
   const renderer = new THREE.WebGLRenderer({
     canvas, antialias: false, alpha: false, powerPreference: 'high-performance',
@@ -169,7 +170,17 @@ export function mountCoverLens(
     if (!visible || document.hidden || stopped) return;
     const t = (now - started) / 1000;
     const skipped = t > .16 && stage.dataset.intro === 'false' && t < COVER_SETTLE_MS / 1000;
-    const beat = skipped ? COVER_SETTLE_MS / 1000 : t;
+    renderScene(t, skipped ? COVER_SETTLE_MS / 1000 : t);
+    if (previous) {
+      elapsedTotal += now - previous;
+      frames += 1;
+      if (frames % 30 === 0) canvas.dataset.fps = (frames * 1000 / elapsedTotal).toFixed(1);
+    }
+    previous = now;
+    frame = requestAnimationFrame(draw);
+  }
+
+  function renderScene(t: number, beat: number) {
     const dolly = smooth(.02, 2.28, beat);
     const idle = smooth(2.26, 3.35, beat);
     const travel = smooth(0, stageHeight * .63, scrollY - stageTop);
@@ -210,21 +221,22 @@ export function mountCoverLens(
       points.needsUpdate = true;
     });
     composer.render();
-    if (previous) {
-      elapsedTotal += now - previous;
-      frames += 1;
-      if (frames % 30 === 0) canvas.dataset.fps = (frames * 1000 / elapsedTotal).toFixed(1);
-    }
-    previous = now;
+  }
+
+  function play() {
+    if (stopped || started) return;
+    started = performance.now();
     frame = requestAnimationFrame(draw);
   }
 
   function markLoaded() {
     if (stopped || ++loaded !== 2) return;
     size();
-    composer.render();
-    started = performance.now();
-    frame = requestAnimationFrame(draw);
+    if (waitForWall) renderScene(0, 0);
+    else {
+      composer.render();
+      play();
+    }
     onReady();
   }
   const resume = () => {
@@ -250,7 +262,8 @@ export function mountCoverLens(
   stage.addEventListener('pointerleave', clearPointer);
   document.addEventListener('visibilitychange', resume);
   canvas.addEventListener('webglcontextlost', loseContext);
-  return () => {
+  function dispose() {
+    if (stopped) return;
     stopped = true;
     cancelAnimationFrame(frame);
     observer.disconnect();
@@ -272,7 +285,8 @@ export function mountCoverLens(
     composer.dispose();
     renderer.dispose();
     renderer.forceContextLoss();
-  };
+  }
+  return { play, dispose };
 }
 
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;

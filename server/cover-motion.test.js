@@ -6,6 +6,7 @@ import {
   COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_WORD_DELAYS, canAnimateCoverLens, coverWordTransform,
   isPastedCover, isWebGLCover,
 } from '../src/lib/coverMotion.ts';
+import { isWallCover, releasedWallPhoto, wallTileTiming, wallTimeline } from '../src/lib/coverWall.ts';
 
 test('only cover=pasted opts into the unmodified cover', () => {
   assert.equal(isPastedCover('?cover=pasted'), true);
@@ -27,6 +28,34 @@ test('the WebGL cover is opt-in and low-power or reduced-motion devices get the 
 test('the four reveal beats and settle retain the original timings', () => {
   assert.deepEqual(COVER_WORD_DELAYS, [260, 600, 940, 1280]);
   assert.equal(COVER_SETTLE_MS, 2800);
+});
+
+test('only the wall route opts into the tile sequence; photos require a rights reference', () => {
+  assert.equal(isWallCover('?cover=wall'), true);
+  for (const query of ['', '?cover=pasted', '?cover=webgl']) assert.equal(isWallCover(query), false);
+  const tile = { sport: 'Netball', caption: 'Shooter' };
+  assert.equal(releasedWallPhoto(tile), undefined);
+  const photo = { src: '/stock.webp', alt: 'Player reaching for a pass', rightsRef: '   ' };
+  assert.equal(releasedWallPhoto({ ...tile, photo }), undefined);
+  const released = { ...photo, rightsRef: 'LIC-123' };
+  assert.equal(releasedWallPhoto({ ...tile, photo: released }), released);
+});
+
+test('the desktop and phone walls finish populating before flipping from the centre', () => {
+  const desktop = wallTimeline(false);
+  const phone = wallTimeline(true);
+  assert.deepEqual([desktop.columns, desktop.rows, desktop.populateMs], [8, 5, 3500]);
+  assert.deepEqual([phone.columns, phone.rows, phone.populateMs], [4, 6, 1800]);
+  for (const timeline of [desktop, phone]) {
+    const corner = wallTileTiming(0, timeline);
+    const last = wallTileTiming(timeline.columns * timeline.rows - 1, timeline);
+    const centre = wallTileTiming(Math.floor(timeline.rows / 2) * timeline.columns + timeline.columns / 2, timeline);
+    assert.equal(corner.populateDelay, 0);
+    assert.equal(last.populateDelay + 490, timeline.populateMs);
+    assert.equal(corner.flipDelay + 465, timeline.waveMs);
+    assert.equal(corner.flipDelay, last.flipDelay);
+    assert.ok(centre.flipDelay < corner.flipDelay);
+  }
 });
 
 test('the settle maps each final word box back over its opening box', () => {

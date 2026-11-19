@@ -58,6 +58,7 @@ import { TwelveLabsModal } from './components/TwelveLabsModal';
 import { CoverHero } from './components/CoverHero';
 import { CoverHero as PastedCoverHero, PAGE_SHELL as PASTED_PAGE_SHELL } from './components/pasted/CoverHero';
 import { isPastedCover, isWebGLCover } from './lib/coverMotion';
+import { isWallCover } from './lib/coverWall';
 import { ManifestoTrail } from './components/ManifestoTrail';
 import { BroadcastMatrix } from './components/BroadcastMatrix';
 import { RosterGrid } from './components/RosterGrid';
@@ -845,7 +846,8 @@ export function MarketplaceApp() {
             ) : (
               <div className="cover-sequence pt-20">
                 <CoverHero
-                  webgl={isWebGLCover(window.location.search)}
+                  webgl={isWebGLCover(window.location.search) || isWallCover(window.location.search)}
+                  wall={isWallCover(window.location.search)}
                   onNavigateSection={navigateToHeading}
                   scrollForKeyboardFocus={scrollForKeyboardFocus}
                   overlayOpen={isMenuOpen || isCartOpen || isSearchOpen || isPortalDrawerOpen || isAuthModalOpen || isSyndicateEnquiryOpen}
