@@ -241,6 +241,9 @@ const FALLBACK_COMMERCIAL_TIERS = {
   national_challenger: { name: 'National Challenger', price_aud: 12500 },
   world_class: { name: 'World-Class Benchmark', price_aud: 25000 },
   syndicate: { name: 'Brisbane 2032 Corporate Syndicate', price_aud: 50000 },
+  olympic_1yr_50k: { name: 'LA 2028 Qualifier Partnership', price_aud: 50000 },
+  olympic_2yr_110k: { name: 'LA 2028 Games Partnership', price_aud: 110000 },
+  olympic_4yr_250k: { name: 'Brisbane 2032 Home Games Quadrennial', price_aud: 250000 },
 };
 
 function loadMockDeliverables() {
