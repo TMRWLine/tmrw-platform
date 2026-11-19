@@ -25,6 +25,25 @@ const GATES: readonly ProtocolGate[] = [
   },
 ];
 
+export function HowItWorksStrip() {
+  return (
+    <section aria-labelledby="cover-story-heading" className="mx-auto max-w-[1600px] px-4 pb-16 text-[#080808] sm:px-6 md:px-8 md:pb-24">
+      <h2 id="cover-story-heading" className="mb-6 text-center font-display text-4xl font-extrabold tracking-tight">
+        How it works
+      </h2>
+      <ol className="cover-story relative m-0 grid list-none border-y border-black/30 p-0 md:grid-cols-3">
+        {GATES.map(({ step, title, body }) => (
+          <li key={step} className="relative border-black/30 px-5 py-7 [&+li]:border-t md:px-8 md:[&+li]:border-l md:[&+li]:border-t-0">
+            <p className="mb-2 font-mono text-xs text-black/70">{step}</p>
+            <h3 className="mb-3 font-display text-xl font-bold">{title}</h3>
+            <p className="m-0 max-w-[45ch] text-sm leading-relaxed text-black/80">{body}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 /**

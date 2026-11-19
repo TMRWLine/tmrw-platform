@@ -16,16 +16,16 @@ import React from 'react';
  *    default objectBoundingBox filter region is safe for the perfectly horizontal and vertical
  *    lines inside it.
  */
-export const CourtLinesOverlay: React.FC<{ aligning?: boolean }> = ({ aligning = false }) => {
+export const CourtLinesOverlay: React.FC<{ className?: string }> = ({ className = '' }) => {
   return (
     <div
       aria-hidden="true"
-      className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-hidden mix-blend-screen"
+      className={`absolute inset-0 w-full h-full pointer-events-none z-10 overflow-hidden mix-blend-screen ${className}`}
     >
       <svg
         viewBox="0 0 1000 600"
         preserveAspectRatio="none"
-        className={`w-full h-full motion-safe:transition-[transform,opacity] motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] ${aligning ? 'scale-[1.06] opacity-55' : 'scale-100 opacity-100'}`}
+        className="w-full h-full"
         focusable="false"
       >
         <defs>

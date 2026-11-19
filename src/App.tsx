@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import Lenis from '@studio-freight/lenis';
 import {
   MapPin,
@@ -54,7 +55,7 @@ import {
 } from './lib/overlayEvents';
 import { AdminDrawer } from './components/AdminDrawer';
 import { TwelveLabsModal } from './components/TwelveLabsModal';
-import { CoverHero, PAGE_SHELL } from './components/CoverHero';
+import { CoverHero } from './components/CoverHero';
 import { ManifestoTrail } from './components/ManifestoTrail';
 import { BroadcastMatrix } from './components/BroadcastMatrix';
 import { RosterGrid } from './components/RosterGrid';
@@ -72,7 +73,7 @@ import { GuardianVerifyPage, GUARDIAN_VERIFY_PATH } from './components/GuardianV
 import { ClaimProfilePage } from './components/ClaimProfilePage';
 import { CommercialTiers } from './components/CommercialTiers';
 import { SyndicateRunway } from './components/SyndicateRunway';
-import { HowItWorks } from './components/HowItWorks';
+import { HowItWorks, HowItWorksStrip } from './components/HowItWorks';
 import { ViewportFrame } from './components/ViewportFrame';
 import { ObsidianWipe } from './components/ObsidianWipe';
 import { CheckoutSuccessPage, CHECKOUT_SUCCESS_PATH } from './pages/checkout/success';
@@ -125,6 +126,7 @@ type ProfileTab = 'overview' | 'brandkit' | 'agreement';
 
 export function MarketplaceApp() {
   const [view, setView] = useState<AppView>(viewFromLocation);
+  const routeTransition = useRef<ViewTransition | null>(null);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [loadingList, setLoadingList] = useState(true);
@@ -544,36 +546,51 @@ export function MarketplaceApp() {
 
   const panelOpen = activeAthlete !== null;
 
-  function navigateSection(id: LandingSectionId) {
+  function navigateSection(id: LandingSectionId, afterNavigate?: () => void) {
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    let nextView: AppView = 'landing';
+    let nextPath = '/';
     if (id === 'how-it-works') {
-      if (path !== HOW_IT_WORKS_PATH) window.history.pushState(null, '', HOW_IT_WORKS_PATH);
-      setView('how-it-works');
-      return;
+      nextPath = HOW_IT_WORKS_PATH;
+      nextView = 'how-it-works';
+    } else if (id === 'roster' || id === 'athletes' || id === 'sponsors') {
+      nextPath = THE_ROSTER_PATH;
+      nextView = 'the-roster';
+    } else if (id === 'commercial-tiers') {
+      nextPath = COMMERCIAL_TIERS_PATH;
+      nextView = 'commercial-tiers';
+    } else if (id === 'syndicate') {
+      nextPath = BRISBANE_RUNWAY_PATH;
+      nextView = 'brisbane-runway';
     }
-    if (id === 'roster' || id === 'athletes' || id === 'sponsors') {
-      if (path !== THE_ROSTER_PATH) window.history.pushState(null, '', THE_ROSTER_PATH);
-      setView('the-roster');
-      return;
+    if (path !== nextPath) {
+      window.history.pushState(null, '', nextView === 'landing' && id !== 'top' ? `/#${landingSectionElementId(id)}` : nextPath);
     }
-    if (id === 'commercial-tiers') {
-      if (path !== COMMERCIAL_TIERS_PATH) window.history.pushState(null, '', COMMERCIAL_TIERS_PATH);
-      setView('commercial-tiers');
-      return;
+    const update = () => {
+      setView(nextView);
+      if (nextView === 'landing') setLandingSection(id);
+    };
+    const notify = () => { if (afterNavigate) requestAnimationFrame(afterNavigate); };
+    routeTransition.current?.skipTransition();
+    routeTransition.current = null;
+    if (view !== nextView && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && document.startViewTransition) {
+      const transition = document.startViewTransition(() => {
+        if (routeTransition.current !== transition) return;
+        flushSync(update);
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        notify();
+      });
+      routeTransition.current = transition;
+      void transition.finished.then(() => {
+        if (routeTransition.current === transition) routeTransition.current = null;
+      });
+    } else {
+      update();
+      notify();
     }
-    if (id === 'syndicate') {
-      if (path !== BRISBANE_RUNWAY_PATH) window.history.pushState(null, '', BRISBANE_RUNWAY_PATH);
-      setView('brisbane-runway');
-      return;
-    }
-    if (path !== '/') {
-      window.history.pushState(null, '', id === 'top' ? '/' : `/#${landingSectionElementId(id)}`);
-    }
-    setView('landing');
-    setLandingSection(id);
   }
 
-  function navigateFromMenu(id: LandingSectionId) {
+  function navigateToHeading(id: LandingSectionId) {
     const headingId: Partial<Record<LandingSectionId, string>> = {
       top: 'cover-heading',
       roster: 'roster-heading',
@@ -582,15 +599,15 @@ export function MarketplaceApp() {
       syndicate: 'syndicate-heading',
       ledger: 'ledger-heading',
     };
-    if (id !== 'top' || view !== 'landing') navigateSection(id);
-    const sameView = view === viewFromLocation();
-    requestAnimationFrame(() => {
-      if (sameView && id !== 'ledger') window.scrollTo({ top: 0, behavior: 'instant' });
+    const focusHeading = () => {
+      if (view === viewFromLocation() && id !== 'ledger') window.scrollTo({ top: 0, behavior: 'instant' });
       const heading = document.getElementById(headingId[id] ?? '');
       if (!heading) return;
       heading.tabIndex = -1;
       heading.focus({ preventScroll: true });
-    });
+    };
+    if (id === 'top' && view === 'landing') requestAnimationFrame(focusHeading);
+    else navigateSection(id, focusHeading);
   }
 
   useEffect(() => {
@@ -629,6 +646,8 @@ export function MarketplaceApp() {
 
   useEffect(() => {
     const syncPath = () => {
+      routeTransition.current?.skipTransition();
+      routeTransition.current = null;
       const next = viewFromLocation();
       setView((current) => (current === 'sponsor' && next === 'landing' ? current : next));
     };
@@ -703,9 +722,9 @@ export function MarketplaceApp() {
         onClose={() => setIsMenuOpen(false)}
         onHome={() => {
           closeOverlays();
-          navigateFromMenu('top');
+          navigateToHeading('top');
         }}
-        onNavigateSection={navigateFromMenu}
+        onNavigateSection={navigateToHeading}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenPortal={() => setIsPortalDrawerOpen(true)}
         onOpenSponsorWorkspace={enterSponsorWorkspace}
@@ -761,9 +780,13 @@ export function MarketplaceApp() {
       ) : view === 'landing' ? (
         <div className="landing-scroll relative z-10 w-full bg-[#FFFFFF]">
           <main className="bg-[#FFFFFF]">
-            <div className={`${PAGE_SHELL} pt-20`}>
-              <CoverHero onNavigateSection={navigateSection} />
+            <div className="pt-20">
+              <CoverHero
+                onNavigateSection={navigateToHeading}
+                overlayOpen={isMenuOpen || isCartOpen || isSearchOpen || isPortalDrawerOpen || isAuthModalOpen || isSyndicateEnquiryOpen}
+              />
             </div>
+            <HowItWorksStrip />
             <ManifestoTrail onNavigateSection={navigateSection} />
             <BroadcastMatrix />
             <SettlementLedger />

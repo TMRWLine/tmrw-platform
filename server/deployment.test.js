@@ -44,6 +44,26 @@ test('Vercel keeps API paths out of the SPA rewrite and includes the runtime cat
   assert.ok(catalogue.packages.every((entry) => typeof entry.tier_id === 'string' && Number.isFinite(entry.price_aud)));
 });
 
+test('Vercel applies anti-framing, HTTPS and a scoped script policy to pages and API responses', () => {
+  const config = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url)));
+  const { source, headers } = config.headers[0];
+  const path = new RegExp(`^${source}$`);
+  for (const route of ['/', '/the-roster', '/api/health']) assert.ok(path.test(route));
+  const values = Object.fromEntries(headers.map(({ key, value }) => [key, value]));
+  const directives = Object.fromEntries(values['Content-Security-Policy'].split(';').map(directive => {
+    const [key, ...sources] = directive.trim().split(/\s+/);
+    return [key, sources];
+  }));
+  assert.deepEqual(directives['frame-ancestors'], ["'none'"]);
+  assert.deepEqual(directives['object-src'], ["'none'"]);
+  assert.deepEqual(directives['script-src'], ["'self'", 'https://vercel.live']);
+  assert.ok(directives['connect-src'].includes('https://*.supabase.co'));
+  assert.match(values['Strict-Transport-Security'], /max-age=31536000/);
+  assert.equal(values['X-Content-Type-Options'], 'nosniff');
+  assert.equal(values['Referrer-Policy'], 'strict-origin-when-cross-origin');
+  assert.match(values['Permissions-Policy'], /geolocation=\(\)/);
+});
+
 test('Instagram OAuth starts through the Vercel handler or returns a JSON configuration error', () => withServer(async (request) => {
   const names = ['INSTAGRAM_APP_ID', 'INSTAGRAM_APP_SECRET', 'INSTAGRAM_REDIRECT_URI'];
   const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
