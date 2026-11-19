@@ -156,6 +156,8 @@ export function MarketplaceApp() {
   const [mediaStudioAthlete, setMediaStudioAthlete] = useState<Athlete | null>(null);
   const [landingSection, setLandingSection] = useState<LandingSectionId | null>(null);
   const [canvasProgress, setCanvasProgress] = useState(0);
+  const [pastLandingCover, setPastLandingCover] = useState(false);
+  const [visibleLandingSection, setVisibleLandingSection] = useState<LandingSectionId | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
   const scrollForKeyboardFocus = useCallback((top?: number) => {
     const lenis = lenisRef.current;
@@ -231,6 +233,40 @@ export function MarketplaceApp() {
       lenisRef.current?.off('scroll', onScroll);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', update);
+    };
+  }, [view]);
+
+  useEffect(() => {
+    if (view !== 'landing' || isPastedCover(window.location.search)) return;
+    const cover = document.querySelector('.cover-sequence .cover-stage');
+    const sections = [
+      ['how-it-works', 'cover-story-heading'],
+      ['roster', 'roster'],
+      ['commercial-tiers', 'commercial-tiers'],
+      ['syndicate', 'brisbane-2032-runway'],
+    ] as const;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const past = (cover?.getBoundingClientRect().bottom ?? Infinity) <= NAV_HEIGHT_PX;
+      setPastLandingCover(past);
+      let active: LandingSectionId | null = past ? 'how-it-works' : null;
+      if (past) {
+        for (const [id, anchor] of sections) {
+          const section = document.getElementById(anchor);
+          if (section && section.getBoundingClientRect().top <= NAV_HEIGHT_PX + 1) active = id;
+        }
+      }
+      setVisibleLandingSection(active);
+    };
+    const requestUpdate = () => { if (!frame) frame = requestAnimationFrame(update); };
+    update();
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', requestUpdate);
+      window.removeEventListener('resize', requestUpdate);
     };
   }, [view]);
 
@@ -690,6 +726,10 @@ export function MarketplaceApp() {
           ? '#080808'
           : CANVAS_WHITE;
   const inkClass = frameTone === 'dark' ? 'text-white' : 'text-[#080808]';
+  const activeNav = view === 'landing' ? visibleLandingSection
+    : view === 'the-roster' ? 'roster'
+    : view === 'brisbane-runway' ? 'syndicate'
+    : view === 'sponsor' ? null : view;
 
   return (
     <div
@@ -712,6 +752,9 @@ export function MarketplaceApp() {
         onCloseOverlays={closeOverlays}
         onNavigateSection={navigateSection}
         tone={frameTone}
+        compact={view !== 'sponsor' && (view !== 'landing' || pastLandingCover)}
+        activeSection={activeNav}
+        activeLocation={view === 'landing' ? 'location' : 'page'}
         onOpenPortal={() => {
           setIsSearchOpen(false);
           setIsMenuOpen(false);
@@ -793,17 +836,22 @@ export function MarketplaceApp() {
         <div className="landing-scroll relative z-10 w-full bg-[#FFFFFF]">
           <main className="bg-[#FFFFFF]">
             {isPastedCover(window.location.search) ? (
-              <div className={`${PASTED_PAGE_SHELL} pt-20`}>
-                <PastedCoverHero onNavigateSection={navigateToHeading} />
+              <>
+                <div className={`${PASTED_PAGE_SHELL} pt-20`}>
+                  <PastedCoverHero onNavigateSection={navigateToHeading} />
+                </div>
+                <HowItWorksStrip />
+              </>
+            ) : (
+              <div className="cover-sequence pt-20">
+                <CoverHero
+                  onNavigateSection={navigateToHeading}
+                  scrollForKeyboardFocus={scrollForKeyboardFocus}
+                  overlayOpen={isMenuOpen || isCartOpen || isSearchOpen || isPortalDrawerOpen || isAuthModalOpen || isSyndicateEnquiryOpen}
+                />
+                <HowItWorksStrip courtHandoff />
               </div>
-            ) : <div className="pt-20">
-              <CoverHero
-                onNavigateSection={navigateToHeading}
-                scrollForKeyboardFocus={scrollForKeyboardFocus}
-                overlayOpen={isMenuOpen || isCartOpen || isSearchOpen || isPortalDrawerOpen || isAuthModalOpen || isSyndicateEnquiryOpen}
-              />
-            </div>}
-            <HowItWorksStrip />
+            )}
             <ManifestoTrail onNavigateSection={navigateSection} />
             <BroadcastMatrix />
             <SettlementLedger />

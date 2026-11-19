@@ -5,6 +5,9 @@ export const COVER_LINE_DRAW_MS = 440;
 export const COVER_CTA_START_MS = Math.max(...COVER_LINE_DELAYS) + COVER_LINE_DRAW_MS;
 export const COVER_CTA_SLIDE_MS = 650;
 export const COVER_TITLE_MORPH_MS = 1000;
+export const COVER_LAMP_CUE_MS = 620;
+export const COVER_GRAZE_DELAY_MS = 95;
+export const COVER_GRAZE_MS = 490;
 
 export function isPastedCover(search: string): boolean {
   return new URLSearchParams(search).get('cover') === 'pasted';

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_LINE_DELAYS, COVER_LINE_DRAW_MS,
+  COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_GRAZE_DELAY_MS, COVER_GRAZE_MS,
+  COVER_LAMP_CUE_MS, COVER_LINE_DELAYS, COVER_LINE_DRAW_MS,
   COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_WORD_DELAYS, coverWordTransform, isPastedCover,
 } from '../src/lib/coverMotion.ts';
 
@@ -35,4 +36,11 @@ test('the CTA release follows the final stroke and the title morph fits inside t
   assert.equal(COVER_CTA_START_MS, COVER_LINE_DELAYS[6] + COVER_LINE_DRAW_MS);
   assert.ok(COVER_CTA_START_MS + COVER_CTA_SLIDE_MS <= COVER_SETTLE_MS);
   assert.ok(COVER_SETTLE_MS - COVER_TITLE_MORPH_MS >= COVER_CTA_START_MS);
+});
+
+test('word grazes start within the lamp cue and the last cue clears before settle', () => {
+  const finalBeat = COVER_WORD_DELAYS.at(-1);
+  assert.ok(COVER_GRAZE_DELAY_MS > 0);
+  assert.ok(COVER_GRAZE_DELAY_MS + COVER_GRAZE_MS <= COVER_LAMP_CUE_MS);
+  assert.ok(finalBeat + COVER_LAMP_CUE_MS < COVER_SETTLE_MS);
 });

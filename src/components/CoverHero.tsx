@@ -1,7 +1,8 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { flushSync } from 'react-dom';
 import {
-  COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_LINE_DELAYS, COVER_LINE_DRAW_MS,
+  COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_GRAZE_DELAY_MS, COVER_GRAZE_MS,
+  COVER_LAMP_CUE_MS, COVER_LINE_DELAYS, COVER_LINE_DRAW_MS,
   COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_WORD_DELAYS, coverWordTransform,
 } from '../lib/coverMotion';
 import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
@@ -229,6 +230,9 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
   const sceneTiming = Object.fromEntries([
     ...COVER_LINE_DELAYS.map((delay, index) => [`--cover-line-${index + 1}`, `${delay}ms`]),
     ['--cover-last-beat', `${COVER_WORD_DELAYS[3]}ms`],
+    ['--cover-lamp-cue', `${COVER_LAMP_CUE_MS}ms`],
+    ['--cover-graze-delay', `${COVER_GRAZE_DELAY_MS}ms`],
+    ['--cover-graze', `${COVER_GRAZE_MS}ms`],
     ['--cover-line-draw', `${COVER_LINE_DRAW_MS}ms`],
     ['--cover-cta-start', `${COVER_CTA_START_MS}ms`],
     ['--cover-cta-slide', `${COVER_CTA_SLIDE_MS}ms`],
@@ -256,7 +260,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
               {!reduced && (
                 <div className="cover-lamp-plane">
                   {COVER_WORD_DELAYS.map(delay => (
-                    <span key={delay} style={{ '--word-delay': `${delay}ms` } as CSSProperties} />
+                    <span className="cover-lamp" key={delay} style={{ '--word-delay': `${delay}ms` } as CSSProperties} />
                   ))}
                 </div>
               )}
@@ -269,6 +273,7 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
           <FilmGrainOverlay />
           <CourtLinesOverlay className="cover-court" />
         </div>
+        <span className="cover-court-handoff" aria-hidden="true" />
         <div className="cover-title">
           <div className="cover-type-measure font-display" aria-hidden="true">
             {[true, false].map(opening => (
@@ -290,9 +295,12 @@ export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFoc
             {WORDS.map((word, index) => (
               <Fragment key={word}>
                 {index > 0 && ' '}
-                <span className="cover-word" style={{ '--word-delay': `${COVER_WORD_DELAYS[index]}ms` } as CSSProperties}>
+                <span className="cover-word" data-finale={index === 3 || undefined} style={{ '--word-delay': `${COVER_WORD_DELAYS[index]}ms` } as CSSProperties}>
                   <span className="cover-word-mask"><span className="cover-word-rise">
-                    {word}
+                    <span className="cover-word-lit">
+                      {word}
+                      {!reduced && <span className="cover-word-graze" aria-hidden="true"><span>{word}</span></span>}
+                    </span>
                     {index === 3 && (
                       <span className="cover-dot" data-paused={pulsePaused}>
                         <span className="cover-dot-drop" aria-hidden="true"><span className="cover-dot-core" /></span>
