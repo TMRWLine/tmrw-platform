@@ -8,8 +8,6 @@
 
   .tmrw-navigation nav { display: none; }
   .nav-brand { flex-shrink: 0; min-height: 44px; justify-content: center; }
-  .nav-brand > span:first-child > span { font-size: 24px; }
-  .nav-brand svg { width: 15px; }
   .nav-utilities { flex-shrink: 0; }
   .nav-utilities > button {
     min-width: 44px;
@@ -19,14 +17,6 @@
   }
   .nav-portal > span { display: none; }
   .nav-portal .nav-portal-icon { display: block; }
-
-  .cover-hero { padding: 24px; min-height: 82svh; }
-  .cover-headline-stage { height: 48svh; min-height: 240px; }
-  .cover-hero h1 { font-size: clamp(2.75rem, 10vw, 4rem); }
-  .cover-hero .cover-intro-headline { font-size: clamp(3rem, 12vw, 4.5rem); }
-  .cover-actions { flex-direction: column; gap: 12px; padding: 0; }
-  .cover-actions > div, .cover-actions button { width: 100%; }
-  .cover-actions button { min-height: 44px; font-size: 14px; }
 
   .roster-toolbar { gap: 8px; }
   .roster-toolbar button { min-height: 44px; min-width: 44px; }
@@ -126,7 +116,5 @@
 }
 
 @media (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
-  .cover-headline-stage { min-height: 160px; }
-  .cover-actions { flex-direction: row; }
   .dossier-footer > div:first-child { display: none; }
 }

@@ -16,11 +16,11 @@ import React from 'react';
  *    default objectBoundingBox filter region is safe for the perfectly horizontal and vertical
  *    lines inside it.
  */
-export const CourtLinesOverlay: React.FC = () => {
+export const CourtLinesOverlay: React.FC<{ className?: string }> = ({ className = '' }) => {
   return (
     <div
       aria-hidden="true"
-      className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-hidden mix-blend-screen"
+      className={`absolute inset-0 w-full h-full pointer-events-none z-10 overflow-hidden mix-blend-screen ${className}`}
     >
       <svg
         viewBox="0 0 1000 600"

@@ -7,6 +7,13 @@ export interface AssetImageProps extends React.ImgHTMLAttributes<HTMLImageElemen
   objectPosition?: string;
 }
 
+export function assetImageSources(file: string | undefined, fallbackFiles: readonly string[]) {
+  const primary = typeof file === 'string' && file ? file : 'placeholder.jpg';
+  return Array.from(new Set([primary, ...fallbackFiles].map(path =>
+    /^https?:\/\//i.test(path) || path.startsWith('/') ? path : `/${path}`,
+  )));
+}
+
 export const AssetImage: React.FC<AssetImageProps> = ({
   file,
   fallbackFiles = [],
@@ -15,23 +22,19 @@ export const AssetImage: React.FC<AssetImageProps> = ({
   className = '',
   ...props
 }) => {
-  // Gracefully fallback if file is undefined or empty
-  const safeFile = file && typeof file === 'string' ? file : 'placeholder.jpg';
-  const src = safeFile.startsWith('http') || safeFile.startsWith('/') ? safeFile : `/${safeFile}`;
+  const sources = assetImageSources(file, fallbackFiles);
 
   return (
     <img
-      src={src}
+      src={sources[0]}
       alt={alt}
       style={{ objectPosition }}
       className={`w-full h-full object-cover ${className}`}
       onError={(e) => {
-        // Try fallback files if primary fails
-        const target = e.target as HTMLImageElement;
-        if (fallbackFiles.length > 0) {
-          const nextFile = fallbackFiles[0];
-          target.src = nextFile.startsWith('http') || nextFile.startsWith('/') ? nextFile : `/${nextFile}`;
-        }
+        const target = e.currentTarget;
+        const current = sources.indexOf(target.getAttribute('src') ?? '');
+        const next = sources[current + 1];
+        if (current >= 0 && next) target.setAttribute('src', next);
       }}
       {...props}
     />

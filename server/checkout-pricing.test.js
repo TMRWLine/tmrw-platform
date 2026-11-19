@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import app from './index.js';
 
-async function fixture(run) {
+async function fixture(run, { stripe = true } = {}) {
   const names = ['STRIPE_SECRET_KEY', 'SUPABASE_URL', 'VITE_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'APP_BASE_URL'];
   const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
-  process.env.STRIPE_SECRET_KEY = 'test-only-checkout-key';
+  if (stripe) process.env.STRIPE_SECRET_KEY = 'test-only-checkout-key';
+  else delete process.env.STRIPE_SECRET_KEY;
   process.env.APP_BASE_URL = 'https://fixture.invalid';
   process.env.SUPABASE_URL = 'https://db.fixture.invalid';
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'fixture-service-role';
@@ -93,7 +94,19 @@ test('capsule prices, costs, royalties, identity and product images come only fr
   assert.ok(body.get('line_items[0][price_data][product_data][name]').includes('MT-22 Heavyweight Contrast Hood'));
   assert.ok(!body.toString().includes('forged'));
   assert.ok(!body.toString().includes('attacker.invalid'));
+  assert.equal(body.has('line_items[0][price_data][product_data][images][0]'), false);
 }));
+
+test('sandbox capsule checkout returns an example split without calling Stripe', () => fixture(async ({ post, calls }) => {
+  const response = await post({ capsuleItems: [{ id: 'drop_mt_2200', qty: 2, size: 'L' }] });
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.mode, 'sandbox_demo');
+  assert.equal(result.checkoutUrl, null);
+  assert.match(result.sessionId, /^cs_demo_capsule_/);
+  assert.deepEqual(result.splits, { grossAud: 360, athleteAud: 148.5, clubAud: 40.5, partnerAud: 40.5 });
+  assert.equal(calls.length, 0);
+}, { stripe: false }));
 
 test('unknown SKUs, invalid quantities and malformed baskets fail before any provider call', () => fixture(async ({ post, calls }) => {
   for (const capsuleItems of [

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import Lenis from '@studio-freight/lenis';
 import {
   MapPin,
@@ -54,7 +55,9 @@ import {
 } from './lib/overlayEvents';
 import { AdminDrawer } from './components/AdminDrawer';
 import { TwelveLabsModal } from './components/TwelveLabsModal';
-import { CoverHero, PAGE_SHELL } from './components/CoverHero';
+import { CoverHero } from './components/CoverHero';
+import { CoverHero as PastedCoverHero, PAGE_SHELL as PASTED_PAGE_SHELL } from './components/pasted/CoverHero';
+import { isPastedCover } from './lib/coverMotion';
 import { ManifestoTrail } from './components/ManifestoTrail';
 import { BroadcastMatrix } from './components/BroadcastMatrix';
 import { RosterGrid } from './components/RosterGrid';
@@ -72,7 +75,7 @@ import { GuardianVerifyPage, GUARDIAN_VERIFY_PATH } from './components/GuardianV
 import { ClaimProfilePage } from './components/ClaimProfilePage';
 import { CommercialTiers } from './components/CommercialTiers';
 import { SyndicateRunway } from './components/SyndicateRunway';
-import { HowItWorks } from './components/HowItWorks';
+import { HowItWorks, HowItWorksStrip } from './components/HowItWorks';
 import { ViewportFrame } from './components/ViewportFrame';
 import { ObsidianWipe } from './components/ObsidianWipe';
 import { CheckoutSuccessPage, CHECKOUT_SUCCESS_PATH } from './pages/checkout/success';
@@ -125,6 +128,7 @@ type ProfileTab = 'overview' | 'brandkit' | 'agreement';
 
 export function MarketplaceApp() {
   const [view, setView] = useState<AppView>(viewFromLocation);
+  const routeTransition = useRef<ViewTransition | null>(null);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [loadingList, setLoadingList] = useState(true);
@@ -153,6 +157,16 @@ export function MarketplaceApp() {
   const [landingSection, setLandingSection] = useState<LandingSectionId | null>(null);
   const [canvasProgress, setCanvasProgress] = useState(0);
   const lenisRef = useRef<Lenis | null>(null);
+  const scrollForKeyboardFocus = useCallback((top?: number) => {
+    const lenis = lenisRef.current;
+    if (lenis) {
+      if (top !== undefined || lenis.isScrolling) {
+        lenis.scrollTo(top ?? window.scrollY, { immediate: true });
+      }
+    } else if (top !== undefined) {
+      window.scrollTo({ top, behavior: 'instant' });
+    }
+  }, []);
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>('all');
   const [catchmentTier, setCatchmentTier] = useState<SpatialTierCode | null>(null);
   const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
@@ -245,23 +259,27 @@ export function MarketplaceApp() {
   }, [view, landingSection]);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [view]);
+    if (!routeTransition.current) scrollForKeyboardFocus(0);
+  }, [view, scrollForKeyboardFocus]);
 
   const isOverlayActive = isSearchOpen || isMenuOpen;
   useEffect(() => {
     if (!isOverlayActive) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const { documentElement, body } = document;
+    const previousRootOverflow = documentElement.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    documentElement.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
     lenisRef.current?.stop();
     return () => {
-      document.body.style.overflow = previousOverflow;
+      documentElement.style.overflow = previousRootOverflow;
+      body.style.overflow = previousBodyOverflow;
       lenisRef.current?.start();
     };
   }, [isOverlayActive, view]);
 
   useEffect(() => {
-    if (!isOverlayActive) return;
+    if (!isSearchOpen || isMenuOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       setIsSearchOpen(false);
@@ -269,7 +287,7 @@ export function MarketplaceApp() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOverlayActive]);
+  }, [isSearchOpen, isMenuOpen]);
 
   useEffect(() => {
     const openSearch = () => {
@@ -540,33 +558,68 @@ export function MarketplaceApp() {
 
   const panelOpen = activeAthlete !== null;
 
-  function navigateSection(id: LandingSectionId) {
+  function navigateSection(id: LandingSectionId, afterNavigate?: () => void) {
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    let nextView: AppView = 'landing';
+    let nextPath = '/';
     if (id === 'how-it-works') {
-      if (path !== HOW_IT_WORKS_PATH) window.history.pushState(null, '', HOW_IT_WORKS_PATH);
-      setView('how-it-works');
-      return;
+      nextPath = HOW_IT_WORKS_PATH;
+      nextView = 'how-it-works';
+    } else if (id === 'roster' || id === 'athletes' || id === 'sponsors') {
+      nextPath = THE_ROSTER_PATH;
+      nextView = 'the-roster';
+    } else if (id === 'commercial-tiers') {
+      nextPath = COMMERCIAL_TIERS_PATH;
+      nextView = 'commercial-tiers';
+    } else if (id === 'syndicate') {
+      nextPath = BRISBANE_RUNWAY_PATH;
+      nextView = 'brisbane-runway';
     }
-    if (id === 'roster' || id === 'athletes' || id === 'sponsors') {
-      if (path !== THE_ROSTER_PATH) window.history.pushState(null, '', THE_ROSTER_PATH);
-      setView('the-roster');
-      return;
+    if (path !== nextPath) {
+      window.history.pushState(null, '', nextView === 'landing' && id !== 'top' ? `/#${landingSectionElementId(id)}` : nextPath);
     }
-    if (id === 'commercial-tiers') {
-      if (path !== COMMERCIAL_TIERS_PATH) window.history.pushState(null, '', COMMERCIAL_TIERS_PATH);
-      setView('commercial-tiers');
-      return;
+    const update = () => {
+      setView(nextView);
+      if (nextView === 'landing') setLandingSection(id);
+    };
+    const notify = () => { if (afterNavigate) requestAnimationFrame(afterNavigate); };
+    routeTransition.current?.skipTransition();
+    routeTransition.current = null;
+    if (view !== nextView && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && document.startViewTransition) {
+      const transition = document.startViewTransition(() => {
+        if (routeTransition.current !== transition) return;
+        flushSync(update);
+        scrollForKeyboardFocus(0);
+        afterNavigate?.();
+      });
+      routeTransition.current = transition;
+      void transition.finished.then(() => {
+        if (routeTransition.current === transition) routeTransition.current = null;
+      });
+    } else {
+      update();
+      notify();
     }
-    if (id === 'syndicate') {
-      if (path !== BRISBANE_RUNWAY_PATH) window.history.pushState(null, '', BRISBANE_RUNWAY_PATH);
-      setView('brisbane-runway');
-      return;
-    }
-    if (path !== '/') {
-      window.history.pushState(null, '', id === 'top' ? '/' : `/#${landingSectionElementId(id)}`);
-    }
-    setView('landing');
-    setLandingSection(id);
+  }
+
+  function navigateToHeading(id: LandingSectionId) {
+    const headingId: Partial<Record<LandingSectionId, string>> = {
+      top: 'cover-heading',
+      roster: 'roster-heading',
+      'how-it-works': 'how-it-works-heading',
+      'commercial-tiers': 'commercial-tiers-heading',
+      syndicate: 'syndicate-heading',
+      ledger: 'ledger-heading',
+    };
+    const focusHeading = () => {
+      if (view === viewFromLocation() && id !== 'ledger') scrollForKeyboardFocus(0);
+      const heading = document.getElementById(headingId[id] ?? '');
+      if (!heading) return;
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    };
+    if (id === 'top' && view === 'landing') requestAnimationFrame(focusHeading);
+    else navigateSection(id, focusHeading);
   }
 
   useEffect(() => {
@@ -605,6 +658,8 @@ export function MarketplaceApp() {
 
   useEffect(() => {
     const syncPath = () => {
+      routeTransition.current?.skipTransition();
+      routeTransition.current = null;
       const next = viewFromLocation();
       setView((current) => (current === 'sponsor' && next === 'landing' ? current : next));
     };
@@ -677,8 +732,11 @@ export function MarketplaceApp() {
       <MenuOverlay
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
-        onHome={goHome}
-        onNavigateSection={navigateSection}
+        onHome={() => {
+          closeOverlays();
+          navigateToHeading('top');
+        }}
+        onNavigateSection={navigateToHeading}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenPortal={() => setIsPortalDrawerOpen(true)}
         onOpenSponsorWorkspace={enterSponsorWorkspace}
@@ -734,9 +792,18 @@ export function MarketplaceApp() {
       ) : view === 'landing' ? (
         <div className="landing-scroll relative z-10 w-full bg-[#FFFFFF]">
           <main className="bg-[#FFFFFF]">
-            <div className={`${PAGE_SHELL} pt-20`}>
-              <CoverHero onNavigateSection={navigateSection} />
-            </div>
+            {isPastedCover(window.location.search) ? (
+              <div className={`${PASTED_PAGE_SHELL} pt-20`}>
+                <PastedCoverHero onNavigateSection={navigateToHeading} />
+              </div>
+            ) : <div className="pt-20">
+              <CoverHero
+                onNavigateSection={navigateToHeading}
+                scrollForKeyboardFocus={scrollForKeyboardFocus}
+                overlayOpen={isMenuOpen || isCartOpen || isSearchOpen || isPortalDrawerOpen || isAuthModalOpen || isSyndicateEnquiryOpen}
+              />
+            </div>}
+            <HowItWorksStrip />
             <ManifestoTrail onNavigateSection={navigateSection} />
             <BroadcastMatrix />
             <SettlementLedger />
@@ -850,6 +917,7 @@ export function MarketplaceApp() {
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
+        onHome={goHome}
         selectedAthlete={selectedAthlete}
         onExploreRoster={() => setView('the-roster')}
       />
