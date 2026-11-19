@@ -3,13 +3,6 @@ import { createPortal } from 'react-dom';
 import { AssetImage } from './AssetImage';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
 import { supabase } from '../lib/supabaseClient';
-import { issuePostcodeWhitelistingGrant, type WhitelistingGrant } from '../lib/whitelisting';
-import { WhitelistingLaunchModal } from './WhitelistingLaunchModal';
-import {
-  StripeEscrowCheckoutModal,
-  type StripeCheckoutPayload,
-  type StripeEscrowReceipt,
-} from './StripeEscrowCheckoutModal';
 import {
   formatFollowers,
   portraitFile,
@@ -184,10 +177,6 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
   const [auditedPillars, setAuditedPillars] = useState<Record<string, boolean>>({});
 
   const [downloadedAsset, setDownloadedAsset] = useState<string | null>(null);
-  const [stripePayload, setStripePayload] = useState<StripeCheckoutPayload | null>(null);
-  const [lastReceipt, setLastReceipt] = useState<StripeEscrowReceipt | null>(null);
-  const [lastPaidPriceAud, setLastPaidPriceAud] = useState<number>(750);
-  const [activeWhitelistingGrant, setActiveWhitelistingGrant] = useState<WhitelistingGrant | null>(null);
   const [liveOverride, setLiveOverride] = useState<LiveAthleteOverride | null>(null);
 
   const currentIndex = athlete
@@ -224,9 +213,6 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
     setAuditedSector(athlete.branding_categories.available[0] ?? 'Apparel');
     setAuditedPillars({});
     setDownloadedAsset(null);
-    setStripePayload(null);
-    setLastReceipt(null);
-    setActiveWhitelistingGrant(null);
 
     supabase.auth.getUser().catch(() => {});
   }, [athlete]);
@@ -243,8 +229,6 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
   const displayIgHandle = liveOverride?.instagram_handle || athlete.social.instagram_handle;
   const displayAvailability =
     liveOverride?.availability_windows || 'Tue & Thu (2pm–5pm) · Sun AM';
-  const isUnder18Guardian = liveOverride?.under_18_guardian ?? false;
-  const guardianName = liveOverride?.guardian_name || 'Verified Legal Guardian';
 
   const displayPullQuote =
     liveOverride?.pull_quote ||
@@ -253,7 +237,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
   const displayBio =
     liveOverride?.bio ||
     athlete.bio ||
-    `${displayFullName} is a verified first-grade contender in ${displayLeague}, developed through ${displayClub} in Postcode ${displayPostcode} (${displaySuburb}). Pre-cleared for local precinct contra, state-wide category lockouts, and direct handle paid social amplification.`;
+    `This example shows how a ${displaySport.toLowerCase()} profile might appear to sponsors. It does not identify an available athlete or grant campaign rights.`;
 
   const displayPosition = liveOverride?.vitals_position || `${displaySport} · First-Grade Starter`;
   const displayPhysical = liveOverride?.vitals_physical || `193 cm (6'4") · 88 kg · Age 21`;
@@ -264,7 +248,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
     `${displayLeague} All-State First Team (2025/26)`,
     `LA 2028 & Brisbane 2032 National Shortlist`,
     `Head Junior Clinic Coach · ${displayClub}`,
-    `${athlete.governing_body.name} Integrity & TPA Cleared`,
+    'Sporting rules and permissions require review',
   ];
 
   const lockedCategories = liveOverride?.locked_categories ?? athlete.branding_categories.locked;
@@ -315,16 +299,13 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
     markAudited('02');
     const blob = new Blob(
       [
-        `tmrw/. SOVEREIGN CLEARINGHOUSE RECORD\n`,
+        `tmrw/. ILLUSTRATIVE PROFILE — NOT AN AGREEMENT OR RIGHTS RELEASE\n`,
         `==================================================\n`,
         `Athlete: ${displayFullName} (${displaySport} · ${displayLeague})\n`,
-        `Signatory Authority: ${isUnder18Guardian ? `Dual-Key Guardian Co-Signed (${guardianName})` : '18+ Sovereign Signatory'}\n`,
         `Vitals & Sizing: ${displayPhysical} | ${displayKitSizing}\n`,
         `Document / Asset: ${title}\n`,
         `Primary Postcode Lock: ${displayPostcode} (${displaySuburb}) | Secondary Zone: ${displaySecondaryPostcode}\n`,
-        `Master NIL Licence Hash: 0x94F${displayPostcode}E\n`,
-        `Direct Handle Sponsorship: ${displayIgHandle}\n`,
-        `Hardwired 70/15/15 Split: 70% Athlete / 15% ${displayClub} / 15% Platform Ops\n`,
+        `Example split: 70% athlete / 15% grassroots club / 15% TMRWLine\n`,
       ],
       { type: 'text/plain;charset=utf-8' },
     );
@@ -339,32 +320,16 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
     setDownloadedAsset(title);
   };
 
-  const triggerCheckout = (tierId: string) => {
+  const previewPackage = (tierId: string) => {
     setSelectedTierId(tierId);
-    const flight = BASE_FLIGHTS.find((f) => f.tier_id === tierId) ?? BASE_FLIGHTS[0];
-    const priceAud = Math.round(flight.basePrice * (seedConfig.floorLock ? 1 : seedConfig.multiplier));
-    setLastPaidPriceAud(priceAud);
-
-    setStripePayload({
-      athleteId: athlete.id,
-      athleteName: displayFullName,
-      athleteSport: `${displaySport} · ${displayLeague}`,
-      athleteImage: athlete.image,
-      clubName: displayClub,
-      postcode: displayPostcode,
-      tierId: flight.tier_id,
-      packageCode: flight.code,
-      packageName: flight.name,
-      priceAud,
-      sectorLabel: auditedSector || availableCategories[0] || 'Apparel',
-    });
+    setDrawerMode('buy');
   };
 
   return createPortal(
     <div
       data-lenis-prevent="true"
       onClick={onClose}
-      className="dossier-backdrop fixed inset-0 z-[80] bg-black/45 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
+      className="dossier-backdrop fixed inset-0 z-[80] bg-black/45 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-volt selection:text-[#080808] animate-fadeIn"
     >
       <div
         data-lenis-prevent="true"
@@ -414,11 +379,11 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
               <span
                 className={
                   drawerMode === 'audit'
-                    ? 'bg-[#CCFF00] text-[#080808] px-2.5 py-0.5 rounded-[4px] font-bold'
+                    ? 'bg-neutral-200 text-[#080808] px-2.5 py-0.5 rounded-[4px] font-bold'
                     : ''
                 }
               >
-                Athlete Dossier
+                Illustrative profile
               </span>
             </button>
 
@@ -444,7 +409,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
               <span
                 className={
                   drawerMode === 'buy'
-                    ? 'bg-[#CCFF00] text-[#080808] px-2.5 py-0.5 rounded-[4px] font-bold'
+                    ? 'bg-neutral-200 text-[#080808] px-2.5 py-0.5 rounded-[4px] font-bold'
                     : ''
                 }
               >
@@ -459,7 +424,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
               onClick={onClose}
               title="Close [ESC]"
               aria-label="Close modal"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-5 py-1.5 font-sans text-xs font-bold tracking-tight transition-colors cursor-pointer border-0"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#080808] hover:bg-neutral-700 text-white px-5 py-1.5 font-sans text-xs font-bold tracking-tight transition-colors cursor-pointer border-0"
             >
               <span>Close</span>
               <span className="text-[11px]">✕</span>
@@ -485,7 +450,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                 <div>
                   <h1 className="m-0 font-display text-4xl sm:text-6xl xl:text-[68px] font-black tracking-[-0.04em] leading-[0.86] uppercase text-[#080808]">
                     {displayFullName}
-                    <span className="text-[#CCFF00]">.</span>
+                    <span className="text-volt">.</span>
                   </h1>
                 </div>
               </div>
@@ -503,11 +468,10 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                 ) : (
                   <>
                     <p className="m-0 font-sans text-[14.5px] sm:text-[15px] font-bold tracking-[-0.02em] leading-[1.28] text-[#080808]">
-                      Four clear packages. Zero talent agency commissions.
+                      Sponsorship package examples. Not available to buy here.
                     </p>
                     <p className="m-0 mt-1 font-sans text-[12px] leading-[1.45] text-neutral-600">
-                      Every package includes automated <strong className="text-[#080808]">API handle linking</strong> so your brand can run geo-fenced Meta and TikTok ads straight through{' '}
-                      <strong className="text-[#080808]">{displayFullName}'s</strong> verified handle ({displayIgHandle}).
+                      Paid posts and use of the athlete’s name, image and likeness (NIL) need a separate agreement and campaign approval.
                     </p>
                   </>
                 )}
@@ -515,12 +479,11 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
 
               <div className="lg:border-l lg:border-black/10 lg:pl-5">
                 <p className="m-0 font-sans text-[12px] leading-[1.45] text-neutral-600">
-                  No ninety-day invoice traps or agency middlemen. Hardwired{' '}
-                  <span className="bg-[#CCFF00] text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">
+                  This example uses a{' '}
+                  <span className="bg-volt text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">
                     70/15/15 split
                   </span>{' '}
-                  backing <strong className="text-[#080808]">{displayFullName}</strong> and{' '}
-                  <strong className="text-[#080808]">{displayClub}</strong> via ATO/IRD tax-deductible RCTI escrow.
+                  between the athlete, their grassroots club and TMRWLine. Agree the amounts and paperwork separately.
                 </p>
               </div>
             </div>
@@ -538,7 +501,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                   <li key={pkg.tier_id} className="m-0 flex min-w-0 flex-col p-0">
                     <article
                       onMouseEnter={() => !isFloorLocked && setSelectedTierId(pkg.tier_id)}
-                      onClick={() => !isFloorLocked && triggerCheckout(pkg.tier_id)}
+                      onClick={() => !isFloorLocked && previewPackage(pkg.tier_id)}
                       style={{ borderRadius: '16px', minHeight: '490px' }}
                       className={`dossier-card group relative isolate flex flex-col justify-between p-7 xl:p-8 transition-colors duration-500 overflow-visible select-none ${
                         isFloorLocked
@@ -551,9 +514,9 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                       <span
                         className={`absolute -top-2.5 right-5 z-30 rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs ${
                           isFloorLocked
-                            ? 'bg-[#080808] text-[#CCFF00]'
+                            ? 'bg-[#080808] text-volt'
                             : pkg.badgeVariant === 'green'
-                            ? 'bg-[#CCFF00] text-[#080808]'
+                            ? 'bg-volt text-[#080808]'
                             : pkg.badgeVariant === 'yellow'
                             ? 'bg-[#F5B800] text-[#080808]'
                             : 'bg-[#0F0F11] text-white'
@@ -590,8 +553,8 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                             <span
                               className={`inline-block rounded-[4px] px-1.5 -ml-1.5 transition-colors duration-200 ${
                                 isSelected
-                                  ? 'bg-[#CCFF00] text-[#080808]'
-                                  : 'bg-transparent group-hover:bg-[#CCFF00] group-hover:text-[#080808]'
+                                  ? 'bg-volt text-[#080808]'
+                                  : 'bg-transparent group-hover:bg-volt group-hover:text-[#080808]'
                               }`}
                             >
                               {pkg.firstWord}
@@ -615,7 +578,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         </div>
                         <span
                           className={`relative z-30 shrink-0 font-display text-lg font-black tracking-tight ${
-                            isSelected ? 'text-[#CCFF00]' : 'text-[#080808] group-hover:text-[#CCFF00]'
+                            isSelected ? 'text-volt' : 'text-[#080808] group-hover:text-volt'
                           }`}
                         >
                           {priceDisplay}
@@ -660,15 +623,15 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                           <div
                             onClick={(e) => {
                               e.stopPropagation();
-                              triggerCheckout(pkg.tier_id);
+                              previewPackage(pkg.tier_id);
                             }}
                             className="dossier-card-actions absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                           >
                             <span className="font-sans text-[11.5px] font-semibold tracking-tight text-[#080808] pl-2.5 truncate">
                               {pkg.shortCode} · {pkg.badge}
                             </span>
-                            <span className="h-7 rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-3.5 font-sans text-[11.5px] font-bold tracking-tight flex items-center gap-1.5 transition-colors">
-                              <span>Lock {priceDisplay}</span>
+                            <span className="h-7 rounded-full bg-[#080808] hover:bg-neutral-700 text-white px-3.5 font-sans text-[11.5px] font-bold tracking-tight flex items-center gap-1.5 transition-colors">
+                              <span>Example {priceDisplay}</span>
                               <span className="text-[10px]">→</span>
                             </span>
                           </div>
@@ -696,11 +659,11 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                   <span
                     className={`absolute -top-2.5 right-5 z-30 rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs ${
                       auditedPillars['01']
-                        ? 'bg-[#CCFF00] text-[#080808]'
+                        ? 'bg-volt text-[#080808]'
                         : 'bg-[#0F0F11] text-white'
                     }`}
                   >
-                    {auditedPillars['01'] ? '✓ Specs Audited' : 'Verified Pedigree'}
+                    {auditedPillars['01'] ? '✓ Details viewed' : 'Example athlete details'}
                   </span>
 
                   <div
@@ -731,8 +694,8 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         <span
                           className={`inline-block rounded-[4px] px-1.5 -ml-1.5 transition-colors duration-200 ${
                             selectedDossierPillar === '01'
-                              ? 'bg-[#CCFF00] text-[#080808]'
-                              : 'bg-transparent group-hover:bg-[#CCFF00] group-hover:text-[#080808]'
+                              ? 'bg-volt text-[#080808]'
+                              : 'bg-transparent group-hover:bg-volt group-hover:text-[#080808]'
                           }`}
                         >
                           Vitals
@@ -756,7 +719,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                     </div>
                     <span
                       className={`relative z-30 shrink-0 font-display text-lg font-black tracking-tight ${
-                        selectedDossierPillar === '01' ? 'text-[#CCFF00]' : 'text-[#080808] group-hover:text-[#CCFF00]'
+                        selectedDossierPillar === '01' ? 'text-volt' : 'text-[#080808] group-hover:text-volt'
                       }`}
                     >
                       BIO
@@ -770,10 +733,10 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                       }`}
                     >
                       {vitalsLens === 'honours'
-                        ? `Verified Honours: ${displayAccolades.join(' · ')}.`
+                        ? `Example honours: ${displayAccolades.join(' · ')}.`
                         : vitalsLens === 'schedule'
-                        ? `Pre-cleared for in-venue sessions, local school clinics, and content shoots inside Postcode ${displayPostcode} on ${displayAvailability}.`
-                        : `${displayAccolades[0]} · ${displayAccolades[1]}. Ready for product seeding and local precinct appearances.`}
+                        ? `Example availability: ${displayAvailability}. Any session or shoot requires agreement.`
+                        : 'A sponsor could ask about competition plans, kit or availability before proposing a deal.'}
                     </p>
                     <div
                       className={`divide-y border-y font-mono text-[9.5px] uppercase ${
@@ -805,7 +768,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                           </div>
                           <div className="py-1.5 flex items-center justify-between gap-2">
                             <span className="opacity-70">PROOF LEDGER</span>
-                            <span className="font-bold text-right">CV & GEO-TAG VERIFIED</span>
+                            <span className="font-bold text-right">ILLUSTRATIVE DETAILS</span>
                           </div>
                         </>
                       )}
@@ -831,7 +794,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                             }}
                             className={`h-7 rounded-full px-2.5 font-sans text-[11px] font-bold capitalize border-0 cursor-pointer transition-colors ${
                               vitalsLens === lens
-                                ? 'bg-[#CCFF00] text-[#080808]'
+                                ? 'bg-volt text-[#080808]'
                                 : 'bg-transparent text-[#080808]/70 hover:text-[#080808]'
                             }`}
                           >
@@ -842,7 +805,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                       <button
                         type="button"
                         onClick={() => setDrawerMode('buy')}
-                        className="h-7 rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-3 font-sans text-[11px] font-bold tracking-tight flex items-center gap-1 border-0 cursor-pointer transition-colors"
+                        className="h-7 rounded-full bg-[#080808] hover:bg-neutral-700 text-white px-3 font-sans text-[11px] font-bold tracking-tight flex items-center gap-1 border-0 cursor-pointer transition-colors"
                       >
                         <span>Seed Kit</span>
                         <span>→</span>
@@ -862,7 +825,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                       : 'bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white'
                   }`}
                 >
-                  <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-[#CCFF00] text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs">
+                  <span className="absolute -top-2.5 right-5 z-30 rounded-full bg-volt text-[#080808] px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs">
                     {auditedPillars['02'] ? '✓ Kit Pulled' : 'Meta & TikTok OAuth'}
                   </span>
 
@@ -894,8 +857,8 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         <span
                           className={`inline-block rounded-[4px] px-1.5 -ml-1.5 transition-colors duration-200 ${
                             selectedDossierPillar === '02'
-                              ? 'bg-[#CCFF00] text-[#080808]'
-                              : 'bg-transparent group-hover:bg-[#CCFF00] group-hover:text-[#080808]'
+                              ? 'bg-volt text-[#080808]'
+                              : 'bg-transparent group-hover:bg-volt group-hover:text-[#080808]'
                           }`}
                         >
                           Paid Social
@@ -919,7 +882,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                     </div>
                     <span
                       className={`relative z-30 shrink-0 font-display text-lg font-black tracking-tight ${
-                        selectedDossierPillar === '02' ? 'text-[#CCFF00]' : 'text-[#080808] group-hover:text-[#CCFF00]'
+                        selectedDossierPillar === '02' ? 'text-volt' : 'text-[#080808] group-hover:text-volt'
                       }`}
                     >
                       4K
@@ -932,7 +895,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         selectedDossierPillar === '02' ? 'text-neutral-200' : 'text-[#444444] group-hover:text-neutral-200'
                       }`}
                     >
-                      Run geo-fenced Meta Partnership and TikTok Spark ads straight through {displayFullName}'s verified handle. Click any asset below to pull immediately.
+                      Examples of what a campaign might include. Downloadable notes are illustrative, not permission to publish or run ads.
                     </p>
                     <div
                       className={`divide-y border-y font-mono text-[9.5px] uppercase ${
@@ -954,7 +917,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                             e.stopPropagation();
                             triggerRealFileDownload(item.file);
                           }}
-                          className="w-full py-1.5 flex items-center justify-between gap-2 bg-transparent border-0 text-current cursor-pointer hover:text-[#CCFF00] text-left font-mono text-[9.5px] uppercase"
+                          className="w-full py-1.5 flex items-center justify-between gap-2 bg-transparent border-0 text-current cursor-pointer hover:text-volt text-left font-mono text-[9.5px] uppercase"
                         >
                           <span className="opacity-75 truncate">{item.label}</span>
                           <span className="font-bold shrink-0">
@@ -972,15 +935,15 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                     <div
                       onClick={(e) => {
                         e.stopPropagation();
-                        triggerCheckout(selectedTierId);
+                        previewPackage(selectedTierId);
                       }}
                       className="dossier-card-actions absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                     >
                       <span className="font-sans text-[11.5px] font-semibold tracking-tight text-[#080808] pl-2.5 truncate">
                         {downloadedAsset ? `✓ Pulled ${downloadedAsset}` : `OAuth · ${displayIgHandle}`}
                       </span>
-                      <span className="h-7 rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-3.5 font-sans text-[11.5px] font-bold tracking-tight flex items-center gap-1.5 transition-colors">
-                        <span>Unlock OAuth</span>
+                      <span className="h-7 rounded-full bg-[#080808] hover:bg-neutral-700 text-white px-3.5 font-sans text-[11.5px] font-bold tracking-tight flex items-center gap-1.5 transition-colors">
+                        <span>See example package</span>
                         <span className="text-[10px]">→</span>
                       </span>
                     </div>
@@ -1001,7 +964,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                   <span
                     className={`absolute -top-2.5 right-5 z-30 rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs ${
                       auditedPillars['03']
-                        ? 'bg-[#CCFF00] text-[#080808]'
+                        ? 'bg-volt text-[#080808]'
                         : 'bg-[#0F0F11] text-white'
                     }`}
                   >
@@ -1036,8 +999,8 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         <span
                           className={`inline-block rounded-[4px] px-1.5 -ml-1.5 transition-colors duration-200 ${
                             selectedDossierPillar === '03'
-                              ? 'bg-[#CCFF00] text-[#080808]'
-                              : 'bg-transparent group-hover:bg-[#CCFF00] group-hover:text-[#080808]'
+                              ? 'bg-volt text-[#080808]'
+                              : 'bg-transparent group-hover:bg-volt group-hover:text-[#080808]'
                           }`}
                         >
                           Audience
@@ -1061,7 +1024,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                     </div>
                     <span
                       className={`relative z-30 shrink-0 font-display text-lg font-black tracking-tight ${
-                        selectedDossierPillar === '03' ? 'text-[#CCFF00]' : 'text-[#080808] group-hover:text-[#CCFF00]'
+                        selectedDossierPillar === '03' ? 'text-volt' : 'text-[#080808] group-hover:text-volt'
                       }`}
                     >
                       {displayPostcode}
@@ -1074,7 +1037,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         selectedDossierPillar === '03' ? 'text-neutral-200' : 'text-[#444444] group-hover:text-neutral-200'
                       }`}
                     >
-                      Bot-filtered social telemetry isolating verified human reach and retail foot-traffic concentration inside a {catchmentRing} trading radius of Postcode {displayPostcode}.
+                      This example shows how a sponsor might compare audience estimates within {catchmentRing} of postcode {displayPostcode}. The figures are illustrative, not verified reach or a promise of foot traffic.
                     </p>
                     <div
                       className={`divide-y border-y font-mono text-[9.5px] uppercase ${
@@ -1084,12 +1047,12 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                       }`}
                     >
                       <div className="py-1.5 flex items-center justify-between gap-2">
-                        <span className="opacity-70">HUMAN AUTHENTICITY</span>
-                        <span className="font-bold text-right">99.4% VERIFIED HUMAN</span>
+                        <span className="opacity-70">DATA STATUS</span>
+                        <span className="font-bold text-right">ILLUSTRATIVE</span>
                       </div>
                       <div className="py-1.5 flex items-center justify-between gap-2">
                         <span className="opacity-70">ENGAGEMENT RATE</span>
-                        <span className="font-bold text-right">{athlete.social.engagement_rate} VERIFIED</span>
+                        <span className="font-bold text-right">{athlete.social.engagement_rate} EXAMPLE</span>
                       </div>
                       <div className="py-1.5 flex items-center justify-between gap-2">
                         <span className="opacity-70">LOCAL CONCENTRATION</span>
@@ -1121,7 +1084,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                             }}
                             className={`h-7 rounded-full px-2.5 font-sans text-[11px] font-bold border-0 cursor-pointer transition-colors ${
                               catchmentRing === ring
-                                ? 'bg-[#CCFF00] text-[#080808]'
+                                ? 'bg-volt text-[#080808]'
                                 : 'bg-transparent text-[#080808]/70 hover:text-[#080808]'
                             }`}
                           >
@@ -1131,10 +1094,10 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                       </div>
                       <button
                         type="button"
-                        onClick={() => triggerCheckout(catchmentMetrics.packageTier)}
-                        className="h-7 rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-3 font-sans text-[11px] font-bold tracking-tight flex items-center gap-1 border-0 cursor-pointer transition-colors"
+                        onClick={() => previewPackage(catchmentMetrics.packageTier)}
+                        className="h-7 rounded-full bg-[#080808] hover:bg-neutral-700 text-white px-3 font-sans text-[11px] font-bold tracking-tight flex items-center gap-1 border-0 cursor-pointer transition-colors"
                       >
-                        <span>Lock {displayPostcode}</span>
+                        <span>See example package</span>
                         <span>→</span>
                       </button>
                     </div>
@@ -1155,12 +1118,12 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                   <span
                     className={`absolute -top-2.5 right-5 z-30 rounded-full px-3.5 py-0.5 font-sans text-[11px] font-bold tracking-tight shadow-xs ${
                       auditedPillars['04']
-                        ? 'bg-[#CCFF00] text-[#080808]'
+                        ? 'bg-volt text-[#080808]'
                         : 'bg-[#F5B800] text-[#080808]'
                     }`}
                   >
                     {auditedPillars['04']
-                      ? `✓ ${auditedSector} Cleared`
+                      ? `Example: ${auditedSector}`
                       : `${availableCategories.length} Open Sectors`}
                   </span>
 
@@ -1192,32 +1155,32 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         <span
                           className={`inline-block rounded-[4px] px-1.5 -ml-1.5 transition-colors duration-200 ${
                             selectedDossierPillar === '04'
-                              ? 'bg-[#CCFF00] text-[#080808]'
-                              : 'bg-transparent group-hover:bg-[#CCFF00] group-hover:text-[#080808]'
+                              ? 'bg-volt text-[#080808]'
+                              : 'bg-transparent group-hover:bg-volt group-hover:text-[#080808]'
                           }`}
                         >
                           Category
                         </span>{' '}
-                        <span>& TPA Check</span>
+                        <span>& sponsor fit</span>
                       </h3>
                       <p
                         className={`m-0 mt-1 font-sans text-[12.5px] font-normal leading-[1.38] truncate ${
                           selectedDossierPillar === '04' ? 'text-neutral-200' : 'text-[#666666] group-hover:text-neutral-200'
                         }`}
                       >
-                        {isUnder18Guardian ? `Guardian Co-Signed (${guardianName})` : '18+ Sovereign Signatory'}
+                        Guardian approval is separate where required
                       </p>
                       <p
                         className={`m-0 font-sans text-[12.5px] font-normal leading-[1.38] truncate ${
                           selectedDossierPillar === '04' ? 'text-neutral-300' : 'text-[#666666] group-hover:text-neutral-300'
                         }`}
                       >
-                        48-Sector Ledger · 0% Agency Commission
+                        Example sponsor categories
                       </p>
                     </div>
                     <span
                       className={`relative z-30 shrink-0 font-display text-lg font-black tracking-tight ${
-                        selectedDossierPillar === '04' ? 'text-[#CCFF00]' : 'text-[#080808] group-hover:text-[#CCFF00]'
+                        selectedDossierPillar === '04' ? 'text-volt' : 'text-[#080808] group-hover:text-volt'
                       }`}
                     >
                       48
@@ -1230,7 +1193,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         selectedDossierPillar === '04' ? 'text-neutral-200' : 'text-[#444444] group-hover:text-neutral-200'
                       }`}
                     >
-                      Arm's-length Third-Party Agreement (TPA) compliant with {athlete.governing_body.name} salary-cap rules. Click any open sector below to run an instant conflict check.
+                      Choose an example sponsor category. For a real campaign, check any existing agreements and the rules of {athlete.governing_body.name} before committing.
                     </p>
                     <div
                       className={`divide-y border-y font-mono text-[9.5px] uppercase ${
@@ -1240,7 +1203,7 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                       }`}
                     >
                       <div className="py-1.5 flex items-center justify-between gap-2">
-                        <span className="opacity-70">OPEN SECTORS</span>
+                        <span className="opacity-70">EXAMPLE CATEGORIES</span>
                         <div className="flex flex-wrap justify-end gap-1">
                           {availableCategories.map((cat) => (
                             <button
@@ -1253,8 +1216,8 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                               }}
                               className={`rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase border-0 cursor-pointer transition-colors ${
                                 auditedSector === cat
-                                  ? 'bg-[#CCFF00] text-[#080808]'
-                                  : 'bg-white/15 text-current hover:bg-[#CCFF00] hover:text-[#080808]'
+                                  ? 'bg-volt text-[#080808]'
+                                  : 'bg-white/15 text-current hover:bg-volt hover:text-[#080808]'
                               }`}
                             >
                               {cat}
@@ -1269,8 +1232,8 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                         </span>
                       </div>
                       <div className="py-1.5 flex items-center justify-between gap-2">
-                        <span className="opacity-70">MASTER NIL DEED</span>
-                        <span className="font-bold text-right">HASH 0x94F{displayPostcode}E</span>
+                        <span className="opacity-70">LICENCE STATUS</span>
+                        <span className="font-bold text-right">NO RIGHTS GRANTED</span>
                       </div>
                       <div className="py-1.5 flex items-center justify-between gap-2">
                         <span className="opacity-70">GUARDRAILS</span>
@@ -1287,15 +1250,15 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         markAudited('04');
-                        triggerCheckout(selectedTierId);
+                        previewPackage(selectedTierId);
                       }}
                       className="dossier-card-actions absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-2 flex items-center justify-between opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300"
                     >
                       <span className="font-sans text-[11.5px] font-semibold tracking-tight text-[#080808] pl-2.5 truncate">
-                        ✓ {auditedSector || availableCategories[0]} Cleared
+                        Example category: {auditedSector || availableCategories[0]}
                       </span>
-                      <span className="h-7 rounded-full bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-3.5 font-sans text-[11.5px] font-bold tracking-tight flex items-center gap-1.5 transition-colors">
-                        <span>Lock Sector</span>
+                      <span className="h-7 rounded-full bg-[#080808] hover:bg-neutral-700 text-white px-3.5 font-sans text-[11.5px] font-bold tracking-tight flex items-center gap-1.5 transition-colors">
+                        <span>See example package</span>
                         <span className="text-[10px]">→</span>
                       </span>
                     </div>
@@ -1309,13 +1272,13 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
         <footer className="dossier-footer shrink-0 z-30 border-t border-black/10 bg-[#FFFFFF] px-4 sm:px-6 md:px-10 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500">
-              SELECTED PACKAGE:
+              EXAMPLE PACKAGE:
             </span>
             <span className="font-display text-lg font-black text-[#080808]">
               {activeFlight.code} · {activeFlight.name} ({activePriceDisplay})
             </span>
             <span className="hidden md:inline font-mono text-[10px] uppercase tracking-wider text-neutral-500">
-              70% Athlete (A${athleteNet70.toLocaleString()}) · 15% Club ({displayClub}) · 15% Ops · Direct Handle Sponsorship
+              Example: 70% athlete (A${athleteNet70.toLocaleString()}) · 15% grassroots club · 15% TMRWLine
             </span>
           </div>
 
@@ -1324,52 +1287,15 @@ export const AthleteDossierDrawer: React.FC<AthleteDossierDrawerProps> = ({
               <button
                 type="button"
                 onClick={() => setDrawerMode('buy')}
-                className="rounded-full border-0 bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-7 py-3 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer transition-colors shadow-md"
+                className="rounded-full border-0 bg-[#080808] hover:bg-neutral-700 text-white px-7 py-3 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer transition-colors shadow-md"
               >
                 VIEW COMMERCIAL PACKAGES · FROM A${entryPrice.toLocaleString()} →
               </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => triggerCheckout(activeFlight.tier_id)}
-                className="rounded-full border-0 bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-7 py-3 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer transition-colors shadow-md"
-              >
-                {`LOCK ${activeFlight.code} · ${activePriceDisplay} →`}
-              </button>
-            )}
+            ) : <span className="font-mono text-xs text-neutral-600">Not available for purchase</span>}
           </div>
         </footer>
       </div>
 
-      <StripeEscrowCheckoutModal
-        payload={stripePayload}
-        onClose={() => setStripePayload(null)}
-        onSuccess={async (receipt) => {
-          const tier = stripePayload?.tierId || selectedTierId;
-          const paidAud = stripePayload?.priceAud || scaledActivePrice;
-          setLastReceipt(receipt);
-          setLastPaidPriceAud(paidAud);
-          setStripePayload(null);
-          markAudited('02');
-          const grant = await issuePostcodeWhitelistingGrant({
-            athleteId: athlete.id,
-            athleteName: displayFullName,
-            flightTierId: tier,
-            postcode: displayPostcode,
-          });
-          setActiveWhitelistingGrant(grant);
-        }}
-      />
-
-      {activeWhitelistingGrant && (
-        <WhitelistingLaunchModal
-          grant={activeWhitelistingGrant}
-          receipt={lastReceipt}
-          priceAud={lastPaidPriceAud}
-          clubName={displayClub}
-          onClose={() => setActiveWhitelistingGrant(null)}
-        />
-      )}
     </div>,
     document.body,
   );

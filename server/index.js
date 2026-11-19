@@ -4,8 +4,20 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import Stripe from 'stripe';
+import { randomBytes } from 'node:crypto';
 import { createTwelveLabsRouter } from './twelvelabs.js';
 import { catalogueItems } from './capsule-catalogue.js';
+import {
+  checkGrantStorage,
+  createGrantAccess,
+  grantPath,
+  hasGrantAccess,
+  isGrantPostcode,
+  isStripeCheckoutId,
+  issuePaidWhitelistingGrant,
+  setGrantAccessCookie,
+} from './whitelisting.js';
+import { requireUser } from './auth.js';
 
 // Load .env / .env.local
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -28,6 +40,28 @@ const SUPABASE_ANON_KEY =
 const app = express();
 if (process.env.VERCEL) app.set('trust proxy', 1);
 app.use(cors());
+
+// Instagram Login entry only: it is not a Supabase authentication provider.
+app.get('/api/auth/instagram/start', (req, res) => {
+  const appId = process.env.INSTAGRAM_APP_ID;
+  const appSecret = process.env.INSTAGRAM_APP_SECRET;
+  if (!appId || !appSecret) {
+    return res.status(501).json({ error: 'Instagram Login is not configured. Please continue with Google.' });
+  }
+  const redirectUri = process.env.INSTAGRAM_REDIRECT_URI;
+  if (!redirectUri) {
+    return res.status(501).json({ error: 'Instagram callback is not configured. Please continue with Google.' });
+  }
+  const state = randomBytes(32).toString('hex');
+  res.cookie('tmrw_instagram_state', state, { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 600000, path: '/api/auth/instagram' });
+  const url = new URL('https://www.instagram.com/oauth/authorize');
+  url.searchParams.set('client_id', appId);
+  url.searchParams.set('redirect_uri', redirectUri);
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('scope', 'instagram_business_basic');
+  url.searchParams.set('state', state);
+  return res.json({ url: url.href });
+});
 
 /**
  * 1. STRIPE WEBHOOK ENDPOINT
@@ -80,6 +114,7 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), a
 // General JSON body parser for all other routes
 app.use('/api/twelvelabs', createTwelveLabsRouter());
 app.use(express.json());
+app.post(grantPath, issuePaidWhitelistingGrant);
 
 app.get(['/health', '/api/health'], (_req, res) => {
   res.json({ ok: true, service: 'sponsor-match-proxy' });
@@ -206,6 +241,9 @@ const FALLBACK_COMMERCIAL_TIERS = {
   national_challenger: { name: 'National Challenger', price_aud: 12500 },
   world_class: { name: 'World-Class Benchmark', price_aud: 25000 },
   syndicate: { name: 'Brisbane 2032 Corporate Syndicate', price_aud: 50000 },
+  olympic_1yr_50k: { name: 'LA 2028 Qualifier Partnership', price_aud: 50000 },
+  olympic_2yr_110k: { name: 'LA 2028 Games Partnership', price_aud: 110000 },
+  olympic_4yr_250k: { name: 'Brisbane 2032 Home Games Quadrennial', price_aud: 250000 },
 };
 
 function loadMockDeliverables() {
@@ -261,6 +299,7 @@ function resolveCheckoutAthlete(athleteId, reqBody) {
   const fromMock = mockAthlete?.id === athleteId ? mockAthlete : null;
   return {
     id: athleteId,
+    postcode: fromMock?.postcode,
     full_name: snapshot.full_name || fromMock?.full_name || 'Verified athlete',
     grassroots_club_name:
       snapshot.grassroots_club_name || fromMock?.grassroots_club?.name || 'Grassroots club',
@@ -315,7 +354,16 @@ async function hydrateAthleteFromSupabase(athlete) {
  *  A) Athlete Merch Capsule Bags: { capsuleItems: [{ id, title, athleteName, clubName, collabPartner, collabRoyaltyPct, priceAud, baseCostAud, qty, size, frontImageUrl }] }
  *  B) Commercial Sponsorship Tiers: { athleteId, tierId, athlete? }
  */
-app.post('/api/checkout/create-session', async (req, res) => {
+const transferGroupPattern = /^TG_[A-Za-z0-9_]{1,80}$/;
+const escrowHold = (grossCents) => {
+  const athleteCents = Math.round((grossCents * 7000) / 10000);
+  return athleteCents - Math.round(athleteCents * 0.5);
+};
+
+app.post('/api/checkout/create-session', (req, res, next) => {
+  if (!Object.hasOwn(req.body ?? {}, 'capsuleItems') && req.get('Authorization')) return requireUser(req, res, next);
+  next();
+}, async (req, res) => {
   try {
     const origin = appBaseUrl(req);
     const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -418,6 +466,10 @@ app.post('/api/checkout/create-session', async (req, res) => {
     }
 
     // BRANCH B: Commercial Sponsorship Tier Checkout
+    const escrowMode = req.body?.escrowMode ?? 'milestone_50_50';
+    if (!['milestone_50_50', 'upfront_100'].includes(escrowMode)) {
+      return res.status(400).json({ error: 'Invalid escrowMode' });
+    }
     const athleteId = String(req.body?.athleteId ?? '').trim();
     const requestedTierId = String(req.body?.tierId ?? '').trim();
     const tierId = requestedTierId === 'pathway_contender' ? 'pathway_flight' : requestedTierId;
@@ -440,6 +492,20 @@ app.post('/api/checkout/create-session', async (req, res) => {
     const productImage = absoluteAssetUrl(athlete.image_url, origin);
 
     if (stripeKey) {
+      const requestOrigin = req.get('Origin');
+      if (requestOrigin && requestOrigin !== origin) {
+        return res.status(400).json({ error: 'Start checkout from the main tmrw/. site.' });
+      }
+      const postcode = req.body?.postcode ?? athlete.postcode;
+      if (!isGrantPostcode(postcode)) {
+        return res.status(400).json({ error: 'A four-digit postcode is required for this sponsorship.' });
+      }
+      try {
+        await checkGrantStorage();
+      } catch {
+        return res.status(503).json({ error: 'Sponsorship checkout is temporarily unavailable.' });
+      }
+      const grantAccess = createGrantAccess();
       const unitCents = Math.round(pkg.price_aud * 100);
       const body = new URLSearchParams();
       body.set('mode', 'payment');
@@ -462,8 +528,20 @@ app.post('/api/checkout/create-session', async (req, res) => {
       body.set('metadata[orderType]', 'sponsorship_tier');
       body.set('metadata[athleteId]', athleteId);
       body.set('metadata[tierId]', tierId);
+      body.set('metadata[athleteName]', athlete.full_name.slice(0, 500));
+      body.set('metadata[postcode]', postcode);
+      body.set('metadata[grantAccessHash]', grantAccess.hash);
       body.set('metadata[athleteCutCents]', String(Math.round(unitCents * 0.7)));
       body.set('metadata[clubCutCents]', String(Math.round(unitCents * 0.15)));
+      body.set('metadata[escrowMode]', escrowMode);
+      body.set('metadata[athleteEscrowHoldCents]', String(escrowMode === 'milestone_50_50' ? escrowHold(unitCents) : 0));
+      if (req.authUser) body.set('metadata[sponsorUserId]', req.authUser.id);
+      body.set('payment_intent_data[transfer_group]', transferGroupPattern.test(req.body?.transferGroup) ? req.body.transferGroup : `TG_${randomBytes(16).toString('hex')}`);
+      for (const [key, value] of [...body]) {
+        if (key.startsWith('metadata[') && key !== 'metadata[grantAccessHash]') {
+          body.set(`payment_intent_data[metadata][${key.slice(9)}`, value);
+        }
+      }
 
       const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
         method: 'POST',
@@ -474,12 +552,13 @@ app.post('/api/checkout/create-session', async (req, res) => {
         body,
       });
       const session = await stripeRes.json();
-      if (!stripeRes.ok || !session?.url) {
+      if (!stripeRes.ok || !session?.url || !isStripeCheckoutId(session.id)) {
         return res.status(502).json({
           error: session?.error?.message ?? 'Stripe could not create a checkout session.',
         });
       }
-      return res.json({ checkoutUrl: session.url });
+      setGrantAccessCookie(req, res, session.id, grantAccess.secret);
+      return res.json({ checkoutUrl: session.url, sessionId: session.id, transferGroup: body.get('payment_intent_data[transfer_group]') });
     }
 
     return res.json({
@@ -487,6 +566,91 @@ app.post('/api/checkout/create-session', async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ error: err?.message ?? 'Unable to initialise checkout.' });
+  }
+});
+
+async function escrowStripe(path, params, method = 'GET', idempotencyKey) {
+  const query = new URLSearchParams(params);
+  const response = await fetch(`https://api.stripe.com/v1/${path}${method === 'GET' ? `?${query}` : ''}`, {
+    method,
+    headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded', ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) },
+    ...(method === 'POST' ? { body: query } : {}),
+    signal: AbortSignal.timeout(15000),
+  });
+  const data = await response.json();
+  if (!response.ok) throw Object.assign(new Error(data.error?.message || 'Stripe request failed'), { stripeStatus: response.status });
+  return data;
+}
+
+async function escrowList(path, transferGroup) {
+  const items = [];
+  let after;
+  do {
+    const page = await escrowStripe(path, { transfer_group: transferGroup, limit: '100', ...(after ? { starting_after: after } : {}) });
+    items.push(...page.data);
+    after = page.has_more ? page.data.at(-1)?.id : undefined;
+  } while (after);
+  return items;
+}
+
+app.post('/api/checkout/release-escrow', async (req, res) => {
+  if (!process.env.STRIPE_SECRET_KEY) return res.status(503).json({ error: 'Stripe is not configured' });
+  const { transferGroup, athleteId, checkoutSessionId, escrowHoldCents } = req.body ?? {};
+  if ((transferGroup !== undefined && (typeof transferGroup !== 'string' || !transferGroupPattern.test(transferGroup))) || typeof athleteId !== 'string' || !athleteId ||
+      typeof checkoutSessionId !== 'string' || !/^cs_[A-Za-z0-9_]+$/.test(checkoutSessionId)) {
+    return res.status(400).json({ error: 'Valid checkoutSessionId, athleteId and optional transferGroup are required' });
+  }
+  try {
+    let session;
+    try {
+      session = await escrowStripe(`checkout/sessions/${checkoutSessionId}`, { 'expand[]': 'payment_intent.latest_charge' });
+    } catch (error) {
+      if (error.stripeStatus === 404) return res.status(404).json({ error: 'Order not found' });
+      throw error;
+    }
+    if (session.id !== checkoutSessionId) return res.status(404).json({ error: 'Order not found' });
+    if (session.metadata?.sponsorUserId) {
+      await requireUser(req, res, () => {});
+      if (!req.authUser) return;
+      if (session.metadata.sponsorUserId !== req.authUser.id) return res.status(403).json({ error: 'Order access denied' });
+    } else if (!hasGrantAccess(req, checkoutSessionId, session.metadata?.grantAccessHash)) {
+      return res.status(403).json({ error: 'Open the receipt in the browser used to start checkout to approve delivery.' });
+    }
+    const intent = session.payment_intent;
+    const order = { id: session.id, metadata: session.metadata, charge: intent?.latest_charge };
+    const group = intent?.transfer_group;
+    const m = order.metadata;
+    const c = order.charge;
+    const amount = Number(m?.athleteEscrowHoldCents);
+    if (!(session.payment_status === 'paid' && c?.status === 'succeeded' && c.paid === true && c.captured === true && !c.refunded && !c.amount_refunded && !c.disputed && !c.dispute && c.currency === 'aud' &&
+      m?.orderType === 'sponsorship_tier' && m.athleteId === athleteId && typeof group === 'string' && transferGroupPattern.test(group) && (transferGroup === undefined || group === transferGroup) &&
+      Number.isSafeInteger(c.amount) && c.amount > 0)) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
+    if (m.escrowMode === 'upfront_100') return res.status(409).json({ error: 'Upfront order has no held escrow to release' });
+    if (!(m.escrowMode === 'milestone_50_50' && typeof m.athleteEscrowHoldCents === 'string' && /^[1-9][0-9]*$/.test(m.athleteEscrowHoldCents) &&
+      Number.isSafeInteger(amount) && amount <= escrowHold(c.amount))) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
+    const transfers = await escrowList('transfers', group);
+    if (escrowHoldCents !== undefined && escrowHoldCents !== amount) return res.status(409).json({ error: 'Escrow amount does not match the order' });
+    const existing = transfers.find((t) => [order.id, order.charge.id].includes(t.metadata?.escrowReleaseFor));
+    const success = (transfer, alreadyReleased) => res.json({ released: true, escrowTransferId: transfer.id, releasedAmountCents: transfer.amount, releasedAt: new Date(transfer.created * 1000).toISOString(), alreadyReleased });
+    if (existing) return success(existing, true);
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) return res.status(503).json({ error: 'payout lookup not configured' });
+    const response = await fetch(`${url}/rest/v1/athlete_profiles?${new URLSearchParams({ id: `eq.${athleteId}`, select: 'stripe_account_id' })}`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return res.status(502).json({ error: 'Unable to look up athlete payout account' });
+    const athletes = await response.json();
+    const destination = athletes[0]?.stripe_account_id;
+    if (typeof destination !== 'string' || !/^acct_[A-Za-z0-9]+$/.test(destination)) return res.status(409).json({ error: 'Athlete Connect account is not configured' });
+    const orderId = order.charge.id;
+    const transfer = await escrowStripe('transfers', {
+      amount: String(amount), currency: 'aud', destination, transfer_group: group, source_transaction: orderId,
+      'metadata[escrowReleaseFor]': orderId, 'metadata[athleteId]': athleteId, ...(m.sponsorUserId ? { 'metadata[sponsorUserId]': m.sponsorUserId } : {}),
+    }, 'POST', `tmrw_escrow_release_${orderId}`);
+    return success(transfer, false);
+  } catch (error) {
+    return res.status(502).json({ error: error.message || 'Unable to release escrow' });
   }
 });
 

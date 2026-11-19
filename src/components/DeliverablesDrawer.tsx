@@ -220,14 +220,17 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
     void createCheckoutSession({
       athleteId: athlete.id,
       tierId: flight.tier_id,
+      postcode: athlete.postcode,
       athlete: {
         full_name: athlete.full_name,
         grassroots_club_name: athlete.grassroots_club.name,
         image_url: athlete.image_url,
       },
     })
-      .then(({ checkoutUrl }) => {
-        if (!checkoutUrl) throw new Error('Unable to initialise secure checkout.');
+      .then(({ checkoutUrl, sessionId }) => {
+        if (!checkoutUrl || !sessionId || !/^cs_(test|live)_[a-zA-Z0-9]+$/.test(sessionId)) {
+          throw new Error('Unable to initialise secure checkout.');
+        }
         window.location.assign(checkoutUrl);
       })
       .catch((error: unknown) => {
@@ -242,7 +245,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
     <div
       data-lenis-prevent="true"
       onClick={onClose}
-      className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-[#CCFF00] selection:text-[#080808] animate-fadeIn"
+      className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 selection:bg-volt selection:text-[#080808] animate-fadeIn"
     >
       <div
         role="dialog"
@@ -263,7 +266,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
             className="inline-flex items-center gap-1.5 rounded-full bg-[#0F0F11] hover:bg-white text-white hover:text-[#0F0F11] border border-transparent hover:border-black/25 px-5 py-1.5 font-sans text-xs font-bold tracking-tight shadow-sm transition-all duration-300 cursor-pointer group"
           >
             <span>Close</span>
-            <span className="text-[11px] text-[#CCFF00] group-hover:text-[#0F0F11] transition-colors">✕</span>
+            <span className="text-[11px] text-volt group-hover:text-[#0F0F11] transition-colors">✕</span>
           </button>
         </header>
 
@@ -287,7 +290,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
                   className="m-0 font-display text-4xl sm:text-6xl xl:text-[68px] font-black tracking-[-0.04em] leading-[0.86] uppercase text-[#080808]"
                 >
                   {athlete.full_name}
-                  <span className="text-[#CCFF00]">.</span>
+                  <span className="text-volt">.</span>
                 </h1>
               </div>
 
@@ -296,20 +299,19 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
                   Four clear packages. Zero talent agency commissions.
                 </p>
                 <p className="m-0 mt-1 font-sans text-[12px] leading-[1.45] text-neutral-600">
-                  Every package includes automated <strong className="text-[#080808]">API handle linking</strong> so your brand can run geo-fenced Meta and TikTok ads straight through{' '}
-                  <strong className="text-[#080808]">{athlete.full_name}&apos;s</strong> verified handle.
+                  Paid posts and advertising require separate athlete permission.
                 </p>
               </div>
 
               <div className="lg:border-l lg:border-black/10 lg:pl-5">
                 <p className="m-0 font-sans text-[12px] leading-[1.45] text-neutral-600">
-                  Hardwired{' '}
-                  <span className="bg-[#CCFF00] text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">
+                  Example:{' '}
+                  <span className="bg-volt text-[#080808] font-bold px-1.5 py-0.5 rounded-[3px]">
                     70/15/15 split
                   </span>{' '}
                   backing <strong className="text-[#080808]">{athlete.full_name}</strong> and{' '}
                   <strong className="text-[#080808]">{athlete.grassroots_club.name}</strong>
-                  {locality ? ` (${locality})` : ''} via instant ATO/IRD tax-deductible RCTI escrow.
+                  {locality ? ` (${locality})` : ''}. Final terms and paperwork are agreed separately.
                 </p>
               </div>
             </div>
@@ -323,12 +325,12 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
             </div>
             <div>
               <span className="font-sans text-[12.5px] font-normal text-[#080808] tracking-tight">
-                4 pre-cleared packages · Direct handle sponsorship included
+                Four package examples · Campaign permissions not included
               </span>
             </div>
             <div className="md:col-span-2 flex items-center justify-end gap-3 font-sans text-[12.5px]">
               <span className="text-neutral-500">Active selection:</span>
-              <span className="bg-[#CCFF00] text-[#080808] font-bold px-2.5 py-0.5 rounded-[4px]">
+              <span className="bg-volt text-[#080808] font-bold px-2.5 py-0.5 rounded-[4px]">
                 {activeFlight.code} · {activeFlight.name} ({activeFlight.price_display})
               </span>
             </div>
@@ -341,7 +343,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
                 flight.badgeVariant === 'yellow'
                   ? 'bg-[#FFB800] text-black'
                   : flight.badgeVariant === 'green'
-                  ? 'bg-[#CCFF00] text-black'
+                  ? 'bg-volt text-black'
                   : 'bg-[#0F0F11] text-white';
 
               return (
@@ -386,8 +388,8 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
                           <span
                             className={`inline-block rounded-[4px] px-1.5 -ml-1.5 transition-colors duration-200 ${
                               isSelected
-                                ? 'bg-[#CCFF00] text-[#080808]'
-                                : 'bg-transparent group-hover:bg-[#CCFF00] group-hover:text-[#080808]'
+                                ? 'bg-volt text-[#080808]'
+                                : 'bg-transparent group-hover:bg-volt group-hover:text-[#080808]'
                             }`}
                           >
                             {flight.firstWord}
@@ -413,7 +415,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
 
                       <span
                         className={`relative z-30 shrink-0 font-display text-lg font-black tracking-tight ${
-                          isSelected ? 'text-[#CCFF00]' : 'text-[#080808] group-hover:text-[#CCFF00]'
+                          isSelected ? 'text-volt' : 'text-[#080808] group-hover:text-volt'
                         }`}
                       >
                         {flight.price_display}
@@ -455,7 +457,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
                           e.stopPropagation();
                           triggerCheckout(flight);
                         }}
-                        className={`whitespace-nowrap rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase tracking-widest px-4 py-2.5 shadow-lg border-0 cursor-pointer transition-all ${
+                        className={`whitespace-nowrap rounded-full bg-volt text-[#080808] font-mono text-[10px] font-bold uppercase tracking-widest px-4 py-2.5 shadow-lg border-0 cursor-pointer transition-all ${
                           isSelected
                             ? 'opacity-100 translate-y-0'
                             : 'opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0'
@@ -492,7 +494,7 @@ export const DeliverablesDrawer: React.FC<DeliverablesDrawerProps> = ({
               type="button"
               disabled={checkoutLoading}
               onClick={() => triggerCheckout(activeFlight)}
-              className="rounded-full border-0 bg-[#080808] hover:bg-[#CCFF00] text-white hover:text-[#080808] px-7 py-3 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer transition-colors disabled:cursor-wait disabled:opacity-70 shadow-md"
+              className="rounded-full border-0 bg-[#080808] hover:bg-volt text-white hover:text-[#080808] px-7 py-3 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer transition-colors disabled:cursor-wait disabled:opacity-70 shadow-md"
             >
               {checkoutLoading
                 ? 'Initialising Stripe Clearing...'

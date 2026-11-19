@@ -101,7 +101,7 @@ export function AthleteCard<TAthlete>({
     badgeVariant === 'yellow'
       ? 'bg-[#FFB800] text-black'
       : badgeVariant === 'green'
-      ? 'bg-[#CCFF00] text-black'
+      ? 'bg-volt text-black'
       : 'bg-[#0F0F11] text-white';
 
   return (
@@ -144,8 +144,8 @@ export function AthleteCard<TAthlete>({
             <span
               className={`inline-block rounded-[4px] px-1.5 -ml-1.5 transition-colors duration-200 ${
                 isHighlighted
-                  ? 'bg-[#CCFF00] text-[#080808]'
-                  : 'bg-transparent group-hover:bg-[#CCFF00] group-hover:text-[#080808]'
+                  ? 'bg-volt text-[#080808]'
+                  : 'bg-transparent group-hover:bg-volt group-hover:text-[#080808]'
               }`}
             >
               {firstName}
@@ -172,7 +172,7 @@ export function AthleteCard<TAthlete>({
             onActivate?.();
             onOpenDossier?.(athlete);
           }}
-          className="relative z-30 shrink-0 w-8 h-8 bg-transparent border-0 p-0 text-[#080808] group-hover:text-white hover:text-[#CCFF00] group-hover:hover:text-[#CCFF00] transition-colors cursor-pointer flex items-center justify-center"
+          className="relative z-30 shrink-0 w-8 h-8 bg-transparent border-0 p-0 text-[#080808] group-hover:text-white hover:text-volt group-hover:hover:text-volt transition-colors cursor-pointer flex items-center justify-center"
         >
           <svg
             className="w-6 h-6"
@@ -209,7 +209,7 @@ export function AthleteCard<TAthlete>({
                 onActivate?.();
                 onMediaStudio();
               }}
-              className="w-8 h-8 rounded-full bg-black/60 hover:bg-[#CCFF00] text-white hover:text-[#080808] border border-white/25 flex items-center justify-center transition-colors cursor-pointer shrink-0 backdrop-blur-sm"
+              className="w-8 h-8 rounded-full bg-black/60 hover:bg-volt text-white hover:text-[#080808] border border-white/25 flex items-center justify-center transition-colors cursor-pointer shrink-0 backdrop-blur-sm"
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" />
@@ -217,7 +217,7 @@ export function AthleteCard<TAthlete>({
             </button>
           ) : null}
 
-          <span className="whitespace-nowrap rounded-full bg-[#CCFF00] text-[#080808] font-mono text-[10px] font-bold uppercase tracking-widest px-3.5 py-2 shadow-lg">
+          <span className="whitespace-nowrap rounded-full bg-volt text-[#080808] font-mono text-[10px] font-bold uppercase tracking-widest px-3.5 py-2 shadow-lg">
             Fund Flight →
           </span>
         </div>

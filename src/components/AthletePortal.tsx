@@ -24,8 +24,8 @@ export function AthletePortal({
       <header className="athlete-portal-head border border-white/10 bg-white/[0.02] backdrop-blur-md p-6">
         <div className="athlete-avatar">{athlete?.initials || athleteInitials(name)}</div>
         <div>
-          <p className="font-mono text-[11px] tracking-widest uppercase text-[#D2FF00] mb-2">
-            // ATHLETE NIL PORTAL
+          <p className="font-mono text-[11px] tracking-widest uppercase text-volt mb-2">
+            // ATHLETE NAME, IMAGE AND LIKENESS (NIL) PORTAL
           </p>
           <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-white mt-0">{name}</h1>
           <p className="font-mono text-[11px] tracking-widest text-zinc-400 mt-2">
@@ -39,13 +39,13 @@ export function AthletePortal({
 
       {focus !== 'drops' && (
         <div className="flex flex-wrap gap-3">
-          <span className="border border-white/10 bg-white/[0.02] font-mono text-xs text-[#D2FF00] px-4 py-2">
+          <span className="border border-white/10 bg-white/[0.02] font-mono text-xs text-volt px-4 py-2">
             {formatCurrency(pending, 'AUD')} PENDING PAYOUT
           </span>
-          <span className="border border-white/10 bg-white/[0.02] font-mono text-xs text-[#D2FF00] px-4 py-2">
+          <span className="border border-white/10 bg-white/[0.02] font-mono text-xs text-volt px-4 py-2">
             {drops.length} COLLAB DROPS
           </span>
-          <span className="border border-white/10 bg-white/[0.02] font-mono text-xs text-[#D2FF00] px-4 py-2">
+          <span className="border border-white/10 bg-white/[0.02] font-mono text-xs text-volt px-4 py-2">
             70/20/10 SPLIT RAIL
           </span>
         </div>
@@ -102,7 +102,7 @@ export function AthletePortal({
           {focus !== 'drops' && onOpenDrops && (
             <button
               type="button"
-              className="border border-white/10 bg-white/[0.02] font-mono text-xs text-[#D2FF00] px-4 py-2 cursor-pointer"
+              className="border border-white/10 bg-white/[0.02] font-mono text-xs text-volt px-4 py-2 cursor-pointer"
               onClick={onOpenDrops}
             >
               OPEN STORE

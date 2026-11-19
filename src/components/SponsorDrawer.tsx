@@ -284,7 +284,7 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
                 <li>* Full sport discipline category lockout across regional market</li>
                 <li>* AI Studio broadcast clip rights for programmatic distribution</li>
                 <li>* Integrated co-branded merchandise drop pre-order rail</li>
-                <li>* 10% gross allocation to Grassroots Community Sports Fund</li>
+                <li>* Example split: 70% athlete, 15% grassroots club, 15% TMRWLine</li>
               </ul>
 
               <button
@@ -350,10 +350,10 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <span className="text-[10px] font-mono uppercase bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">
-                    Instant Activation
+                    Local sponsorship example
                   </span>
                   <h3 className="text-base font-bold uppercase mt-1">Local Postcode Starter</h3>
-                  <p className="text-xs text-zinc-400">1 Verified Athlete within 5km Store Radius</p>
+                  <p className="text-xs text-zinc-400">Potential partnership with a local athlete</p>
                 </div>
                 <div className="text-right">
                   <span className="text-lg font-bold font-mono text-white">A$5000</span>
@@ -363,9 +363,9 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
 
               <ul className="text-xs text-zinc-400 space-y-1.5 my-4 font-mono">
                 <li>* Storefront window poster and digital POS promotion rights</li>
-                <li>* 2 verified social amplification posts tagged with store location</li>
-                <li>* Pre-cleared Sport Integrity Australia bylaws clearance</li>
-                <li>* Instant automated Recipient Created Tax Invoice (RCTI)</li>
+                <li>* Example: two social posts, subject to the athlete’s approval</li>
+                <li>* Check applicable sport rules before agreeing a campaign</li>
+                <li>* Confirm invoicing and tax requirements in the agreement</li>
               </ul>
 
               <button
@@ -383,8 +383,8 @@ export const SponsorDrawer: React.FC<SponsorDrawerProps> = ({ isOpen, onClose, a
         </div>
 
         <div className="p-4 border-t border-zinc-800 bg-zinc-950/80 text-[11px] font-mono text-zinc-500 flex justify-between">
-          <span>// ESCROW REVENUE SPLIT: 70/15/15</span>
-          <span>EST. SETTLEMENT: T+2</span>
+          <span>EXAMPLE SPLIT: 70/15/15</span>
+          <span>PAYMENT TIMING AGREED SEPARATELY</span>
         </div>
       </div>
 

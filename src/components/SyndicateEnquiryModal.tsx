@@ -178,7 +178,7 @@ export const SyndicateEnquiryModal: React.FC<SyndicateEnquiryModalProps> = ({ is
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-full bg-[#080808] text-[#F7F7F6] font-bold text-xs uppercase tracking-widest py-3.5 border-0 cursor-pointer hover:bg-[#B8FF00] hover:text-[#080808] transition-colors disabled:opacity-50"
+              className="w-full rounded-full bg-[#080808] text-[#F7F7F6] font-bold text-xs uppercase tracking-widest py-3.5 border-0 cursor-pointer hover:bg-volt hover:text-[#080808] transition-colors disabled:opacity-50"
             >
               {submitting ? 'Sending enquiry…' : 'Submit syndicate enquiry'}
             </button>
