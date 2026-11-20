@@ -1137,7 +1137,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   );
                 })}
               </ul>
-              <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="capsule-checkout-actions flex flex-wrap items-center justify-between gap-4">
                 <p className="m-0 font-bold">Subtotal · A${grossTotal.toLocaleString()}</p>
                 <button type="button" disabled={isCheckingOut} onClick={handleStripeCheckout}
                   className="min-h-11 rounded-full border-0 bg-volt px-6 font-mono text-xs font-bold uppercase text-[#0F0F11] hover:bg-white disabled:opacity-50">
@@ -1166,7 +1166,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </p>
               )}
               <p className="m-0 font-mono text-[11px] text-neutral-500">Demo session: {demoReceipt.sessionId}</p>
-              <div className="pt-4 flex justify-center gap-3">
+              <div className="capsule-checkout-actions pt-4 flex justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => {

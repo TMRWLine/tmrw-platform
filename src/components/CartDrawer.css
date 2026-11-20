@@ -151,7 +151,8 @@
     font-size: clamp(24px, 7vw, 32px);
   }
 
-  .capsule-product-actions {
+  .capsule-product-actions,
+  .capsule-checkout-actions {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
@@ -161,7 +162,8 @@
     justify-content: space-between;
   }
 
-  .capsule-product-actions > button {
+  .capsule-product-actions > button,
+  .capsule-checkout-actions > button {
     width: 100%;
   }
 
