@@ -6,8 +6,9 @@
 
 Use the Vite framework preset, repository root as the project root, Node.js 24.x,
 `npm ci` to install, `npm run build` to build, and `dist` as the output directory.
-The repository configuration exports Express through `api/[...path].js`; API
-requests must reach that function, not the SPA fallback. The bundled commercial
+The repository configuration rewrites `/api` and all `/api/*` paths to the Express
+entry point at `api/index.js`, ahead of the SPA fallback. Non-Next projects need
+this explicit rewrite rather than a Next.js-style `[...path]` filename. The bundled commercial
 catalogue is explicitly included in the function. No always-running Express
 process is needed on Vercel. `npm run dev` still runs Vite and the local API.
 
