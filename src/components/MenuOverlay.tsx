@@ -3,6 +3,7 @@ import { BrandLockup } from './BrandLockup';
 import type { LandingSectionId } from './Navigation';
 import { GUARDIAN_VERIFY_PATH } from './GuardianVerifyPage';
 import { OPEN_DEPLOY_DRAWER_EVENT, emitOverlayEvent } from '../lib/overlayEvents';
+import './MenuOverlay.css';
 
 interface MenuOverlayProps {
   isOpen: boolean;
@@ -32,10 +33,10 @@ interface MenuItem {
 }
 
 const NAVIGATION: readonly MenuItem[] = [
-  { label: 'The Roster', action: { kind: 'section', id: 'roster' } },
-  { label: 'How It Works', action: { kind: 'section', id: 'how-it-works' } },
+  { label: 'Roster', action: { kind: 'section', id: 'roster' } },
+  { label: 'How it works', action: { kind: 'section', id: 'how-it-works' } },
   { label: 'Commercial Tiers', action: { kind: 'section', id: 'commercial-tiers' } },
-  { label: 'Brisbane 2032 Runway', action: { kind: 'section', id: 'syndicate' } },
+  { label: 'Runway', action: { kind: 'section', id: 'syndicate' } },
 ];
 
 const PROTOCOL: readonly MenuItem[] = [
@@ -94,9 +95,8 @@ const HEADER_CLASS =
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-volt focus-visible:ring-offset-2 focus-visible:ring-offset-[#080808]';
 
-const PRIMARY_LINK = `block text-left p-0 bg-transparent border-0 font-display font-bold text-lg md:text-xl text-[#F7F7F6] hover:text-volt transition-colors duration-150 cursor-pointer mb-1.5 ${FOCUS_RING}`;
-const SECONDARY_LINK = `block text-left p-0 bg-transparent border-0 text-xs md:text-sm text-[#CCCCCC] hover:text-white transition-colors cursor-pointer mb-1.5 ${FOCUS_RING}`;
-const SOCIAL_LINK = `block text-left p-0 bg-transparent border-0 text-xs md:text-sm text-[#CCCCCC] hover:text-volt transition-colors cursor-pointer mb-1.5 no-underline ${FOCUS_RING}`;
+const PRIMARY_LINK = `site-menu-row text-left p-0 bg-transparent border-0 font-display font-bold text-[clamp(1.875rem,4vw,4rem)] leading-[1.05] tracking-tight text-[#F7F7F6] hover:text-volt cursor-pointer ${FOCUS_RING}`;
+const SECONDARY_LINK = `site-menu-row text-left p-0 bg-transparent border-0 text-sm text-[#CCCCCC] hover:text-white cursor-pointer no-underline ${FOCUS_RING}`;
 
 /* ---- Monochrome payment-partner badges (outline + glyphs, inherit currentColor) ---- */
 
@@ -341,7 +341,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
 
       {/* Top curtain drawer */}
       <div
-        className={`absolute top-0 left-0 w-full h-[55vh] min-h-[min(440px,100dvh)] max-h-[580px] bg-[#080808] text-white border-b border-white/10 z-10 flex flex-col justify-between p-8 md:p-12 shadow-2xl overflow-y-auto overscroll-contain select-none motion-safe:transition-transform duration-300 ease-out ${
+        className={`site-menu-curtain absolute inset-x-0 top-0 max-h-[100dvh] bg-[#080808] text-white z-10 px-8 py-6 md:px-12 md:py-8 shadow-2xl overflow-y-auto overscroll-contain select-none motion-safe:transition-transform duration-300 ease-out ${
           shown ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
@@ -353,48 +353,43 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close menu"
-            className={`inline-flex items-center justify-center p-0 bg-transparent border-0 text-white hover:text-volt transition-colors duration-150 cursor-pointer ${FOCUS_RING}`}
+            className={`site-menu-row justify-center p-0 bg-transparent border-0 text-white hover:text-volt cursor-pointer ${FOCUS_RING}`}
           >
             <CloseIcon />
           </button>
         </div>
 
-        {/* Four-column grid */}
-        <nav
-          aria-label="Menu sections"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-8 py-8"
-        >
-          <section aria-labelledby="menu-navigation">
-            <h2 id="menu-navigation" className={HEADER_CLASS}>
-              Navigation
-            </h2>
+        <nav aria-label="Menu sections" className="pt-7 pb-5">
+          <section aria-label="Primary destinations" className="site-menu-primary">
             {renderItems(NAVIGATION, PRIMARY_LINK)}
           </section>
+          <div className="site-menu-court-line" aria-hidden="true" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-10 gap-y-7">
+            <section aria-labelledby="menu-protocol">
+              <h2 id="menu-protocol" className={HEADER_CLASS}>
+                Protocol
+              </h2>
+              {renderItems(PROTOCOL, SECONDARY_LINK)}
+            </section>
 
-          <section aria-labelledby="menu-protocol">
-            <h2 id="menu-protocol" className={HEADER_CLASS}>
-              Protocol
-            </h2>
-            {renderItems(PROTOCOL, SECONDARY_LINK)}
-          </section>
+            <section aria-labelledby="menu-portals">
+              <h2 id="menu-portals" className={HEADER_CLASS}>
+                Portals
+              </h2>
+              {renderItems(PORTALS, SECONDARY_LINK)}
+            </section>
 
-          <section aria-labelledby="menu-portals">
-            <h2 id="menu-portals" className={HEADER_CLASS}>
-              Portals
-            </h2>
-            {renderItems(PORTALS, SECONDARY_LINK)}
-          </section>
-
-          <section aria-labelledby="menu-follow">
-            <h2 id="menu-follow" className={HEADER_CLASS}>
-              Follow us
-            </h2>
-            {renderItems(FOLLOW, SOCIAL_LINK)}
-          </section>
+            <section aria-labelledby="menu-follow">
+              <h2 id="menu-follow" className={HEADER_CLASS}>
+                Follow us
+              </h2>
+              {renderItems(FOLLOW, SECONDARY_LINK)}
+            </section>
+          </div>
         </nav>
 
         {/* Institutional footer bar */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 pt-6 border-t border-white/10">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 pt-6">
           <ul
             aria-label="Payment and clearing partners"
             className="m-0 p-0 list-none flex flex-wrap items-center gap-3 text-[#999999]"
