@@ -7,6 +7,7 @@ import Stripe from 'stripe';
 import { randomBytes } from 'node:crypto';
 import { createTwelveLabsRouter } from './twelvelabs.js';
 import { catalogueItems } from './capsule-catalogue.js';
+import { capsuleSplit, capsuleTotals } from '../src/lib/capsuleCommerce.ts';
 import {
   checkGrantStorage,
   createGrantAccess,
@@ -368,6 +369,7 @@ app.post('/api/checkout/create-session', (req, res, next) => {
 
     // BRANCH A: Athlete Merch Capsule Checkout from CartDrawer.tsx
     if (Object.hasOwn(req.body ?? {}, 'capsuleItems')) {
+      if (stripeKey && !/^(sk|rk)_test_/.test(stripeKey)) return res.status(503).json({ error: 'Capsule checkout is available in Stripe test mode only.' });
       let items;
       try {
         items = catalogueItems(req.body.capsuleItems);
@@ -386,15 +388,14 @@ app.post('/api/checkout/create-session', (req, res, next) => {
         const qty = entry.qty;
         const unitAud = entry.priceAud;
         const baseAud = entry.baseCostAud;
-        const netUnitCents = Math.max(0, Math.round((unitAud - baseAud) * 100));
         const hasPartner = Number(entry.collabRoyaltyPct) > 0;
         const athletePct = hasPartner ? 0.55 : 0.7;
-        const partnerPct = hasPartner ? Number(entry.collabRoyaltyPct) / 100 : 0;
+        const split = capsuleSplit(unitAud, baseAud, Number(entry.collabRoyaltyPct), qty);
 
         grossCents += Math.round(unitAud * 100) * qty;
-        athleteCutCents += Math.round(netUnitCents * athletePct) * qty;
-        clubCutCents += Math.round(netUnitCents * 0.15) * qty;
-        partnerCutCents += Math.round(netUnitCents * partnerPct) * qty;
+        athleteCutCents += split.athleteCents;
+        clubCutCents += split.clubCents;
+        partnerCutCents += split.partnerCents;
 
         body.set(`line_items[${idx}][quantity]`, String(qty));
         body.set(`line_items[${idx}][price_data][currency]`, 'aud');
@@ -414,6 +415,12 @@ app.post('/api/checkout/create-session', (req, res, next) => {
           body.set(`line_items[${idx}][price_data][product_data][images][0]`, imgUrl);
         }
       });
+
+      const totals = capsuleTotals(grossCents);
+      body.set(`line_items[${items.length}][quantity]`, '1');
+      body.set(`line_items[${items.length}][price_data][currency]`, 'aud');
+      body.set(`line_items[${items.length}][price_data][unit_amount]`, String(totals.gstCents));
+      body.set(`line_items[${items.length}][price_data][product_data][name]`, 'GST (10%)');
 
       const primary = items[0];
       const successQuery = `capsule=1&athleteName=${encodeURIComponent(primary.athleteName || '')}`;
@@ -460,6 +467,7 @@ app.post('/api/checkout/create-session', (req, res, next) => {
           clubAud: clubCutCents / 100,
           partnerAud: partnerCutCents / 100,
         },
+        totals,
       });
     }
 
@@ -564,6 +572,48 @@ app.post('/api/checkout/create-session', (req, res, next) => {
     });
   } catch (err) {
     return res.status(500).json({ error: err?.message ?? 'Unable to initialise checkout.' });
+  }
+});
+
+app.get('/api/checkout/capsule-session', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const sessionId = req.query.session_id;
+  if (typeof sessionId !== 'string' || !/^cs_test_[A-Za-z0-9_]{1,200}$/.test(sessionId)) {
+    return res.status(400).json({ error: 'A valid Stripe test session is required.' });
+  }
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key || !/^(sk|rk)_test_/.test(key)) return res.status(503).json({ error: 'Stripe test receipt verification is unavailable.' });
+  try {
+    const headers = { Authorization: `Bearer ${key}` };
+    const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, { headers, signal: AbortSignal.timeout(15000) });
+    if (!response.ok) return res.status(response.status === 404 ? 404 : 502).json({ error: 'Unable to verify this checkout session.' });
+    const session = await response.json();
+    if (session.id !== sessionId || session.livemode !== false || session.metadata?.orderType !== 'merch_capsule') {
+      return res.status(404).json({ error: 'Merchandise test session not found.' });
+    }
+    const itemsResponse = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}/line_items?limit=100`, { headers, signal: AbortSignal.timeout(15000) });
+    if (!itemsResponse.ok) throw new Error('Line items unavailable');
+    const items = await itemsResponse.json();
+    if (!Array.isArray(items.data) || items.has_more) throw new Error('Incomplete line items');
+    const cents = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+    const gstItems = items.data.filter(item => item.description === 'GST (10%)');
+    const merchandise = items.data.filter(item => item.description !== 'GST (10%)');
+    return res.json({
+      paymentStatus: ['paid', 'unpaid', 'no_payment_required'].includes(session.payment_status) ? session.payment_status : 'unknown',
+      currency: typeof session.currency === 'string' ? session.currency : 'aud',
+      lineItems: merchandise.map(item => ({ description: String(item.description ?? 'Merchandise').slice(0, 500), quantity: cents(item.quantity), amountCents: cents(item.amount_total) })),
+      subtotalCents: merchandise.reduce((sum, item) => sum + cents(item.amount_total), 0),
+      gstCents: gstItems.reduce((sum, item) => sum + cents(item.amount_total), 0) + cents(session.total_details?.amount_tax),
+      shippingCents: cents(session.total_details?.amount_shipping),
+      totalCents: cents(session.amount_total),
+      splits: {
+        athleteCents: cents(Number(session.metadata.athleteCutCents)),
+        clubCents: cents(Number(session.metadata.clubCutCents)),
+        partnerCents: cents(Number(session.metadata.partnerCutCents)),
+      },
+    });
+  } catch {
+    return res.status(502).json({ error: 'Unable to verify checkout. Your bag has been kept.' });
   }
 });
 

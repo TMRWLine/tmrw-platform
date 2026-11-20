@@ -1,0 +1,63 @@
+export const VENUE_SIZE = '25x VENUE CURVE (3S·8M·9L·5XL)';
+export const BAG_STORAGE_KEY = 'tmrw_capsule_bag_v1';
+export const BAG_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function capsuleSplit(priceAud: number, baseCostAud: number, royaltyPct = 0, qty = 1) {
+  const netUnitCents = Math.max(0, Math.round((priceAud - baseCostAud) * 100));
+  return {
+    athleteCents: Math.round(netUnitCents * (royaltyPct > 0 ? 0.55 : 0.7)) * qty,
+    clubCents: Math.round(netUnitCents * 0.15) * qty,
+    partnerCents: Math.round(netUnitCents * (royaltyPct > 0 ? royaltyPct / 100 : 0)) * qty,
+  };
+}
+
+export function capsuleTotals(subtotalCents: number) {
+  const gstCents = Math.round(subtotalCents * 0.1);
+  return { subtotalCents, gstCents, shippingCents: 0, totalCents: subtotalCents + gstCents };
+}
+
+type Product = { id: string };
+export type BagLine<T> = { item: T; qty: number; size: string };
+
+export function restoreBag<T extends Product>(raw: string | null, catalogue: readonly T[], now = Date.now()): BagLine<T>[] {
+  try {
+    const saved = JSON.parse(raw ?? 'null');
+    if (saved?.version !== 1 || !Number.isFinite(saved.expiresAt) || saved.expiresAt <= now || !Array.isArray(saved.lines)) return [];
+    const lines: BagLine<T>[] = [];
+    for (const line of saved.lines) {
+      const item = catalogue.find(product => product.id === line?.id);
+      if (!item || !['S', 'M', 'L', 'XL', VENUE_SIZE].includes(line.size) || !Number.isFinite(line.qty)) continue;
+      const step = line.size === VENUE_SIZE ? 25 : 1;
+      const qty = Math.min(100, Math.max(step, Math.floor(line.qty / step) * step));
+      const existing = lines.find(entry => entry.item.id === item.id && entry.size === line.size);
+      if (existing) existing.qty = Math.min(100, existing.qty + qty);
+      else lines.push({ item, qty, size: line.size });
+    }
+    return lines;
+  } catch {
+    return [];
+  }
+}
+
+export function serialiseBag<T extends Product>(lines: BagLine<T>[], now = Date.now()) {
+  return JSON.stringify({ version: 1, expiresAt: now + BAG_TTL_MS, lines: lines.map(({ item, qty, size }) => ({ id: item.id, qty, size })) });
+}
+
+export type CapsuleReturn = { status: 'success' | 'cancelled'; sessionId: string };
+
+export function readCapsuleReturn(search: string): CapsuleReturn | null {
+  const params = new URLSearchParams(search);
+  const status = params.get('capsule_checkout');
+  return status === 'success' || status === 'cancelled' ? { status, sessionId: params.get('session_id') ?? '' } : null;
+}
+
+export interface CapsuleReceipt {
+  paymentStatus: 'paid' | 'unpaid' | 'no_payment_required' | 'unknown';
+  currency: string;
+  lineItems: { description: string; quantity: number; amountCents: number }[];
+  subtotalCents: number;
+  gstCents: number;
+  shippingCents: number;
+  totalCents: number;
+  splits: { athleteCents: number; clubCents: number; partnerCents: number };
+}
