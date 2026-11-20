@@ -10,7 +10,7 @@ Start with Instagram, TikTok and a LinkedIn Company Page. Check `@tmrwline` on b
 
 ## Instagram
 
-**Display name:** TMRWLine | tmrw/.
+**Display name:** TMRWLine
 
 **Bio (150 characters max):**
 
