@@ -8,6 +8,7 @@ async function fixture(run, overrides = {}) {
   process.env.STRIPE_SECRET_KEY = overrides.key ?? 'sk_test_fixture';
   const originalFetch = globalThis.fetch;
   const calls = [];
+  const requestId = overrides.requestId ?? 'cs_test_x';
   const session = {
     id: 'cs_test_x', livemode: false, payment_status: 'paid', currency: 'aud', amount_total: 19800,
     total_details: { amount_shipping: 0, amount_tax: 0 },
@@ -16,11 +17,11 @@ async function fixture(run, overrides = {}) {
   };
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), options });
-    assert.equal(options.headers.Authorization, 'Bearer sk_test_fixture');
+    assert.equal(options.headers.Authorization, `Bearer ${overrides.key ?? 'sk_test_fixture'}`);
     if (overrides.throw) throw new Error('provider failed');
     if (overrides.status) return Response.json({ error: { message: 'private provider error' } }, { status: overrides.status });
-    if (String(url).endsWith('/cs_test_x')) return Response.json(session);
-    assert.equal(String(url), 'https://api.stripe.com/v1/checkout/sessions/cs_test_x/line_items?limit=100');
+    if (String(url).endsWith(`/${requestId}`)) return Response.json(session);
+    assert.equal(String(url), `https://api.stripe.com/v1/checkout/sessions/${requestId}/line_items?limit=100`);
     return Response.json({ has_more: false, data: [
       { description: 'tmrw/. Hoodie (L)', quantity: 1, amount_total: 18000, privateField: 'private' },
       { description: 'GST (10%)', quantity: 1, amount_total: 1800 },
@@ -28,7 +29,7 @@ async function fixture(run, overrides = {}) {
   };
   const server = createServer(app);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const get = (id = 'cs_test_x') => originalFetch(`http://127.0.0.1:${server.address().port}/api/checkout/capsule-session?session_id=${encodeURIComponent(id)}`);
+  const get = (id = requestId) => originalFetch(`http://127.0.0.1:${server.address().port}/api/checkout/capsule-session?session_id=${encodeURIComponent(id)}`);
   try { await run({ get, calls }); }
   finally {
     globalThis.fetch = originalFetch;
@@ -57,8 +58,8 @@ for (const status of ['unpaid', 'no_payment_required', 'unexpected']) {
   }, { session: { payment_status: status } }));
 }
 
-test('invalid or live session ids never reach Stripe', () => fixture(async ({ get, calls }) => {
-  for (const id of ['', 'cs_live_x', '../secret', 'cs_demo_capsule_x']) assert.equal((await get(id)).status, 400);
+test('invalid session ids never reach Stripe', () => fixture(async ({ get, calls }) => {
+  for (const id of ['', 'cs_live_', '../secret', 'cs_demo_capsule_x']) assert.equal((await get(id)).status, 400);
   assert.equal(calls.length, 0);
 }));
 
@@ -77,10 +78,36 @@ for (const options of [{ status: 404 }, { status: 401 }, { throw: true }, { item
   }, options));
 }
 
-test('live keys cannot verify capsule payments', () => fixture(async ({ get, calls }) => {
+for (const prefix of ['sk', 'rk']) {
+  for (const mode of ['test', 'live']) {
+    test(`${prefix} ${mode} key verifies a matching capsule session`, () => fixture(async ({ get, calls }) => {
+      const response = await get();
+      assert.equal(response.status, 200);
+      assert.equal((await response.json()).paymentStatus, 'paid');
+      assert.equal(calls.length, 2);
+    }, { key: `${prefix}_${mode}_fixture`, requestId: `cs_${mode}_x`, session: { id: `cs_${mode}_x`, livemode: mode === 'live' } }));
+  }
+}
+
+for (const mode of ['test', 'live']) {
+  const other = mode === 'live' ? 'test' : 'live';
+  for (const sessionMode of [mode, other]) {
+    test(`${mode} key rejects ${other} session ID with ${sessionMode} livemode`, () => fixture(async ({ get, calls }) => {
+      assert.equal((await get()).status, 404);
+      assert.equal(calls.length, 1);
+    }, { key: `sk_${mode}_fixture`, requestId: `cs_${other}_x`, session: { id: `cs_${other}_x`, livemode: sessionMode === 'live' } }));
+  }
+}
+
+test('live key rejects a live session reporting test livemode', () => fixture(async ({ get, calls }) => {
+  assert.equal((await get()).status, 404);
+  assert.equal(calls.length, 1);
+}, { key: 'sk_live_fixture', requestId: 'cs_live_x', session: { id: 'cs_live_x', livemode: false } }));
+
+test('unrecognised key mode cannot verify capsule payments', () => fixture(async ({ get, calls }) => {
   assert.equal((await get()).status, 503);
   assert.equal(calls.length, 0);
-}, { key: 'sk_live_fixture' }));
+}, { key: 'invalid_fixture' }));
 
 test('missing Stripe configuration is reported without a provider request', () => fixture(async ({ get, calls }) => {
   delete process.env.STRIPE_SECRET_KEY;

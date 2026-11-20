@@ -1,11 +1,12 @@
-# Capsule Bag and test receipts
+# Capsule Bag and receipts
 
-- Capsule checkout accepts Stripe test keys only (`sk_test_` or `rk_test_`). With no key it keeps the explicit demo-order flow. Live keys are rejected before a provider call.
+- Capsule checkout supports Stripe test and live keys. Receipt verification accepts `cs_test_` and `cs_live_` session IDs and requires the ID mode and Stripe session `livemode` to match the configured `sk_test_`/`rk_test_` or `sk_live_`/`rk_live_` key. With no key, checkout keeps the explicit demo-order flow. All verification tests use stubs; actual payment testing must use test mode only.
 - Bag lines persist under `tmrw_capsule_bag_v1` for seven days of inactivity. Only SKU, size and quantity are stored. Rehydration uses current client catalogue data, drops unknown SKUs/sizes and clamps single garments to 1–100 or venue packs to 25–100 in steps of 25.
-- Subtotal is ex-GST. GST is charged on top as one `GST (10%)` Stripe line, rounded to cents on the complete subtotal. Shipping is not configured or charged: Bag displays `$0.00 (not charged)` in AUD. Split metadata remains ex-GST and net of blank garment cost.
-- The return URL opens Bag for cancellation or a receipt for success, then removes checkout query parameters while preserving unrelated parameters/hash. Success is not proof of payment: `/api/checkout/capsule-session` retrieves the test session and its line items from Stripe. Only `payment_status=paid` clears Bag. The response is not cached and excludes customer/contact/payment identifiers and arbitrary metadata.
+- Subtotal is ex-GST. GST is charged on top as one `GST (10%)` Stripe line, rounded to cents on the complete subtotal. Shipping is not configured or charged: Bag displays `A$0.00 (not charged)`. All AUD amounts in Bag and receipts use `A$`. Split metadata remains ex-GST and net of blank garment cost.
+- The return URL opens Bag for cancellation or a receipt for success, then removes checkout query parameters while preserving unrelated parameters/hash. Success is not proof of payment: `/api/checkout/capsule-session` retrieves the session and its line items from Stripe. Only `payment_status=paid` clears Bag. The response is not cached and excludes customer/contact/payment identifiers and arbitrary metadata.
 - Receipts use Stripe's line-item amounts, total, tax and shipping amounts. This is a payment-status receipt, not a fulfilment or delivery confirmation. There is no automatic retry/payment attempt on a return URL.
 - Card, Studio and server split maths share `src/lib/capsuleCommerce.ts`: round each unit's net margin to cents, apply the royalty rate, round each allocation to cents, then multiply by garment quantity.
+- Runtime: `package.json` requires Node 24.x. There is no `.nvmrc` or Vercel runtime override; `api/[...path].js` re-exports `server/index.js`. Node 24 supports native type stripping for the shared `.ts` module, which uses erasable types and no TypeScript-only runtime syntax. Both entry points can run directly without the test runner's `tsx` loader.
 
 ## Product-photo shoot geometry
 

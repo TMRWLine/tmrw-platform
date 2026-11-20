@@ -1,7 +1,7 @@
-import type { capsuleTotals } from '../lib/capsuleCommerce';
+import { formatCapsuleMoney, type capsuleTotals } from '../lib/capsuleCommerce';
 
 export function CapsuleTotals({ totals, currency = 'aud' }: { totals: ReturnType<typeof capsuleTotals>; currency?: string }) {
-  const money = (cents: number) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: currency.toUpperCase() }).format(cents / 100);
+  const money = (cents: number) => formatCapsuleMoney(cents, currency);
   return (
     <dl className="m-0 w-full space-y-2 font-['JetBrains_Mono',monospace] text-xs">
       {[

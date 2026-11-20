@@ -2,6 +2,13 @@ export const VENUE_SIZE = '25x VENUE CURVE (3S·8M·9L·5XL)';
 export const BAG_STORAGE_KEY = 'tmrw_capsule_bag_v1';
 export const BAG_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+export function formatCapsuleMoney(cents: number, currency = 'aud') {
+  return new Intl.NumberFormat('en-AU', { style: 'currency', currency: currency.toUpperCase() })
+    .formatToParts(cents / 100)
+    .map(part => part.type === 'currency' && currency.toUpperCase() === 'AUD' ? 'A$' : part.value)
+    .join('');
+}
+
 export function capsuleSplit(priceAud: number, baseCostAud: number, royaltyPct = 0, qty = 1) {
   const netUnitCents = Math.max(0, Math.round((priceAud - baseCostAud) * 100));
   return {

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { BrandLockup } from './BrandLockup';
 import { ProductPhotoGallery } from './ProductPhotoGallery';
 import { CapsuleTotals } from './CapsuleTotals';
-import { BAG_STORAGE_KEY, capsuleSplit, capsuleTotals, restoreBag, serialiseBag, type BagLine, type CapsuleReceipt, type CapsuleReturn } from '../lib/capsuleCommerce';
+import { BAG_STORAGE_KEY, capsuleSplit, capsuleTotals, formatCapsuleMoney, restoreBag, serialiseBag, type BagLine, type CapsuleReceipt, type CapsuleReturn } from '../lib/capsuleCommerce';
 import type { AthleteRecord } from '../data/roster';
 
 export type LockupStyleId = 'editorial' | 'stencil' | 'heritage';
@@ -499,7 +499,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   };
 
   const totals = capsuleTotals(cartItems.reduce((sum, entry) => sum + Math.round(entry.item.priceAud * 100) * entry.qty, 0));
-  const formatAud = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', currencyDisplay: 'narrowSymbol' });
 
   const hasPartnerActive = newCollabPartner.trim().length > 0 && enablePartnerRoyaltySplit;
   const athletePctPreview = hasPartnerActive ? 0.55 : 0.7;
@@ -1177,9 +1176,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </p>
               {demoReceipt.split && (
                 <p className="m-0 font-sans text-sm text-neutral-700">
-                  Example split (AUD): {formatAud.format(demoReceipt.split.athleteAud)} for athletes,
-                  {' '}{formatAud.format(demoReceipt.split.clubAud)} for clubs
-                  {demoReceipt.split.partnerAud > 0 && `, and ${formatAud.format(demoReceipt.split.partnerAud)} for collaborators`}.
+                  Example split (AUD): {formatCapsuleMoney(Math.round(demoReceipt.split.athleteAud * 100))} for athletes,
+                  {' '}{formatCapsuleMoney(Math.round(demoReceipt.split.clubAud * 100))} for clubs
+                  {demoReceipt.split.partnerAud > 0 && `, and ${formatCapsuleMoney(Math.round(demoReceipt.split.partnerAud * 100))} for collaborators`}.
                 </p>
               )}
               <p className="m-0 font-mono text-[11px] text-neutral-500">Demo session: {demoReceipt.sessionId}</p>
@@ -1208,16 +1207,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           {view === 'receipt' && (
             <section aria-label="Checkout receipt" className="mx-auto w-full max-w-xl space-y-5 py-10 text-[#080808]">
               <h2 ref={demoHeadingRef} tabIndex={-1} className="m-0 text-3xl font-black">{receiptLoading ? 'Verifying checkout' : receipt?.paymentStatus === 'paid' ? 'Payment confirmed' : 'Payment not confirmed'}</h2>
-              {receiptLoading && <p role="status" className="font-['JetBrains_Mono',monospace] text-xs">Checking your Stripe test session…</p>}
+              {receiptLoading && <p role="status" className="font-['JetBrains_Mono',monospace] text-xs">Checking your Stripe session…</p>}
               {receiptError && <p role="alert">{receiptError}</p>}
               {receipt && (
                 <>
-                  <p className="font-['JetBrains_Mono',monospace] text-xs">Stripe test payment status: {receipt.paymentStatus}. {receipt.paymentStatus !== 'paid' && 'Your bag has been kept. Do not pay again until you have checked the payment status.'}</p>
+                  <p className="font-['JetBrains_Mono',monospace] text-xs">Stripe payment status: {receipt.paymentStatus}. {receipt.paymentStatus !== 'paid' && 'Your bag has been kept. Do not pay again until you have checked the payment status.'}</p>
                   <ul className="list-none space-y-3 p-0 font-['JetBrains_Mono',monospace] text-xs">
-                    {receipt.lineItems.map((line, index) => <li key={index}>{line.description} × {line.quantity} · {new Intl.NumberFormat('en-AU', { style: 'currency', currency: receipt.currency.toUpperCase() }).format(line.amountCents / 100)}</li>)}
+                    {receipt.lineItems.map((line, index) => <li key={index}>{line.description} × {line.quantity} · {formatCapsuleMoney(line.amountCents, receipt.currency)}</li>)}
                   </ul>
                   <CapsuleTotals totals={receipt} currency={receipt.currency} />
-                  <p className="font-['JetBrains_Mono',monospace] text-xs">Ex-GST split: athletes {formatAud.format(receipt.splits.athleteCents / 100)}, clubs {formatAud.format(receipt.splits.clubCents / 100)}, collaborators {formatAud.format(receipt.splits.partnerCents / 100)}.</p>
+                  <p className="font-['JetBrains_Mono',monospace] text-xs">Ex-GST split: athletes {formatCapsuleMoney(receipt.splits.athleteCents, receipt.currency)}, clubs {formatCapsuleMoney(receipt.splits.clubCents, receipt.currency)}, collaborators {formatCapsuleMoney(receipt.splits.partnerCents, receipt.currency)}.</p>
                 </>
               )}
               <button type="button" onClick={() => setView('empty')} className="min-h-11 rounded-full border-0 bg-[#080808] px-6 font-mono text-xs text-[#F7F7F6]">View Bag</button>

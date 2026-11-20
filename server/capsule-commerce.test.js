@@ -3,7 +3,16 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import app from './index.js';
-import { BAG_TTL_MS, VENUE_SIZE, capsuleSplit, capsuleTotals, restoreBag, serialiseBag, readCapsuleReturn } from '../src/lib/capsuleCommerce.ts';
+import { BAG_TTL_MS, VENUE_SIZE, capsuleSplit, capsuleTotals, formatCapsuleMoney, restoreBag, serialiseBag, readCapsuleReturn } from '../src/lib/capsuleCommerce.ts';
+
+test('capsule AUD amounts always identify Australian dollars including zero and negative amounts', () => {
+  assert.equal(formatCapsuleMoney(18000), 'A$180.00');
+  assert.equal(formatCapsuleMoney(0, 'AUD'), 'A$0.00');
+  assert.equal(formatCapsuleMoney(-1), '-A$0.01');
+  assert.equal(formatCapsuleMoney(198000, 'aud'), 'A$1,980.00');
+  assert.equal(formatCapsuleMoney(18000, 'usd'), new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'USD' }).format(180));
+  assert.throws(() => formatCapsuleMoney(18000, 'invalid'), RangeError);
+});
 
 const catalogue = [{ id: 'drop_mt_2200', priceAud: 180 }, { id: 'drop_sb_2095', priceAud: 95 }];
 const saved = lines => JSON.stringify({ version: 1, expiresAt: 1000 + BAG_TTL_MS, lines });
@@ -62,6 +71,7 @@ test('client and server share cent rounding for both garments, fan/pack and part
   const originalFetch = globalThis.fetch;
   const bodies = [];
   globalThis.fetch = async (_url, options) => {
+    assert.equal(options.headers.Authorization, `Bearer ${process.env.STRIPE_SECRET_KEY}`);
     bodies.push(new URLSearchParams(options.body));
     return Response.json({ id: 'cs_test_fixture', url: 'https://checkout.stripe.invalid/fixture' });
   };
@@ -84,8 +94,10 @@ test('client and server share cent rounding for both garments, fan/pack and part
     }
     process.env.STRIPE_SECRET_KEY = 'sk_live_fixture';
     const response = await originalFetch(`http://127.0.0.1:${server.address().port}/api/checkout/create-session`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ capsuleItems: [{ id: 'drop_mt_2200', qty: 1 }] }) });
-    assert.equal(response.status, 503);
-    assert.equal(bodies.length, 4);
+    assert.equal(response.status, 200);
+    assert.equal(bodies.length, 5);
+    assert.equal(bodies.at(-1).get('line_items[0][price_data][unit_amount]'), '18000');
+    assert.equal(bodies.at(-1).get('line_items[1][price_data][unit_amount]'), '1800');
   } finally {
     globalThis.fetch = originalFetch;
     if (oldKey === undefined) delete process.env.STRIPE_SECRET_KEY; else process.env.STRIPE_SECRET_KEY = oldKey;

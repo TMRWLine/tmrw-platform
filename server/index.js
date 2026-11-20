@@ -369,7 +369,6 @@ app.post('/api/checkout/create-session', (req, res, next) => {
 
     // BRANCH A: Athlete Merch Capsule Checkout from CartDrawer.tsx
     if (Object.hasOwn(req.body ?? {}, 'capsuleItems')) {
-      if (stripeKey && !/^(sk|rk)_test_/.test(stripeKey)) return res.status(503).json({ error: 'Capsule checkout is available in Stripe test mode only.' });
       let items;
       try {
         items = catalogueItems(req.body.capsuleItems);
@@ -578,18 +577,19 @@ app.post('/api/checkout/create-session', (req, res, next) => {
 app.get('/api/checkout/capsule-session', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   const sessionId = req.query.session_id;
-  if (typeof sessionId !== 'string' || !/^cs_test_[A-Za-z0-9_]{1,200}$/.test(sessionId)) {
-    return res.status(400).json({ error: 'A valid Stripe test session is required.' });
+  if (typeof sessionId !== 'string' || !/^cs_(test|live)_[A-Za-z0-9_]{1,200}$/.test(sessionId)) {
+    return res.status(400).json({ error: 'A valid Stripe checkout session is required.' });
   }
   const key = process.env.STRIPE_SECRET_KEY;
-  if (!key || !/^(sk|rk)_test_/.test(key)) return res.status(503).json({ error: 'Stripe test receipt verification is unavailable.' });
+  const keyMode = key?.match(/^(?:sk|rk)_(test|live)_/)?.[1];
+  if (!keyMode) return res.status(503).json({ error: 'Stripe receipt verification is unavailable.' });
   try {
     const headers = { Authorization: `Bearer ${key}` };
     const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, { headers, signal: AbortSignal.timeout(15000) });
     if (!response.ok) return res.status(response.status === 404 ? 404 : 502).json({ error: 'Unable to verify this checkout session.' });
     const session = await response.json();
-    if (session.id !== sessionId || session.livemode !== false || session.metadata?.orderType !== 'merch_capsule') {
-      return res.status(404).json({ error: 'Merchandise test session not found.' });
+    if (session.id !== sessionId || session.livemode !== (keyMode === 'live') || !sessionId.startsWith(`cs_${keyMode}_`) || session.metadata?.orderType !== 'merch_capsule') {
+      return res.status(404).json({ error: 'Merchandise session not found.' });
     }
     const itemsResponse = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}/line_items?limit=100`, { headers, signal: AbortSignal.timeout(15000) });
     if (!itemsResponse.ok) throw new Error('Line items unavailable');
