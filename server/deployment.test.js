@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import Stripe from 'stripe';
-import handler from '../api/[...path].js';
+import handler from '../api/index.js';
 import app from './index.js';
 
 async function withServer(run) {
@@ -30,7 +30,8 @@ test('Vercel exports the Express handler, health works, and missing API routes n
 
 test('Vercel keeps API paths out of the SPA rewrite and includes the runtime catalogue', () => {
   const config = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url)));
-  const pattern = new RegExp(`^${config.rewrites[0].source}$`);
+  const spaRewrite = config.rewrites.find((rewrite) => rewrite.destination === '/index.html');
+  const pattern = new RegExp(`^${spaRewrite.source}$`);
   assert.ok(pattern.test('/'));
   assert.ok(pattern.test('/checkout/success'));
   assert.ok(!pattern.test('/api/checkout/create-session'));
