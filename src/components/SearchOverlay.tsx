@@ -190,7 +190,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, o
       aria-modal="true"
       aria-label="Search athlete profiles"
       data-lenis-prevent
-      className="fixed inset-0 z-50 bg-[#F7F7F6] overflow-y-auto px-6 md:px-12 py-10 animate-fadeIn"
+      className="mobile-overlay search-overlay fixed inset-0 z-50 bg-[#F7F7F6] overflow-y-auto px-6 md:px-12 py-10 animate-fadeIn"
     >
       <div className="w-full max-w-[1400px] mx-auto">
         {/* Top action bar */}
@@ -286,7 +286,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, o
                     const value = valuationOf(a);
                     return (
                       <li key={a.id || name} className="m-0 p-0">
-                        <article className="flex items-center gap-4 rounded-2xl bg-white border border-[#EAEAEA] p-4">
+                        <article className="search-athlete-result flex items-center gap-4 rounded-2xl bg-white border border-[#EAEAEA] p-4">
                           <div
                             aria-hidden="true"
                             className="shrink-0 w-12 h-12 rounded-full bg-[#080808] text-white flex items-center justify-center font-display font-extrabold text-sm"

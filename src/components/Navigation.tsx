@@ -160,10 +160,10 @@ export const Navigation: React.FC<NavigationProps> = ({
     : ICON_BUTTON;
 
   return (
-    <header className={headerClass} data-compact={compact}>
+    <header className={`tmrw-navigation ${headerClass}`} data-compact={compact}>
       {/* Grid container: shares the 1600px plumb line of the showcase cards below. */}
       <div className={`max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full h-[74px] flex items-center justify-between ${compact ? '-translate-y-[7px]' : ''} ${compact && activeLabel ? 'max-lg:-translate-y-[13px]' : ''}`}>
-        <BrandLockup tone={dark ? 'dark' : 'light'} onClick={goHome} className="shrink-0 max-sm:[&>span]:w-[92px]" />
+        <BrandLockup tone={dark ? 'dark' : 'light'} onClick={goHome} className="nav-brand shrink-0 max-sm:[&>span]:w-[92px]" />
 
         {/* Centre links */}
         <nav className="hidden lg:flex items-center gap-1" aria-label="Primary">
@@ -216,18 +216,22 @@ export const Navigation: React.FC<NavigationProps> = ({
         </nav>
 
         {/* Right utility cluster */}
-        <div className="flex items-center">
+        <div className="nav-utilities flex items-center">
           <button
             type="button"
             onClick={onOpenPortal}
             aria-label="Athlete Portal"
             aria-haspopup="dialog"
-            className={`group relative inline-flex items-center gap-1 sm:gap-2 rounded-full px-2 sm:px-4 py-1.5 border transition-all duration-200 mr-1 sm:mr-4 cursor-pointer select-none ${focusRing} ${
+            className={`nav-portal group relative inline-flex items-center gap-1 sm:gap-2 rounded-full px-2 sm:px-4 py-1.5 border transition-all duration-200 mr-1 sm:mr-4 cursor-pointer select-none ${focusRing} ${
               dark
                 ? 'border-white/20 bg-white/[0.04] hover:bg-volt hover:border-volt'
                 : 'border-[#080808]/20 bg-[#080808]/[0.03] hover:bg-[#080808] hover:border-[#080808]'
             }`}
           >
+            <svg className="nav-portal-icon hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.5" />
+              <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+            </svg>
             {/* Portal dot */}
             <span className="relative flex h-2 w-2" aria-hidden="true">
               <span className={`relative inline-flex rounded-full h-2 w-2 ${dark ? 'bg-volt group-hover:bg-black' : 'bg-[#080808] group-hover:bg-white'}`} />

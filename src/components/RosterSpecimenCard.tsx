@@ -135,13 +135,16 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
 
   return (
     <article
-      onClick={() => onOpenDossier(athlete, 'audit')}
+      onClick={(event) => {
+        event.currentTarget.querySelector<HTMLButtonElement>('.roster-dossier-open')?.focus({ preventScroll: true });
+        onOpenDossier(athlete, 'audit');
+      }}
       style={{
         borderRadius: '16px',
         aspectRatio: '1 / 1.24',
         minHeight: '490px',
       }}
-      className="group relative isolate flex w-full flex-col justify-between p-7 xl:p-8 bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white transition-colors duration-500 cursor-pointer overflow-visible select-none"
+      className="roster-specimen group relative isolate flex w-full flex-col justify-between p-7 xl:p-8 bg-[#F0F0EE] hover:bg-[#080808] text-[#080808] hover:text-white transition-colors duration-500 cursor-pointer overflow-visible select-none"
     >
       {/* Floating Top-Right Pill Badge — #B8FF00 Green for "New", #F5B800 Yellow for "Updated" */}
       {effectiveBadgeText && (
@@ -236,7 +239,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
           }}
           title="Open Athlete Dossier"
           aria-label="Open Athlete Dossier"
-          className={`h-7 w-7 rounded-lg bg-transparent border-0 flex items-center justify-center transition-colors cursor-pointer p-0 shrink-0 ${
+          className={`roster-dossier-open h-7 w-7 rounded-lg bg-transparent border-0 flex items-center justify-center transition-colors cursor-pointer p-0 shrink-0 ${
             mediaMode === 'video'
               ? 'text-white hover:text-volt'
               : 'text-[#080808] group-hover:text-white group-hover:hover:text-volt'
@@ -265,7 +268,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
           2. On Hover: Initials vanish & Full-Width White Bar controls Photos, Video & Audio Mute/Unmute. */}
       <div className="relative z-20 mt-auto pt-6 pb-1">
         <div
-          className={`font-display text-[128px] sm:text-[138px] xl:text-[148px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 ${
+          className={`roster-initials font-display text-[128px] sm:text-[138px] xl:text-[148px] font-black leading-[0.82] tracking-[-0.055em] -ml-1 transition-all duration-300 ${
             mediaMode === 'video'
               ? 'opacity-0 translate-y-2 pointer-events-none'
               : 'opacity-100 translate-y-0 group-hover:opacity-0 group-hover:translate-y-2 group-hover:pointer-events-none'
@@ -277,7 +280,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
         {/* Full-Width White Pill Bar on Hover */}
         <div
           onClick={(e) => e.stopPropagation()}
-          className={`absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between transition-all duration-300 ${
+          className={`roster-media-controls absolute inset-x-0 bottom-0 h-10 rounded-full bg-[#FFFFFF] text-[#080808] shadow-[0_12px_32px_rgba(0,0,0,0.35)] px-1.5 flex items-center justify-between transition-all duration-300 ${
             mediaMode === 'video'
               ? 'opacity-100 translate-y-0 pointer-events-auto'
               : 'opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto'
