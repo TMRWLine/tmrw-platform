@@ -350,15 +350,20 @@ export function MarketplaceApp() {
       setRequestedPackage(packageId);
       setIsCartOpen(true);
     };
+    const openCapsuleDrawer = () => {
+      setIsSearchOpen(false);
+      setIsMenuOpen(false);
+      setIsCartOpen(true);
+    };
     window.addEventListener(OPEN_SEARCH_OVERLAY_EVENT, openSearch);
     window.addEventListener(OPEN_MENU_OVERLAY_EVENT, openMenu);
     window.addEventListener(OPEN_DEPLOY_DRAWER_EVENT, openDeployDrawer);
-    window.addEventListener(OPEN_CAPSULE_DRAWER_EVENT, openDeployDrawer);
+    window.addEventListener(OPEN_CAPSULE_DRAWER_EVENT, openCapsuleDrawer);
     return () => {
       window.removeEventListener(OPEN_SEARCH_OVERLAY_EVENT, openSearch);
       window.removeEventListener(OPEN_MENU_OVERLAY_EVENT, openMenu);
       window.removeEventListener(OPEN_DEPLOY_DRAWER_EVENT, openDeployDrawer);
-      window.removeEventListener(OPEN_CAPSULE_DRAWER_EVENT, openDeployDrawer);
+      window.removeEventListener(OPEN_CAPSULE_DRAWER_EVENT, openCapsuleDrawer);
     };
   }, []);
 
