@@ -12,7 +12,20 @@
 
 ## Product-photo shoot geometry
 
-No photo sourcing or manifest tooling is part of this change. The published manifest stays empty. Missing/404 views show a branded placeholder; missing still views remain selectable when a partial set is published. No stock or generated images are used.
+The manifest currently enables owner-authorised Earls Collection product-photo previews, pending owner approval. These are source-product photos, not finished athlete capsule photography. Missing/404 views still show a branded placeholder. No stock, generated, retouched branding or 360 images are used.
+
+### Earls preview sources
+
+All source URLs below were taken from `https://www.earlscollection.com/products/<handle>.json` and visually inspected. Outputs are centred 4:5 crops, 1280 × 1600 optimised progressive JPEGs, each below 320KB. Product pricing and capsule designs are unchanged.
+
+- `drop_mt_2200`, handle `contrast-hood-black`: flat front, on-model back (no flat back available), fabric/appliqué detail. The detail has a misleading source filename but visibly shows this hoodie's appliqué.
+  - `front.jpg`: https://cdn.shopify.com/s/files/1/0013/6658/9507/files/ContrasstHood-Black_Front.png?v=1783520756
+  - `back.jpg`: https://cdn.shopify.com/s/files/1/0013/6658/9507/files/F59_260602_Earls_eComm_05.jpg?v=1782189025
+  - `detail-1.jpg`: https://cdn.shopify.com/s/files/1/0013/6658/9507/files/Two-WayGilet-Chord_Back_1390527f-311b-4047-a4ac-d75f05d71a6b.png?v=1783520768
+- `drop_sb_2095`, handle `family-heritage-tee-vintage-black`: plain unbranded washed front, rear-print flat shot and printed-fabric detail. Selected over Pollock's paint splatter and the more prominent front lettering on Lowercase, Gothic and Sidewalk. The rear print is retained, not retouched.
+  - `front.jpg`: https://cdn.shopify.com/s/files/1/0013/6658/9507/files/FamilyHeritageTee_1.jpg?v=1794272145
+  - `back.jpg`: https://cdn.shopify.com/s/files/1/0013/6658/9507/files/FamilyHeritageTee_Flatlay_1.png?v=1794272147
+  - `detail-1.jpg`: https://cdn.shopify.com/s/files/1/0013/6658/9507/files/FamilyHeritageTee_Detail_2.png?v=1794272148
 
 - The gallery image uses `object-fit: contain`, filling the fixed media frame without cropping or changing the frame when an image fails.
 - At 1440 × 900, the media frame is **605 × 460 CSS pixels**, measured in the capsule overlay. The actual frame ratio is approximately **1.315:1** because its height is capped at 460px.
