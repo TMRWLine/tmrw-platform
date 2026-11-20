@@ -9,6 +9,7 @@ import { createTwelveLabsRouter } from './twelvelabs.js';
 import { catalogueItems } from './capsule-catalogue.js';
 import {
   checkGrantStorage,
+  diagnoseGrantStorage,
   createGrantAccess,
   grantPath,
   hasGrantAccess,
@@ -122,6 +123,12 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), a
 app.use('/api/twelvelabs', createTwelveLabsRouter());
 app.use(express.json());
 app.post(grantPath, issuePaidWhitelistingGrant);
+
+app.get('/api/health/grant-storage', async (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const result = await diagnoseGrantStorage();
+  res.status(result.ok ? 200 : 503).json(result);
+});
 
 app.get(['/health', '/api/health'], (_req, res) => {
   res.json({ ok: true, service: 'sponsor-match-proxy' });

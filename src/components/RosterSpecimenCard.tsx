@@ -171,7 +171,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
           file={imageFile}
           fallbackFiles={imageFallbacks}
           alt={displayFullName}
-          className={`w-full h-full object-cover transition-all duration-700 ease-out ${
+          className={`absolute inset-0 transition-[transform,opacity,filter] duration-700 ease-out ${
             mediaMode === 'video'
               ? `grayscale-0 opacity-95 ${activeClips[clipIdx]?.crop ?? 'scale-110'}`
               : `grayscale opacity-[0.12] group-hover:grayscale-0 group-hover:opacity-90 ${CARD_FRAMES[frameIdx].crop}`
