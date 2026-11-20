@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useReducedMotion } from '../lib/useReducedMotion';
+import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
 import type { LandingSectionId } from './Navigation';
 import { CourtLinesOverlay } from './CourtLinesOverlay';
 import { RollingPillButton } from './RollingPillButton';
@@ -17,7 +18,7 @@ const PULSE_BLINK_CSS =
   '0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 18px rgba(184, 255, 0, 0.95); }' +
   '50% { opacity: 0.15; transform: scale(0.82); box-shadow: 0 0 4px rgba(184, 255, 0, 0.2); }' +
   '}' +
-  '@media (prefers-reduced-motion: no-preference) { .tmrw-dot-blink { animation: tmrwPulseBlink 1.05s cubic-bezier(0.4, 0, 0.6, 1) 4; } }';
+  '@media (prefers-reduced-motion: no-preference) { .tmrw-dot-blink { animation: tmrwPulseBlink 1.05s cubic-bezier(0.4, 0, 0.6, 1) 3; } }';
 
 export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
   const reducedMotion = useReducedMotion();
@@ -53,12 +54,12 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
 
   const isIntro = !reducedMotion && phase === 'intro';
 
-  const navigate = (id: 'how-it-works' | 'commercial-tiers') => {
+  const navigate = (id: 'roster' | 'syndicate') => {
     if (onNavigateSection) {
       onNavigateSection(id);
       return;
     }
-    window.location.assign(`/${id}`);
+    window.location.assign(id === 'roster' ? THE_ROSTER_PATH : BRISBANE_RUNWAY_PATH);
   };
 
   return (
@@ -120,7 +121,7 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
           }}
         />
 
-        <CourtLinesOverlay />
+        <CourtLinesOverlay aligning={isIntro} />
 
         {/* Pure Central Headline */}
         <div className="relative z-10 my-auto flex h-[56vh] w-full items-center justify-center">
@@ -135,8 +136,11 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
             }}
             className="motion-safe:transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform"
           >
-            {isIntro ? (
-              <h1 className="m-0 block text-center font-display font-extrabold leading-[0.92] tracking-tight text-[#F7F7F6] drop-shadow-[0_8px_36px_rgba(0,0,0,0.9)] text-7xl sm:text-8xl md:text-[7.5rem] lg:text-[9.2rem]">
+            <h1 id="cover-heading" aria-label="Line up your future" className={isIntro
+              ? 'm-0 block text-center font-display font-extrabold leading-[0.92] tracking-tight text-[#F7F7F6] drop-shadow-[0_8px_36px_rgba(0,0,0,0.9)] text-7xl sm:text-8xl md:text-[7.5rem] lg:text-[9.2rem]'
+              : 'm-0 block max-w-[12ch] text-center font-display font-extrabold leading-[0.96] tracking-tight text-[#F7F7F6] drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)] text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem]'}>
+              {isIntro ? (
+              <>
                 <span className="block">
                   <span
                     className={[
@@ -181,14 +185,13 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
                     future
                     <span
                       aria-hidden="true"
-                      className="tmrw-dot-blink ml-2.5 inline-block h-4 w-4 rounded-full bg-volt align-baseline shadow-[0_0_24px_rgba(184,255,0,1)] md:h-6 md:w-6"
+                      className="ml-2.5 inline-block h-4 w-4 rounded-full bg-volt align-baseline shadow-[0_0_24px_rgba(184,255,0,1)] md:h-6 md:w-6"
                     />
                   </span>
                 </span>
-              </h1>
-            ) : (
-              <div className="flex flex-col items-center gap-4">
-              <h1 className="m-0 block max-w-[12ch] text-center font-display font-extrabold leading-[0.96] tracking-tight text-[#F7F7F6] drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)] text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem]">
+              </>
+              ) : (
+              <>
                 Line up your{' '}
                 <span className="whitespace-nowrap">
                   future
@@ -197,12 +200,9 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
                     className="tmrw-dot-blink ml-2 inline-block h-3.5 w-3.5 shrink-0 rounded-full bg-volt align-baseline opacity-100 shadow-[0_0_16px_rgba(184,255,0,0.95)] md:h-4 md:w-4"
                   />
                 </span>
-              </h1>
-              <p className="m-0 rounded bg-black/75 px-3 py-1 text-center text-sm font-medium text-white sm:text-base">
-                Local businesses back athletes and the clubs behind them.
-              </p>
-              </div>
-            )}
+              </>
+              )}
+            </h1>
           </div>
         </div>
 
@@ -213,17 +213,17 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
           ].join(' ')}
         >
           <div className="flex justify-start">
-            <RollingPillButton variant="primary" onClick={() => navigate('how-it-works')}>
-              Athletes: How it works
+            <RollingPillButton variant="primary" onClick={() => navigate('roster')}>
+              Explore the Roster
             </RollingPillButton>
           </div>
           <div className="flex justify-end">
             <RollingPillButton
               variant="glass"
               className="bg-black/75"
-              onClick={() => navigate('commercial-tiers')}
+              onClick={() => navigate('syndicate')}
             >
-              Businesses: See sponsorship options
+              Brisbane 2032 Runway
             </RollingPillButton>
           </div>
         </div>}

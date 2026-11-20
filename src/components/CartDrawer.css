@@ -1,6 +1,5 @@
 /* Commerce phone rules stay isolated from the desktop layout and other drawers. */
-.capsule-mobile-nav,
-.capsule-touch-flip-hint {
+.capsule-mobile-nav {
   display: none;
 }
 
@@ -27,6 +26,10 @@
   .capsule-shop-header > div:last-of-type button {
     padding-right: 12px;
     padding-left: 12px;
+  }
+
+  .capsule-shop-header .capsule-header-bag {
+    display: none;
   }
 
   .capsule-shop .capsule-mobile-nav {
@@ -134,24 +137,21 @@
     padding: 16px;
   }
 
-  .capsule-product [role='button'] {
-    height: 400px;
+  .capsule-studio-preview {
     padding: 16px;
   }
 
-  .capsule-product [role='button'] > .flex:first-of-type,
-  .capsule-product [role='button'] > .flex:last-child {
+  .capsule-studio-preview > .flex:first-of-type,
+  .capsule-studio-preview > .flex:last-child {
     flex-wrap: wrap;
     gap: 8px;
   }
 
-  .capsule-product [role='button'] .text-4xl,
-  .capsule-studio [role='button'] .text-3xl {
+  .capsule-studio-preview .text-3xl {
     font-size: clamp(24px, 7vw, 32px);
   }
 
-  .capsule-product-actions,
-  .capsule-checkout-actions {
+  .capsule-product-actions {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
@@ -176,34 +176,12 @@
     gap: 4px 12px;
   }
 
-  .capsule-showroom-with-empty-bag {
-    display: none;
-  }
-
   .capsule-live-bag {
     padding: 20px 16px;
   }
 
-  .capsule-live-bag .inline-flex {
-    max-width: 100%;
-    border-radius: 16px;
-    padding: 4px 8px 4px 12px;
-  }
-
-  .capsule-live-bag .inline-flex button {
-    flex-shrink: 0;
-  }
-
-  .capsule-checkout-actions button {
-    white-space: normal;
-  }
-
-  .capsule-shop .capsule-desktop-flip-hint {
-    display: none;
-  }
-
-  .capsule-shop .capsule-touch-flip-hint {
-    display: inline;
+  .capsule-bag-quantity {
+    flex-wrap: wrap;
   }
 
   .capsule-shop .max-w-lg > .flex {
