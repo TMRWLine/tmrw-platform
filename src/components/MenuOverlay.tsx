@@ -89,17 +89,14 @@ const FOLLOW: readonly MenuItem[] = [
   },
 ];
 
-/** Slide/fade duration. Keep in sync with the `duration-300` utilities below. */
-const TRANSITION_MS = 300;
-
 const HEADER_CLASS =
-  'm-0 mb-3 font-mono text-xs uppercase text-[#666666] tracking-widest font-normal';
+  'm-0 mb-3 font-mono text-xs uppercase text-[#999999] tracking-widest font-normal';
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8FF00] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080808]';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-volt focus-visible:ring-offset-2 focus-visible:ring-offset-[#080808]';
 
-const PRIMARY_LINK = `block text-left p-0 bg-transparent border-0 font-display font-bold text-lg md:text-xl text-[#F7F7F6] hover:text-[#B8FF00] transition-colors duration-150 cursor-pointer mb-1.5 ${FOCUS_RING}`;
+const PRIMARY_LINK = `block text-left p-0 bg-transparent border-0 font-display font-bold text-lg md:text-xl text-[#F7F7F6] hover:text-volt transition-colors duration-150 cursor-pointer mb-1.5 ${FOCUS_RING}`;
 const SECONDARY_LINK = `block text-left p-0 bg-transparent border-0 text-xs md:text-sm text-[#CCCCCC] hover:text-white transition-colors cursor-pointer mb-1.5 ${FOCUS_RING}`;
-const SOCIAL_LINK = `block text-left p-0 bg-transparent border-0 text-xs md:text-sm text-[#CCCCCC] hover:text-[#B8FF00] transition-colors cursor-pointer mb-1.5 no-underline ${FOCUS_RING}`;
+const SOCIAL_LINK = `block text-left p-0 bg-transparent border-0 text-xs md:text-sm text-[#CCCCCC] hover:text-volt transition-colors cursor-pointer mb-1.5 no-underline ${FOCUS_RING}`;
 
 /* ---- Monochrome payment-partner badges (outline + glyphs, inherit currentColor) ---- */
 
@@ -221,15 +218,15 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
   onOpenSponsorWorkspace,
 }) => {
   const closeRef = useRef<HTMLButtonElement>(null);
-
-  // `mounted` keeps the tree alive through the slide-out; `shown` drives the transform/opacity.
-  const [mounted, setMounted] = useState(isOpen);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
     if (isOpen) {
-      setMounted(true);
-      // Two frames: commit the off-screen state first so the transition actually runs.
+      dialog.showModal();
+      closeRef.current?.focus();
       let inner = 0;
       const outer = requestAnimationFrame(() => {
         inner = requestAnimationFrame(() => setShown(true));
@@ -237,27 +234,11 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
       return () => {
         cancelAnimationFrame(outer);
         cancelAnimationFrame(inner);
+        dialog.close();
       };
     }
     setShown(false);
-    const timer = window.setTimeout(() => setMounted(false), TRANSITION_MS);
-    return () => window.clearTimeout(timer);
   }, [isOpen]);
-
-  useEffect(() => {
-    if (shown) closeRef.current?.focus();
-  }, [shown]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!mounted) return null;
 
   const run = (action: MenuAction) => {
     switch (action.kind) {
@@ -322,12 +303,30 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
   );
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      id="site-menu"
       aria-label="Site menu"
+      onCancel={event => {
+        event.preventDefault();
+        onClose();
+      }}
+      onKeyDown={event => {
+        if (event.key !== 'Tab') return;
+        const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button, a[href]')]
+          .filter(control => control.tabIndex >= 0);
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }}
       data-lenis-prevent
-      className="fixed inset-0 z-50 overflow-hidden"
+      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none overflow-hidden border-0 bg-transparent p-0 backdrop:bg-transparent"
     >
       {/* Backdrop scrim: everything below the curtain dismisses the menu */}
       <button
@@ -335,14 +334,14 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
         tabIndex={-1}
         aria-label="Close menu"
         onClick={onClose}
-        className={`absolute inset-0 w-full h-full p-0 border-0 cursor-default bg-black/60 backdrop-blur-md transition-opacity duration-300 ${
+        className={`absolute inset-0 w-full h-full p-0 border-0 cursor-default bg-black/60 backdrop-blur-md motion-safe:transition-opacity duration-300 ${
           shown ? 'opacity-100' : 'opacity-0'
         }`}
       />
 
       {/* Top curtain drawer */}
       <div
-        className={`absolute top-0 left-0 w-full h-[55vh] min-h-[440px] max-h-[580px] bg-[#080808] text-white border-b border-white/10 z-10 flex flex-col justify-between p-8 md:p-12 shadow-2xl overflow-y-auto select-none transition-transform duration-300 ease-out ${
+        className={`absolute top-0 left-0 w-full h-[55vh] min-h-[min(440px,100dvh)] max-h-[580px] bg-[#080808] text-white border-b border-white/10 z-10 flex flex-col justify-between p-8 md:p-12 shadow-2xl overflow-y-auto overscroll-contain select-none motion-safe:transition-transform duration-300 ease-out ${
           shown ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
@@ -354,7 +353,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close menu"
-            className={`inline-flex items-center justify-center p-0 bg-transparent border-0 text-white hover:text-[#B8FF00] transition-colors duration-150 cursor-pointer ${FOCUS_RING}`}
+            className={`inline-flex items-center justify-center p-0 bg-transparent border-0 text-white hover:text-volt transition-colors duration-150 cursor-pointer ${FOCUS_RING}`}
           >
             <CloseIcon />
           </button>
@@ -421,7 +420,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
           </p>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };
 

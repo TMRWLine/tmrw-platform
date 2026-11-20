@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useReducedMotion } from '../lib/useReducedMotion';
+import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
 import type { LandingSectionId } from './Navigation';
 import { CourtLinesOverlay } from './CourtLinesOverlay';
 import { RollingPillButton } from './RollingPillButton';
@@ -13,17 +15,24 @@ const INTRO_WORDS = ['Line', 'up', 'your', 'future'];
 
 const PULSE_BLINK_CSS =
   '@keyframes tmrwPulseBlink {' +
-  '0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 18px rgba(204, 255, 0, 0.95); }' +
-  '50% { opacity: 0.15; transform: scale(0.82); box-shadow: 0 0 4px rgba(204, 255, 0, 0.2); }' +
+  '0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 18px rgba(184, 255, 0, 0.95); }' +
+  '50% { opacity: 0.15; transform: scale(0.82); box-shadow: 0 0 4px rgba(184, 255, 0, 0.2); }' +
   '}' +
-  '.tmrw-dot-blink { animation: tmrwPulseBlink 1.05s cubic-bezier(0.4, 0, 0.6, 1) infinite; }';
+  '@media (prefers-reduced-motion: no-preference) { .tmrw-dot-blink { animation: tmrwPulseBlink 1.05s cubic-bezier(0.4, 0, 0.6, 1) 3; } }';
 
 export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const reducedMotion = useReducedMotion();
+  const [pointer, setMousePos] = useState({ x: 0, y: 0 });
+  const mousePos = reducedMotion ? { x: 0, y: 0 } : pointer;
   const [phase, setPhase] = useState<'intro' | 'settled'>('intro');
   const [visibleWords, setVisibleWords] = useState<number>(0);
 
   useEffect(() => {
+    if (reducedMotion) {
+      setPhase('settled');
+      setMousePos({ x: 0, y: 0 });
+      return;
+    }
     const timers: number[] = [];
 
     INTRO_WORDS.forEach((_, idx) => {
@@ -41,16 +50,16 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
     return () => {
       timers.forEach((t) => window.clearTimeout(t));
     };
-  }, []);
+  }, [reducedMotion]);
 
-  const isIntro = phase === 'intro';
+  const isIntro = !reducedMotion && phase === 'intro';
 
-  const scrollToRoster = () => {
+  const navigate = (id: 'roster' | 'syndicate') => {
     if (onNavigateSection) {
-      onNavigateSection('roster');
+      onNavigateSection(id);
       return;
     }
-    document.getElementById('roster')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.location.assign(id === 'roster' ? THE_ROSTER_PATH : BRISBANE_RUNWAY_PATH);
   };
 
   return (
@@ -59,7 +68,7 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
         aria-label="tmrw cover"
         className="relative flex min-h-[82vh] w-full select-none flex-col justify-between overflow-hidden rounded-[28px] border border-[#EAEAEA] bg-[#080808] p-8 shadow-sm md:rounded-[32px] md:p-14"
         onMouseMove={(e) => {
-          if (isIntro) return;
+          if (isIntro || reducedMotion) return;
           const rect = e.currentTarget.getBoundingClientRect();
           const x = (e.clientX - rect.left) / rect.width - 0.5;
           const y = (e.clientY - rect.top) / rect.height - 0.5;
@@ -78,7 +87,7 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
           fetchPriority="high"
           draggable={false}
           className={[
-            'pointer-events-none absolute inset-0 h-full w-full select-none object-cover object-center transition-all duration-1000 ease-out',
+            'pointer-events-none absolute inset-0 h-full w-full select-none object-cover object-center motion-safe:transition-all duration-1000 ease-out',
             isIntro ? 'opacity-30 blur-[3px] scale-110' : 'opacity-100 blur-0 scale-[1.04]',
           ].join(' ')}
           style={{
@@ -104,7 +113,7 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
 
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 transition-transform duration-500 ease-out"
+          className="pointer-events-none absolute inset-0 z-0 motion-safe:transition-transform duration-500 ease-out"
           style={{
             transform: 'translate3d(' + mousePos.x * 0.6 + 'px, ' + mousePos.y * 0.6 + 'px, 0)',
             background:
@@ -112,7 +121,7 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
           }}
         />
 
-        <CourtLinesOverlay />
+        <CourtLinesOverlay aligning={isIntro} />
 
         {/* Pure Central Headline */}
         <div className="relative z-10 my-auto flex h-[56vh] w-full items-center justify-center">
@@ -125,10 +134,13 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
                 ? 'scale(1.12)'
                 : 'translate3d(' + mousePos.x * 0.18 + 'px, ' + mousePos.y * 0.18 + 'px, 0) scale(1)',
             }}
-            className="transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform"
+            className="motion-safe:transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform"
           >
-            {isIntro ? (
-              <h1 className="m-0 block text-center font-display font-extrabold leading-[0.92] tracking-tight text-[#F7F7F6] drop-shadow-[0_8px_36px_rgba(0,0,0,0.9)] text-7xl sm:text-8xl md:text-[7.5rem] lg:text-[9.2rem]">
+            <h1 id="cover-heading" aria-label="Line up your future" className={isIntro
+              ? 'm-0 block text-center font-display font-extrabold leading-[0.92] tracking-tight text-[#F7F7F6] drop-shadow-[0_8px_36px_rgba(0,0,0,0.9)] text-7xl sm:text-8xl md:text-[7.5rem] lg:text-[9.2rem]'
+              : 'm-0 block max-w-[12ch] text-center font-display font-extrabold leading-[0.96] tracking-tight text-[#F7F7F6] drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)] text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem]'}>
+              {isIntro ? (
+              <>
                 <span className="block">
                   <span
                     className={[
@@ -173,53 +185,48 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
                     future
                     <span
                       aria-hidden="true"
-                      className="tmrw-dot-blink ml-2.5 inline-block h-4 w-4 rounded-full bg-[#CCFF00] align-baseline shadow-[0_0_24px_rgba(204,255,0,1)] md:h-6 md:w-6"
+                      className="ml-2.5 inline-block h-4 w-4 rounded-full bg-volt align-baseline shadow-[0_0_24px_rgba(184,255,0,1)] md:h-6 md:w-6"
                     />
                   </span>
                 </span>
-              </h1>
-            ) : (
-              <h1 className="m-0 block max-w-[12ch] text-center font-display font-extrabold leading-[0.96] tracking-tight text-[#F7F7F6] drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)] transition-all duration-700 text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem]">
+              </>
+              ) : (
+              <>
                 Line up your{' '}
                 <span className="whitespace-nowrap">
                   future
                   <span
                     aria-hidden="true"
-                    className="tmrw-dot-blink ml-2 inline-block h-3.5 w-3.5 shrink-0 rounded-full bg-[#CCFF00] align-baseline opacity-100 shadow-[0_0_16px_rgba(204,255,0,0.95)] md:h-4 md:w-4"
+                    className="tmrw-dot-blink ml-2 inline-block h-3.5 w-3.5 shrink-0 rounded-full bg-volt align-baseline opacity-100 shadow-[0_0_16px_rgba(184,255,0,0.95)] md:h-4 md:w-4"
                   />
                 </span>
-              </h1>
-            )}
+              </>
+              )}
+            </h1>
           </div>
         </div>
 
         {/* Buttons Split Perfectly Across Either Side of the Center Guideline */}
-        <div
+        {!isIntro && <div
           className={[
-            'relative z-20 flex w-full items-center justify-between px-4 pb-2 transition-all duration-700 md:px-12',
-            isIntro ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0',
+            'relative z-20 flex w-full flex-wrap items-center justify-center gap-3 pb-2 sm:justify-between md:px-12',
           ].join(' ')}
         >
           <div className="flex justify-start">
-            <RollingPillButton variant="primary" onClick={scrollToRoster}>
+            <RollingPillButton variant="primary" onClick={() => navigate('roster')}>
               Explore the Roster
             </RollingPillButton>
           </div>
           <div className="flex justify-end">
             <RollingPillButton
               variant="glass"
-              onClick={() => {
-                if (onNavigateSection) {
-                  onNavigateSection('syndicate');
-                  return;
-                }
-                window.location.assign('/brisbane-2032-runway');
-              }}
+              className="bg-black/75"
+              onClick={() => navigate('syndicate')}
             >
               Brisbane 2032 Runway
             </RollingPillButton>
           </div>
-        </div>
+        </div>}
       </section>
     </div>
   );

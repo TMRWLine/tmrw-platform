@@ -144,7 +144,7 @@ export const Navigation: React.FC<NavigationProps> = ({
     ? 'group relative inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold tracking-tight text-white transition-colors duration-150 cursor-pointer select-none bg-transparent border-0'
     : LINK_CLASS;
   const focusRing = dark
-    ? 'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]'
+    ? 'focus:outline-none focus-visible:ring-2 focus-visible:ring-volt focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]'
     : FOCUS_RING;
   const iconButton = dark
     ? 'inline-flex items-center justify-center p-2 rounded-full bg-transparent border-0 text-white hover:bg-white/10 transition-all duration-150 cursor-pointer'
@@ -154,10 +154,10 @@ export const Navigation: React.FC<NavigationProps> = ({
     <header className={headerClass}>
       {/* Grid container: shares the 1600px plumb line of the showcase cards below. */}
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full h-full flex items-center justify-between">
-        <BrandLockup tone={dark ? 'dark' : 'light'} onClick={goHome} />
+        <BrandLockup tone={dark ? 'dark' : 'light'} onClick={goHome} className="shrink-0 max-sm:[&>span]:w-[92px]" />
 
         {/* Centre links */}
-        <nav className="hidden md:flex items-center gap-1" aria-label="Primary">
+        <nav className="hidden lg:flex items-center gap-1" aria-label="Primary">
           {NAV_LINKS.map((link) => {
             const href =
               link.id === 'commercial-tiers'
@@ -198,7 +198,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 <span>{link.label}</span>
                 <span
                   aria-hidden="true"
-                  className="h-1.5 w-1.5 rounded-full bg-[#B8FF00] opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150 ease-out shadow-[0_0_8px_rgba(184,255,0,0.8)]"
+                  className={`h-1.5 w-1.5 rounded-full opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150 ease-out ${dark ? 'bg-volt' : 'bg-[#080808]'}`}
                 />
               </a>
             );
@@ -210,26 +210,27 @@ export const Navigation: React.FC<NavigationProps> = ({
           <button
             type="button"
             onClick={onOpenPortal}
+            aria-label="Athlete Portal"
             aria-haspopup="dialog"
-            className={`group relative inline-flex items-center gap-2 rounded-full px-4 py-1.5 border transition-all duration-200 mr-4 cursor-pointer select-none ${focusRing} ${
+            className={`group relative inline-flex items-center gap-1 sm:gap-2 rounded-full px-2 sm:px-4 py-1.5 border transition-all duration-200 mr-1 sm:mr-4 cursor-pointer select-none ${focusRing} ${
               dark
-                ? 'border-white/20 bg-white/[0.04] hover:bg-[#CCFF00] hover:border-[#CCFF00]'
+                ? 'border-white/20 bg-white/[0.04] hover:bg-volt hover:border-volt'
                 : 'border-[#080808]/20 bg-[#080808]/[0.03] hover:bg-[#080808] hover:border-[#080808]'
             }`}
           >
             {/* Live status telemetry beacon */}
             <span className="relative flex h-2 w-2" aria-hidden="true">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B8FF00] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#B8FF00] shadow-[0_0_10px_#B8FF00]"></span>
+              {dark && <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-volt opacity-75" />}
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${dark ? 'bg-volt group-hover:bg-black' : 'bg-[#080808] group-hover:bg-white'}`} />
             </span>
 
             {/* Rolling monospace label */}
             <span
-              className={`whitespace-nowrap font-mono text-[10px] font-bold tracking-[0.12em] ${
+              className={`whitespace-nowrap font-mono text-[9px] sm:text-[10px] font-bold tracking-[0.04em] sm:tracking-[0.12em] ${
                 dark ? 'text-white group-hover:text-black' : 'text-[#080808] group-hover:text-[#F7F7F6]'
               }`}
             >
-              Athlete Portal
+              <span className="hidden sm:inline">Athlete </span>Portal
             </span>
           </button>
 
@@ -239,7 +240,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             aria-label="Search the roster"
             aria-haspopup="dialog"
             aria-expanded={isSearchOpen}
-            className={`${iconButton} ${focusRing}`}
+            className={`${iconButton} max-sm:p-1.5 ${focusRing}`}
           >
             <SearchIcon />
           </button>
@@ -248,7 +249,8 @@ export const Navigation: React.FC<NavigationProps> = ({
             type="button"
             onClick={() => emitOverlayEvent(OPEN_DEPLOY_DRAWER_EVENT)}
             aria-label="Open capital deployment drawer"
-            className={`${iconButton} ml-1 ${focusRing}`}
+            aria-haspopup="dialog"
+            className={`${iconButton} max-sm:p-1.5 sm:ml-1 ${focusRing}`}
           >
             <BagIcon />
           </button>
@@ -258,8 +260,9 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={onToggleMenu}
             aria-label="Open menu"
             aria-haspopup="dialog"
+            aria-controls="site-menu"
             aria-expanded={isMenuOpen}
-            className={`${iconButton} ml-1 ${focusRing}`}
+            className={`${iconButton} max-sm:p-1.5 sm:ml-1 ${focusRing}`}
           >
             <MenuIcon />
           </button>

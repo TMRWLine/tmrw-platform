@@ -5,10 +5,10 @@ dotenv.config({ path: '.env.local' });
 dotenv.config();
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('[AGENT FATAL] Missing VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local');
+  console.error('[AGENT FATAL] Missing VITE_SUPABASE_URL or SUPABASE_SECRET_KEY in .env.local');
   process.exit(1);
 }
 

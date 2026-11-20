@@ -251,17 +251,21 @@ export function MarketplaceApp() {
   const isOverlayActive = isSearchOpen || isMenuOpen;
   useEffect(() => {
     if (!isOverlayActive) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const { documentElement, body } = document;
+    const previousRootOverflow = documentElement.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    documentElement.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
     lenisRef.current?.stop();
     return () => {
-      document.body.style.overflow = previousOverflow;
+      documentElement.style.overflow = previousRootOverflow;
+      body.style.overflow = previousBodyOverflow;
       lenisRef.current?.start();
     };
   }, [isOverlayActive, view]);
 
   useEffect(() => {
-    if (!isOverlayActive) return;
+    if (!isSearchOpen || isMenuOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       setIsSearchOpen(false);
@@ -269,7 +273,7 @@ export function MarketplaceApp() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOverlayActive]);
+  }, [isSearchOpen, isMenuOpen]);
 
   useEffect(() => {
     const openSearch = () => {
@@ -569,6 +573,26 @@ export function MarketplaceApp() {
     setLandingSection(id);
   }
 
+  function navigateFromMenu(id: LandingSectionId) {
+    const headingId: Partial<Record<LandingSectionId, string>> = {
+      top: 'cover-heading',
+      roster: 'roster-heading',
+      'how-it-works': 'how-it-works-heading',
+      'commercial-tiers': 'commercial-tiers-heading',
+      syndicate: 'syndicate-heading',
+      ledger: 'ledger-heading',
+    };
+    if (id !== 'top' || view !== 'landing') navigateSection(id);
+    const sameView = view === viewFromLocation();
+    requestAnimationFrame(() => {
+      if (sameView && id !== 'ledger') window.scrollTo({ top: 0, behavior: 'instant' });
+      const heading = document.getElementById(headingId[id] ?? '');
+      if (!heading) return;
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    });
+  }
+
   useEffect(() => {
     const applyRosterHash = () => {
       if (!window.location.hash.startsWith('#roster')) return;
@@ -677,8 +701,11 @@ export function MarketplaceApp() {
       <MenuOverlay
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
-        onHome={goHome}
-        onNavigateSection={navigateSection}
+        onHome={() => {
+          closeOverlays();
+          navigateFromMenu('top');
+        }}
+        onNavigateSection={navigateFromMenu}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenPortal={() => setIsPortalDrawerOpen(true)}
         onOpenSponsorWorkspace={enterSponsorWorkspace}
@@ -759,7 +786,7 @@ export function MarketplaceApp() {
       ) : (
       <main className="page bg-transparent">
         <div className="page-head editorial-copy border-b border-white/10" id="athlete-roster">
-          <p className="font-mono text-xs tracking-widest uppercase text-[#D2FF00] mb-3">
+          <p className="font-mono text-xs tracking-widest uppercase text-volt mb-3">
             // ENTERPRISE WORKSPACE
           </p>
           <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white mt-0">
@@ -850,6 +877,7 @@ export function MarketplaceApp() {
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
+        onHome={goHome}
         selectedAthlete={selectedAthlete}
         onExploreRoster={() => setView('the-roster')}
       />

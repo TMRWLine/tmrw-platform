@@ -20,36 +20,19 @@ interface BroadcastCarrier {
 
 const REGISTERS: readonly BroadcastRegister[] = [
   {
-    figure: '15,000',
-    label: 'PATHWAY CONTENDERS',
-    body: 'Emerging 18-to-25 talent dominating televised state and national leagues without a commercial retainer, from NBL1, Shute Shield, VFL, and Hostplus Cup to Sal’s NBL and Olympic trials.',
+    figure: 'LOCAL',
+    label: 'PATHWAY ATHLETES',
+    body: 'It takes training, travel and people who turn up to get an athlete to game day.',
   },
   {
-    figure: '$0.00',
-    label: 'BROADCAST DIVIDEND',
-    body: 'What filters back to the athletes and junior clubs generating the ratings. Networks sell the airtime. Contenders carry the cost of the runway.',
-    badge: 'CURRENT MEDIAN',
+    figure: 'CLUB',
+    label: 'THE PEOPLE BEHIND THE PLAY',
+    body: 'The club that opens the gates, lends the gear and gets the team on the road has a stake in what comes next.',
   },
   {
     figure: '70/15/15',
-    label: 'THE CLEARING PROTOCOL',
-    body: (
-      <>
-        <span className="bg-[#CCFF00] text-[#0F0F11] font-semibold px-1.5 py-0.5 rounded-[3px]">
-          No agents
-        </span>{' '}
-        taking a clip.{' '}
-        <span className="bg-[#CCFF00] text-[#0F0F11] font-semibold px-1.5 py-0.5 rounded-[3px]">
-          No chasing invoices
-        </span>
-        .{' '}
-        <span className="bg-[#CCFF00] text-[#0F0F11] font-semibold px-1.5 py-0.5 rounded-[3px]">
-          Pre-cleared deals
-        </span>
-        , instant payouts, and a hardwired split backing you and the junior club that built you on the road to LA 2028 and Brisbane 2032.
-      </>
-    ),
-    live: true,
+    label: 'EXAMPLE SPONSORSHIP SPLIT',
+    body: 'One way the money could be shared: 70% to the athlete, 15% to their grassroots club and 15% to TMRWLine. No payment or timing is promised.',
     showSplitBar: true,
   },
   {
@@ -59,11 +42,11 @@ const REGISTERS: readonly BroadcastRegister[] = [
     body: (
       <>
         Followers don’t pay rent. Automated{' '}
-        <span className="bg-[#CCFF00] text-[#0F0F11] font-semibold px-1.5 py-0.5 rounded-[3px]">
+        <span className="bg-volt text-[#0F0F11] font-semibold px-1.5 py-0.5 rounded-[3px]">
           API handle linking
         </span>{' '}
         and postcode token locks let local brands run geo-fenced Meta and TikTok ads straight through your verified handle for{' '}
-        <span className="bg-[#CCFF00] text-[#0F0F11] font-semibold px-1.5 py-0.5 rounded-[3px]">
+        <span className="bg-volt text-[#0F0F11] font-semibold px-1.5 py-0.5 rounded-[3px]">
           paid social amplification
         </span>{' '}
         across a 5km to 50km radius.
@@ -170,21 +153,19 @@ export const BroadcastMatrix: React.FC = () => (
           className="lg:col-span-7 m-0 font-sans text-4xl sm:text-5xl lg:text-[3.85rem] xl:text-[4.35rem] font-black tracking-[-0.045em] uppercase text-[#0F0F11] leading-[0.92]"
         >
           <span className="block">
-            15,000 athletes on live TV
-            <span className="text-[#CCFF00] drop-shadow-[0_0_16px_rgba(204,255,0,0.85)]">.</span>
+            Before the cameras roll.
           </span>
           <span className="mt-1 block">
-            Zero commercial retainers
-            <span className="text-[#CCFF00] drop-shadow-[0_0_16px_rgba(204,255,0,0.85)]">.</span>
+            Local sport puts in the work.
           </span>
         </h2>
 
         <div className="lg:col-span-5 lg:border-l lg:border-neutral-200 lg:pl-8">
           <span className="text-[10px] font-mono uppercase tracking-[0.16em] text-neutral-400 mb-2 block">
-            STRUCTURAL MARKET DEFICIT
+            THE WORK BEFORE GAME DAY
           </span>
           <p className="m-0 font-sans text-sm sm:text-base font-medium leading-[1.48] text-[#0F0F11]">
-            Every weekend, emerging Australian and New Zealand contenders fill broadcast slots for major networks while seeing zero commercial return. tmrw<span className="text-[#CCFF00] font-black">/.</span> turns live screen time into direct brand cash, sponsored feed amplification, and club dividends<span className="text-[#CCFF00] font-black">.</span>
+            Travel, gear and training add up. Local businesses can help cover those costs by backing athletes and their clubs.
           </p>
         </div>
       </div>
@@ -212,8 +193,8 @@ export const BroadcastMatrix: React.FC = () => (
               ) : null}
               {register.live ? (
                 <span className="relative flex h-[6px] w-[6px] shrink-0" aria-hidden="true">
-                  <span className="absolute inset-0 rounded-full bg-[#CCFF00] opacity-80 blur-[3px]" />
-                  <span className="relative h-[6px] w-[6px] rounded-full bg-[#CCFF00]" />
+                  <span className="absolute inset-0 rounded-full bg-volt opacity-80 blur-[3px]" />
+                  <span className="relative h-[6px] w-[6px] rounded-full bg-volt" />
                 </span>
               ) : null}
             </div>
@@ -230,7 +211,7 @@ export const BroadcastMatrix: React.FC = () => (
             >
               <span className="block h-full w-[70%] bg-[#0F0F11]" />
               <span className="block h-full w-[15%] bg-neutral-400" />
-              <span className="block h-full w-[15%] bg-[#CCFF00]" />
+              <span className="block h-full w-[15%] bg-volt" />
             </div>
           ) : null}
 
@@ -240,7 +221,7 @@ export const BroadcastMatrix: React.FC = () => (
               role="img"
               aria-label="5km local storefront ring, 15km suburban trade catchment, 50km regional hub"
             >
-              <span className="block h-full w-[55%] bg-[#CCFF00]" />
+              <span className="block h-full w-[55%] bg-volt" />
               <span className="block h-full w-[30%] bg-[#0F0F11]" />
               <span className="block h-full w-[15%] bg-neutral-400" />
             </div>

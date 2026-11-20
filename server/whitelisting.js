@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { supabaseHeaders, supabaseSecretKey } from './supabase-keys.js';
 
 export const grantPath = '/api/checkout/whitelisting-grant';
 const termDays = 90;
@@ -43,32 +44,114 @@ function radiusForTier(tierId) {
   return 5;
 }
 
-function grantStorage() {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('Whitelisting storage is not configured');
+export function grantStorageKeyKind(key = '') {
+  if (typeof key !== 'string') return 'other';
+  if (key.startsWith('sb_secret_')) return 'sb_secret';
+  if (key.startsWith('sb_publishable_')) return 'sb_publishable';
+  try {
+    const parts = key.split('.');
+    if (parts.length === 3) {
+      const { role } = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+      if (role === 'service_role' || role === 'anon') return `jwt-${role}`;
+    }
+  } catch { /* not a recognised role hint */ }
+  return 'other';
+}
 
+function storageConfiguration() {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key = supabaseSecretKey();
+  let hostname = null;
+  try {
+    const parsed = new URL(url);
+    const containsKey = [process.env.SUPABASE_SECRET_KEY, process.env.SUPABASE_SERVICE_ROLE_KEY]
+      .some(value => value && parsed.hostname.includes(value.toLowerCase()));
+    if (['http:', 'https:'].includes(parsed.protocol) && !containsKey) hostname = parsed.hostname;
+  } catch { /* invalid or missing URL */ }
+  return { url, key, hostname };
+}
+
+class GrantStorageError extends Error {
+  constructor(details) {
+    super(details.message);
+    this.details = details;
+  }
+}
+
+function storageFailure(operation, status, code, errorClass = 'StorageError') {
+  const messages = {
+    '42501': 'Permission denied for grant storage',
+    '42703': 'A required grant storage column does not exist',
+    PGRST205: 'The grant storage table is not in the schema cache',
+    ConfigurationError: 'Whitelisting storage is not configured',
+    TimeoutError: 'Grant storage request timed out',
+    AbortError: 'Grant storage request was aborted',
+    TypeError: 'Grant storage URL or network request failed',
+    SyntaxError: 'Grant storage returned invalid JSON',
+    PersistenceError: 'The activation grant was not persisted',
+  };
+  const details = { operation, table: 'whitelisting_grants', httpStatus: status, postgrestCode: code,
+    message: messages[code] || messages[errorClass] || 'Grant storage request failed', errorClass };
+  console.error('Grant storage failure', details);
+  return new GrantStorageError(details);
+}
+
+function grantStorage() {
   return async (params, body) => {
-    const response = await fetch(`${url.replace(/\/$/, '')}/rest/v1/whitelisting_grants?${new URLSearchParams(params)}`, {
-      method: body ? 'POST' : 'GET',
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        ...(body && {
-          'Content-Type': 'application/json',
-          Prefer: 'resolution=ignore-duplicates,return=minimal',
-        }),
-      },
-      signal: AbortSignal.timeout(8000),
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    if (!response.ok) throw new Error('Whitelisting storage is unavailable');
-    return body ? undefined : response.json();
+    const operation = body ? 'write' : params.limit === 0 ? 'preflight' : 'read';
+    const { url, key } = storageConfiguration();
+    let status = null;
+    try {
+      if (!url || !key) throw storageFailure(operation, null, null, 'ConfigurationError');
+      const response = await fetch(`${url.replace(/\/$/, '')}/rest/v1/whitelisting_grants?${new URLSearchParams(params)}`, {
+        method: body ? 'POST' : 'GET',
+        headers: {
+          ...supabaseHeaders(key),
+          ...(body && {
+            'Content-Type': 'application/json',
+            Prefer: 'resolution=ignore-duplicates,return=minimal',
+          }),
+        },
+        signal: AbortSignal.timeout(8000),
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      status = response.status;
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        const code = /^(?:[0-9A-Z]{5}|PGRST\d{3})$/.test(payload?.code) ? payload.code : null;
+        throw storageFailure(operation, status, code);
+      }
+      if (operation === 'preflight') {
+        await response.json();
+        return { httpStatus: status, postgrestCode: null };
+      }
+      return body ? undefined : await response.json();
+    } catch (error) {
+      if (error instanceof GrantStorageError) throw error;
+      const errorClass = ['TimeoutError', 'AbortError', 'TypeError', 'SyntaxError'].includes(error?.name) ? error.name : 'Error';
+      throw storageFailure(operation, status, null, errorClass);
+    }
   };
 }
 
 export async function checkGrantStorage() {
-  await grantStorage()({ select: `checkout_session_id,${grantFields}`, limit: 0 });
+  return grantStorage()({ select: `checkout_session_id,${grantFields}`, limit: 0 });
+}
+
+export async function diagnoseGrantStorage() {
+  const { key, hostname } = storageConfiguration();
+  const keyKind = grantStorageKeyKind(key);
+  const variables = Object.fromEntries(['SUPABASE_URL', 'VITE_SUPABASE_URL', 'SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY'].map(name => [name, Boolean(process.env[name])]));
+  const result = { ok: false, hostname, variables, keyKind,
+    keyWarning: ['sb_publishable', 'jwt-anon'].includes(keyKind) ? 'The server secret variable contains a publishable or anon key.' : null,
+    httpStatus: null, postgrestCode: null };
+  try {
+    Object.assign(result, await checkGrantStorage(), { ok: true });
+  } catch (error) {
+    result.httpStatus = error.details?.httpStatus ?? null;
+    result.postgrestCode = error.details?.postgrestCode ?? null;
+  }
+  return result;
 }
 
 export async function issuePaidWhitelistingGrant(req, res) {
@@ -120,7 +203,7 @@ export async function issuePaidWhitelistingGrant(req, res) {
       });
       [grant] = await records(query);
     }
-    if (!grant) throw new Error('The activation grant was not persisted');
+    if (!grant) throw storageFailure('write', null, null, 'PersistenceError');
 
     const holdCents = Number(metadata.athleteEscrowHoldCents);
     return res.json({
