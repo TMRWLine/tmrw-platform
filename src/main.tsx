@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ClaimProfilePage } from './components/ClaimProfilePage';
 import './index.css';
+import './mobile.css';
 import { registerSW } from 'virtual:pwa-register';
 
 const App = React.lazy(() => import('./App'));

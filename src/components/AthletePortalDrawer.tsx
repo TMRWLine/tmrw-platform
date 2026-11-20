@@ -589,7 +589,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
     <div
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-[105] selection:bg-volt selection:text-[#0F0F11]"
+      className="mobile-overlay fixed inset-0 z-[105] selection:bg-volt selection:text-[#0F0F11]"
     >
       <button
         type="button"

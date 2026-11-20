@@ -495,7 +495,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           first?.focus();
         }
       }}
-      className="capsule-shop fixed inset-0 m-0 h-full w-full max-h-none max-w-none border-0 bg-white p-0 text-[#0F0F11] open:flex flex-col overflow-y-auto overscroll-contain selection:bg-volt selection:text-[#0F0F11] motion-safe:animate-fadeIn"
+      className="mobile-overlay capsule-shop fixed inset-0 m-0 h-full w-full max-h-none max-w-none border-0 bg-white p-0 text-[#0F0F11] open:flex flex-col overflow-y-auto overscroll-contain selection:bg-volt selection:text-[#0F0F11] motion-safe:animate-fadeIn"
     >
       <header className="capsule-shop-header shrink-0 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-5 flex items-center justify-between border-b border-black/10">
         <BrandLockup onClick={onHome} />

@@ -873,11 +873,12 @@ export function SovereignSyndicateBoard({ embedded = false }: { embedded?: boole
       {isCertificateOpen &&
         createPortal(
           <div
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[95] flex items-center justify-center p-4"
+            data-lenis-prevent="true"
+            className="mobile-overlay certificate-backdrop fixed inset-0 bg-black/75 backdrop-blur-sm z-[95] flex items-center justify-center p-4"
             onClick={() => setIsCertificateOpen(false)}
           >
             <div
-              className="bg-white border-2 border-black max-w-xl w-full p-8 md:p-10 shadow-[8px_8px_0px_0px_rgba(184,255,0,1)] relative z-10 text-black"
+              className="certificate-panel bg-white border-2 border-black max-w-xl w-full p-8 md:p-10 shadow-[8px_8px_0px_0px_rgba(184,255,0,1)] relative z-10 text-black"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-start mb-8 pb-4 border-b-2 border-black">

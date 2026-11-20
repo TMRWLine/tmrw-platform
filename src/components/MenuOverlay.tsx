@@ -326,7 +326,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
         }
       }}
       data-lenis-prevent
-      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none overflow-hidden border-0 bg-transparent p-0 backdrop:bg-transparent"
+      className="mobile-overlay fixed inset-0 m-0 h-full max-h-none w-full max-w-none overflow-hidden border-0 bg-transparent p-0 backdrop:bg-transparent"
     >
       {/* Backdrop scrim: everything below the curtain dismisses the menu */}
       <button
