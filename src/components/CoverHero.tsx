@@ -1,235 +1,325 @@
-import React, { useEffect, useState } from 'react';
-import { useReducedMotion } from '../lib/useReducedMotion';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { flushSync } from 'react-dom';
+import {
+  COVER_CTA_SLIDE_MS, COVER_CTA_START_MS, COVER_LINE_DELAYS, COVER_LINE_DRAW_MS,
+  COVER_SETTLE_MS, COVER_TITLE_MORPH_MS, COVER_WORD_DELAYS, coverWordTransform,
+} from '../lib/coverMotion';
 import { BRISBANE_RUNWAY_PATH, THE_ROSTER_PATH } from '../lib/routes';
+import { useReducedMotion } from '../lib/useReducedMotion';
 import type { LandingSectionId } from './Navigation';
 import { CourtLinesOverlay } from './CourtLinesOverlay';
+import { FilmGrainOverlay } from './FilmGrainOverlay';
 import { RollingPillButton } from './RollingPillButton';
+import './CoverHero.css';
 
-export const PAGE_SHELL = 'max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full';
+const WORDS = ['Line', 'up', 'your', 'future'] as const;
+const FINE_POINTER = '(hover: hover) and (pointer: fine)';
+const EASE = 'cubic-bezier(.16, 1, .3, 1)';
+const IMAGE_SIZES = '(max-width: 420px) 100vw, 612px';
+const LINKS = [
+  { id: 'roster', href: THE_ROSTER_PATH, label: 'Explore the Roster', variant: 'primary' },
+  { id: 'syndicate', href: BRISBANE_RUNWAY_PATH, label: 'Brisbane 2032 Runway', variant: 'glass' },
+] as const;
 
-interface CoverHeroProps {
-  onNavigateSection?: (id: LandingSectionId) => void;
+function CoverPhoto({ soft = false }: { soft?: boolean }) {
+  return (
+    <picture>
+      <source type="image/avif" srcSet="/coverpage-420.avif 420w, /coverpage-612.avif 612w" sizes={IMAGE_SIZES} />
+      <source type="image/webp" srcSet="/coverpage-420.webp 420w, /coverpage-612.webp 612w" sizes={IMAGE_SIZES} />
+      <img className={`cover-photo${soft ? ' cover-photo-soft' : ''}`} src="/coverpage.jpg" alt=""
+        width={612} height={407} draggable={false} {...{ fetchpriority: 'high' }} />
+    </picture>
+  );
 }
 
-const INTRO_WORDS = ['Line', 'up', 'your', 'future'];
+export function CoverHero({ onNavigateSection, overlayOpen, scrollForKeyboardFocus }: {
+  onNavigateSection: (id: LandingSectionId) => void;
+  overlayOpen: boolean;
+  scrollForKeyboardFocus: (top?: number) => void;
+}) {
+  const reduced = useReducedMotion();
+  const [settled, setSettled] = useState(false);
+  const [introComplete, setIntroComplete] = useState(false);
+  const [pulsePaused, setPulsePaused] = useState(false);
+  const [pastCover, setPastCover] = useState(false);
+  const [wide, setWide] = useState(false);
+  const intro = !reduced && !introComplete;
+  const openingTitle = !reduced && !settled;
+  const cover = useRef<HTMLElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const introLayout = useRef<HTMLSpanElement>(null);
+  const finalLayout = useRef<HTMLSpanElement>(null);
+  const skip = useRef<HTMLButtonElement>(null);
+  const quickLinks = useRef<HTMLElement>(null);
+  const marker = useRef<HTMLSpanElement>(null);
+  const animations = useRef<Animation[]>([]);
+  const pointer = useRef({ x: 0, y: 0, targetX: 0, targetY: 0, frame: 0 });
 
-const PULSE_BLINK_CSS =
-  '@keyframes tmrwPulseBlink {' +
-  '0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 18px rgba(184, 255, 0, 0.95); }' +
-  '50% { opacity: 0.15; transform: scale(0.82); box-shadow: 0 0 4px rgba(184, 255, 0, 0.2); }' +
-  '}' +
-  '@media (prefers-reduced-motion: no-preference) { .tmrw-dot-blink { animation: tmrwPulseBlink 1.05s cubic-bezier(0.4, 0, 0.6, 1) 3; } }';
+  const settleTitle = useCallback((startTime: number) => {
+    const title = heading.current;
+    if (!title) return;
+    const words = Array.from(title.querySelectorAll<HTMLElement>('.cover-word'));
+    const before = words.map(node => node.style.transform);
+    flushSync(() => setSettled(true));
+    animations.current = words.flatMap((node, index) => {
+      if (!before[index] || typeof node.animate !== 'function') return [];
+      const animation = node.animate([
+        { transform: before[index] },
+        { transform: node.style.transform },
+      ], { duration: COVER_TITLE_MORPH_MS, easing: EASE });
+      animation.startTime = startTime;
+      return [animation];
+    });
+  }, []);
 
-export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
-  const reducedMotion = useReducedMotion();
-  const [pointer, setMousePos] = useState({ x: 0, y: 0 });
-  const mousePos = reducedMotion ? { x: 0, y: 0 } : pointer;
-  const [phase, setPhase] = useState<'intro' | 'settled'>('intro');
-  const [visibleWords, setVisibleWords] = useState<number>(0);
+  const finishIntro = useCallback(() => {
+    const returnFocus = document.activeElement === skip.current;
+    animations.current.forEach(animation => animation.cancel());
+    setSettled(true);
+    setIntroComplete(true);
+    if (returnFocus) heading.current?.focus({ preventScroll: true });
+  }, []);
+
+  useLayoutEffect(() => {
+    const title = heading.current;
+    const introSample = introLayout.current;
+    const finalSample = finalLayout.current;
+    if (!title || !introSample || !finalSample) return;
+    const words = Array.from(title.querySelectorAll<HTMLElement>('.cover-word'));
+    const introBoxes = Array.from(introSample.querySelectorAll('.cover-word-sample'));
+    const finalBoxes = Array.from(finalSample.querySelectorAll('.cover-word-sample'));
+    const positionWords = () => {
+      const origin = title.getBoundingClientRect();
+      const targetBoxes = openingTitle ? introBoxes : finalBoxes;
+      const transforms = targetBoxes.map((sample, index) => {
+        const box = finalBoxes[index].getBoundingClientRect();
+        return box.width && box.height
+          ? coverWordTransform(sample.getBoundingClientRect(), { left: origin.left, top: origin.top, width: box.width, height: box.height })
+          : '';
+      });
+      words.forEach((node, index) => { node.style.transform = transforms[index]; });
+    };
+    positionWords();
+    const observer = new ResizeObserver(positionWords);
+    [...introBoxes, ...finalBoxes, title].forEach(node => observer.observe(node));
+    return () => observer.disconnect();
+  }, [openingTitle]);
 
   useEffect(() => {
-    if (reducedMotion) {
-      setPhase('settled');
-      setMousePos({ x: 0, y: 0 });
-      return;
-    }
-    const timers: number[] = [];
-
-    INTRO_WORDS.forEach((_, idx) => {
-      const t = window.setTimeout(() => {
-        setVisibleWords(idx + 1);
-      }, 260 + idx * 340);
-      timers.push(t);
-    });
-
-    const settleTimer = window.setTimeout(() => {
-      setPhase('settled');
-    }, 2800);
-    timers.push(settleTimer);
-
+    if (!intro) return;
+    const morphDelay = COVER_SETTLE_MS - COVER_TITLE_MORPH_MS;
+    const morphStart = performance.now() + morphDelay;
+    const morphTimer = window.setTimeout(() => settleTitle(morphStart), morphDelay);
+    const finishTimer = window.setTimeout(finishIntro, COVER_SETTLE_MS);
     return () => {
-      timers.forEach((t) => window.clearTimeout(t));
+      window.clearTimeout(morphTimer);
+      window.clearTimeout(finishTimer);
     };
-  }, [reducedMotion]);
+  }, [intro, settleTitle, finishIntro]);
 
-  const isIntro = !reducedMotion && phase === 'intro';
+  useEffect(() => {
+    if (reduced) animations.current.forEach(animation => animation.cancel());
+    return () => animations.current.forEach(animation => animation.cancel());
+  }, [reduced]);
 
-  const navigate = (id: 'roster' | 'syndicate') => {
-    if (onNavigateSection) {
-      onNavigateSection(id);
-      return;
-    }
-    window.location.assign(id === 'roster' ? THE_ROSTER_PATH : BRISBANE_RUNWAY_PATH);
+  useEffect(() => {
+    const stage = cover.current;
+    if (!stage || !('IntersectionObserver' in window)) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      setPastCover(!entry.isIntersecting && entry.boundingClientRect.bottom <= 0);
+    });
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const edgeMarker = marker.current;
+    if (reduced || CSS.supports('animation-timeline: scroll(root block)') || !edgeMarker || !('IntersectionObserver' in window)) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      setWide(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+    });
+    observer.observe(edgeMarker);
+    return () => observer.disconnect();
+  }, [reduced]);
+
+  useEffect(() => {
+    const bar = quickLinks.current;
+    if (!bar) return;
+    const style = document.documentElement.style;
+    const sync = () => style.setProperty('--cover-quick-links-height', `${bar.getBoundingClientRect().height}px`);
+    sync();
+    const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(sync) : null;
+    resizeObserver?.observe(bar, { box: 'border-box' });
+    let frame = 0;
+    const keepFocusVisible = (event: FocusEvent) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement) || !target.matches(':focus-visible') || !bar.offsetHeight) return;
+      scrollForKeyboardFocus();
+      if (bar.contains(target)) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => {
+          if (document.activeElement !== target) return;
+          const barRect = bar.getBoundingClientRect();
+          const targetRect = target.getBoundingClientRect();
+          const overlap = targetRect.bottom + 8 - barRect.top;
+          if (barRect.height > 0 && overlap > 0 && targetRect.top < barRect.bottom) {
+            scrollForKeyboardFocus(window.scrollY + Math.ceil(overlap));
+          }
+        });
+      });
+    };
+    document.addEventListener('focusin', keepFocusVisible);
+    return () => {
+      document.removeEventListener('focusin', keepFocusVisible);
+      cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      style.removeProperty('--cover-quick-links-height');
+    };
+  }, [pastCover, overlayOpen, scrollForKeyboardFocus]);
+
+  const glide = useCallback(() => {
+    const state = pointer.current;
+    if (state.frame) return;
+    const tick = () => {
+      const stage = cover.current;
+      if (!stage) return;
+      const dx = state.targetX - state.x;
+      const dy = state.targetY - state.y;
+      const atRest = Math.abs(dx) + Math.abs(dy) < .045;
+      state.x = atRest ? state.targetX : state.x + dx * .13;
+      state.y = atRest ? state.targetY : state.y + dy * .13;
+      stage.style.setProperty('--cover-x', `${state.x}px`);
+      stage.style.setProperty('--cover-y', `${state.y}px`);
+      state.frame = atRest ? 0 : requestAnimationFrame(tick);
+    };
+    state.frame = requestAnimationFrame(tick);
+  }, []);
+
+  useEffect(() => {
+    const state = pointer.current;
+    const stage = cover.current;
+    return () => {
+      cancelAnimationFrame(state.frame);
+      Object.assign(state, { x: 0, y: 0, targetX: 0, targetY: 0, frame: 0 });
+      stage?.style.removeProperty('--cover-x');
+      stage?.style.removeProperty('--cover-y');
+    };
+  }, [reduced]);
+
+  const movePointer = (event: PointerEvent<HTMLElement>) => {
+    if (intro || reduced || event.pointerType !== 'mouse' || !window.matchMedia(FINE_POINTER).matches) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    pointer.current.targetX = ((event.clientX - bounds.left) / bounds.width - .5) * 32;
+    pointer.current.targetY = ((event.clientY - bounds.top) / bounds.height - .5) * 32;
+    glide();
   };
 
+  const links = LINKS.map(({ id, href, label, variant }) => (
+    <RollingPillButton key={id} href={href} variant={variant} className={variant === 'glass' ? 'bg-black/85' : ''}
+      onClick={(event) => {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        onNavigateSection(id);
+      }}>
+      {label}
+    </RollingPillButton>
+  ));
+
+  const sceneTiming = Object.fromEntries([
+    ...COVER_LINE_DELAYS.map((delay, index) => [`--cover-line-${index + 1}`, `${delay}ms`]),
+    ['--cover-last-beat', `${COVER_WORD_DELAYS[3]}ms`],
+    ['--cover-line-draw', `${COVER_LINE_DRAW_MS}ms`],
+    ['--cover-cta-start', `${COVER_CTA_START_MS}ms`],
+    ['--cover-cta-slide', `${COVER_CTA_SLIDE_MS}ms`],
+    ['--cover-settle', `${COVER_SETTLE_MS}ms`],
+  ]) as CSSProperties;
+
   return (
-    <div className="pb-12 md:pb-20">
-      <section
-        aria-label="tmrw cover"
-        className="relative flex min-h-[82vh] w-full select-none flex-col justify-between overflow-hidden rounded-[28px] border border-[#EAEAEA] bg-[#080808] p-8 shadow-sm md:rounded-[32px] md:p-14"
-        onMouseMove={(e) => {
-          if (isIntro || reducedMotion) return;
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = (e.clientX - rect.left) / rect.width - 0.5;
-          const y = (e.clientY - rect.top) / rect.height - 0.5;
-          setMousePos({ x: x * 32, y: y * 32 });
-        }}
-        onMouseLeave={() => {
-          setMousePos({ x: 0, y: 0 });
-        }}
-      >
-        <style>{PULSE_BLINK_CSS}</style>
-
-        <img
-          src="/coverpage.jpg"
-          alt=""
-          aria-hidden="true"
-          fetchPriority="high"
-          draggable={false}
-          className={[
-            'pointer-events-none absolute inset-0 h-full w-full select-none object-cover object-center motion-safe:transition-all duration-1000 ease-out',
-            isIntro ? 'opacity-30 blur-[3px] scale-110' : 'opacity-100 blur-0 scale-[1.04]',
-          ].join(' ')}
-          style={{
-            transform: isIntro
-              ? 'scale(1.1)'
-              : 'scale(1.04) translate3d(' +
-                -mousePos.x * 0.25 +
-                'px, ' +
-                -mousePos.y * 0.25 +
-                'px, 0)',
-          }}
-        />
-
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_20%_40%,rgba(235,59,48,0.28)_0%,transparent_60%)]"
-        />
-
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-black/35"
-        />
-
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 motion-safe:transition-transform duration-500 ease-out"
-          style={{
-            transform: 'translate3d(' + mousePos.x * 0.6 + 'px, ' + mousePos.y * 0.6 + 'px, 0)',
-            background:
-              'radial-gradient(ellipse 70% 50% at 50% 65%, rgba(255,255,255,0.07) 0%, rgba(0,0,0,0.45) 80%, transparent 100%)',
-          }}
-        />
-
-        <CourtLinesOverlay aligning={isIntro} />
-
-        {/* Pure Central Headline */}
-        <div className="relative z-10 my-auto flex h-[56vh] w-full items-center justify-center">
-          <div
-            onClick={() => {
-              if (isIntro) setPhase('settled');
-            }}
-            style={{
-              transform: isIntro
-                ? 'scale(1.12)'
-                : 'translate3d(' + mousePos.x * 0.18 + 'px, ' + mousePos.y * 0.18 + 'px, 0) scale(1)',
-            }}
-            className="motion-safe:transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform"
-          >
-            <h1 id="cover-heading" aria-label="Line up your future" className={isIntro
-              ? 'm-0 block text-center font-display font-extrabold leading-[0.92] tracking-tight text-[#F7F7F6] drop-shadow-[0_8px_36px_rgba(0,0,0,0.9)] text-7xl sm:text-8xl md:text-[7.5rem] lg:text-[9.2rem]'
-              : 'm-0 block max-w-[12ch] text-center font-display font-extrabold leading-[0.96] tracking-tight text-[#F7F7F6] drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)] text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem]'}>
-              {isIntro ? (
-              <>
-                <span className="block">
-                  <span
-                    className={[
-                      'inline-block transition-all duration-300',
-                      visibleWords >= 1
-                        ? 'opacity-100 translate-y-0 blur-0'
-                        : 'opacity-0 translate-y-3 blur-sm',
-                    ].join(' ')}
-                  >
-                    Line
-                  </span>{' '}
-                  <span
-                    className={[
-                      'inline-block transition-all duration-300',
-                      visibleWords >= 2
-                        ? 'opacity-100 translate-y-0 blur-0'
-                        : 'opacity-0 translate-y-3 blur-sm',
-                    ].join(' ')}
-                  >
-                    up
-                  </span>
-                </span>
-                <span className="block">
-                  <span
-                    className={[
-                      'inline-block transition-all duration-300',
-                      visibleWords >= 3
-                        ? 'opacity-100 translate-y-0 blur-0'
-                        : 'opacity-0 translate-y-3 blur-sm',
-                    ].join(' ')}
-                  >
-                    your
-                  </span>{' '}
-                  <span
-                    className={[
-                      'inline-block whitespace-nowrap transition-all duration-300',
-                      visibleWords >= 4
-                        ? 'opacity-100 translate-y-0 blur-0'
-                        : 'opacity-0 translate-y-3 blur-sm',
-                    ].join(' ')}
-                  >
-                    future
-                    <span
-                      aria-hidden="true"
-                      className="ml-2.5 inline-block h-4 w-4 rounded-full bg-volt align-baseline shadow-[0_0_24px_rgba(184,255,0,1)] md:h-6 md:w-6"
-                    />
-                  </span>
-                </span>
-              </>
-              ) : (
-              <>
-                Line up your{' '}
-                <span className="whitespace-nowrap">
-                  future
-                  <span
-                    aria-hidden="true"
-                    className="tmrw-dot-blink ml-2 inline-block h-3.5 w-3.5 shrink-0 rounded-full bg-volt align-baseline opacity-100 shadow-[0_0_16px_rgba(184,255,0,0.95)] md:h-4 md:w-4"
-                  />
-                </span>
-              </>
+    <>
+      <section ref={cover} aria-label="tmrw cover" className="cover-stage" data-intro={intro} data-wide={wide}
+        style={sceneTiming}
+        onPointerMove={movePointer}
+        onPointerLeave={() => {
+          if (!pointer.current.x && !pointer.current.y && !pointer.current.frame) return;
+          pointer.current.targetX = pointer.current.targetY = 0;
+          glide();
+        }}>
+        <span ref={marker} className="cover-marker" aria-hidden="true" />
+        <div className="cover-edge" aria-hidden="true">
+          <div className="cover-image-plane">
+            <div className="cover-camera">
+              <div className="cover-photo-stack">
+                <CoverPhoto />
+                {!reduced && <CoverPhoto soft />}
+              </div>
+              {!reduced && (
+                <div className="cover-lamp-plane">
+                  {COVER_WORD_DELAYS.map(delay => (
+                    <span key={delay} style={{ '--word-delay': `${delay}ms` } as CSSProperties} />
+                  ))}
+                </div>
               )}
-            </h1>
+            </div>
           </div>
+          <div className="cover-red-glow" />
+          <div className="cover-scrim" />
+          <div className="cover-parallax-glow" />
+          <div className="cover-bloom" />
+          <FilmGrainOverlay />
+          <CourtLinesOverlay className="cover-court" />
         </div>
-
-        {/* Buttons Split Perfectly Across Either Side of the Center Guideline */}
-        {!isIntro && <div
-          className={[
-            'relative z-20 flex w-full flex-wrap items-center justify-center gap-3 pb-2 sm:justify-between md:px-12',
-          ].join(' ')}
-        >
-          <div className="flex justify-start">
-            <RollingPillButton variant="primary" onClick={() => navigate('roster')}>
-              Explore the Roster
-            </RollingPillButton>
+        <div className="cover-title">
+          <div className="cover-type-measure font-display" aria-hidden="true">
+            {[true, false].map(opening => (
+              <span key={String(opening)} className={opening ? 'cover-measure-intro' : 'cover-measure-final'}
+                ref={opening ? introLayout : finalLayout}>
+                {WORDS.map((word, index) => (
+                  <Fragment key={word}>
+                    {index > 0 && ' '}
+                    <span className="cover-word-sample">
+                      {word}{index === 3 && <span className="cover-dot" />}
+                    </span>
+                    {index === 1 && opening && <br />}
+                  </Fragment>
+                ))}
+              </span>
+            ))}
           </div>
-          <div className="flex justify-end">
-            <RollingPillButton
-              variant="glass"
-              className="bg-black/75"
-              onClick={() => navigate('syndicate')}
-            >
-              Brisbane 2032 Runway
-            </RollingPillButton>
-          </div>
-        </div>}
+          <h1 ref={heading} id="cover-heading" className="font-display" tabIndex={-1} aria-label="Line up your future">
+            {WORDS.map((word, index) => (
+              <Fragment key={word}>
+                {index > 0 && ' '}
+                <span className="cover-word" style={{ '--word-delay': `${COVER_WORD_DELAYS[index]}ms` } as CSSProperties}>
+                  <span className="cover-word-mask"><span className="cover-word-rise">
+                    {word}
+                    {index === 3 && (
+                      <span className="cover-dot" data-paused={pulsePaused}>
+                        <span className="cover-dot-drop" aria-hidden="true"><span className="cover-dot-core" /></span>
+                        {!intro && !reduced && (
+                          <button type="button" className="cover-dot-toggle"
+                            aria-label={pulsePaused ? 'Resume dot animation' : 'Pause dot animation'}
+                            title={pulsePaused ? 'Resume dot animation' : 'Pause dot animation'}
+                            onClick={() => setPulsePaused(value => !value)} />
+                        )}
+                      </span>
+                    )}
+                  </span></span>
+                </span>
+              </Fragment>
+            ))}
+          </h1>
+          {intro && <button ref={skip} type="button" className="cover-skip" onClick={finishIntro}><span className="sr-only">Skip cover animation</span></button>}
+        </div>
+        <div className="cover-actions">
+          {links}
+        </div>
       </section>
-    </div>
+      {pastCover && !overlayOpen && (
+        <nav ref={quickLinks} className="cover-quick-links" aria-label="Quick links">
+          {links}
+        </nav>
+      )}
+    </>
   );
-};
-
-export default CoverHero;
+}
