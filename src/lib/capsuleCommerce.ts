@@ -1,5 +1,6 @@
 export const VENUE_SIZE = '25x VENUE CURVE (3S·8M·9L·5XL)';
 export const BAG_STORAGE_KEY = 'tmrw_capsule_bag_v1';
+export const PENDING_BAG_STORAGE_PREFIX = 'tmrw_capsule_checkout_v1_';
 export const BAG_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function formatCapsuleMoney(cents: number, currency = 'aud') {
@@ -48,6 +49,20 @@ export function restoreBag<T extends Product>(raw: string | null, catalogue: rea
 
 export function serialiseBag<T extends Product>(lines: BagLine<T>[], now = Date.now()) {
   return JSON.stringify({ version: 1, expiresAt: now + BAG_TTL_MS, lines: lines.map(({ item, qty, size }) => ({ id: item.id, qty, size })) });
+}
+
+export function settlePaidBag<T extends Product>(rawBag: string | null, rawCheckout: string | null, catalogue: readonly T[], now = Date.now()) {
+  const current = restoreBag(rawBag, catalogue, now);
+  let checkout;
+  try { checkout = JSON.parse(rawCheckout ?? 'null'); } catch { checkout = null; }
+  const valid = checkout?.version === 1 && Number.isFinite(checkout.expiresAt) && checkout.expiresAt > now && Array.isArray(checkout.lines);
+  const purchased = valid ? restoreBag(rawCheckout, catalogue, now) : [];
+  const lines = valid && checkout.settled === true ? current : valid ? current.flatMap(line => {
+    const bought = purchased.find(entry => entry.item.id === line.item.id && entry.size === line.size);
+    const qty = line.qty - (bought?.qty ?? 0);
+    return qty > 0 ? [{ ...line, qty }] : [];
+  }) : [];
+  return { lines, checkout: JSON.stringify({ version: 1, expiresAt: now + BAG_TTL_MS, lines: [], settled: true }) };
 }
 
 export type CapsuleReturn = { status: 'success' | 'cancelled'; sessionId: string };

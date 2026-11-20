@@ -3,7 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import app from './index.js';
-import { BAG_TTL_MS, VENUE_SIZE, capsuleSplit, capsuleTotals, formatCapsuleMoney, formatCapsuleSplit, restoreBag, serialiseBag, readCapsuleReturn } from '../src/lib/capsuleCommerce.ts';
+import { BAG_TTL_MS, VENUE_SIZE, capsuleSplit, capsuleTotals, formatCapsuleMoney, formatCapsuleSplit, restoreBag, serialiseBag, settlePaidBag, readCapsuleReturn } from '../src/lib/capsuleCommerce.ts';
 
 test('receipt split explains net garment costs and all allocations with legacy and zero royalty fallbacks', () => {
   const split = { athleteCents: 7425, clubCents: 2025, partnerCents: 2025, platformCents: 2025, netCents: 13500, garmentCostCents: 4500 };
@@ -25,6 +25,25 @@ test('capsule AUD amounts always identify Australian dollars including zero and 
 
 const catalogue = [{ id: 'drop_mt_2200', priceAud: 180 }, { id: 'drop_sb_2095', priceAud: 95 }];
 const saved = lines => JSON.stringify({ version: 1, expiresAt: 1000 + BAG_TTL_MS, lines });
+
+test('paid checkout subtracts purchased quantities from latest bag and preserves later units, sizes and SKUs', () => {
+  const pending = saved([{ id: catalogue[0].id, size: 'L', qty: 1 }, { id: catalogue[1].id, size: VENUE_SIZE, qty: 25 }]);
+  const bag = saved([{ id: catalogue[0].id, size: 'L', qty: 3 }, { id: catalogue[0].id, size: 'M', qty: 1 }, { id: catalogue[1].id, size: VENUE_SIZE, qty: 50 }, { id: catalogue[1].id, size: 'S', qty: 1 }]);
+  const result = settlePaidBag(bag, pending, catalogue, 1001);
+  assert.deepEqual(result.lines.map(({ item, qty, size }) => [item.id, size, qty]), [[catalogue[0].id, 'L', 2], [catalogue[0].id, 'M', 1], [catalogue[1].id, VENUE_SIZE, 25], [catalogue[1].id, 'S', 1]]);
+  assert.deepEqual(settlePaidBag(serialiseBag(result.lines, 1001), result.checkout, catalogue, 1002).lines, result.lines);
+  assert.deepEqual(settlePaidBag(pending, pending, catalogue, 1001).lines, []);
+  assert.deepEqual(settlePaidBag(null, pending, catalogue, 1001).lines, []);
+});
+
+test('missing, malformed and expired snapshots keep legacy clearing and never subtract twice', () => {
+  for (const snapshot of [null, '{', '{}', JSON.stringify({ version: 1, expiresAt: 999, lines: [] })]) {
+    const result = settlePaidBag(saved([{ id: catalogue[0].id, size: 'L', qty: 2 }]), snapshot, catalogue, 1001);
+    assert.deepEqual(result.lines, []);
+    const newer = serialiseBag([{ item: catalogue[1], size: 'M', qty: 1 }], 1002);
+    assert.deepEqual(settlePaidBag(newer, result.checkout, catalogue, 1002).lines, restoreBag(newer, catalogue, 1002));
+  }
+});
 
 test('bag round trips identity, quantity and size using current catalogue economics', () => {
   const lines = [{ item: { ...catalogue[0], priceAud: 1 }, qty: 2, size: 'L' }, { item: catalogue[1], qty: 25, size: VENUE_SIZE }];

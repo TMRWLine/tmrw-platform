@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { BrandLockup } from './BrandLockup';
 import { ProductPhotoGallery } from './ProductPhotoGallery';
 import { CapsuleTotals } from './CapsuleTotals';
-import { BAG_STORAGE_KEY, capsuleSplit, capsuleTotals, formatCapsuleMoney, formatCapsuleSplit, restoreBag, serialiseBag, type BagLine, type CapsuleReceipt, type CapsuleReturn } from '../lib/capsuleCommerce';
+import { BAG_STORAGE_KEY, PENDING_BAG_STORAGE_PREFIX, capsuleSplit, capsuleTotals, formatCapsuleMoney, formatCapsuleSplit, restoreBag, serialiseBag, settlePaidBag, type BagLine, type CapsuleReceipt, type CapsuleReturn } from '../lib/capsuleCommerce';
 import type { AthleteRecord } from '../data/roster';
 
 export type LockupStyleId = 'editorial' | 'stencil' | 'heritage';
@@ -282,7 +282,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         if (!response.ok) throw new Error(data.error || 'Unable to verify checkout. Your bag has been kept.');
         if (controller.signal.aborted) return;
         setReceipt(data);
-        if (data.paymentStatus === 'paid') setCartItems([]);
+        if (data.paymentStatus === 'paid') {
+          try {
+            const key = PENDING_BAG_STORAGE_PREFIX + checkoutReturn.sessionId;
+            const settled = settlePaidBag(window.localStorage.getItem(BAG_STORAGE_KEY), window.localStorage.getItem(key), loadAllCapsules());
+            if (settled.lines.length) window.localStorage.setItem(BAG_STORAGE_KEY, serialiseBag(settled.lines));
+            else window.localStorage.removeItem(BAG_STORAGE_KEY);
+            window.localStorage.setItem(key, settled.checkout);
+            setCartItems(settled.lines);
+          } catch { setCartItems([]); }
+        }
       } catch (error) {
         if (!controller.signal.aborted) setReceiptError(error instanceof Error ? error.message : 'Unable to verify checkout. Your bag has been kept.');
       } finally {
@@ -429,6 +438,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       }
 
       if (data.checkoutUrl && /^https?:\/\//i.test(data.checkoutUrl)) {
+        try {
+          if (typeof data.sessionId === 'string' && /^cs_(test|live)_/.test(data.sessionId)) {
+            window.localStorage.setItem(PENDING_BAG_STORAGE_PREFIX + data.sessionId, serialiseBag(cartItems));
+          }
+        } catch { /* Checkout remains available when storage is unavailable. */ }
         window.location.assign(data.checkoutUrl);
         return;
       }
