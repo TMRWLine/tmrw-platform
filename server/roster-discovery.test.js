@@ -37,6 +37,16 @@ test('search includes all catalogue profiles and supports names, club and league
   assert.ok(search({ query: 'Victorian Football League' }).length > 0);
 });
 
+test('NBL1 searches distinguish divisions without narrowing the competition filter', () => {
+  const competition = 'nbl1';
+  const east = search({ competition, query: 'NBL1 East' });
+  const south = search({ competition, query: 'NBL1 South' });
+  assert.deepEqual(east.map(({ league }) => league), ['NBL1 East', 'NBL1 East']);
+  assert.deepEqual(south.map(({ league }) => league), ['NBL1 South']);
+  assert.deepEqual(search({ query: 'NBL1 West' }), []);
+  assert.deepEqual(search({ query: 'NBL1 Basketball' }), search({ competition }));
+});
+
 test('Catchment combines with competition and requires an exact four-digit postcode', () => {
   const expected = search({ catchment: '2200' });
   assert.deepEqual(expected.map(({ postcode }) => postcode), ['2200']);

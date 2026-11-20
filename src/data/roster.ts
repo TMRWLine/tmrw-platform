@@ -91,11 +91,16 @@ export interface RosterDiscoveryFilters {
   catchment: string;
 }
 
-const COMPETITION_NAMES: Readonly<Record<Exclude<RosterCompetition, 'all'>, readonly string[]>> = {
-  nbl1: ['nbl1', 'nbl1 basketball', 'nbl1 east', 'nbl1 south', 'nbl1 north', 'nbl1 central', 'nbl1 west'],
+const COMPETITION_ALIASES: Readonly<Record<Exclude<RosterCompetition, 'all'>, readonly string[]>> = {
+  nbl1: ['nbl1', 'nbl1 basketball'],
   shute: ['shute shield', 'shute shield premier', 'shute shield rugby'],
   vfl: ['vfl', 'vfl state league', 'victorian football league', 'smithys vfl'],
   qld: ['queensland premier rugby', 'hospital cup'],
+};
+
+const COMPETITION_NAMES = {
+  ...COMPETITION_ALIASES,
+  nbl1: [...COMPETITION_ALIASES.nbl1, 'nbl1 east', 'nbl1 south', 'nbl1 north', 'nbl1 central', 'nbl1 west'],
 };
 
 export const EMPTY_ROSTER_FILTERS: RosterDiscoveryFilters = { query: '', competition: 'all', catchment: '' };
@@ -128,7 +133,7 @@ export function matchesRosterDiscovery(record: AthleteRecord, filters: RosterDis
   const competition = ROSTER_COMPETITIONS.find(({ id }) => id !== 'all' && COMPETITION_NAMES[id].includes(league));
   const words = [
     record.display_name, record.full_name, record.sport, record.current_club, league,
-    ...(competition && competition.id !== 'all' ? COMPETITION_NAMES[competition.id] : []),
+    ...(competition && competition.id !== 'all' ? COMPETITION_ALIASES[competition.id] : []),
     competition?.label ?? '', record.postcode, suburb,
   ].map(normaliseSearch).join(' ').split(' ');
   return query.split(' ').every((term) => words.some((word) => /^\d+$/.test(term) ? word === term : word.startsWith(term)));
