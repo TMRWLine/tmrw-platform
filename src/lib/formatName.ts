@@ -1,14 +1,14 @@
 /** Safe name helpers — never throw if athlete/campaign strings are missing. */
 
 export function nameParts(name?: string | null): string[] {
-  return (name ?? '').split(' ').filter(Boolean);
+  return (name ?? '').split(/\s+/).filter(Boolean);
 }
 
 export function athleteInitials(name?: string | null): string {
   const parts = nameParts(name);
   if (parts.length === 0) return '?';
   return parts
-    .map((p) => p[0])
+    .map((p) => Array.from(p)[0])
     .slice(0, 2)
     .join('')
     .toUpperCase();

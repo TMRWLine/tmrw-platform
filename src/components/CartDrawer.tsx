@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BrandLockup } from './BrandLockup';
+import { useMobileDialog } from '../lib/useMobileDialog';
+import { athleteInitials } from '../lib/formatName';
 import { ProductPhotoGallery } from './ProductPhotoGallery';
 import type { AthleteRecord } from '../data/roster';
 
@@ -233,6 +235,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   );
   const [cartItems, setCartItems] = useState<{ item: CartCapsuleItem; qty: number; size: string }[]>([]);
   const drawerRef = useRef<HTMLDialogElement>(null);
+  useMobileDialog(isOpen, drawerRef);
   const closeRef = useRef<HTMLButtonElement>(null);
   const demoHeadingRef = useRef<HTMLHeadingElement>(null);
   const [bagUpdate, setBagUpdate] = useState('');
@@ -274,13 +277,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     const name = selectedAthlete.display_name || selectedAthlete.name;
     if (name) {
       setNewAthleteName(name);
-      const initials = name
-        .split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
-      setNewMonogram(`${initials}·01`);
+      setNewMonogram(`${athleteInitials(name)}·01`);
     }
     if (selectedAthlete.current_club || selectedAthlete.club) {
       setNewClubName(selectedAthlete.current_club || selectedAthlete.club);
@@ -294,7 +291,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     const onOpenCustom = (e: Event) => {
       const detail = (e as CustomEvent).detail || {};
       if (detail.initialView) setView(detail.initialView);
-      if (detail.athleteName) setNewAthleteName(detail.athleteName);
+      if (detail.athleteName) {
+        setNewAthleteName(detail.athleteName);
+        setNewMonogram(`${athleteInitials(detail.athleteName)}·01`);
+      }
       if (detail.clubName) setNewClubName(detail.clubName);
       if (detail.postcode) setNewPostcode(detail.postcode);
     };

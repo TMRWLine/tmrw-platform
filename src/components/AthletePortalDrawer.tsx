@@ -1,8 +1,10 @@
-import React, { useEffect, useId, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import './AthletePortalDrawer.css';
 import { AthleteAccessHeader, AthleteAccessTabs, AthleteAccessHero } from './AthleteAccessShell';
 import { dispatchOpenCapsuleDrawer } from './CartDrawer';
 import { ROSTER_DATA, suburbForPostcode } from '../data/roster';
 import type { LiveAthleteOverride } from './AthleteDossierDrawer';
+import { useMobileDialog } from '../lib/useMobileDialog';
 import {
   getActiveAthleteSession,
   maskBsbAndAccount,
@@ -36,6 +38,7 @@ interface PortalSubmission {
 interface AthletePortalDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenCapsuleStudio: () => void;
   onContinue: (submission: PortalSubmission) => void;
   onTestBypass?: (sandboxAthlete: unknown) => void;
 }
@@ -163,7 +166,7 @@ const ALL_SECTORS = [
 ] as const;
 
 const FIELD_LABEL =
-  'font-mono text-[9.5px] tracking-[0.18em] text-neutral-500 uppercase block mb-1.5 font-bold';
+  'athlete-portal-field-label font-mono text-[9.5px] tracking-[0.18em] text-neutral-500 uppercase block mb-1.5 font-bold';
 const FIELD_SHELL =
   'bg-[#EAEAE6] border border-black/10 rounded-xl px-4 py-3 text-sm font-mono text-[#0F0F11] placeholder-neutral-400 outline-none focus-within:border-[#0F0F11] transition-colors w-full flex items-center';
 const FIELD_INPUT =
@@ -183,7 +186,10 @@ const PROTOCOL_ROWS: ReadonlyArray<{ label: string; value: string }> = [
 export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
   isOpen,
   onClose,
+  onOpenCapsuleStudio,
 }) => {
+  const dialogRef = useRef<HTMLElement>(null);
+  useMobileDialog(isOpen, dialogRef);
   const baseId = useId();
   const identifierId = `${baseId}-identifier`;
   const leagueId = `${baseId}-league`;
@@ -457,6 +463,13 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (isOpen && window.matchMedia('(max-width: 1023px)').matches) {
+      dialogRef.current?.scrollTo({ top: 0 });
+      dialogRef.current?.focus({ preventScroll: true });
+    }
+  }, [isOpen, drawerView, step]);
+
   if (!isOpen) return null;
 
   const isPodiumSeed = followerCount >= 150000 || leagueDetail.toLowerCase().includes('olympic');
@@ -589,7 +602,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
     <div
       data-lenis-prevent="true"
       onWheel={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-[105] selection:bg-volt selection:text-[#0F0F11]"
+      className="athlete-portal fixed inset-0 z-[105] selection:bg-volt selection:text-[#0F0F11]"
     >
       <button
         type="button"
@@ -600,8 +613,9 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
       />
 
       <aside
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
-        aria-modal="true"
         aria-label="Athlete portal"
         data-lenis-prevent="true"
         onWheel={(e) => e.stopPropagation()}
@@ -613,7 +627,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
           <div
             data-lenis-prevent="true"
             onWheel={(e) => e.stopPropagation()}
-            className="flex-1 overflow-y-auto p-6 sm:p-8 md:p-10 flex flex-col justify-between"
+            className="athlete-portal-entry flex-1 overflow-y-auto p-6 sm:p-8 md:p-10 flex flex-col justify-between"
           >
             <div>
               <AthleteAccessHeader onClose={onClose} />
@@ -717,6 +731,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                     <input
                       type="text"
                       inputMode="numeric"
+                      aria-label="Six-digit security code"
                       maxLength={6}
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -746,6 +761,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                   type="button"
                   onClick={() => {
                     onClose();
+                    onOpenCapsuleStudio();
                     dispatchOpenCapsuleDrawer({
                       initialView: 'creator',
                       athleteName: fullName || 'Marcus Thorne',
@@ -790,13 +806,13 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
 
         {drawerView === 'wizard' && (
           <>
-            <header className="shrink-0 border-b border-black/10 bg-[#FFFFFF] px-5 py-4 sm:px-8 sm:py-5">
+            <header className="athlete-portal-header shrink-0 border-b border-black/10 bg-[#FFFFFF] px-5 py-4 sm:px-8 sm:py-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setDrawerView('entry')}
-                    className="rounded-full bg-[#F2F2F0] hover:bg-[#080808] text-[#080808] hover:text-white px-3.5 py-1.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer transition-colors"
+                    className="athlete-portal-back rounded-full bg-[#F2F2F0] hover:bg-[#080808] text-[#080808] hover:text-white px-3.5 py-1.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer transition-colors"
                   >
                     ← Back
                   </button>
@@ -880,6 +896,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
 
                 {wizardMode === 'edit_existing' && (
                   <select
+                    aria-label="Contender to edit"
                     value={selectedAthleteId}
                     onChange={(e) => setSelectedAthleteId(e.target.value)}
                     className="rounded-xl bg-[#F2F2F0] border border-black/15 px-3 py-1.5 font-sans text-xs font-bold text-[#080808] outline-none"
@@ -894,7 +911,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
               </div>
 
               {/* 5 Distinct Tabs with Clean Athlete-Centric Headings */}
-              <div className="mt-3 flex overflow-x-auto sm:grid sm:grid-cols-5 gap-1.5 pb-1">
+              <div aria-label="Profile sections" className="athlete-portal-sections mt-3 flex overflow-x-auto sm:grid sm:grid-cols-5 gap-1.5 pb-1">
                 {(
                   [
                     [1, '01. Identity & Vitals'],
@@ -907,6 +924,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                   <button
                     key={idx}
                     type="button"
+                    aria-pressed={step === idx}
                     onClick={() => setStep(idx)}
                     className={`shrink-0 rounded-xl border px-3 py-2 text-left cursor-pointer transition-all ${
                       step === idx
@@ -925,7 +943,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
             <div
               data-lenis-prevent="true"
               onWheel={(e) => e.stopPropagation()}
-              className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-5 sm:px-8 space-y-4 bg-[#FFFFFF]"
+              className="athlete-portal-content flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-5 sm:px-8 space-y-4 bg-[#FFFFFF]"
             >
               {savedBanner && (
                 <div className="rounded-2xl bg-[#080808] text-volt p-4 font-mono text-xs font-bold flex items-center justify-between gap-4">
@@ -1104,7 +1122,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                       </span>
                       <span className="text-neutral-400">7000 / 1500 / 1500 BPS</span>
                     </div>
-                    <div className="grid grid-cols-3 gap-3 font-mono text-xs">
+                    <div className="athlete-portal-split grid grid-cols-3 gap-3 font-mono text-xs">
                       <div className="rounded-xl bg-white/[0.06] p-3">
                         <span className="block text-[9px] text-neutral-400">70% ATHLETE</span>
                         <strong className="text-lg text-white">A${pkg01Athlete70}</strong>
@@ -1319,7 +1337,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                               type="file"
                               accept="image/*"
                               onChange={(e) => handleMediaFileUpload(e, setSlide1Studio, 'athlete-media')}
-                              className="hidden"
+                              className="athlete-portal-file-input"
                             />
                           </label>
                         </div>
@@ -1342,7 +1360,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                               type="file"
                               accept="image/*"
                               onChange={(e) => handleMediaFileUpload(e, setSlide2Action, 'athlete-media')}
-                              className="hidden"
+                              className="athlete-portal-file-input"
                             />
                           </label>
                         </div>
@@ -1365,7 +1383,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                               type="file"
                               accept="image/*"
                               onChange={(e) => handleMediaFileUpload(e, setSlide3Precinct, 'athlete-media')}
-                              className="hidden"
+                              className="athlete-portal-file-input"
                             />
                           </label>
                         </div>
@@ -1388,7 +1406,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                               type="file"
                               accept="image/*"
                               onChange={(e) => handleMediaFileUpload(e, setSlide4Training, 'athlete-media')}
-                              className="hidden"
+                              className="athlete-portal-file-input"
                             />
                           </label>
                         </div>
@@ -1414,7 +1432,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                               type="file"
                               accept="video/mp4,video/quicktime,video/*"
                               onChange={(e) => handleMediaFileUpload(e, setReelVideoUrl, 'athlete-media')}
-                              className="hidden"
+                              className="athlete-portal-file-input"
                             />
                           </label>
                         </div>
@@ -1440,7 +1458,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                                 const file = e.target.files?.[0];
                                 if (file) setHighlightStemFile(file.name);
                               }}
-                              className="hidden"
+                              className="athlete-portal-file-input"
                             />
                           </label>
                         </div>
@@ -1538,7 +1556,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                             onChange={(e) =>
                               handleMediaFileUpload(e, setClearanceDocName, 'compliance-vault')
                             }
-                            className="hidden"
+                            className="athlete-portal-file-input"
                           />
                         </label>
                       </div>
@@ -1549,13 +1567,14 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                     <label className={FIELD_LABEL}>
                       48-Sector Conflict Matrix (Hard Exclusions Enforced: No Betting, Vaping, Alcohol)
                     </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="athlete-portal-sectors grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {ALL_SECTORS.map((sec) => {
                         const isLocked = lockedCategories.includes(sec);
                         return (
                           <button
                             key={sec}
                             type="button"
+                            aria-pressed={isLocked}
                             onClick={() => toggleSectorLock(sec)}
                             className={`rounded-xl border p-2.5 text-left cursor-pointer transition-all ${
                               isLocked
@@ -1588,6 +1607,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
                       </div>
                       <button
                         type="button"
+                        aria-pressed={under18Guardian}
                         onClick={() => setUnder18Guardian(!under18Guardian)}
                         className={`rounded-full px-4 py-1.5 font-mono text-[10px] font-bold uppercase border-0 cursor-pointer ${
                           under18Guardian
@@ -1711,7 +1731,7 @@ export const AthletePortalDrawer: React.FC<AthletePortalDrawerProps> = ({
               )}
             </div>
 
-            <footer className="shrink-0 border-t border-black/10 bg-[#FFFFFF] px-5 py-4 sm:px-8 flex flex-wrap items-center justify-between gap-3">
+            <footer className="athlete-portal-actions shrink-0 border-t border-black/10 bg-[#FFFFFF] px-5 py-4 sm:px-8 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 {step > 1 && (
                   <button

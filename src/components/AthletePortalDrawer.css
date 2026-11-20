@@ -1,0 +1,132 @@
+.athlete-portal-file-input {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .athlete-portal aside {
+    display: block;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    overflow-wrap: anywhere;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    scroll-padding-block: 1rem;
+  }
+
+  .athlete-portal-entry,
+  .athlete-portal-content {
+    overflow: visible;
+    padding: 1.25rem;
+  }
+
+  .athlete-portal-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .athlete-portal-header > .flex:first-child > .flex:first-child {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .athlete-portal button.athlete-portal-back {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .athlete-portal :where(.flex, .grid),
+  .athlete-portal :where(.flex, .grid) > * {
+    min-width: 0;
+  }
+
+  .athlete-portal .flex.justify-between {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .athlete-portal .font-mono {
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+  }
+
+  .athlete-portal .athlete-portal-field-label {
+    font-size: 0.6875rem;
+    line-height: 1.6;
+  }
+
+  .athlete-portal button,
+  .athlete-portal label:has(.athlete-portal-file-input) {
+    min-height: 44px;
+    min-width: 44px;
+    white-space: normal;
+    touch-action: manipulation;
+  }
+
+  .athlete-portal :is(input:not([type='file']), select, textarea) {
+    min-height: 44px;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  .athlete-portal :is(button, input, select, textarea, a):focus-visible,
+  .athlete-portal label:has(.athlete-portal-file-input:focus-visible) {
+    outline: 2px solid #080808;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 3px #CCFF00;
+  }
+
+  .athlete-portal label:has(.athlete-portal-file-input) {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 0.75rem;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .athlete-portal .athlete-portal-file-input {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .athlete-portal .athlete-portal-sections {
+    display: flex;
+    overflow-x: auto;
+    padding: 0.25rem 0.25rem 0.5rem;
+    scroll-padding-inline: 0.25rem;
+  }
+
+  .athlete-portal-sections button {
+    flex-shrink: 0;
+  }
+
+  .athlete-portal-actions,
+  body:has(#tmrw-locked-runway-footer) .athlete-portal footer:not(#tmrw-locked-runway-footer) {
+    /* The runway hides unrelated footers; wizard actions must remain reachable. */
+    display: flex !important;
+    padding: 1rem 1.25rem;
+  }
+
+  .athlete-portal-actions > button {
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 479px) {
+  .athlete-portal .athlete-portal-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 359px) {
+  .athlete-portal .grid-cols-2:not(.athlete-portal-sectors):not([role='tablist']) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
