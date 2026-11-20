@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import app from './index.js';
+import { readFileSync } from 'node:fs';
 
 async function fixture(run, { stripe = true } = {}) {
   const names = ['STRIPE_SECRET_KEY', 'SUPABASE_URL', 'VITE_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'APP_BASE_URL'];
@@ -74,6 +75,30 @@ test('Olympic horizon tiers create Stripe sessions at their advertised AUD price
   const unknown = await post({ athleteId: 'fixture', tierId: 'olympic_3yr_unknown' });
   assert.equal(unknown.status, 400);
   assert.equal(calls.length, tiers.length);
+}));
+
+test('every catalogue tier charges the client ledger total with ex-GST splits and ignores tampered totals', () => fixture(async ({ post, calls }) => {
+  const packages = JSON.parse(readFileSync(new URL('../src/data/mockDeliverables.json', import.meta.url))).packages;
+  const tiers = new Map(packages.map((pkg) => [pkg.tier_id, pkg.price_aud]));
+  for (const [id, aud] of [['syndicate', 50000], ['olympic_1yr_50k', 50000], ['olympic_2yr_110k', 110000], ['olympic_4yr_250k', 250000], ['pathway_contender', 3500]]) tiers.set(id, aud);
+  for (const [tierId, amountAud] of tiers) {
+    const base = Math.round(amountAud * 100);
+    const gst = Math.round(base * 0.1);
+    const athlete = Math.round(base * 7000 / 10000);
+    assert.equal((await post({ athleteId: 'fixture', tierId, postcode: '2000', amountAud: 1, splitLedger: { grossCents: 1, gstCents: 0, totalPayableCents: 1 }, exGstCents: 1, gstCents: 0 })).status, 200, tierId);
+    const body = calls.at(-1);
+    assert.equal(body.get('line_items[0][price_data][unit_amount]'), String(base));
+    assert.equal(body.get('line_items[1][price_data][unit_amount]'), String(gst));
+    assert.equal(body.get('line_items[1][price_data][product_data][name]'), 'GST (10%)');
+    assert.equal(body.get('line_items[1][price_data][currency]'), 'aud');
+    assert.equal(body.get('line_items[1][quantity]'), '1');
+    const total = [0, 1].reduce((sum, i) => sum + Number(body.get(`line_items[${i}][quantity]`)) * Number(body.get(`line_items[${i}][price_data][unit_amount]`)), 0);
+    assert.equal(total, base + gst, tierId);
+    for (const [key, value] of Object.entries({ exGstCents: base, gstCents: gst, totalIncGstCents: total, athleteCutCents: athlete, clubCutCents: Math.round(base * 1500 / 10000), athleteEscrowHoldCents: athlete - Math.round(athlete * 0.5) })) {
+      assert.equal(body.get(`metadata[${key}]`), String(value), `${tierId} ${key}`);
+      assert.equal(body.get(`payment_intent_data[metadata][${key}]`), String(value));
+    }
+  }
 }));
 
 test('capsule prices, costs, royalties, identity and product images come only from the server catalogue', () => fixture(async ({ post, calls }) => {

@@ -9,6 +9,7 @@ import { createTwelveLabsRouter } from './twelvelabs.js';
 import { catalogueItems } from './capsule-catalogue.js';
 import {
   checkGrantStorage,
+  diagnoseGrantStorage,
   createGrantAccess,
   grantPath,
   hasGrantAccess,
@@ -82,7 +83,15 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), a
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
+        if (session.metadata?.orderType === 'merch_capsule') break;
+        try {
+          await settleCheckoutSession(session.id);
+        } catch (error) {
+          return res.status(500).json({ error: error.message || 'Settlement failed' });
+        }
         const totalAud = (session.amount_total ?? 0) / 100;
+        const gstAud = Number(session.metadata?.gstCents || 0) / 100;
+        const exGstAud = session.metadata?.exGstCents === undefined ? totalAud - gstAud : Number(session.metadata.exGstCents) / 100;
         const orderType = session.metadata?.orderType || 'sponsorship_tier';
         const athleteCutCents = Number(session.metadata?.athleteCutCents || 0);
         const clubCutCents = Number(session.metadata?.clubCutCents || 0);
@@ -90,7 +99,7 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), a
 
         console.log(`[stripe webhook] ✓ Checkout Session Completed: ${session.id}`);
         console.log(
-          `[stripe webhook]   Type: ${orderType} | Gross: A$${totalAud.toFixed(2)} | Athlete: A$${(athleteCutCents / 100).toFixed(2)} | Club: A$${(clubCutCents / 100).toFixed(2)} | Partner: A$${(partnerCutCents / 100).toFixed(2)}`,
+          `[stripe webhook]   Type: ${orderType} | Ex-GST: A$${exGstAud.toFixed(2)} | GST: A$${gstAud.toFixed(2)} | Total: A$${totalAud.toFixed(2)} | Athlete: A$${(athleteCutCents / 100).toFixed(2)} | Club: A$${(clubCutCents / 100).toFixed(2)} | Partner: A$${(partnerCutCents / 100).toFixed(2)}`,
         );
         break;
       }
@@ -114,6 +123,12 @@ app.post('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }), a
 app.use('/api/twelvelabs', createTwelveLabsRouter());
 app.use(express.json());
 app.post(grantPath, issuePaidWhitelistingGrant);
+
+app.get('/api/health/grant-storage', async (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const result = await diagnoseGrantStorage();
+  res.status(result.ok ? 200 : 503).json(result);
+});
 
 app.get(['/health', '/api/health'], (_req, res) => {
   res.json({ ok: true, service: 'sponsor-match-proxy' });
@@ -464,6 +479,8 @@ app.post('/api/checkout/create-session', (req, res, next) => {
     }
 
     // BRANCH B: Commercial Sponsorship Tier Checkout
+    const clubCadence = req.body?.clubCadence === undefined ? 'quarterly_batch' : req.body.clubCadence;
+    if (!['quarterly_batch', 'immediate_t0'].includes(clubCadence)) return res.status(400).json({ error: 'Invalid clubCadence' });
     const escrowMode = req.body?.escrowMode ?? 'milestone_50_50';
     if (!['milestone_50_50', 'upfront_100'].includes(escrowMode)) {
       return res.status(400).json({ error: 'Invalid escrowMode' });
@@ -505,6 +522,7 @@ app.post('/api/checkout/create-session', (req, res, next) => {
       }
       const grantAccess = createGrantAccess();
       const unitCents = Math.round(pkg.price_aud * 100);
+      const gstCents = Math.round(unitCents * 0.1);
       const body = new URLSearchParams();
       body.set('mode', 'payment');
       body.set('success_url', successUrl);
@@ -524,6 +542,13 @@ app.post('/api/checkout/create-session', (req, res, next) => {
         body.set('line_items[0][price_data][product_data][images][0]', productImage);
       }
       body.set('metadata[orderType]', 'sponsorship_tier');
+      body.set('line_items[1][quantity]', '1');
+      body.set('line_items[1][price_data][currency]', 'aud');
+      body.set('line_items[1][price_data][unit_amount]', String(gstCents));
+      body.set('line_items[1][price_data][product_data][name]', 'GST (10%)');
+      body.set('metadata[exGstCents]', String(unitCents));
+      body.set('metadata[gstCents]', String(gstCents));
+      body.set('metadata[totalIncGstCents]', String(unitCents + gstCents));
       body.set('metadata[athleteId]', athleteId);
       body.set('metadata[tierId]', tierId);
       body.set('metadata[athleteName]', athlete.full_name.slice(0, 500));
@@ -532,6 +557,7 @@ app.post('/api/checkout/create-session', (req, res, next) => {
       body.set('metadata[athleteCutCents]', String(Math.round(unitCents * 0.7)));
       body.set('metadata[clubCutCents]', String(Math.round(unitCents * 0.15)));
       body.set('metadata[escrowMode]', escrowMode);
+      body.set('metadata[clubCadence]', clubCadence);
       body.set('metadata[athleteEscrowHoldCents]', String(escrowMode === 'milestone_50_50' ? escrowHold(unitCents) : 0));
       if (req.authUser) body.set('metadata[sponsorUserId]', req.authUser.id);
       body.set('payment_intent_data[transfer_group]', transferGroupPattern.test(req.body?.transferGroup) ? req.body.transferGroup : `TG_${randomBytes(16).toString('hex')}`);
@@ -591,6 +617,109 @@ async function escrowList(path, transferGroup) {
   return items;
 }
 
+function payoutError(status, message) {
+  return Object.assign(new Error(message), { status });
+}
+
+async function retrieveCheckoutOrder(checkoutSessionId) {
+  if (!process.env.STRIPE_SECRET_KEY) throw payoutError(503, 'Stripe is not configured');
+  if (typeof checkoutSessionId !== 'string' || !/^cs_[A-Za-z0-9_]+$/.test(checkoutSessionId)) throw payoutError(400, 'Valid checkoutSessionId is required');
+  try {
+    const session = await escrowStripe(`checkout/sessions/${checkoutSessionId}`, { 'expand[]': 'payment_intent.latest_charge' });
+    if (session.id !== checkoutSessionId) throw payoutError(404, 'Order not found');
+    return session;
+  } catch (error) {
+    if (error.stripeStatus === 404) throw payoutError(404, 'Order not found');
+    throw error;
+  }
+}
+
+async function authorizeCheckoutOrder(session, req, res) {
+  if (!session.metadata?.sponsorUserId) {
+    if (!hasGrantAccess(req, session.id, session.metadata?.grantAccessHash)) throw payoutError(403, 'Open the receipt in the browser used to start checkout to approve delivery.');
+    return true;
+  }
+  await requireUser(req, res, () => {});
+  if (!req.authUser) return false;
+  if (session.metadata.sponsorUserId !== req.authUser.id) throw payoutError(403, 'Order access denied');
+  return true;
+}
+
+function verifiedCheckoutOrder(session) {
+  const m = session.metadata;
+  const c = session.payment_intent?.latest_charge;
+  const group = session.payment_intent?.transfer_group;
+  if (!(session.payment_status === 'paid' && c?.status === 'succeeded' && c.paid === true && c.captured === true && !c.refunded && !c.amount_refunded && !c.disputed && !c.dispute && c.currency === 'aud' &&
+    m?.orderType === 'sponsorship_tier' && typeof m.athleteId === 'string' && m.athleteId && typeof group === 'string' && transferGroupPattern.test(group) && Number.isSafeInteger(c.amount) && c.amount > 0)) {
+    throw payoutError(404, 'Eligible paid escrow order not found');
+  }
+  return { id: session.id, metadata: m, charge: c, group };
+}
+
+function payoutConfig() {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key = supabaseSecretKey();
+  if (!url || !key) throw payoutError(503, 'payout lookup not configured');
+  return { url, headers: supabaseHeaders(key) };
+}
+
+async function athletePayoutProfile(athleteId) {
+  if (typeof athleteId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(athleteId)) throw payoutError(409, 'Athlete Connect account is not configured');
+  const { url, headers } = payoutConfig();
+  const response = await fetch(`${url}/rest/v1/athlete_profiles?${new URLSearchParams({ id: `eq.${athleteId}`, select: 'stripe_account_id,current_club' })}`, { headers, signal: AbortSignal.timeout(8000) });
+  if (!response.ok) throw payoutError(502, 'Unable to look up athlete payout account');
+  const profiles = await response.json();
+  const profile = profiles[0];
+  if (typeof profile?.stripe_account_id !== 'string' || !/^acct_[A-Za-z0-9]+$/.test(profile.stripe_account_id)) throw payoutError(409, 'Athlete Connect account is not configured');
+  return profile;
+}
+
+function stampedCents(value) {
+  return typeof value === 'string' && /^(0|[1-9][0-9]*)$/.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : NaN;
+}
+
+export async function settleCheckoutSession(checkoutSessionId, authorize = async () => true) {
+  const session = await retrieveCheckoutOrder(checkoutSessionId);
+  if (!await authorize(session)) return null;
+  const { metadata: m, charge, group } = verifiedCheckoutOrder(session);
+  const athleteCut = stampedCents(m.athleteCutCents);
+  const hold = stampedCents(m.athleteEscrowHoldCents);
+  const clubAmount = stampedCents(m.clubCutCents);
+  const clubCadence = m.clubCadence === undefined ? 'quarterly_batch' : m.clubCadence;
+  const amount = athleteCut - hold;
+  if (!(athleteCut > 0 && athleteCut <= Math.round(charge.amount * 0.7) && clubAmount > 0 && clubAmount <= Math.round(charge.amount * 0.15) && Number.isSafeInteger(amount) && amount > 0 &&
+    ((m.escrowMode === 'upfront_100' && hold === 0) || (m.escrowMode === 'milestone_50_50' && hold === athleteCut - Math.round(athleteCut * 0.5))) && ['quarterly_batch', 'immediate_t0'].includes(clubCadence))) throw payoutError(409, 'Invalid stamped payout amounts or cadence');
+  const paidAt = new Date((charge.created ?? session.created) * 1000);
+  if (!Number.isFinite(paidAt.getTime())) throw payoutError(409, 'Order payment date is missing');
+  const profile = await athletePayoutProfile(m.athleteId);
+  const transfers = await escrowList('transfers', group);
+  let transfer = transfers.find((t) => t.metadata?.payoutFor === 'athlete_t0' && t.metadata?.payoutCharge === charge.id);
+  const alreadyPaid = Boolean(transfer);
+  if (!transfer) transfer = await escrowStripe('transfers', {
+    amount: String(amount), currency: 'aud', destination: profile.stripe_account_id, transfer_group: group, source_transaction: charge.id,
+    'metadata[payoutFor]': 'athlete_t0', 'metadata[payoutCharge]': charge.id, 'metadata[athleteId]': m.athleteId,
+  }, 'POST', `tmrw_athlete_t0_${charge.id}`);
+  if (!transfer.id) throw payoutError(502, 'Stripe did not confirm athlete payout');
+  const scheduledFor = clubCadence === 'quarterly_batch' ? new Date(paidAt.getFullYear(), (Math.floor(paidAt.getMonth() / 3) + 1) * 3, 0).toISOString() : null;
+  const status = clubCadence === 'quarterly_batch' ? 'queued_quarterly' : 'awaiting_club_connect_account';
+  const { url, headers } = payoutConfig();
+  const clubResponse = await fetch(`${url}/rest/v1/club_payouts?on_conflict=charge_id`, {
+    method: 'POST', headers: { ...headers, 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=representation' },
+    body: JSON.stringify({ checkout_session_id: session.id, charge_id: charge.id, transfer_group: group, athlete_id: m.athleteId, club_name: profile.current_club || null, amount_cents: clubAmount, cadence: clubCadence, status, scheduled_for: scheduledFor, stripe_transfer_id: null }), signal: AbortSignal.timeout(8000),
+  });
+  if (!clubResponse.ok) throw payoutError(502, 'Unable to record club payout');
+  return { settled: true, athleteT0: { transferId: transfer.id, amountCents: transfer.amount, alreadyPaid }, club: { status, amountCents: clubAmount, cadence: clubCadence, scheduledFor } };
+}
+
+app.post('/api/checkout/settle', async (req, res) => {
+  try {
+    const result = await settleCheckoutSession(req.body?.checkoutSessionId, (session) => authorizeCheckoutOrder(session, req, res));
+    if (result) return res.json(result);
+  } catch (error) {
+    return res.status(error.status || 502).json({ error: error.message || 'Unable to settle checkout' });
+  }
+});
+
 app.post('/api/checkout/release-escrow', async (req, res) => {
   if (!process.env.STRIPE_SECRET_KEY) return res.status(503).json({ error: 'Stripe is not configured' });
   const { transferGroup, athleteId, checkoutSessionId, escrowHoldCents } = req.body ?? {};
@@ -599,48 +728,32 @@ app.post('/api/checkout/release-escrow', async (req, res) => {
     return res.status(400).json({ error: 'Valid checkoutSessionId, athleteId and optional transferGroup are required' });
   }
   try {
-    let session;
-    try {
-      session = await escrowStripe(`checkout/sessions/${checkoutSessionId}`, { 'expand[]': 'payment_intent.latest_charge' });
-    } catch (error) {
-      if (error.stripeStatus === 404) return res.status(404).json({ error: 'Order not found' });
-      throw error;
-    }
-    if (session.id !== checkoutSessionId) return res.status(404).json({ error: 'Order not found' });
-    if (session.metadata?.sponsorUserId) {
-      await requireUser(req, res, () => {});
-      if (!req.authUser) return;
-      if (session.metadata.sponsorUserId !== req.authUser.id) return res.status(403).json({ error: 'Order access denied' });
-    } else if (!hasGrantAccess(req, checkoutSessionId, session.metadata?.grantAccessHash)) {
-      return res.status(403).json({ error: 'Open the receipt in the browser used to start checkout to approve delivery.' });
-    }
-    const intent = session.payment_intent;
-    const order = { id: session.id, metadata: session.metadata, charge: intent?.latest_charge };
-    const group = intent?.transfer_group;
+    const session = await retrieveCheckoutOrder(checkoutSessionId);
+    if (!await authorizeCheckoutOrder(session, req, res)) return;
+    const order = verifiedCheckoutOrder(session);
+    const group = order.group;
     const m = order.metadata;
     const c = order.charge;
     const amount = Number(m?.athleteEscrowHoldCents);
-    if (!(session.payment_status === 'paid' && c?.status === 'succeeded' && c.paid === true && c.captured === true && !c.refunded && !c.amount_refunded && !c.disputed && !c.dispute && c.currency === 'aud' &&
-      m?.orderType === 'sponsorship_tier' && m.athleteId === athleteId && typeof group === 'string' && transferGroupPattern.test(group) && (transferGroup === undefined || group === transferGroup) &&
-      Number.isSafeInteger(c.amount) && c.amount > 0)) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
+    if (m.athleteId !== athleteId || (transferGroup !== undefined && group !== transferGroup)) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
     if (m.escrowMode === 'upfront_100') return res.status(409).json({ error: 'Upfront order has no held escrow to release' });
+    let exGstCents = c.amount;
+    if (m.exGstCents !== undefined || m.gstCents !== undefined) {
+      exGstCents = Number(m.exGstCents);
+      const gstCents = Number(m.gstCents);
+      if (!(typeof m.exGstCents === 'string' && /^[1-9][0-9]*$/.test(m.exGstCents) &&
+        typeof m.gstCents === 'string' && /^[0-9]+$/.test(m.gstCents) &&
+        Number.isSafeInteger(exGstCents) && Number.isSafeInteger(gstCents) &&
+        c.amount === exGstCents + gstCents)) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
+    }
     if (!(m.escrowMode === 'milestone_50_50' && typeof m.athleteEscrowHoldCents === 'string' && /^[1-9][0-9]*$/.test(m.athleteEscrowHoldCents) &&
-      Number.isSafeInteger(amount) && amount <= escrowHold(c.amount))) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
+      Number.isSafeInteger(amount) && amount <= escrowHold(exGstCents))) return res.status(404).json({ error: 'Eligible paid escrow order not found' });
     const transfers = await escrowList('transfers', group);
     if (escrowHoldCents !== undefined && escrowHoldCents !== amount) return res.status(409).json({ error: 'Escrow amount does not match the order' });
     const existing = transfers.find((t) => [order.id, order.charge.id].includes(t.metadata?.escrowReleaseFor));
     const success = (transfer, alreadyReleased) => res.json({ released: true, escrowTransferId: transfer.id, releasedAmountCents: transfer.amount, releasedAt: new Date(transfer.created * 1000).toISOString(), alreadyReleased });
     if (existing) return success(existing, true);
-    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const key = supabaseSecretKey();
-    if (!url || !key) return res.status(503).json({ error: 'payout lookup not configured' });
-    const response = await fetch(`${url}/rest/v1/athlete_profiles?${new URLSearchParams({ id: `eq.${athleteId}`, select: 'stripe_account_id' })}`, {
-      headers: supabaseHeaders(key), signal: AbortSignal.timeout(8000),
-    });
-    if (!response.ok) return res.status(502).json({ error: 'Unable to look up athlete payout account' });
-    const athletes = await response.json();
-    const destination = athletes[0]?.stripe_account_id;
-    if (typeof destination !== 'string' || !/^acct_[A-Za-z0-9]+$/.test(destination)) return res.status(409).json({ error: 'Athlete Connect account is not configured' });
+    const { stripe_account_id: destination } = await athletePayoutProfile(athleteId);
     const orderId = order.charge.id;
     const transfer = await escrowStripe('transfers', {
       amount: String(amount), currency: 'aud', destination, transfer_group: group, source_transaction: orderId,
@@ -648,7 +761,7 @@ app.post('/api/checkout/release-escrow', async (req, res) => {
     }, 'POST', `tmrw_escrow_release_${orderId}`);
     return success(transfer, false);
   } catch (error) {
-    return res.status(502).json({ error: error.message || 'Unable to release escrow' });
+    return res.status(error.status || 502).json({ error: error.message || 'Unable to release escrow' });
   }
 });
 
