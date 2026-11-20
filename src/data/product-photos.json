@@ -1,1 +1,4 @@
-{}
+{
+  "drop_mt_2200": { "front": true, "back": true, "detail": true },
+  "drop_sb_2095": { "front": true, "back": true, "detail": true }
+}

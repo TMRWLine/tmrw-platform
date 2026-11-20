@@ -10,8 +10,9 @@ const control = 'min-h-11 border border-black/15 bg-white px-3 text-xs font-semi
 
 export function ProductPhotoGallery({ sku, name }: { sku: string; name: string }) {
   const photos = getProductPhotos(sku);
-  const views = PHOTO_VIEWS.filter(([id]) => id === 'spin' ? photos.spin.length > 0 : photos[id]);
-  const [selected, setSelected] = useState<View | undefined>(views[0]?.[0]);
+  const hasPhotos = !!(photos.front || photos.back || photos.detail || photos.spin.length);
+  const views = PHOTO_VIEWS.filter(([id]) => id === 'spin' ? photos.spin.length > 0 : hasPhotos);
+  const [selected, setSelected] = useState<View | undefined>(PHOTO_VIEWS.find(([id]) => id === 'spin' ? photos.spin.length > 0 : photos[id])?.[0]);
   const [frame, setFrame] = useState(0);
   const [play, setPlay] = useState(false);
   const [spinStatus, setSpinStatus] = useState<'idle' | 'loading' | 'ready' | 'failed'>('idle');
@@ -102,10 +103,11 @@ export function ProductPhotoGallery({ sku, name }: { sku: string; name: string }
             draggable={false} onError={() => setFailedSource(src)}
             className="absolute inset-0 h-full w-full object-contain" />
         ) : (
-          <p className="m-0 p-5 text-center font-mono text-xs font-semibold">
-            {spin && spinStatus !== 'failed' && !ready ? 'Loading 360° view…' :
-              selected ? 'This product view is unavailable' : 'Product photos coming soon'}
-          </p>
+          <div role="status" className="p-5 text-center font-mono text-xs font-semibold text-[#080808]">
+            <span aria-hidden="true" className="mb-3 block text-lg font-bold">tmrw/<span className="text-[#080808]">.</span></span>
+            <p className="m-0">{spin && spinStatus !== 'failed' && !ready ? 'Loading 360° view…' :
+              selected ? `${label} view unavailable. Product photos coming soon.` : 'Product photos coming soon'}</p>
+          </div>
         )}
       </div>
       {!!views.length && (

@@ -81,7 +81,8 @@ import { ObsidianWipe } from './components/ObsidianWipe';
 import { CheckoutSuccessPage, CHECKOUT_SUCCESS_PATH } from './pages/checkout/success';
 import { CANVAS_OBSIDIAN, CANVAS_WHITE, mixHex, syndicateProgress } from './lib/canvasTone';
 import { AthleteCommercialDashboard } from './components/AthleteCommercialDashboard';
-import { CartDrawer } from './components/CartDrawer.tsx';
+import { CartDrawer, OPEN_CAPSULE_DRAWER_EVENT } from './components/CartDrawer.tsx';
+import { readCapsuleReturn } from './lib/capsuleCommerce';
 import { supabase } from './lib/supabaseClient';
 import {
   fetchAthletes,
@@ -174,6 +175,14 @@ export function MarketplaceApp() {
   const [catchmentCounts, setCatchmentCounts] = useState<Record<SpatialTierCode, number> | null>(null);
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
+  const [capsuleReturn] = useState(() => readCapsuleReturn(window.location.search));
+  useEffect(() => {
+    if (!capsuleReturn) return;
+    setIsCartOpen(true);
+    const url = new URL(window.location.href);
+    for (const key of ['capsule_checkout', 'session_id', 'capsule', 'athleteName']) url.searchParams.delete(key);
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+  }, [capsuleReturn]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isPortalDrawerOpen, setIsPortalDrawerOpen] = useState(false);
   const [isSyndicateEnquiryOpen, setIsSyndicateEnquiryOpen] = useState(false);
@@ -341,13 +350,20 @@ export function MarketplaceApp() {
       setRequestedPackage(packageId);
       setIsCartOpen(true);
     };
+    const openCapsuleDrawer = () => {
+      setIsSearchOpen(false);
+      setIsMenuOpen(false);
+      setIsCartOpen(true);
+    };
     window.addEventListener(OPEN_SEARCH_OVERLAY_EVENT, openSearch);
     window.addEventListener(OPEN_MENU_OVERLAY_EVENT, openMenu);
     window.addEventListener(OPEN_DEPLOY_DRAWER_EVENT, openDeployDrawer);
+    window.addEventListener(OPEN_CAPSULE_DRAWER_EVENT, openCapsuleDrawer);
     return () => {
       window.removeEventListener(OPEN_SEARCH_OVERLAY_EVENT, openSearch);
       window.removeEventListener(OPEN_MENU_OVERLAY_EVENT, openMenu);
       window.removeEventListener(OPEN_DEPLOY_DRAWER_EVENT, openDeployDrawer);
+      window.removeEventListener(OPEN_CAPSULE_DRAWER_EVENT, openCapsuleDrawer);
     };
   }, []);
 
@@ -958,6 +974,7 @@ export function MarketplaceApp() {
       )}
 
       <CartDrawer
+        checkoutReturn={capsuleReturn}
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         onHome={goHome}

@@ -3,6 +3,8 @@ import './CartDrawer.css';
 import { createPortal } from 'react-dom';
 import { BrandLockup } from './BrandLockup';
 import { ProductPhotoGallery } from './ProductPhotoGallery';
+import { CapsuleTotals } from './CapsuleTotals';
+import { BAG_STORAGE_KEY, PENDING_BAG_STORAGE_PREFIX, capsuleSplit, capsuleTotals, formatCapsuleMoney, formatCapsuleSplit, restoreBag, serialiseBag, settlePaidBag, type BagLine, type CapsuleReceipt, type CapsuleReturn } from '../lib/capsuleCommerce';
 import type { AthleteRecord } from '../data/roster';
 
 export type LockupStyleId = 'editorial' | 'stencil' | 'heritage';
@@ -193,6 +195,7 @@ function getLockupClass(styleId?: LockupStyleId): string {
 }
 
 interface CartDrawerProps {
+  checkoutReturn?: CapsuleReturn | null;
   isOpen?: boolean;
   onClose: () => void;
   onHome: () => void;
@@ -222,17 +225,24 @@ const RetroPixelCabinetIcon: React.FC = () => (
 );
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
+  checkoutReturn,
   isOpen = true,
   onClose,
   onHome,
   selectedAthlete,
   onExploreRoster,
 }) => {
-  const [view, setView] = useState<'empty' | 'capsules' | 'creator' | 'checkout_demo'>('capsules');
+  const [view, setView] = useState<'empty' | 'capsules' | 'creator' | 'checkout_demo' | 'receipt'>('capsules');
   const [capsules, setCapsules] = useState<CartCapsuleItem[]>(() =>
     typeof window !== 'undefined' ? loadAllCapsules() : [...DEFAULT_CAPSULE_DROPS],
   );
-  const [cartItems, setCartItems] = useState<{ item: CartCapsuleItem; qty: number; size: string }[]>([]);
+  const [cartItems, setCartItems] = useState<BagLine<CartCapsuleItem>[]>(() => {
+    try { return restoreBag(window.localStorage.getItem(BAG_STORAGE_KEY), loadAllCapsules()); }
+    catch { return []; }
+  });
+  const [receipt, setReceipt] = useState<CapsuleReceipt | null>(null);
+  const [receiptError, setReceiptError] = useState<string | null>(null);
+  const [receiptLoading, setReceiptLoading] = useState(false);
   const drawerRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const demoHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -246,8 +256,51 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [demoReceipt, setDemoReceipt] = useState<{
     sessionId: string;
-    split: { athleteAud: number; clubAud: number; partnerAud: number } | null;
+    split: CapsuleReceipt['splits'] | null;
+    totals: ReturnType<typeof capsuleTotals>;
   } | null>(null);
+
+  useEffect(() => {
+    try {
+      if (cartItems.length) window.localStorage.setItem(BAG_STORAGE_KEY, serialiseBag(cartItems));
+      else window.localStorage.removeItem(BAG_STORAGE_KEY);
+    } catch { /* Storage may be unavailable in private browsing. */ }
+  }, [cartItems]);
+
+  useEffect(() => {
+    if (!checkoutReturn) return;
+    if (checkoutReturn.status === 'cancelled') {
+      setView('empty');
+      return;
+    }
+    setView('receipt');
+    setReceiptLoading(true);
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch(`/api/checkout/capsule-session?session_id=${encodeURIComponent(checkoutReturn.sessionId)}`, { signal: controller.signal });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Unable to verify checkout. Your bag has been kept.');
+        if (controller.signal.aborted) return;
+        setReceipt(data);
+        if (data.paymentStatus === 'paid') {
+          try {
+            const key = PENDING_BAG_STORAGE_PREFIX + checkoutReturn.sessionId;
+            const settled = settlePaidBag(window.localStorage.getItem(BAG_STORAGE_KEY), window.localStorage.getItem(key), loadAllCapsules());
+            if (settled.lines.length) window.localStorage.setItem(BAG_STORAGE_KEY, serialiseBag(settled.lines));
+            else window.localStorage.removeItem(BAG_STORAGE_KEY);
+            window.localStorage.setItem(key, settled.checkout);
+            setCartItems(settled.lines);
+          } catch { setCartItems([]); }
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) setReceiptError(error instanceof Error ? error.message : 'Unable to verify checkout. Your bag has been kept.');
+      } finally {
+        if (!controller.signal.aborted) setReceiptLoading(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [checkoutReturn]);
 
   // Studio State
   const [selectedChassisId, setSelectedChassisId] = useState<string>('hoodie_420');
@@ -332,7 +385,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     drawerRef.current?.scrollTo({ top: 0, behavior: 'instant' });
-    if (view === 'checkout_demo') demoHeadingRef.current?.focus({ preventScroll: true });
+    if (view === 'checkout_demo' || view === 'receipt') demoHeadingRef.current?.focus({ preventScroll: true });
   }, [isOpen, view]);
 
   if (!isOpen) return null;
@@ -391,6 +444,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       }
 
       if (data.checkoutUrl && /^https?:\/\//i.test(data.checkoutUrl)) {
+        try {
+          if (typeof data.sessionId === 'string' && /^cs_(test|live)_/.test(data.sessionId)) {
+            window.localStorage.setItem(PENDING_BAG_STORAGE_PREFIX + data.sessionId, serialiseBag(cartItems));
+          }
+        } catch { /* Checkout remains available when storage is unavailable. */ }
         window.location.assign(data.checkoutUrl);
         return;
       }
@@ -401,9 +459,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       }
       const { athleteAud, clubAud, partnerAud } = data.splits ?? {};
       const split = [athleteAud, clubAud, partnerAud].every(Number.isFinite)
-        ? { athleteAud, clubAud, partnerAud }
+        ? { athleteCents: Math.round(athleteAud * 100), clubCents: Math.round(clubAud * 100), partnerCents: Math.round(partnerAud * 100),
+          ...Object.fromEntries(['netCents', 'garmentCostCents', 'platformCents'].filter(key => Number.isSafeInteger(data.splits[key]) && data.splits[key] >= 0).map(key => [key, data.splits[key]])) }
         : null;
-      setDemoReceipt({ sessionId, split });
+      setDemoReceipt({ sessionId, split, totals: capsuleTotals(cartItems.reduce((sum, entry) => sum + Math.round(entry.item.priceAud * 100) * entry.qty, 0)) });
       setView('checkout_demo');
     } catch (err: any) {
       setCheckoutError(err?.message || 'Unable to connect to checkout server on port 3001.');
@@ -460,16 +519,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     setCartItems(prev => prev.map((entry, i) => i === idx ? { ...entry, qty } : entry));
   };
 
-  const grossTotal = cartItems.reduce((sum, entry) => sum + entry.item.priceAud * entry.qty, 0);
-  const formatAud = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', currencyDisplay: 'narrowSymbol' });
+  const totals = capsuleTotals(cartItems.reduce((sum, entry) => sum + Math.round(entry.item.priceAud * 100) * entry.qty, 0));
 
   const hasPartnerActive = newCollabPartner.trim().length > 0 && enablePartnerRoyaltySplit;
   const athletePctPreview = hasPartnerActive ? 0.55 : 0.7;
-  const partnerPctPreview = hasPartnerActive ? 0.15 : 0;
-  const previewNetMargin = Math.max(0, Number(newPrice) - activeChassis.baseCostAud);
-  const previewAthleteUnit = Math.round(previewNetMargin * athletePctPreview);
-  const previewPartnerUnit = Math.round(previewNetMargin * partnerPctPreview);
-  const previewClubUnit = Math.round(previewNetMargin * 0.15);
+  const previewSplit = capsuleSplit(Number(newPrice), activeChassis.baseCostAud, hasPartnerActive ? 15 : 0);
+  const previewAthleteUnit = (previewSplit.athleteCents / 100).toFixed(2);
+  const previewPartnerUnit = (previewSplit.partnerCents / 100).toFixed(2);
+  const previewClubUnit = (previewSplit.clubCents / 100).toFixed(2);
 
   return createPortal(
     <dialog
@@ -565,6 +622,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       </header>
 
       <p role="status" className="sr-only">{bagUpdate}</p>
+      {view === 'empty' && checkoutReturn?.status === 'cancelled' && (
+        <p role="status" className="mx-auto px-4 font-mono text-xs text-[#080808]">Checkout cancelled. Your bag has been kept. No payment is confirmed.</p>
+      )}
       <div className="capsule-shop-content flex-1 w-full max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 pt-6 pb-14 flex flex-col">
         <div className="capsule-shop-panel w-full min-h-[640px] rounded-[20px] bg-[#F7F7F6] p-3 sm:p-8 md:p-12 flex flex-col relative overflow-hidden">
           {view === 'empty' && cartItems.length === 0 && (
@@ -724,7 +784,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         </div>
                       </div>
 
-                      <div className="mt-4 rounded-xl bg-[#EAEAE6] p-3.5 font-mono text-[10px] space-y-1.5 border border-black/10">
+                      <div className="mt-4 rounded-xl bg-[#EAEAE6] p-3.5 font-['JetBrains_Mono',monospace] text-[10px] space-y-1.5 border border-black/10">
                         <div className="flex justify-between text-neutral-700">
                           <span>{Math.round(athletePctPreview * 100)}% ATHLETE:</span>
                           <strong className="text-[#0F0F11]">A${previewAthleteUnit} / unit</strong>
@@ -996,13 +1056,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 {capsules.map((drop) => {
                   const multiplier = sponsorBulkMode ? 25 : 1;
                   const displayPrice = drop.priceAud * multiplier;
-                  const netPerUnit = drop.priceAud - drop.baseCostAud;
                   const athletePct = drop.collabRoyaltyPct ? 0.55 : 0.7;
-                  const athleteTotal = Math.round(netPerUnit * athletePct) * multiplier;
-                  const partnerTotal = drop.collabRoyaltyPct
-                    ? Math.round(netPerUnit * (drop.collabRoyaltyPct / 100)) * multiplier
-                    : 0;
-                  const clubTotal = Math.round(netPerUnit * 0.15) * multiplier;
+                  const split = capsuleSplit(drop.priceAud, drop.baseCostAud, drop.collabRoyaltyPct ?? 0, multiplier);
+                  const athleteTotal = split.athleteCents / 100;
+                  const partnerTotal = split.partnerCents / 100;
+                  const clubTotal = split.clubCents / 100;
                   return (
                     <article
                       key={drop.id}
@@ -1072,13 +1130,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               : '+ Add to Bag'}
                           </button>
                         </div>
-                        <div className="rounded-xl bg-[#EAEAE6] p-3.5 font-mono text-[10.5px] space-y-1.5 border border-black/10">
+                        <div className="rounded-xl bg-[#EAEAE6] p-3.5 font-['JetBrains_Mono',monospace] text-[10.5px] space-y-1.5 border border-black/10">
                           <div className="flex justify-between">
                             <span className="text-neutral-600">
                               {Math.round(athletePct * 100)}% TO {drop.athleteName.toUpperCase()}:
                             </span>
                             <strong className="text-[#0F0F11]">
-                              A${athleteTotal.toLocaleString()} {sponsorBulkMode ? '/ pack' : '/ unit'}
+                              A${athleteTotal.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {sponsorBulkMode ? '/ pack' : '/ unit'}
                             </strong>
                           </div>
                           {drop.collabPartner && partnerTotal > 0 && (
@@ -1087,7 +1145,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                                 15% TO {drop.collabPartner.toUpperCase()}:
                               </span>
                               <strong className="text-[#0F0F11]">
-                                A${partnerTotal.toLocaleString()} {sponsorBulkMode ? '/ pack' : '/ unit'}
+                                A${partnerTotal.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {sponsorBulkMode ? '/ pack' : '/ unit'}
                               </strong>
                             </div>
                           )}
@@ -1096,7 +1154,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               15% TO {drop.clubName.toUpperCase()}:
                             </span>
                             <strong className="text-[#0F0F11]">
-                              A${clubTotal.toLocaleString()} {sponsorBulkMode ? '/ pack' : '/ unit'}
+                              A${clubTotal.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {sponsorBulkMode ? '/ pack' : '/ unit'}
                             </strong>
                           </div>
                         </div>
@@ -1110,7 +1168,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           )}
 
           {view === 'empty' && cartItems.length > 0 && (
-            <section aria-label="Your bag" className="capsule-live-bag space-y-5 bg-[#0F0F11] p-5 text-white sm:p-8">
+            <section aria-label="Your bag" className="capsule-live-bag space-y-5 bg-[#080808] p-5 text-[#F7F7F6] sm:p-8">
               <h2 className="m-0 text-3xl font-black">Your bag</h2>
               <ul className="m-0 list-none space-y-3 p-0">
                 {cartItems.map((entry, idx) => {
@@ -1119,13 +1177,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     <li key={entry.item.id + entry.size} className="flex flex-wrap items-center justify-between gap-3 border-b border-white/20 pb-3">
                       <div className="text-sm">
                         <strong>{entry.item.title}</strong>
-                        <p className="m-0 mt-1 text-neutral-300">{entry.size} · A${(entry.item.priceAud * entry.qty).toLocaleString()}</p>
+                        <p className="m-0 mt-1 font-['JetBrains_Mono',monospace] text-neutral-300">{entry.size} · A${(entry.item.priceAud * entry.qty).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                       </div>
                       <div className="capsule-bag-quantity flex items-center gap-2">
                         <button type="button" disabled={entry.qty <= step} onClick={() => changeQuantity(idx, entry.qty - step)}
                           aria-label={`Decrease quantity of ${entry.item.title}`}
                           className="h-11 w-11 border border-white/30 bg-transparent text-white disabled:opacity-40">−</button>
-                        <span aria-label="Quantity" aria-live="polite">{entry.qty}</span>
+                        <span aria-label="Quantity" aria-live="polite" className="font-['JetBrains_Mono',monospace]">{entry.qty}</span>
                         <button type="button" disabled={entry.qty + step > 100} onClick={() => changeQuantity(idx, entry.qty + step)}
                           aria-label={`Increase quantity of ${entry.item.title}`}
                           className="h-11 w-11 border border-white/30 bg-transparent text-white disabled:opacity-40">+</button>
@@ -1138,7 +1196,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 })}
               </ul>
               <div className="capsule-checkout-actions flex flex-wrap items-center justify-between gap-4">
-                <p className="m-0 font-bold">Subtotal · A${grossTotal.toLocaleString()}</p>
+                <CapsuleTotals totals={totals} />
                 <button type="button" disabled={isCheckingOut} onClick={handleStripeCheckout}
                   className="min-h-11 rounded-full border-0 bg-volt px-6 font-mono text-xs font-bold uppercase text-[#0F0F11] hover:bg-white disabled:opacity-50">
                   {isCheckingOut ? 'Opening checkout…' : 'Checkout'}
@@ -1159,13 +1217,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 No payment was taken, no order was placed, and no funds were transferred.
               </p>
               {demoReceipt.split && (
-                <p className="m-0 font-sans text-sm text-neutral-700">
-                  Example split (AUD): {formatAud.format(demoReceipt.split.athleteAud)} for athletes,
-                  {' '}{formatAud.format(demoReceipt.split.clubAud)} for clubs
-                  {demoReceipt.split.partnerAud > 0 && `, and ${formatAud.format(demoReceipt.split.partnerAud)} for collaborators`}.
+                <p className="m-0 font-['JetBrains_Mono',monospace] text-xs text-neutral-700">
+                  {formatCapsuleSplit(demoReceipt.split, demoReceipt.totals.subtotalCents, 'aud', true)}
                 </p>
               )}
               <p className="m-0 font-mono text-[11px] text-neutral-500">Demo session: {demoReceipt.sessionId}</p>
+              <CapsuleTotals totals={demoReceipt.totals} />
               <div className="capsule-checkout-actions pt-4 flex justify-center gap-3">
                 <button
                   type="button"
@@ -1186,6 +1243,26 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </button>
               </div>
             </div>
+          )}
+          {view === 'receipt' && (
+            <section aria-label="Checkout receipt" className="mx-auto w-full max-w-xl space-y-5 py-10 text-[#080808]">
+              <h2 ref={demoHeadingRef} tabIndex={-1} className="m-0 text-3xl font-black">{receiptLoading ? 'Verifying checkout' : receipt?.paymentStatus === 'paid' ? 'Payment confirmed' : 'Payment not confirmed'}</h2>
+              {receiptLoading && <p role="status" className="font-['JetBrains_Mono',monospace] text-xs">Checking your Stripe session…</p>}
+              {receiptError && <p role="alert">{receiptError}</p>}
+              {receipt && (
+                <>
+                  <p className="font-['JetBrains_Mono',monospace] text-xs">Stripe payment status: {receipt.paymentStatus}. {receipt.paymentStatus !== 'paid' && 'Your bag has been kept. Do not pay again until you have checked the payment status.'}</p>
+                  <ul className="list-none space-y-3 p-0 font-['JetBrains_Mono',monospace] text-xs">
+                    {receipt.lineItems.map((line, index) => <li key={index}>{line.description} × {line.quantity} · {formatCapsuleMoney(line.amountCents, receipt.currency)}</li>)}
+                  </ul>
+                  <CapsuleTotals totals={receipt} currency={receipt.currency} />
+                  <p className="font-['JetBrains_Mono',monospace] text-xs">{formatCapsuleSplit(receipt.splits, receipt.subtotalCents, receipt.currency)}</p>
+                </>
+              )}
+              <div className="capsule-checkout-actions flex gap-3">
+                <button type="button" onClick={() => setView('empty')} className="min-h-11 rounded-full border-0 bg-[#080808] px-6 font-mono text-xs text-[#F7F7F6]">View Bag</button>
+              </div>
+            </section>
           )}
         </div>
       </div>

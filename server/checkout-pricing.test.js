@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 async function fixture(run, { stripe = true } = {}) {
   const names = ['STRIPE_SECRET_KEY', 'SUPABASE_URL', 'VITE_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'APP_BASE_URL'];
   const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
-  if (stripe) process.env.STRIPE_SECRET_KEY = 'test-only-checkout-key';
+  if (stripe) process.env.STRIPE_SECRET_KEY = 'sk_test_checkout_fixture';
   else delete process.env.STRIPE_SECRET_KEY;
   process.env.APP_BASE_URL = 'https://fixture.invalid';
   process.env.SUPABASE_URL = 'https://db.fixture.invalid';
@@ -120,10 +120,17 @@ test('capsule prices, costs, royalties, identity and product images come only fr
   assert.equal(body.get('metadata[athleteCutCents]'), '19750');
   assert.equal(body.get('metadata[clubCutCents]'), '5100');
   assert.equal(body.get('metadata[partnerCutCents]'), '4050');
+  assert.equal(body.get('line_items[2][price_data][product_data][name]'), 'GST (10%)');
+  assert.equal(body.get('line_items[2][price_data][unit_amount]'), '4550');
+  assert.equal(body.get('line_items[2][quantity]'), '1');
+  assert.equal(body.get('line_items[2][price_data][currency]'), 'aud');
+  assert.equal(body.get('metadata[grossCents]'), '45500');
+  assert.ok(![...body.keys()].some(key => key.includes('shipping')));
   assert.ok(body.get('line_items[0][price_data][product_data][name]').includes('MT-22 Heavyweight Contrast Hood'));
   assert.ok(!body.toString().includes('forged'));
   assert.ok(!body.toString().includes('attacker.invalid'));
-  assert.equal(body.has('line_items[0][price_data][product_data][images][0]'), false);
+  assert.equal(body.get('line_items[0][price_data][product_data][images][0]'), 'https://fixture.invalid/products/drop_mt_2200/front.jpg');
+  assert.equal(body.get('line_items[1][price_data][product_data][images][0]'), 'https://fixture.invalid/products/drop_sb_2095/front.jpg');
 }));
 
 test('sandbox capsule checkout returns an example split without calling Stripe', () => fixture(async ({ post, calls }) => {
@@ -132,8 +139,9 @@ test('sandbox capsule checkout returns an example split without calling Stripe',
   const result = await response.json();
   assert.equal(result.mode, 'sandbox_demo');
   assert.equal(result.checkoutUrl, null);
+  assert.deepEqual(result.totals, { subtotalCents: 36000, gstCents: 3600, shippingCents: 0, totalCents: 39600 });
   assert.match(result.sessionId, /^cs_demo_capsule_/);
-  assert.deepEqual(result.splits, { grossAud: 360, athleteAud: 148.5, clubAud: 40.5, partnerAud: 40.5 });
+  assert.deepEqual(result.splits, { grossAud: 360, athleteAud: 148.5, clubAud: 40.5, partnerAud: 40.5, netCents: 27000, garmentCostCents: 9000, platformCents: 4050 });
   assert.equal(calls.length, 0);
 }, { stripe: false }));
 
@@ -152,4 +160,5 @@ test('canonical 25-garment venue packs retain catalogue unit pricing', () => fix
   assert.equal((await post({ capsuleItems: [{ id: 'drop_mt_2200', qty: 25, size: '25x VENUE CURVE (3S·8M·9L·5XL)', priceAud: 1 }] })).status, 200);
   assert.equal(calls[0].get('line_items[0][price_data][unit_amount]'), '18000');
   assert.equal(calls[0].get('line_items[0][quantity]'), '25');
+  assert.equal(calls[0].get('line_items[1][price_data][unit_amount]'), '45000');
 }));
