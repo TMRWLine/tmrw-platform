@@ -129,7 +129,8 @@ test('capsule prices, costs, royalties, identity and product images come only fr
   assert.ok(body.get('line_items[0][price_data][product_data][name]').includes('MT-22 Heavyweight Contrast Hood'));
   assert.ok(!body.toString().includes('forged'));
   assert.ok(!body.toString().includes('attacker.invalid'));
-  assert.equal(body.has('line_items[0][price_data][product_data][images][0]'), false);
+  assert.equal(body.get('line_items[0][price_data][product_data][images][0]'), 'https://fixture.invalid/products/drop_mt_2200/front.jpg');
+  assert.equal(body.get('line_items[1][price_data][product_data][images][0]'), 'https://fixture.invalid/products/drop_sb_2095/front.jpg');
 }));
 
 test('sandbox capsule checkout returns an example split without calling Stripe', () => fixture(async ({ post, calls }) => {
