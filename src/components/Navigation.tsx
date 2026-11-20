@@ -154,10 +154,10 @@ export const Navigation: React.FC<NavigationProps> = ({
     <header className={`tmrw-navigation ${headerClass}`}>
       {/* Grid container: shares the 1600px plumb line of the showcase cards below. */}
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 w-full h-full flex items-center justify-between">
-        <BrandLockup tone={dark ? 'dark' : 'light'} onClick={goHome} className="nav-brand" />
+        <BrandLockup tone={dark ? 'dark' : 'light'} onClick={goHome} className="nav-brand shrink-0 max-sm:[&>span]:w-[92px]" />
 
         {/* Centre links */}
-        <nav className="hidden md:flex items-center gap-1" aria-label="Primary">
+        <nav className="hidden lg:flex items-center gap-1" aria-label="Primary">
           {NAV_LINKS.map((link) => {
             const href =
               link.id === 'commercial-tiers'
@@ -212,7 +212,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={onOpenPortal}
             aria-label="Athlete Portal"
             aria-haspopup="dialog"
-            className={`nav-portal group relative inline-flex items-center gap-2 rounded-full px-2 sm:px-4 py-1.5 border transition-all duration-200 mr-1 sm:mr-4 cursor-pointer select-none ${focusRing} ${
+            className={`nav-portal group relative inline-flex items-center gap-1 sm:gap-2 rounded-full px-2 sm:px-4 py-1.5 border transition-all duration-200 mr-1 sm:mr-4 cursor-pointer select-none ${focusRing} ${
               dark
                 ? 'border-white/20 bg-white/[0.04] hover:bg-volt hover:border-volt'
                 : 'border-[#080808]/20 bg-[#080808]/[0.03] hover:bg-[#080808] hover:border-[#080808]'
@@ -230,7 +230,7 @@ export const Navigation: React.FC<NavigationProps> = ({
 
             {/* Rolling monospace label */}
             <span
-              className={`whitespace-nowrap font-mono text-[10px] font-bold tracking-[0.12em] ${
+              className={`whitespace-nowrap font-mono text-[9px] sm:text-[10px] font-bold tracking-[0.04em] sm:tracking-[0.12em] ${
                 dark ? 'text-white group-hover:text-black' : 'text-[#080808] group-hover:text-[#F7F7F6]'
               }`}
             >
@@ -244,7 +244,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             aria-label="Search the roster"
             aria-haspopup="dialog"
             aria-expanded={isSearchOpen}
-            className={`${iconButton} ${focusRing}`}
+            className={`${iconButton} max-sm:p-1.5 ${focusRing}`}
           >
             <SearchIcon />
           </button>
@@ -253,7 +253,8 @@ export const Navigation: React.FC<NavigationProps> = ({
             type="button"
             onClick={() => emitOverlayEvent(OPEN_DEPLOY_DRAWER_EVENT)}
             aria-label="Open capital deployment drawer"
-            className={`${iconButton} ml-1 ${focusRing}`}
+            aria-haspopup="dialog"
+            className={`${iconButton} max-sm:p-1.5 sm:ml-1 ${focusRing}`}
           >
             <BagIcon />
           </button>
@@ -263,8 +264,9 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={onToggleMenu}
             aria-label="Open menu"
             aria-haspopup="dialog"
+            aria-controls="site-menu"
             aria-expanded={isMenuOpen}
-            className={`${iconButton} ml-1 ${focusRing}`}
+            className={`${iconButton} max-sm:p-1.5 sm:ml-1 ${focusRing}`}
           >
             <MenuIcon />
           </button>

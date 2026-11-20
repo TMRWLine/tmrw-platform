@@ -8,8 +8,6 @@
 
   .tmrw-navigation nav { display: none; }
   .nav-brand { flex-shrink: 0; min-height: 44px; justify-content: center; }
-  .nav-brand > span:first-child > span { font-size: 24px; }
-  .nav-brand svg { width: 15px; }
   .nav-utilities { flex-shrink: 0; }
   .nav-utilities > button {
     min-width: 44px;

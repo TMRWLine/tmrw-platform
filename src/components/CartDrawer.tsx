@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BrandLockup } from './BrandLockup';
+import { ProductPhotoGallery } from './ProductPhotoGallery';
 import type { AthleteRecord } from '../data/roster';
 
 export type LockupStyleId = 'editorial' | 'stencil' | 'heritage';
@@ -19,8 +20,6 @@ export interface CartCapsuleItem {
   gsm: string;
   fitProfile: string;
   garmentType: 'hoodie' | 'tee';
-  frontImageUrl: string;
-  backImageUrl: string;
   priceAud: number;
   baseCostAud: number;
   unitsSold: number;
@@ -51,8 +50,6 @@ interface BlankChassis {
   gsm: string;
   fitProfile: string;
   garmentType: 'hoodie' | 'tee';
-  frontImageUrl: string;
-  backImageUrl: string;
   baseCostAud: number;
   defaultRetailAud: number;
   spec: string;
@@ -66,8 +63,6 @@ const BLANK_CHASSIS_OPTIONS: readonly BlankChassis[] = [
     gsm: '420GSM',
     fitProfile: 'BOX FIT · RAW EDGE TRIMMING',
     garmentType: 'hoodie',
-    frontImageUrl: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=85',
-    backImageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1000&q=85',
     baseCostAud: 45,
     defaultRetailAud: 180,
     spec: '420GSM Heavyweight French Terry Cotton · Garment Dyed & Distressed',
@@ -79,8 +74,6 @@ const BLANK_CHASSIS_OPTIONS: readonly BlankChassis[] = [
     gsm: '280GSM',
     fitProfile: 'RELAXED ARCHITECTURAL CUT',
     garmentType: 'tee',
-    frontImageUrl: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85',
-    backImageUrl: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=1000&q=85',
     baseCostAud: 25,
     defaultRetailAud: 95,
     spec: '280GSM Combed Cotton · Overlocked Seams & Pip Label',
@@ -138,8 +131,6 @@ const DEFAULT_CAPSULE_DROPS: readonly CartCapsuleItem[] = [
     gsm: '420GSM',
     fitProfile: 'BOX FIT · RAW EDGE TRIMMING',
     garmentType: 'hoodie',
-    frontImageUrl: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=85',
-    backImageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1000&q=85',
     priceAud: 180,
     baseCostAud: 45,
     unitsSold: 58,
@@ -162,8 +153,6 @@ const DEFAULT_CAPSULE_DROPS: readonly CartCapsuleItem[] = [
     gsm: '280GSM',
     fitProfile: 'RELAXED ARCHITECTURAL CUT',
     garmentType: 'tee',
-    frontImageUrl: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85',
-    backImageUrl: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=1000&q=85',
     priceAud: 95,
     baseCostAud: 25,
     unitsSold: 131,
@@ -205,6 +194,7 @@ function getLockupClass(styleId?: LockupStyleId): string {
 interface CartDrawerProps {
   isOpen?: boolean;
   onClose: () => void;
+  onHome: () => void;
   selectedAthlete?: AthleteRecord | any | null;
   onExploreRoster?: () => void;
 }
@@ -233,23 +223,30 @@ const RetroPixelCabinetIcon: React.FC = () => (
 export const CartDrawer: React.FC<CartDrawerProps> = ({
   isOpen = true,
   onClose,
+  onHome,
   selectedAthlete,
   onExploreRoster,
 }) => {
-  const [view, setView] = useState<'empty' | 'capsules' | 'creator' | 'checkout_success'>('capsules');
+  const [view, setView] = useState<'empty' | 'capsules' | 'creator' | 'checkout_demo'>('capsules');
   const [capsules, setCapsules] = useState<CartCapsuleItem[]>(() =>
     typeof window !== 'undefined' ? loadAllCapsules() : [...DEFAULT_CAPSULE_DROPS],
   );
   const [cartItems, setCartItems] = useState<{ item: CartCapsuleItem; qty: number; size: string }[]>([]);
+  const drawerRef = useRef<HTMLDialogElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const demoHeadingRef = useRef<HTMLHeadingElement>(null);
+  const [bagUpdate, setBagUpdate] = useState('');
   const [selectedSize, setSelectedSize] = useState<Record<string, string>>({
     drop_mt_2200: 'L',
     drop_sb_2095: 'M',
   });
   const [sponsorBulkMode, setSponsorBulkMode] = useState(false);
-  const [hoveredSides, setHoveredSides] = useState<Record<string, boolean>>({});
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [lastSessionId, setLastSessionId] = useState<string | null>(null);
+  const [demoReceipt, setDemoReceipt] = useState<{
+    sessionId: string;
+    split: { athleteAud: number; clubAud: number; partnerAud: number } | null;
+  } | null>(null);
 
   // Studio State
   const [selectedChassisId, setSelectedChassisId] = useState<string>('hoodie_420');
@@ -313,24 +310,35 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+    const drawer = drawerRef.current;
+    if (!isOpen || !drawer) return;
+    const trigger = document.activeElement;
+    drawer.showModal();
+    closeRef.current?.focus();
+    return () => {
+      drawer.close();
+      if (document.activeElement === document.body && trigger instanceof HTMLElement && trigger.getClientRects().length) {
+        trigger.focus({ preventScroll: true });
+      }
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    drawerRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+    if (view === 'checkout_demo') demoHeadingRef.current?.focus({ preventScroll: true });
+  }, [isOpen, view]);
 
   if (!isOpen) return null;
-
-  const toggleFlipCard = (id: string) => {
-    setHoveredSides((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
 
   const addToCart = (drop: CartCapsuleItem) => {
     setCheckoutError(null);
     const qtyToAdd = sponsorBulkMode ? 25 : 1;
     const size = sponsorBulkMode ? '25x VENUE CURVE (3S·8M·9L·5XL)' : selectedSize[drop.id] || 'L';
+    if ((cartItems.find(entry => entry.item.id === drop.id && entry.size === size)?.qty ?? 0) + qtyToAdd > 100) {
+      setBagUpdate('This item has reached the maximum quantity per order.');
+      return;
+    }
     setCartItems((prev) => {
       const existingIdx = prev.findIndex((x) => x.item.id === drop.id && x.size === size);
       if (existingIdx > -1) {
@@ -343,7 +351,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       }
       return [...prev, { item: drop, qty: qtyToAdd, size }];
     });
-    setView('capsules');
+    setBagUpdate(`Added ${drop.title} to your bag.`);
   };
 
   const handleStripeCheckout = async () => {
@@ -363,7 +371,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         baseCostAud: entry.item.baseCostAud,
         qty: entry.qty,
         size: entry.size,
-        frontImageUrl: entry.item.frontImageUrl,
       }));
 
       const response = await fetch('/api/checkout/create-session', {
@@ -382,8 +389,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         return;
       }
 
-      setLastSessionId(data.sessionId || `cs_test_${Date.now()}`);
-      setView('checkout_success');
+      const sessionId = data.sessionId;
+      if (typeof sessionId !== 'string' || !sessionId.startsWith('cs_demo_capsule_')) {
+        throw new Error('Checkout did not return a payment link.');
+      }
+      const { athleteAud, clubAud, partnerAud } = data.splits ?? {};
+      const split = [athleteAud, clubAud, partnerAud].every(Number.isFinite)
+        ? { athleteAud, clubAud, partnerAud }
+        : null;
+      setDemoReceipt({ sessionId, split });
+      setView('checkout_demo');
     } catch (err: any) {
       setCheckoutError(err?.message || 'Unable to connect to checkout server on port 3001.');
     } finally {
@@ -418,8 +433,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       gsm: activeChassis.gsm,
       fitProfile: activeChassis.fitProfile,
       garmentType: activeChassis.garmentType,
-      frontImageUrl: activeChassis.frontImageUrl,
-      backImageUrl: activeChassis.backImageUrl,
       priceAud: Number(newPrice) || activeChassis.defaultRetailAud,
       baseCostAud: activeChassis.baseCostAud,
       unitsSold: 1,
@@ -437,17 +450,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     setCartItems((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const changeQuantity = (idx: number, qty: number) => {
+    setCartItems(prev => prev.map((entry, i) => i === idx ? { ...entry, qty } : entry));
+  };
+
   const grossTotal = cartItems.reduce((sum, entry) => sum + entry.item.priceAud * entry.qty, 0);
-  const netMarginPool = cartItems.reduce(
-    (sum, entry) => sum + (entry.item.priceAud - entry.item.baseCostAud) * entry.qty,
-    0,
-  );
-  const athleteCutTotal = cartItems.reduce((sum, entry) => {
-    const unitNet = entry.item.priceAud - entry.item.baseCostAud;
-    const athletePct = entry.item.collabRoyaltyPct ? 0.55 : 0.7;
-    return sum + Math.round(unitNet * athletePct) * entry.qty;
-  }, 0);
-  const clubCut15 = Math.round(netMarginPool * 0.15);
+  const formatAud = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', currencyDisplay: 'narrowSymbol' });
 
   const hasPartnerActive = newCollabPartner.trim().length > 0 && enablePartnerRoyaltySplit;
   const athletePctPreview = hasPartnerActive ? 0.55 : 0.7;
@@ -458,12 +466,33 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const previewClubUnit = Math.round(previewNetMargin * 0.15);
 
   return createPortal(
-    <div
+    <dialog
+      ref={drawerRef}
+      aria-label="Merchandise showroom and bag"
       data-lenis-prevent="true"
-      className="mobile-overlay fixed inset-0 z-[90] bg-[#FFFFFF] text-[#0F0F11] flex flex-col overflow-y-auto selection:bg-volt selection:text-[#0F0F11] animate-fadeIn"
+      onCancel={event => {
+        event.preventDefault();
+        onClose();
+      }}
+      onKeyDown={event => {
+        if (event.key !== 'Tab') return;
+        const controls = [...event.currentTarget.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]',
+        )].filter(control => control.tabIndex >= 0 && control.getClientRects().length);
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }}
+      className="mobile-overlay fixed inset-0 m-0 h-full w-full max-h-none max-w-none border-0 bg-white p-0 text-[#0F0F11] open:flex flex-col overflow-y-auto overscroll-contain selection:bg-volt selection:text-[#0F0F11] motion-safe:animate-fadeIn"
     >
       <header className="shrink-0 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-5 flex items-center justify-between border-b border-black/10">
-        <BrandLockup onClick={onClose} />
+        <BrandLockup onClick={onHome} />
 
         <div className="hidden md:flex items-center gap-6 font-sans text-xs font-medium text-[#0F0F11]">
           <button
@@ -485,15 +514,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           >
             Athlete Merch Capsules ({capsules.length})
           </button>
-          <button
-            type="button"
-            onClick={() => setView('empty')}
-            className={`bg-transparent border-0 cursor-pointer ${
-              view === 'empty' && cartItems.length === 0 ? 'font-bold underline underline-offset-4' : 'hover:opacity-60'
-            }`}
-          >
-            Bag ({cartItems.reduce((s, i) => s + i.qty, 0)})
-          </button>
           <span className="h-3.5 w-[1px] bg-black/15" aria-hidden="true" />
           <button
             type="button"
@@ -509,16 +529,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          {cartItems.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setView('capsules')}
-              className="rounded-full bg-[#0F0F11] text-volt px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer"
-            >
-              {cartItems.reduce((s, i) => s + i.qty, 0)} Items · A${grossTotal.toLocaleString()}
-            </button>
-          )}
           <button
+            type="button"
+            aria-pressed={view === 'empty'}
+            onClick={() => setView('empty')}
+            className="min-h-11 rounded-full border border-black/15 bg-white px-3 font-mono text-xs font-bold text-[#080808] aria-pressed:bg-[#080808] aria-pressed:text-white"
+          >
+            Bag ({cartItems.reduce((s, i) => s + i.qty, 0)})
+          </button>
+          <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
             title="Close [ESC]"
@@ -531,8 +551,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         </div>
       </header>
 
-      <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 pt-6 pb-14 flex flex-col justify-center">
-        <div className="w-full min-h-[640px] rounded-[28px] bg-[#EAEAE6] p-6 sm:p-12 md:p-16 flex flex-col justify-center relative overflow-hidden">
+      <p role="status" className="sr-only">{bagUpdate}</p>
+      <div className="flex-1 w-full max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 pt-6 pb-14 flex flex-col">
+        <div className="w-full min-h-[640px] rounded-[20px] bg-[#F7F7F6] p-3 sm:p-8 md:p-12 flex flex-col relative overflow-hidden">
           {view === 'empty' && cartItems.length === 0 && (
             <div className="max-w-md mx-auto text-center my-auto py-16">
               <RetroPixelCabinetIcon />
@@ -592,12 +613,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     <div>
                       <div className="flex items-center justify-between gap-2 pb-4 mb-4 border-b border-black/10">
                         <span className="font-mono text-[9.5px] font-bold uppercase tracking-widest text-neutral-500">
-                          INTERACTIVE SPECIMEN PREVIEW
+                          DESIGN MOCKUP · NOT A PRODUCT PHOTO
                         </span>
                         <div className="flex items-center gap-1 bg-[#EAEAE6] p-1 rounded-full">
                           <button
                             type="button"
                             onClick={() => setSpecimenSide('front')}
+                            aria-pressed={specimenSide === 'front'}
                             className={`rounded-full px-3 py-1 font-mono text-[9px] font-bold uppercase cursor-pointer border-0 transition-colors ${
                               specimenSide === 'front' ? 'bg-[#0F0F11] text-volt' : 'bg-transparent text-[#0F0F11]'
                             }`}
@@ -607,6 +629,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           <button
                             type="button"
                             onClick={() => setSpecimenSide('back')}
+                            aria-pressed={specimenSide === 'back'}
                             className={`rounded-full px-3 py-1 font-mono text-[9px] font-bold uppercase cursor-pointer border-0 transition-colors ${
                               specimenSide === 'back' ? 'bg-[#0F0F11] text-volt' : 'bg-transparent text-[#0F0F11]'
                             }`}
@@ -617,26 +640,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       </div>
 
                       <div
-                        onClick={() => setSpecimenSide((s) => (s === 'front' ? 'back' : 'front'))}
-                        onMouseEnter={() => setSpecimenSide('back')}
-                        onMouseLeave={() => setSpecimenSide('front')}
-                        className={`rounded-[18px] h-96 p-6 flex flex-col justify-between mb-5 transition-all relative overflow-hidden cursor-pointer select-none ${activeSwatch.swatchBg}`}
+                        className={`rounded-[18px] h-96 p-6 flex flex-col justify-between mb-5 relative overflow-hidden select-none ${activeSwatch.swatchBg}`}
                       >
                         <div className="absolute inset-0 z-0 overflow-hidden bg-black/20">
-                          <img
-                            src={activeChassis.frontImageUrl}
-                            alt={`${activeChassis.name} front`}
-                            className={`w-full h-full object-cover transition-all duration-700 ease-out absolute inset-0 ${
-                              specimenSide === 'back' ? 'opacity-0 scale-105' : 'opacity-65 scale-100'
-                            }`}
-                          />
-                          <img
-                            src={activeChassis.backImageUrl}
-                            alt={`${activeChassis.name} back`}
-                            className={`w-full h-full object-cover transition-all duration-700 ease-out absolute inset-0 ${
-                              specimenSide === 'back' ? 'opacity-70 scale-100' : 'opacity-0 scale-105'
-                            }`}
-                          />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/50" />
                         </div>
 
@@ -926,16 +932,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             </div>
           )}
 
-          {/* SHOWROOM VIEW (OPTION B: INTERACTIVE DUAL-IMAGE SPECIMEN INSPECTOR) */}
-          {(view === 'capsules' || view === 'empty') && (
+          {view === 'capsules' && (
             <div className="w-full space-y-6">
               <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/10 pb-6">
                 <div>
                   <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500 block mb-2">
-                    LIMITED ATHLETE CAPSULE DROPS · ZERO INVENTORY RISK
+                    ATHLETE CAPSULES
                   </span>
                   <h2 className="m-0 font-sans text-3xl sm:text-5xl font-black uppercase tracking-[-0.03em] text-[#0F0F11] leading-none">
-                    Co-Branded Athlete Merch<span className="text-volt">.</span>
+                    Co-Branded Athlete Merch.
                   </h2>
                 </div>
 
@@ -961,16 +966,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-white border border-black/15 px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 font-mono text-[10.5px]">
-                <span className="text-neutral-700">
-                  <strong className="text-[#0F0F11]">APPROACH B SPECIMEN INSPECTOR:</strong> Hover or tap any garment card below to fluidly cross-fade between the front retail lookbook and the back club postcode archive.
-                </span>
-                <span className="text-neutral-500">
-                  70/15/15 · STRIPE CONNECT SPLIT
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+              <div className="grid grid-cols-1 gap-6">
                 {capsules.map((drop) => {
                   const multiplier = sponsorBulkMode ? 25 : 1;
                   const displayPrice = drop.priceAud * multiplier;
@@ -981,137 +977,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     ? Math.round(netPerUnit * (drop.collabRoyaltyPct / 100)) * multiplier
                     : 0;
                   const clubTotal = Math.round(netPerUnit * 0.15) * multiplier;
-                  const isHovered = hoveredSides[drop.id] || false;
-                  const sold = drop.unitsSold ?? 42;
-                  const cap = drop.unitsCap ?? 100;
-                  const pctBooked = Math.min(100, Math.round((sold / cap) * 100));
-
                   return (
                     <article
                       key={drop.id}
-                      className="rounded-[24px] bg-white p-6 sm:p-8 border border-black/15 flex flex-col justify-between shadow-md transition-all duration-300 hover:shadow-xl"
+                      className="grid grid-cols-1 gap-5 border border-black/15 bg-white p-4 sm:grid-cols-2 sm:p-6"
                     >
-                      <div>
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          aria-label={`Inspect ${drop.title} front and back archive`}
-                          className={`relative h-[440px] rounded-[20px] p-6 flex flex-col justify-between overflow-hidden cursor-pointer select-none transition-all duration-500 ${drop.swatchBg}`}
-                          onMouseEnter={() => setHoveredSides((p) => ({ ...p, [drop.id]: true }))}
-                          onMouseLeave={() => setHoveredSides((p) => ({ ...p, [drop.id]: false }))}
-                          onClick={() => toggleFlipCard(drop.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              toggleFlipCard(drop.id);
-                            }
-                          }}
-                        >
-                          <div className="absolute inset-0 z-0 overflow-hidden bg-[#0F0F11]">
-                            <img
-                              src={drop.frontImageUrl}
-                              alt={`${drop.title} front lookbook`}
-                              className={`w-full h-full object-cover transition-all duration-700 ease-out absolute inset-0 ${
-                                isHovered ? 'opacity-0 scale-105' : 'opacity-70 scale-100'
-                              }`}
-                            />
-                            <img
-                              src={drop.backImageUrl}
-                              alt={`${drop.title} back postcode archive`}
-                              className={`w-full h-full object-cover transition-all duration-700 ease-out absolute inset-0 ${
-                                isHovered ? 'opacity-75 scale-100' : 'opacity-0 scale-105'
-                              }`}
-                            />
-                            <div
-                              className={`absolute inset-0 transition-opacity duration-500 ${
-                                isHovered
-                                  ? 'bg-gradient-to-t from-black/85 via-black/45 to-black/60'
-                                  : 'bg-gradient-to-t from-black/75 via-black/25 to-black/50'
-                              }`}
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between font-mono text-[9.5px] font-bold uppercase tracking-widest relative z-10 text-white">
-                            <span className="bg-black/45 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-                              {drop.edition}
-                            </span>
-                            <span
-                              className={`px-3.5 py-1 rounded-full backdrop-blur-sm transition-colors duration-300 ${
-                                isHovered
-                                  ? 'bg-volt text-[#0F0F11]'
-                                  : 'bg-black/60 text-volt border border-volt/30'
-                              }`}
-                            >
-                              {isHovered ? '⚡ SHOWING BACK ARCHIVE' : '⚡ HOVER TO FLIP BACK'}
-                            </span>
-                          </div>
-
-                          <div className="relative my-auto h-48 flex items-center justify-center z-10">
-                            <div
-                              className={`absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-500 ease-out ${
-                                isHovered
-                                  ? 'opacity-0 -translate-y-3 scale-95 pointer-events-none'
-                                  : 'opacity-100 translate-y-0 scale-100'
-                              }`}
-                            >
-                              <div
-                                className={`text-5xl sm:text-6xl text-white drop-shadow-[0_6px_24px_rgba(0,0,0,0.65)] ${getLockupClass(
-                                  drop.lockupStyle,
-                                )}`}
-                              >
-                                {drop.monogram}
-                                <span className="text-volt">.</span>
-                              </div>
-                              <div className="mt-2.5 font-mono text-[10px] tracking-widest uppercase text-white/90 bg-black/40 backdrop-blur-xs px-3 py-0.5 rounded-full">
-                                {drop.gsm} · {drop.fitProfile}
-                              </div>
-                              {drop.collabPartner && (
-                                <div className="mt-3.5 inline-flex items-center gap-1.5 rounded-full bg-black/90 text-volt px-3.5 py-1 font-mono text-[9.5px] font-bold uppercase tracking-widest border border-volt/40 shadow-lg">
-                                  <span>× {drop.collabPartner}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            <div
-                              className={`absolute inset-0 flex flex-col items-center justify-center text-center font-mono transition-all duration-500 ease-out bg-black/55 backdrop-blur-md p-6 rounded-2xl border border-white/15 shadow-2xl ${
-                                isHovered
-                                  ? 'opacity-100 translate-y-0 scale-100'
-                                  : 'opacity-0 translate-y-3 scale-95 pointer-events-none'
-                              }`}
-                            >
-                              <div className="text-[10px] uppercase text-volt tracking-widest font-bold">
-                                SOVEREIGN ARCHIVE // {drop.clubName}
-                              </div>
-                              <div className="text-4xl sm:text-5xl font-black tracking-tight text-white drop-shadow-md mt-1.5">
-                                POSTCODE {drop.postcode}
-                                <span className="text-volt">.</span>
-                              </div>
-                              <div className="text-[10px] uppercase text-neutral-200 pt-2">
-                                {drop.spec}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between font-mono text-[9.5px] uppercase text-white/90 pt-3 border-t border-white/15 relative z-10">
-                            <span>{drop.athleteName} × {drop.clubName}</span>
-                            <div className="flex items-center gap-2">
-                              <span className={!isHovered ? 'text-volt font-bold' : 'text-white/50'}>FRONT</span>
-                              <span>/</span>
-                              <span className={isHovered ? 'text-volt font-bold' : 'text-white/50'}>BACK</span>
-                              <span>· {drop.gsm}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-5 mb-4">
-                          <div className="flex justify-between font-mono text-[9.5px] uppercase text-neutral-500 mb-1.5">
-                            <span>PRE-ORDER TALLY: {sold} / {cap} UNITS</span>
-                            <span className="text-[#0F0F11] font-bold">{pctBooked}% BOOKED · GREENLIT</span>
-                          </div>
-                          <div className="w-full h-2 rounded-full bg-[#EAEAE6] overflow-hidden">
-                            <div className="h-full bg-[#0F0F11]" style={{ width: `${pctBooked}%` }} />
-                          </div>
-                        </div>
+                      <ProductPhotoGallery sku={drop.id} name={drop.title} />
+                      <div className="flex min-w-0 flex-col gap-4">
+                        <p className="m-0 font-mono text-xs text-neutral-700">
+                          {drop.athleteName} × {drop.clubName}
+                          {drop.collabPartner && ` × ${drop.collabPartner}`}
+                        </p>
 
                         <div className="flex items-start justify-between gap-2">
                           <div>
@@ -1132,7 +1008,44 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           </div>
                         </div>
 
-                        <div className="mt-4 rounded-xl bg-[#EAEAE6] p-3.5 font-mono text-[10.5px] space-y-1.5 border border-black/10">
+                        <div className="flex flex-wrap items-center gap-3">
+                          {!sponsorBulkMode ? (
+                            <div role="group" aria-label={`Size for ${drop.title}`} className="flex flex-wrap items-center gap-1.5">
+                              {['S', 'M', 'L', 'XL'].map((sz) => (
+                                <button
+                                  key={sz}
+                                  type="button"
+                                  aria-pressed={(selectedSize[drop.id] || 'L') === sz}
+                                  onClick={() =>
+                                    setSelectedSize((prev) => ({ ...prev, [drop.id]: sz }))
+                                  }
+                                  className={`w-11 h-11 rounded-xl font-mono text-xs font-bold cursor-pointer border transition-colors ${
+                                    (selectedSize[drop.id] || 'L') === sz
+                                      ? 'bg-[#0F0F11] text-volt border-[#0F0F11]'
+                                      : 'bg-[#EAEAE6] text-[#0F0F11] border-black/10 hover:bg-[#0F0F11] hover:text-white'
+                                  }`}
+                                >
+                                  {sz}
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="rounded-xl bg-[#EAEAE6] px-3 py-2 font-mono text-[10px] font-bold text-[#0F0F11]">
+                              SIZE CURVE: 3S·8M·9L·5XL
+                            </div>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => addToCart(drop)}
+                            className="min-h-11 rounded-full bg-[#0F0F11] hover:bg-volt text-white hover:text-[#0F0F11] px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider cursor-pointer border-0 shadow-md transition-colors"
+                          >
+                            {sponsorBulkMode
+                              ? `+ Lock 25x Pack (A$${displayPrice.toLocaleString()})`
+                              : '+ Add to Bag'}
+                          </button>
+                        </div>
+                        <div className="rounded-xl bg-[#EAEAE6] p-3.5 font-mono text-[10.5px] space-y-1.5 border border-black/10">
                           <div className="flex justify-between">
                             <span className="text-neutral-600">
                               {Math.round(athletePct * 100)}% TO {drop.athleteName.toUpperCase()}:
@@ -1161,122 +1074,71 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           </div>
                         </div>
                       </div>
-
-                      <div className="pt-5 mt-5 border-t border-black/10 flex items-center justify-between gap-2">
-                        {!sponsorBulkMode ? (
-                          <div className="flex items-center gap-1.5">
-                            {['S', 'M', 'L', 'XL'].map((sz) => (
-                              <button
-                                key={sz}
-                                type="button"
-                                onClick={() =>
-                                  setSelectedSize((prev) => ({ ...prev, [drop.id]: sz }))
-                                }
-                                className={`w-9 h-9 rounded-xl font-mono text-xs font-bold cursor-pointer border transition-colors ${
-                                  (selectedSize[drop.id] || 'L') === sz
-                                    ? 'bg-[#0F0F11] text-volt border-[#0F0F11]'
-                                    : 'bg-[#EAEAE6] text-[#0F0F11] border-black/10 hover:bg-[#0F0F11] hover:text-white'
-                                }`}
-                              >
-                                {sz}
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="rounded-xl bg-[#EAEAE6] px-3 py-2 font-mono text-[10px] font-bold text-[#0F0F11]">
-                            SIZE CURVE: 3S·8M·9L·5XL
-                          </div>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={() => addToCart(drop)}
-                          className="rounded-full bg-[#0F0F11] hover:bg-volt text-white hover:text-[#0F0F11] px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider cursor-pointer border-0 shadow-md transition-colors"
-                        >
-                          {sponsorBulkMode
-                            ? `+ Lock 25x Pack (A$${displayPrice.toLocaleString()})`
-                            : '+ Add to Bag'}
-                        </button>
-                      </div>
                     </article>
                   );
                 })}
               </div>
 
-              {cartItems.length > 0 && (
-                <div className="rounded-[24px] bg-[#0F0F11] text-white p-6 sm:p-8 flex flex-col gap-4 shadow-xl">
-                  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                    <div className="space-y-2 flex-1">
-                      <span className="font-mono text-[10px] uppercase tracking-widest text-volt block">
-                        LIVE BAG · STRIPE CONNECT ROYALTY SPLIT
-                      </span>
-                      <div className="flex flex-wrap gap-2">
-                        {cartItems.map((entry, idx) => (
-                          <span
-                            key={entry.item.id + entry.size + idx}
-                            className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 font-mono text-xs"
-                          >
-                            <span>
-                              {entry.qty}x {entry.item.title} ({entry.size})
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removeFromCart(idx)}
-                              className="bg-transparent border-0 text-volt cursor-pointer font-bold"
-                            >
-                              ✕
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 self-stretch lg:self-auto justify-between">
-                      <div className="text-right">
-                        <span className="font-mono text-[10px] text-neutral-400 uppercase block">
-                          TOTAL AUD
-                        </span>
-                        <span className="font-sans text-3xl font-black text-white">
-                          A${grossTotal.toLocaleString()}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        disabled={isCheckingOut}
-                        onClick={handleStripeCheckout}
-                        className="rounded-full bg-volt disabled:opacity-50 text-[#0F0F11] px-7 py-4 font-mono text-xs font-bold uppercase tracking-widest cursor-pointer border-0 shadow-md hover:bg-white transition-colors"
-                      >
-                        {isCheckingOut ? 'Initialising Stripe...' : 'Checkout via Stripe Connect →'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {checkoutError && (
-                    <div className="rounded-xl bg-red-500/20 border border-red-400/40 px-4 py-2.5 font-mono text-xs text-red-200">
-                      {checkoutError}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           )}
 
-          {view === 'checkout_success' && (
+          {view === 'empty' && cartItems.length > 0 && (
+            <section aria-label="Your bag" className="space-y-5 bg-[#0F0F11] p-5 text-white sm:p-8">
+              <h2 className="m-0 text-3xl font-black">Your bag</h2>
+              <ul className="m-0 list-none space-y-3 p-0">
+                {cartItems.map((entry, idx) => {
+                  const step = entry.size.startsWith('25x ') ? 25 : 1;
+                  return (
+                    <li key={entry.item.id + entry.size} className="flex flex-wrap items-center justify-between gap-3 border-b border-white/20 pb-3">
+                      <div className="text-sm">
+                        <strong>{entry.item.title}</strong>
+                        <p className="m-0 mt-1 text-neutral-300">{entry.size} · A${(entry.item.priceAud * entry.qty).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button type="button" disabled={entry.qty <= step} onClick={() => changeQuantity(idx, entry.qty - step)}
+                          aria-label={`Decrease quantity of ${entry.item.title}`}
+                          className="h-11 w-11 border border-white/30 bg-transparent text-white disabled:opacity-40">−</button>
+                        <span aria-label="Quantity" aria-live="polite">{entry.qty}</span>
+                        <button type="button" disabled={entry.qty + step > 100} onClick={() => changeQuantity(idx, entry.qty + step)}
+                          aria-label={`Increase quantity of ${entry.item.title}`}
+                          className="h-11 w-11 border border-white/30 bg-transparent text-white disabled:opacity-40">+</button>
+                        <button type="button" onClick={() => removeFromCart(idx)}
+                          aria-label={`Remove ${entry.item.title} from bag`}
+                          className="min-h-11 bg-transparent px-2 text-xs text-white underline">Remove</button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <p className="m-0 font-bold">Subtotal · A${grossTotal.toLocaleString()}</p>
+                <button type="button" disabled={isCheckingOut} onClick={handleStripeCheckout}
+                  className="min-h-11 rounded-full border-0 bg-volt px-6 font-mono text-xs font-bold uppercase text-[#0F0F11] hover:bg-white disabled:opacity-50">
+                  {isCheckingOut ? 'Opening checkout…' : 'Checkout'}
+                </button>
+              </div>
+              {checkoutError && <p role="alert" className="m-0 text-sm text-red-200">{checkoutError}</p>}
+              <button type="button" onClick={() => setView('capsules')}
+                className="min-h-11 border-0 bg-transparent p-0 text-sm text-white underline">Continue browsing</button>
+            </section>
+          )}
+
+          {view === 'checkout_demo' && demoReceipt && (
             <div className="max-w-lg mx-auto text-center my-auto py-12 space-y-5">
-              <span className="inline-block rounded-full bg-volt text-[#0F0F11] font-mono text-[10px] font-bold uppercase tracking-widest px-4 py-1.5">
-                ✓ ORDER LOCKED · ROYALTY CLEARED
-              </span>
-              <h2 className="m-0 font-sans text-4xl font-black uppercase tracking-tight text-[#0F0F11]">
-                Backed the contender<span className="text-volt">.</span>
+              <h2 ref={demoHeadingRef} tabIndex={-1} className="m-0 font-sans text-4xl font-black uppercase tracking-tight text-[#0F0F11]">
+                Demo order
               </h2>
               <p className="m-0 font-sans text-sm text-neutral-700 leading-relaxed">
-                A${athleteCutTotal.toLocaleString()} net royalties routed to the athlete and A${clubCut15.toLocaleString()} to their junior club.
+                No payment was taken, no order was placed, and no funds were transferred.
               </p>
-              {lastSessionId && (
-                <p className="m-0 font-mono text-[11px] text-neutral-500">
-                  SESSION REF: {lastSessionId}
+              {demoReceipt.split && (
+                <p className="m-0 font-sans text-sm text-neutral-700">
+                  Example split (AUD): {formatAud.format(demoReceipt.split.athleteAud)} for athletes,
+                  {' '}{formatAud.format(demoReceipt.split.clubAud)} for clubs
+                  {demoReceipt.split.partnerAud > 0 && `, and ${formatAud.format(demoReceipt.split.partnerAud)} for collaborators`}.
                 </p>
               )}
+              <p className="m-0 font-mono text-[11px] text-neutral-500">Demo session: {demoReceipt.sessionId}</p>
               <div className="pt-4 flex justify-center gap-3">
                 <button
                   type="button"
@@ -1300,7 +1162,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           )}
         </div>
       </div>
-    </div>,
+    </dialog>,
     document.body,
   );
 };
