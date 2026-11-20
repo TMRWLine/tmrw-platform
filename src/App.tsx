@@ -229,6 +229,8 @@ export function MarketplaceApp() {
           : document.getElementById(landingSectionElementId(landingSection));
       if (target != null) {
         if (lenisRef.current) {
+          // Route changes can replace a short page with the much longer landing page.
+          lenisRef.current.resize();
           lenisRef.current.scrollTo(target, {
             offset: typeof target === 'number' ? 0 : -NAV_HEIGHT_PX,
             duration: 1.15,
@@ -594,46 +596,28 @@ export function MarketplaceApp() {
   }
 
   useEffect(() => {
-    const applyRosterHash = () => {
-      if (!window.location.hash.startsWith('#roster')) return;
-      const query = window.location.hash.includes('?')
-        ? window.location.hash.slice(window.location.hash.indexOf('?'))
-        : '';
-      window.history.replaceState(null, '', `${THE_ROSTER_PATH}${query}`);
-      setView('the-roster');
-    };
-    applyRosterHash();
-    window.addEventListener('hashchange', applyRosterHash);
-    return () => window.removeEventListener('hashchange', applyRosterHash);
-  }, []);
-
-  useEffect(() => {
-    const alias = window.location.hash.replace(/^#/, '').split('?')[0];
-    if (alias === 'how-it-works') {
-      window.history.replaceState(null, '', HOW_IT_WORKS_PATH);
-      setView('how-it-works');
-    } else if (alias === 'roster') {
-      const query = window.location.hash.includes('?')
-        ? window.location.hash.slice(window.location.hash.indexOf('?'))
-        : '';
-      window.history.replaceState(null, '', `${THE_ROSTER_PATH}${query}`);
-      setView('the-roster');
-    } else if (alias === 'commercial-tiers') {
-      window.history.replaceState(null, '', COMMERCIAL_TIERS_PATH);
-      setView('commercial-tiers');
-    } else if (alias === 'syndicate') {
-      window.history.replaceState(null, '', BRISBANE_RUNWAY_PATH);
-      setView('brisbane-runway');
-    }
-  }, []);
-
-  useEffect(() => {
     const syncPath = () => {
+      const [alias, query] = window.location.hash.slice(1).split('?');
+      const aliases: Record<string, string> = {
+        'how-it-works': HOW_IT_WORKS_PATH,
+        roster: THE_ROSTER_PATH,
+        'commercial-tiers': COMMERCIAL_TIERS_PATH,
+        syndicate: BRISBANE_RUNWAY_PATH,
+      };
+      if (aliases[alias]) {
+        const search = alias === 'roster' && query ? `?${query}` : '';
+        window.history.replaceState(null, '', `${aliases[alias]}${search}`);
+      }
       const next = viewFromLocation();
       setView((current) => (current === 'sponsor' && next === 'landing' ? current : next));
     };
+    syncPath();
     window.addEventListener('popstate', syncPath);
-    return () => window.removeEventListener('popstate', syncPath);
+    window.addEventListener('hashchange', syncPath);
+    return () => {
+      window.removeEventListener('popstate', syncPath);
+      window.removeEventListener('hashchange', syncPath);
+    };
   }, []);
 
   function closeOverlays() {

@@ -62,9 +62,14 @@ test('Olympic horizon tiers create Stripe sessions at their advertised AUD price
     ['olympic_4yr_250k', '25000000'],
   ];
   for (const [tierId, cents] of tiers) {
-    const response = await post({ athleteId: 'fixture', tierId, amountAud: 1 });
+    const response = await post({
+      athleteId: '11111111-1111-1111-1111-111111111111', tierId, postcode: '0220', amountAud: 1,
+    });
     assert.equal(response.status, 200, tierId);
-    assert.deepEqual(await response.json(), { checkoutUrl: 'https://checkout.stripe.invalid/fixture' });
+    const session = await response.json();
+    assert.equal(session.checkoutUrl, 'https://checkout.stripe.invalid/fixture');
+    assert.equal(session.sessionId, 'cs_test_fixture');
+    assert.match(session.transferGroup, /^TG_[a-f0-9]{32}$/);
     const body = calls.at(-1);
     assert.equal(body.get('metadata[tierId]'), tierId);
     assert.equal(body.get('line_items[0][price_data][unit_amount]'), cents);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useReducedMotion } from '../lib/useReducedMotion';
 import { FilmGrainOverlay } from './FilmGrainOverlay';
+import { useDialogFocus } from '../lib/useDialogFocus';
 
 const GROSS = '$2500 AUD';
 const ATHLETE = '$1750 AUD';
@@ -10,9 +11,35 @@ const ESCROW = '$375 AUD';
 export const SettlementLedger: React.FC = () => {
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [videoUnavailable, setVideoUnavailable] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const reducedMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(isReceiptModalOpen, receiptRef, () => setIsReceiptModalOpen(false));
+
+  useEffect(() => {
+    if (!isReceiptModalOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const preventBackgroundScroll = (event: Event) => {
+      const panel = receiptRef.current;
+      const isZoomGesture =
+        (event.type === 'wheel' && (event as WheelEvent).ctrlKey) ||
+        (event.type === 'touchmove' && (event as TouchEvent).touches.length > 1);
+      if (isZoomGesture) return;
+      if (!panel || !panel.contains(event.target as Node) || panel.scrollHeight <= panel.clientHeight) {
+        event.preventDefault();
+      }
+    };
+    document.addEventListener('wheel', preventBackgroundScroll, { passive: false });
+    document.addEventListener('touchmove', preventBackgroundScroll, { passive: false });
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('wheel', preventBackgroundScroll);
+      document.removeEventListener('touchmove', preventBackgroundScroll);
+    };
+  }, [isReceiptModalOpen]);
 
   useEffect(() => {
     if (reducedMotion) videoRef.current?.pause();
@@ -75,6 +102,8 @@ export const SettlementLedger: React.FC = () => {
               muted={isMuted}
               playsInline
               onTimeUpdate={handleTimeUpdate}
+              onError={() => setVideoUnavailable(true)}
+              onLoadedData={() => setVideoUnavailable(false)}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onEnded={() => setIsPlaying(false)}
@@ -91,23 +120,29 @@ export const SettlementLedger: React.FC = () => {
             <span className="absolute top-6 left-6 text-neutral-400 font-mono text-xs pointer-events-none z-10">+</span>
             <span className="absolute top-6 right-6 text-neutral-400 font-mono text-xs pointer-events-none z-10">+</span>
 
-            <div className="relative z-10 flex flex-wrap items-center justify-between gap-2">
+            <div data-video-unavailable={videoUnavailable} className="relative z-10 flex flex-wrap items-center justify-between gap-2">
               <span className="bg-volt text-black font-mono font-bold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider shadow-[0_0_10px_rgba(184,255,0,0.3)]">
                 ILLUSTRATIVE FOOTAGE · SURFING
               </span>
 
               <div className="flex flex-wrap gap-2">
+              {videoUnavailable ? (
+                <span role="status" className="ledger-video-unavailable hidden font-mono text-[10px] text-white bg-black/80 px-3 py-1 rounded-full">
+                  VIDEO UNAVAILABLE
+                </span>
+              ) : null}
               <button
                 type="button"
                 onClick={togglePlayback}
-                className="rounded-full border border-white/70 bg-black px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                className="ledger-playback-toggle rounded-full border border-white/70 bg-black px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
               >
                 {isPlaying ? 'Pause video' : 'Play video'}
               </button>
               <button
                 type="button"
                 onClick={toggleMute}
-                className="rounded-full border border-white/70 bg-black px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                aria-pressed={!isMuted}
+                className="ledger-audio-toggle rounded-full border border-white/70 bg-black px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
               >
                 {isMuted ? 'UNMUTE AUDIO' : 'MUTE AUDIO'}
               </button>
@@ -194,16 +229,21 @@ export const SettlementLedger: React.FC = () => {
       {/* Brutalist Receipt Modal */}
       {isReceiptModalOpen && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          data-lenis-prevent="true"
+          className="mobile-overlay certificate-backdrop fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setIsReceiptModalOpen(false)}
         >
           <div
-            className="bg-white border-2 border-black max-w-xl w-full p-8 md:p-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative z-10"
+            ref={receiptRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="receipt-heading"
+            className="certificate-panel bg-white border-2 border-black max-w-xl w-full p-8 md:p-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative z-10"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Masthead */}
             <div className="flex justify-between items-start mb-8 pb-4 border-b-2 border-black">
-              <h3 className="font-mono font-bold text-lg uppercase tracking-tight text-black m-0">
+              <h3 id="receipt-heading" className="font-mono font-bold text-lg uppercase tracking-tight text-black m-0">
                 SAMPLE RECEIPT · NOT A PAYMENT
               </h3>
               <button

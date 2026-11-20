@@ -1,0 +1,9 @@
+/* Marketing additions to the existing phone baseline. Desktop geometry is unchanged. */
+@media (max-width: 767px), (max-width: 1023px) and (max-height: 500px) and (pointer: coarse) {
+  html:has(.certificate-backdrop) { overflow: hidden; }
+  .app-shell > div:has(> #how-it-works):has(.certificate-backdrop) { z-index: 60; }
+  .ledger-audio-toggle, .ledger-playback-toggle { min-height: 44px; min-width: 44px; }
+  [data-video-unavailable="true"] :is(.ledger-audio-toggle, .ledger-playback-toggle) { display: none; }
+  .ledger-video-unavailable { display: block; }
+  #tmrw-locked-runway-footer a { min-height: 44px; justify-content: center; }
+}

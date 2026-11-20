@@ -236,7 +236,7 @@ export const RosterSpecimenCard: React.FC<RosterSpecimenCardProps> = ({
           }}
           title="Open Athlete Dossier"
           aria-label="Open Athlete Dossier"
-          className={`h-7 w-7 rounded-lg bg-transparent border-0 flex items-center justify-center transition-colors cursor-pointer p-0 shrink-0 ${
+          className={`roster-dossier-open h-7 w-7 rounded-lg bg-transparent border-0 flex items-center justify-center transition-colors cursor-pointer p-0 shrink-0 ${
             mediaMode === 'video'
               ? 'text-white hover:text-volt'
               : 'text-[#080808] group-hover:text-white group-hover:hover:text-volt'

@@ -119,10 +119,20 @@ export const HowItWorks: React.FC = () => {
                 transition={{ duration: 0.7, delay: index * 0.08, ease: EASE }}
               >
                 <article
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={pinned === index}
+                  aria-label={`${gate.title}, ${pinned === index ? 'unpin' : 'pin'} gate`}
                   className={`group relative cursor-pointer border border-black/10 bg-white p-6 transition-[background,border-color,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:p-8 ${
                     on ? 'bg-[#FBFBFB] border-black/20' : 'hover:bg-[#FBFBFB]'
                   }`}
                   onClick={() => setPinned((currentPinned) => (currentPinned === index ? null : index))}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setPinned((currentPinned) => (currentPinned === index ? null : index));
+                    }
+                  }}
                   onMouseEnter={() => {
                     if (pinned === null) setActive(index);
                   }}

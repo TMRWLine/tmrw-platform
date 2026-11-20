@@ -66,7 +66,7 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
     <div className="pb-12 md:pb-20">
       <section
         aria-label="tmrw cover"
-        className="relative flex min-h-[82vh] w-full select-none flex-col justify-between overflow-hidden rounded-[28px] border border-[#EAEAEA] bg-[#080808] p-8 shadow-sm md:rounded-[32px] md:p-14"
+        className="cover-hero relative flex min-h-[82vh] w-full select-none flex-col justify-between overflow-hidden rounded-[28px] border border-[#EAEAEA] bg-[#080808] p-8 shadow-sm md:rounded-[32px] md:p-14"
         onMouseMove={(e) => {
           if (isIntro || reducedMotion) return;
           const rect = e.currentTarget.getBoundingClientRect();
@@ -124,7 +124,7 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
         <CourtLinesOverlay aligning={isIntro} />
 
         {/* Pure Central Headline */}
-        <div className="relative z-10 my-auto flex h-[56vh] w-full items-center justify-center">
+        <div className="cover-headline-stage relative z-10 my-auto flex h-[56vh] w-full items-center justify-center">
           <div
             onClick={() => {
               if (isIntro) setPhase('settled');
@@ -137,7 +137,7 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
             className="motion-safe:transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform"
           >
             <h1 id="cover-heading" aria-label="Line up your future" className={isIntro
-              ? 'm-0 block text-center font-display font-extrabold leading-[0.92] tracking-tight text-[#F7F7F6] drop-shadow-[0_8px_36px_rgba(0,0,0,0.9)] text-7xl sm:text-8xl md:text-[7.5rem] lg:text-[9.2rem]'
+              ? 'cover-intro-headline m-0 block text-center font-display font-extrabold leading-[0.92] tracking-tight text-[#F7F7F6] drop-shadow-[0_8px_36px_rgba(0,0,0,0.9)] text-7xl sm:text-8xl md:text-[7.5rem] lg:text-[9.2rem]'
               : 'm-0 block max-w-[12ch] text-center font-display font-extrabold leading-[0.96] tracking-tight text-[#F7F7F6] drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)] text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem]'}>
               {isIntro ? (
               <>
@@ -209,7 +209,7 @@ export const CoverHero: React.FC<CoverHeroProps> = ({ onNavigateSection }) => {
         {/* Buttons Split Perfectly Across Either Side of the Center Guideline */}
         {!isIntro && <div
           className={[
-            'relative z-20 flex w-full flex-wrap items-center justify-center gap-3 pb-2 sm:justify-between md:px-12',
+            'cover-actions relative z-20 flex w-full flex-wrap items-center justify-center gap-3 pb-2 sm:justify-between md:px-12',
           ].join(' ')}
         >
           <div className="flex justify-start">

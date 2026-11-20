@@ -326,7 +326,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
         }
       }}
       data-lenis-prevent
-      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none overflow-hidden border-0 bg-transparent p-0 backdrop:bg-transparent"
+      className="mobile-overlay site-menu fixed inset-0 m-0 h-full max-h-none w-full max-w-none overflow-hidden border-0 bg-transparent p-0 backdrop:bg-transparent"
     >
       {/* Backdrop scrim: everything below the curtain dismisses the menu */}
       <button
@@ -341,7 +341,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
 
       {/* Top curtain drawer */}
       <div
-        className={`absolute top-0 left-0 w-full h-[55vh] min-h-[min(440px,100dvh)] max-h-[580px] bg-[#080808] text-white border-b border-white/10 z-10 flex flex-col justify-between p-8 md:p-12 shadow-2xl overflow-y-auto overscroll-contain select-none motion-safe:transition-transform duration-300 ease-out ${
+        className={`site-menu-panel absolute top-0 left-0 w-full h-[55vh] min-h-[min(440px,100dvh)] max-h-[580px] bg-[#080808] text-white border-b border-white/10 z-10 flex flex-col justify-between p-8 md:p-12 shadow-2xl overflow-y-auto overscroll-contain select-none motion-safe:transition-transform duration-300 ease-out ${
           shown ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
