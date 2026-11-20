@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import './CartDrawer.css';
 import { createPortal } from 'react-dom';
 import { BrandLockup } from './BrandLockup';
 import { ProductPhotoGallery } from './ProductPhotoGallery';
@@ -322,6 +323,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const activeSwatch =
     SWATCH_THEMES.find((s) => s.id === selectedSwatchId) ?? SWATCH_THEMES[0];
 
+  const navigateMobile = (nextView: 'capsules' | 'empty' | 'creator') => {
+    setView(nextView);
+    drawerRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
   useEffect(() => {
     if (!selectedAthlete) return;
     const name = selectedAthlete.display_name || selectedAthlete.name;
@@ -546,9 +552,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           first?.focus();
         }
       }}
-      className="mobile-overlay fixed inset-0 m-0 h-full w-full max-h-none max-w-none border-0 bg-white p-0 text-[#0F0F11] open:flex flex-col overflow-y-auto overscroll-contain selection:bg-volt selection:text-[#0F0F11] motion-safe:animate-fadeIn"
+      className="mobile-overlay capsule-shop fixed inset-0 m-0 h-full w-full max-h-none max-w-none border-0 bg-white p-0 text-[#0F0F11] open:flex flex-col overflow-y-auto overscroll-contain selection:bg-volt selection:text-[#0F0F11] motion-safe:animate-fadeIn"
     >
-      <header className="shrink-0 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-5 flex items-center justify-between border-b border-black/10">
+      <header className="capsule-shop-header shrink-0 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-5 flex items-center justify-between border-b border-black/10">
         <BrandLockup onClick={onHome} />
 
         <div className="hidden md:flex items-center gap-6 font-sans text-xs font-medium text-[#0F0F11]">
@@ -590,7 +596,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             type="button"
             aria-pressed={view === 'empty'}
             onClick={() => setView('empty')}
-            className="min-h-11 rounded-full border border-black/15 bg-white px-3 font-mono text-xs font-bold text-[#080808] aria-pressed:bg-[#080808] aria-pressed:text-white"
+            className="capsule-header-bag min-h-11 rounded-full border border-black/15 bg-white px-3 font-mono text-xs font-bold text-[#080808] aria-pressed:bg-[#080808] aria-pressed:text-white"
           >
             Bag ({cartItems.reduce((s, i) => s + i.qty, 0)})
           </button>
@@ -606,14 +612,21 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <span className="text-[11px] text-volt group-hover:text-[#0F0F11] transition-colors">✕</span>
           </button>
         </div>
+
+        <nav className="capsule-mobile-nav" aria-label="Capsule shop navigation">
+          <button type="button" aria-pressed={view === 'capsules'} onClick={() => navigateMobile('capsules')}>Showroom</button>
+          <button type="button" aria-pressed={view === 'empty'} onClick={() => navigateMobile('empty')}>Bag ({cartItems.reduce((sum, entry) => sum + entry.qty, 0)})</button>
+          <button type="button" aria-pressed={view === 'creator'} onClick={() => navigateMobile('creator')}>Studio</button>
+          <button type="button" onClick={() => { onClose(); onExploreRoster?.(); }}>The Roster</button>
+        </nav>
       </header>
 
       <p role="status" className="sr-only">{bagUpdate}</p>
       {view === 'empty' && checkoutReturn?.status === 'cancelled' && (
         <p role="status" className="mx-auto px-4 font-mono text-xs text-[#080808]">Checkout cancelled. Your bag has been kept. No payment is confirmed.</p>
       )}
-      <div className="flex-1 w-full max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 pt-6 pb-14 flex flex-col">
-        <div className="w-full min-h-[640px] rounded-[20px] bg-[#F7F7F6] p-3 sm:p-8 md:p-12 flex flex-col relative overflow-hidden">
+      <div className="capsule-shop-content flex-1 w-full max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 pt-6 pb-14 flex flex-col">
+        <div className="capsule-shop-panel w-full min-h-[640px] rounded-[20px] bg-[#F7F7F6] p-3 sm:p-8 md:p-12 flex flex-col relative overflow-hidden">
           {view === 'empty' && cartItems.length === 0 && (
             <div className="max-w-md mx-auto text-center my-auto py-16">
               <RetroPixelCabinetIcon />
@@ -644,7 +657,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
           {/* CREATOR STUDIO VIEW */}
           {view === 'creator' && (
-            <div className="w-full max-w-6xl mx-auto space-y-6">
+            <div className="capsule-studio w-full max-w-6xl mx-auto space-y-6">
               <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/15 pb-5">
                 <div>
                   <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-600 mb-1.5">
@@ -700,7 +713,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       </div>
 
                       <div
-                        className={`rounded-[18px] h-96 p-6 flex flex-col justify-between mb-5 relative overflow-hidden select-none ${activeSwatch.swatchBg}`}
+                        className={`capsule-studio-preview rounded-[18px] h-96 p-6 flex flex-col justify-between mb-5 relative overflow-hidden select-none ${activeSwatch.swatchBg}`}
                       >
                         <div className="absolute inset-0 z-0 overflow-hidden bg-black/20">
                           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/50" />
@@ -805,6 +818,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               key={chassis.id}
                               type="button"
                               onClick={() => handleSelectChassis(chassis)}
+                              aria-pressed={isSelected}
                               className={`rounded-xl p-3.5 text-left transition-all cursor-pointer border ${
                                 isSelected
                                   ? 'bg-[#0F0F11] text-white border-[#0F0F11]'
@@ -837,6 +851,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               key={sw.id}
                               type="button"
                               onClick={() => setSelectedSwatchId(sw.id)}
+                              aria-pressed={selectedSwatchId === sw.id}
                               className={`rounded-lg py-2 px-2 font-mono text-[9px] font-bold uppercase cursor-pointer border transition-all ${
                                 selectedSwatchId === sw.id
                                   ? 'bg-[#0F0F11] text-volt border-[#0F0F11]'
@@ -858,6 +873,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               key={st.id}
                               type="button"
                               onClick={() => setSelectedLockupStyle(st.id)}
+                              aria-pressed={selectedLockupStyle === st.id}
                               className={`rounded-lg py-2 px-2 font-mono text-[9px] font-bold uppercase cursor-pointer border transition-all ${
                                 selectedLockupStyle === st.id
                                   ? 'bg-[#0F0F11] text-volt border-[#0F0F11]'
@@ -873,36 +889,39 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
-                        <label className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
+                        <label htmlFor="capsule-athlete-name" className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
                           ATHLETE NAME
                         </label>
                         <input
                           type="text"
                           required
                           value={newAthleteName}
+                          id="capsule-athlete-name"
                           onChange={(e) => setNewAthleteName(e.target.value)}
                           className="w-full rounded-xl bg-[#EAEAE6] border-0 px-3.5 py-2.5 font-sans text-xs font-bold"
                         />
                       </div>
                       <div>
-                        <label className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
+                        <label htmlFor="capsule-club-name" className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
                           JUNIOR CLUB (15%)
                         </label>
                         <input
                           type="text"
                           required
                           value={newClubName}
+                          id="capsule-club-name"
                           onChange={(e) => setNewClubName(e.target.value)}
                           className="w-full rounded-xl bg-[#EAEAE6] border-0 px-3.5 py-2.5 font-sans text-xs font-bold"
                         />
                       </div>
                       <div>
-                        <label className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
+                        <label htmlFor="capsule-partner-name" className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
                           CO-LAB BRAND
                         </label>
                         <input
                           type="text"
                           value={newCollabPartner}
+                          id="capsule-partner-name"
                           onChange={(e) => setNewCollabPartner(e.target.value)}
                           className="w-full rounded-xl bg-[#EAEAE6] border-0 px-3.5 py-2.5 font-sans text-xs font-bold"
                         />
@@ -920,6 +939,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <button
                           type="button"
                           onClick={() => setEnablePartnerRoyaltySplit((v) => !v)}
+                          aria-pressed={enablePartnerRoyaltySplit}
                           className={`rounded-full px-3.5 py-1.5 font-mono text-[9.5px] font-bold uppercase cursor-pointer border-0 ${
                             enablePartnerRoyaltySplit ? 'bg-volt text-[#0F0F11]' : 'bg-white/15 text-white'
                           }`}
@@ -931,36 +951,40 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                     <div className="grid grid-cols-2 sm:grid-cols-12 gap-3">
                       <div className="col-span-2 sm:col-span-6">
-                        <label className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
+                        <label htmlFor="capsule-garment-title" className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
                           GARMENT TITLE
                         </label>
                         <input
                           type="text"
                           required
                           value={newGarmentTitle}
+                          id="capsule-garment-title"
                           onChange={(e) => setNewGarmentTitle(e.target.value)}
                           className="w-full rounded-xl bg-[#EAEAE6] border-0 px-3.5 py-2.5 font-sans text-xs font-bold"
                         />
                       </div>
                       <div className="col-span-1 sm:col-span-3">
-                        <label className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
+                        <label htmlFor="capsule-postcode" className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
                           POSTCODE
                         </label>
                         <input
                           type="text"
                           maxLength={4}
                           value={newPostcode}
+                          id="capsule-postcode"
+                          inputMode="numeric"
                           onChange={(e) => setNewPostcode(e.target.value)}
                           className="w-full rounded-xl bg-[#EAEAE6] border-0 px-3 py-2.5 font-mono text-xs font-bold"
                         />
                       </div>
                       <div className="col-span-1 sm:col-span-3">
-                        <label className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
+                        <label htmlFor="capsule-retail-price" className="block font-mono text-[10px] font-bold uppercase text-neutral-500 mb-1">
                           RETAIL AUD
                         </label>
                         <input
                           type="number"
                           value={newPrice}
+                          id="capsule-retail-price"
                           onChange={(e) => setNewPrice(Number(e.target.value))}
                           className="w-full rounded-xl bg-[#EAEAE6] border-0 px-3 py-2.5 font-mono text-xs font-bold"
                         />
@@ -1004,10 +1028,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   </h2>
                 </div>
 
-                <div className="flex items-center gap-2 bg-white p-1.5 rounded-full border border-black/10">
+                <div className="capsule-purchase-mode flex items-center gap-2 bg-white p-1.5 rounded-full border border-black/10">
                   <button
                     type="button"
                     onClick={() => setSponsorBulkMode(false)}
+                    aria-pressed={!sponsorBulkMode}
                     className={`rounded-full px-4 py-1.5 font-mono text-[10px] font-bold uppercase cursor-pointer border-0 transition-colors ${
                       !sponsorBulkMode ? 'bg-[#0F0F11] text-volt' : 'bg-transparent text-[#0F0F11]'
                     }`}
@@ -1017,6 +1042,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => setSponsorBulkMode(true)}
+                    aria-pressed={sponsorBulkMode}
                     className={`rounded-full px-4 py-1.5 font-mono text-[10px] font-bold uppercase cursor-pointer border-0 transition-colors ${
                       sponsorBulkMode ? 'bg-[#0F0F11] text-volt' : 'bg-transparent text-[#0F0F11]'
                     }`}
@@ -1038,7 +1064,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   return (
                     <article
                       key={drop.id}
-                      className="grid grid-cols-1 gap-5 border border-black/15 bg-white p-4 sm:grid-cols-2 sm:p-6"
+                      className="capsule-product grid grid-cols-1 gap-5 border border-black/15 bg-white p-4 sm:grid-cols-2 sm:p-6"
                     >
                       <ProductPhotoGallery sku={drop.id} name={drop.title} />
                       <div className="flex min-w-0 flex-col gap-4">
@@ -1066,13 +1092,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="capsule-product-actions flex flex-wrap items-center gap-3">
                           {!sponsorBulkMode ? (
                             <div role="group" aria-label={`Size for ${drop.title}`} className="flex flex-wrap items-center gap-1.5">
                               {['S', 'M', 'L', 'XL'].map((sz) => (
                                 <button
                                   key={sz}
                                   type="button"
+                                  aria-label={`Size ${sz} for ${drop.title}`}
                                   aria-pressed={(selectedSize[drop.id] || 'L') === sz}
                                   onClick={() =>
                                     setSelectedSize((prev) => ({ ...prev, [drop.id]: sz }))
@@ -1141,7 +1168,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           )}
 
           {view === 'empty' && cartItems.length > 0 && (
-            <section aria-label="Your bag" className="space-y-5 bg-[#080808] p-5 text-[#F7F7F6] sm:p-8">
+            <section aria-label="Your bag" className="capsule-live-bag space-y-5 bg-[#080808] p-5 text-[#F7F7F6] sm:p-8">
               <h2 className="m-0 text-3xl font-black">Your bag</h2>
               <ul className="m-0 list-none space-y-3 p-0">
                 {cartItems.map((entry, idx) => {
@@ -1152,7 +1179,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <strong>{entry.item.title}</strong>
                         <p className="m-0 mt-1 font-['JetBrains_Mono',monospace] text-neutral-300">{entry.size} · A${(entry.item.priceAud * entry.qty).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="capsule-bag-quantity flex items-center gap-2">
                         <button type="button" disabled={entry.qty <= step} onClick={() => changeQuantity(idx, entry.qty - step)}
                           aria-label={`Decrease quantity of ${entry.item.title}`}
                           className="h-11 w-11 border border-white/30 bg-transparent text-white disabled:opacity-40">−</button>
@@ -1168,7 +1195,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   );
                 })}
               </ul>
-              <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="capsule-checkout-actions flex flex-wrap items-center justify-between gap-4">
                 <CapsuleTotals totals={totals} />
                 <button type="button" disabled={isCheckingOut} onClick={handleStripeCheckout}
                   className="min-h-11 rounded-full border-0 bg-volt px-6 font-mono text-xs font-bold uppercase text-[#0F0F11] hover:bg-white disabled:opacity-50">
@@ -1196,7 +1223,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               )}
               <p className="m-0 font-mono text-[11px] text-neutral-500">Demo session: {demoReceipt.sessionId}</p>
               <CapsuleTotals totals={demoReceipt.totals} />
-              <div className="pt-4 flex justify-center gap-3">
+              <div className="capsule-checkout-actions pt-4 flex justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => {
@@ -1232,7 +1259,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <p className="font-['JetBrains_Mono',monospace] text-xs">{formatCapsuleSplit(receipt.splits, receipt.subtotalCents, receipt.currency)}</p>
                 </>
               )}
-              <button type="button" onClick={() => setView('empty')} className="min-h-11 rounded-full border-0 bg-[#080808] px-6 font-mono text-xs text-[#F7F7F6]">View Bag</button>
+              <div className="capsule-checkout-actions flex gap-3">
+                <button type="button" onClick={() => setView('empty')} className="min-h-11 rounded-full border-0 bg-[#080808] px-6 font-mono text-xs text-[#F7F7F6]">View Bag</button>
+              </div>
             </section>
           )}
         </div>

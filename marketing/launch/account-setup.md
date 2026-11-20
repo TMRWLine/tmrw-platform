@@ -10,7 +10,7 @@ Start with Instagram, TikTok and a LinkedIn Company Page. Check `@tmrwline` on b
 
 ## Instagram
 
-**Display name:** TMRWLine | tmrw/.
+**Display name:** TMRWLine
 
 **Bio (150 characters max):**
 
@@ -43,7 +43,7 @@ Line up your Future
 
 **Industry:** Spectator Sports
 
-**Website:** `[Add the official TMRWLine website URL]`
+**Website:** `https://tmrwline.com` (add once the site loads)
 
 **About:** TMRWLine helps local businesses back athletes and grassroots clubs through sponsorship. We show how the money is split so businesses and clubs can see where their support goes. Follow for worked sponsorship examples, stories from local sport and ways to nominate an athlete in your postcode.
 
