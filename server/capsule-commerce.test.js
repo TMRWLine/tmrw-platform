@@ -3,7 +3,16 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import app from './index.js';
-import { BAG_TTL_MS, VENUE_SIZE, capsuleSplit, capsuleTotals, formatCapsuleMoney, restoreBag, serialiseBag, readCapsuleReturn } from '../src/lib/capsuleCommerce.ts';
+import { BAG_TTL_MS, VENUE_SIZE, capsuleSplit, capsuleTotals, formatCapsuleMoney, formatCapsuleSplit, restoreBag, serialiseBag, readCapsuleReturn } from '../src/lib/capsuleCommerce.ts';
+
+test('receipt split explains net garment costs and all allocations with legacy and zero royalty fallbacks', () => {
+  const split = { athleteCents: 7425, clubCents: 2025, partnerCents: 2025, platformCents: 2025, netCents: 13500, garmentCostCents: 4500 };
+  const text = 'Split of A$135.00 net (A$180.00 ex-GST less A$45.00 garment cost): athlete A$74.25 · collaborator A$20.25 · club A$20.25 · tmrw/. A$20.25';
+  assert.equal(formatCapsuleSplit(split, 18000), text);
+  assert.equal(formatCapsuleSplit(split, 18000, 'aud', true), text.replace('Split', 'Example split'));
+  assert.equal(formatCapsuleSplit({ athleteCents: 4900, clubCents: 1050, partnerCents: 0 }, 9500), 'Ex-GST net allocations: athlete A$49.00 · club A$10.50');
+  assert.equal(formatCapsuleSplit({ athleteCents: 0, clubCents: 0, partnerCents: 0 }, 0, 'aud', true), 'Example ex-GST net allocations: athlete A$0.00 · club A$0.00');
+});
 
 test('capsule AUD amounts always identify Australian dollars including zero and negative amounts', () => {
   assert.equal(formatCapsuleMoney(18000), 'A$180.00');
@@ -89,6 +98,9 @@ test('client and server share cent rounding for both garments, fan/pack and part
         assert.equal(Number(body.get('metadata[athleteCutCents]')), client.athleteCents);
         assert.equal(Number(body.get('metadata[clubCutCents]')), client.clubCents);
         assert.equal(Number(body.get('metadata[partnerCutCents]')), client.partnerCents);
+        assert.equal(Number(body.get('metadata[garmentCostCents]')), cost * 100 * qty);
+        assert.equal(Number(body.get('metadata[netCents]')), (price - cost) * 100 * qty);
+        assert.equal(Number(body.get('metadata[platformCutCents]')) + client.athleteCents + client.clubCents + client.partnerCents, (price - cost) * 100 * qty);
         assert.equal(Number(body.get('line_items[1][price_data][unit_amount]')), capsuleTotals(price * 100 * qty).gstCents);
       }
     }

@@ -58,6 +58,16 @@ for (const status of ['unpaid', 'no_payment_required', 'unexpected']) {
   }, { session: { payment_status: status } }));
 }
 
+test('capsule receipt exposes complete net and garment cost metadata in cents', () => fixture(async ({ get }) => {
+  assert.deepEqual((await (await get()).json()).splits, { athleteCents: 7425, clubCents: 2025, partnerCents: 2025, netCents: 13500, garmentCostCents: 4500, platformCents: 2025 });
+}, { session: { metadata: { orderType: 'merch_capsule', athleteCutCents: '7425', clubCutCents: '2025', partnerCutCents: '2025', netCents: '13500', garmentCostCents: '4500', platformCutCents: '2025' } } }));
+
+for (const value of [undefined, '', '-1', '1.5', 'invalid', '9007199254740992']) {
+  test(`optional split metadata is omitted when invalid: ${value}`, () => fixture(async ({ get }) => {
+    assert.deepEqual((await (await get()).json()).splits, { athleteCents: 0, clubCents: 0, partnerCents: 0 });
+  }, { session: { metadata: { orderType: 'merch_capsule', netCents: value, garmentCostCents: value, platformCutCents: value } } }));
+}
+
 test('invalid session ids never reach Stripe', () => fixture(async ({ get, calls }) => {
   for (const id of ['', 'cs_live_', '../secret', 'cs_demo_capsule_x']) assert.equal((await get(id)).status, 400);
   assert.equal(calls.length, 0);

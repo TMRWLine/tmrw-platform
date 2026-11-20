@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { BrandLockup } from './BrandLockup';
 import { ProductPhotoGallery } from './ProductPhotoGallery';
 import { CapsuleTotals } from './CapsuleTotals';
-import { BAG_STORAGE_KEY, capsuleSplit, capsuleTotals, formatCapsuleMoney, restoreBag, serialiseBag, type BagLine, type CapsuleReceipt, type CapsuleReturn } from '../lib/capsuleCommerce';
+import { BAG_STORAGE_KEY, capsuleSplit, capsuleTotals, formatCapsuleMoney, formatCapsuleSplit, restoreBag, serialiseBag, type BagLine, type CapsuleReceipt, type CapsuleReturn } from '../lib/capsuleCommerce';
 import type { AthleteRecord } from '../data/roster';
 
 export type LockupStyleId = 'editorial' | 'stencil' | 'heritage';
@@ -255,7 +255,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [demoReceipt, setDemoReceipt] = useState<{
     sessionId: string;
-    split: { athleteAud: number; clubAud: number; partnerAud: number } | null;
+    split: CapsuleReceipt['splits'] | null;
     totals: ReturnType<typeof capsuleTotals>;
   } | null>(null);
 
@@ -439,7 +439,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       }
       const { athleteAud, clubAud, partnerAud } = data.splits ?? {};
       const split = [athleteAud, clubAud, partnerAud].every(Number.isFinite)
-        ? { athleteAud, clubAud, partnerAud }
+        ? { athleteCents: Math.round(athleteAud * 100), clubCents: Math.round(clubAud * 100), partnerCents: Math.round(partnerAud * 100),
+          ...Object.fromEntries(['netCents', 'garmentCostCents', 'platformCents'].filter(key => Number.isSafeInteger(data.splits[key]) && data.splits[key] >= 0).map(key => [key, data.splits[key]])) }
         : null;
       setDemoReceipt({ sessionId, split, totals: capsuleTotals(cartItems.reduce((sum, entry) => sum + Math.round(entry.item.priceAud * 100) * entry.qty, 0)) });
       setView('checkout_demo');
@@ -1175,10 +1176,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 No payment was taken, no order was placed, and no funds were transferred.
               </p>
               {demoReceipt.split && (
-                <p className="m-0 font-sans text-sm text-neutral-700">
-                  Example split (AUD): {formatCapsuleMoney(Math.round(demoReceipt.split.athleteAud * 100))} for athletes,
-                  {' '}{formatCapsuleMoney(Math.round(demoReceipt.split.clubAud * 100))} for clubs
-                  {demoReceipt.split.partnerAud > 0 && `, and ${formatCapsuleMoney(Math.round(demoReceipt.split.partnerAud * 100))} for collaborators`}.
+                <p className="m-0 font-['JetBrains_Mono',monospace] text-xs text-neutral-700">
+                  {formatCapsuleSplit(demoReceipt.split, demoReceipt.totals.subtotalCents, 'aud', true)}
                 </p>
               )}
               <p className="m-0 font-mono text-[11px] text-neutral-500">Demo session: {demoReceipt.sessionId}</p>
@@ -1216,7 +1215,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     {receipt.lineItems.map((line, index) => <li key={index}>{line.description} × {line.quantity} · {formatCapsuleMoney(line.amountCents, receipt.currency)}</li>)}
                   </ul>
                   <CapsuleTotals totals={receipt} currency={receipt.currency} />
-                  <p className="font-['JetBrains_Mono',monospace] text-xs">Ex-GST split: athletes {formatCapsuleMoney(receipt.splits.athleteCents, receipt.currency)}, clubs {formatCapsuleMoney(receipt.splits.clubCents, receipt.currency)}, collaborators {formatCapsuleMoney(receipt.splits.partnerCents, receipt.currency)}.</p>
+                  <p className="font-['JetBrains_Mono',monospace] text-xs">{formatCapsuleSplit(receipt.splits, receipt.subtotalCents, receipt.currency)}</p>
                 </>
               )}
               <button type="button" onClick={() => setView('empty')} className="min-h-11 rounded-full border-0 bg-[#080808] px-6 font-mono text-xs text-[#F7F7F6]">View Bag</button>

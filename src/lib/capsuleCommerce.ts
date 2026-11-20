@@ -66,5 +66,19 @@ export interface CapsuleReceipt {
   gstCents: number;
   shippingCents: number;
   totalCents: number;
-  splits: { athleteCents: number; clubCents: number; partnerCents: number };
+  splits: { athleteCents: number; clubCents: number; partnerCents: number; netCents?: number; garmentCostCents?: number; platformCents?: number };
+}
+
+export function formatCapsuleSplit(splits: CapsuleReceipt['splits'], subtotalCents: number, currency = 'aud', example = false) {
+  const money = (cents: number) => formatCapsuleMoney(cents, currency);
+  const complete = splits.netCents !== undefined && splits.garmentCostCents !== undefined && splits.platformCents !== undefined;
+  const heading = complete
+    ? `${example ? 'Example split' : 'Split'} of ${money(splits.netCents!)} net (${money(subtotalCents)} ex-GST less ${money(splits.garmentCostCents!)} garment cost)`
+    : `${example ? 'Example ex-GST' : 'Ex-GST'} net allocations`;
+  return `${heading}: ${[
+    `athlete ${money(splits.athleteCents)}`,
+    ...(splits.partnerCents > 0 ? [`collaborator ${money(splits.partnerCents)}`] : []),
+    `club ${money(splits.clubCents)}`,
+    ...(splits.platformCents !== undefined ? [`tmrw/. ${money(splits.platformCents)}`] : []),
+  ].join(' · ')}`;
 }

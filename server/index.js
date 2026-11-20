@@ -376,6 +376,7 @@ app.post('/api/checkout/create-session', (req, res, next) => {
         return res.status(400).json({ error: error.message });
       }
       let grossCents = 0;
+      let garmentCostCents = 0;
       let athleteCutCents = 0;
       let clubCutCents = 0;
       let partnerCutCents = 0;
@@ -392,6 +393,7 @@ app.post('/api/checkout/create-session', (req, res, next) => {
         const split = capsuleSplit(unitAud, baseAud, Number(entry.collabRoyaltyPct), qty);
 
         grossCents += Math.round(unitAud * 100) * qty;
+        garmentCostCents += Math.round(baseAud * 100) * qty;
         athleteCutCents += split.athleteCents;
         clubCutCents += split.clubCents;
         partnerCutCents += split.partnerCents;
@@ -432,6 +434,11 @@ app.post('/api/checkout/create-session', (req, res, next) => {
       body.set('metadata[athleteCutCents]', String(athleteCutCents));
       body.set('metadata[clubCutCents]', String(clubCutCents));
       body.set('metadata[partnerCutCents]', String(partnerCutCents));
+      const netCents = grossCents - garmentCostCents;
+      const platformCents = netCents - athleteCutCents - clubCutCents - partnerCutCents;
+      body.set('metadata[netCents]', String(netCents));
+      body.set('metadata[garmentCostCents]', String(garmentCostCents));
+      body.set('metadata[platformCutCents]', String(platformCents));
 
       if (stripeKey) {
         const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
@@ -465,6 +472,9 @@ app.post('/api/checkout/create-session', (req, res, next) => {
           athleteAud: athleteCutCents / 100,
           clubAud: clubCutCents / 100,
           partnerAud: partnerCutCents / 100,
+          netCents,
+          garmentCostCents,
+          platformCents,
         },
         totals,
       });
@@ -598,6 +608,8 @@ app.get('/api/checkout/capsule-session', async (req, res) => {
     const cents = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
     const gstItems = items.data.filter(item => item.description === 'GST (10%)');
     const merchandise = items.data.filter(item => item.description !== 'GST (10%)');
+    const optionalCents = (name, value) => typeof value === 'string' && /^\d+$/.test(value) && Number.isSafeInteger(Number(value))
+      ? { [name]: Number(value) } : {};
     return res.json({
       paymentStatus: ['paid', 'unpaid', 'no_payment_required'].includes(session.payment_status) ? session.payment_status : 'unknown',
       currency: typeof session.currency === 'string' ? session.currency : 'aud',
@@ -610,6 +622,9 @@ app.get('/api/checkout/capsule-session', async (req, res) => {
         athleteCents: cents(Number(session.metadata.athleteCutCents)),
         clubCents: cents(Number(session.metadata.clubCutCents)),
         partnerCents: cents(Number(session.metadata.partnerCutCents)),
+        ...optionalCents('netCents', session.metadata.netCents),
+        ...optionalCents('garmentCostCents', session.metadata.garmentCostCents),
+        ...optionalCents('platformCents', session.metadata.platformCutCents),
       },
     });
   } catch {
