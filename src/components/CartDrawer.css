@@ -1,0 +1,192 @@
+/* Commerce phone rules stay isolated from the desktop layout and other drawers. */
+.capsule-mobile-nav {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .capsule-shop {
+    overscroll-behavior: contain;
+    scroll-padding-top: 148px;
+  }
+
+  .capsule-shop-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    flex-wrap: wrap;
+    gap: 12px 8px;
+    padding: max(12px, env(safe-area-inset-top)) 16px 12px;
+    background: #fff;
+  }
+
+  .capsule-shop-header > div:last-of-type {
+    gap: 8px;
+  }
+
+  .capsule-shop-header > div:last-of-type button {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .capsule-shop-header .capsule-header-bag {
+    display: none;
+  }
+
+  .capsule-shop .capsule-mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    width: 100%;
+  }
+
+  .capsule-mobile-nav button {
+    border: 1px solid #08080826;
+    border-radius: 12px;
+    background: #f7f7f6;
+    color: #080808;
+    padding: 8px 4px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .capsule-mobile-nav button[aria-pressed='true'] {
+    background: #080808;
+    color: #b8ff00;
+  }
+
+  .capsule-shop-content {
+    padding: 16px 12px max(24px, env(safe-area-inset-bottom));
+  }
+
+  .capsule-shop-panel {
+    min-height: calc(100dvh - 180px);
+    padding: 20px 12px;
+    border-radius: 20px;
+    overflow: visible;
+  }
+
+  .capsule-shop button,
+  .capsule-shop [role='button'] {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  .capsule-shop :is(button, input, [role='button']):focus-visible {
+    outline: 2px solid #080808;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 3px #b8ff00;
+  }
+
+  .capsule-shop :is([class*='text-[9'], [class*='text-[10'], [class*='text-[11']) {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .capsule-shop :is(h2, h3, p, label, strong, span) {
+    overflow-wrap: anywhere;
+  }
+
+  .capsule-shop :is(.grid, .flex) > * {
+    min-width: 0;
+  }
+
+  .capsule-shop input:not([type='checkbox']) {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .capsule-shop input[type='checkbox'] {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .capsule-studio form > div > div.rounded-\[24px\] {
+    padding: 16px;
+  }
+
+  .capsule-studio form > div:first-child > div > div > div:first-child {
+    flex-wrap: wrap;
+  }
+
+  .capsule-studio button .truncate {
+    white-space: normal;
+  }
+
+  .capsule-studio button > .flex {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .capsule-purchase-mode {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    border-radius: 16px;
+  }
+
+  .capsule-purchase-mode button {
+    padding: 10px 8px;
+    border-radius: 12px;
+  }
+
+  .capsule-product {
+    padding: 16px;
+  }
+
+  .capsule-studio-preview {
+    padding: 16px;
+  }
+
+  .capsule-studio-preview > .flex:first-of-type,
+  .capsule-studio-preview > .flex:last-child {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .capsule-studio-preview .text-3xl {
+    font-size: clamp(24px, 7vw, 32px);
+  }
+
+  .capsule-product-actions,
+  .capsule-checkout-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .capsule-product-actions > .flex {
+    justify-content: space-between;
+  }
+
+  .capsule-product-actions > button,
+  .capsule-checkout-actions > button {
+    width: 100%;
+  }
+
+  .capsule-product-actions > .flex button {
+    width: 48px;
+    height: 48px;
+  }
+
+  .capsule-product .space-y-1\.5 > .flex,
+  .capsule-studio .space-y-1\.5 > .flex {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .capsule-live-bag {
+    padding: 20px 16px;
+  }
+
+  .capsule-bag-quantity {
+    flex-wrap: wrap;
+  }
+
+  .capsule-shop .max-w-lg > .flex {
+    flex-wrap: wrap;
+  }
+}

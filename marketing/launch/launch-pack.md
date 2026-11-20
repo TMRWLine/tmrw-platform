@@ -6,11 +6,14 @@ Everything for launch in one place: account setup, bios, safety settings, all 20
 
 **Every postcode has a tomorrow.**
 
-## 0. Tomorrow morning: the domain
+## 0. Domain and email
 
-- [ ] Buy the domain and make sure the site loads on your phone. Write it here: `https://[DOMAIN]`
-- [ ] Paste the same address in exactly three places: **Instagram** Edit profile > Links, **TikTok** Edit profile > Website (if TikTok doesn't show the field yet, add it later), **LinkedIn** Page > Edit > Website.
-- [ ] Until the domain works, leave those fields blank. Don't paste placeholder text or a link that doesn't load.
+**Website:** `https://tmrwline.com` · **Sign-up and login email for all three accounts:** `social@tmrwline.com` · **Public contact in bios:** `hello@tmrwline.com`
+
+- [ ] **Email first.** Add Zoho Mail's MX records in Cloudflare DNS, then send a test email to social@tmrwline.com and hello@tmrwline.com from your phone. Don't create any account until social@ receives mail, because each app sends its sign-up code there.
+- [ ] **Then the site.** Open `https://tmrwline.com` on your phone. If it doesn't load, create the accounts anyway and leave the website field blank; add the link the day it loads. Don't paste a link that doesn't work.
+- [ ] Once it loads, paste `https://tmrwline.com` in exactly three places: **Instagram** Edit profile > Links, **TikTok** Edit profile > Website (if TikTok doesn't show the field yet, add it later), **LinkedIn** Page > Edit > Website.
+- [ ] Where each email goes: **social@** signs in to Instagram, TikTok and the LinkedIn Page notifications; **hello@** is the public contact; **partners@** handles sponsor enquiries; **athletes@** handles nominations and consent forms; **privacy@** handles privacy and removal requests; **press@** handles media. Keep the passwords in a password manager, not in this pack.
 - [ ] Changes on the website itself (pages, waitlist, link hub) go to the website bot, not this pack.
 
 ## Files you need
@@ -30,15 +33,15 @@ Other file names in the table below (`d2-tiktok.mp4` and so on) are what to call
 
 ## 1. Before you create anything
 
-- [ ] Set aside a brand email inbox you control and a recovery phone. On LinkedIn, use your real personal profile to administer the Company Page; don't create a second personal profile for the brand.
+- [ ] Use `social@tmrwline.com` to sign up for every account, plus a recovery phone. On LinkedIn, use your real personal profile to administer the Company Page; don't create a second personal profile for the brand.
 - [ ] Put a unique password for each account in your password manager. Have an authenticator ready. Turn on two-factor authentication (2FA) as each account is created and store recovery codes privately.
 - [ ] Check **@tmrwline** on Instagram and TikTok, and **linkedin.com/company/tmrwline** on LinkedIn, before creating any account. If the first choice isn't available on all three, check **@tmrwlineanz** and **linkedin.com/company/tmrwlineanz** instead. Use the same available base on all three; stop and choose a matching alternative if neither works. None of these names is reserved or verified available.
-- [ ] Keep this pack open on your laptop and the files above downloaded. Have the website address from step 0 ready.
+- [ ] Keep this pack open on your laptop and the files above downloaded. Have the website and email addresses from step 0 ready.
 
 ## 2. Create Instagram first
 
 - [ ] Sign up, set the agreed handle and set **Name: TMRWLine**. Switch to a public **Professional** account and select **Business**. Pick **Sports & Recreation** if available, or the closest accurate sports category. Keep public contact buttons off unless a monitored brand inbox is ready.
-- [ ] Upload **profile-picture.png**. Add `https://[DOMAIN]` in **Edit profile > Links**. Turn on 2FA and paste this bio:
+- [ ] Upload **profile-picture.png**. Add `https://tmrwline.com` in **Edit profile > Links** once it loads. Under **Edit profile > Contact options**, set the public email to `hello@tmrwline.com`. Turn on 2FA and paste this bio:
 > Line up your Future  
 > Local businesses backing athletes and grassroots clubs.  
 > Nominate yourself or a mate.
@@ -46,18 +49,18 @@ Other file names in the table below (`d2-tiktok.mp4` and so on) are what to call
 ## 3. Create TikTok second
 
 - [ ] Create the account with the agreed username and set **Name: TMRWLine**. In account settings, switch to **Business Account** and choose the closest available sports or recreation category, such as **Sports & Outdoors** if offered. Keep the account public.
-- [ ] Upload **profile-picture.png**, turn on 2FA, and add `https://[DOMAIN]` in the website field if it's available. If not, leave it blank and add the link later. Paste this bio:
+- [ ] Upload **profile-picture.png**, turn on 2FA, and add `https://tmrwline.com` in the website field if it's available and the site loads. If not, leave it blank and add the link later. Paste this bio:
 > Line up your Future  
 > Local sport. Nominate yourself or an athlete in your postcode.
 
 ## 4. Create the LinkedIn Company Page third
 
-- [ ] From your real personal profile, create a **Company Page**. Set **Name: TMRWLine**, the agreed Page URL and **Industry: Spectator Sports**. Complete company size and type truthfully. Website: `https://[DOMAIN]`.
+- [ ] From your real personal profile, create a **Company Page**. Set **Name: TMRWLine**, the agreed Page URL and **Industry: Spectator Sports**. Complete company size and type truthfully. Website: `https://tmrwline.com` (leave it blank until the site loads).
 - [ ] Upload **profile-picture.png** as the Page logo and **linkedin-banner.png** as the banner. Turn on 2FA for the admin's personal profile and give a trusted backup their own Page admin access rather than sharing your login.
 - [ ] Paste this tagline:
 > Line up your Future
 - [ ] Paste this About:
-> TMRWLine helps local businesses back athletes and grassroots clubs through sponsorship. We show how the money is split so businesses and clubs can see where their support goes. Follow for worked sponsorship examples, stories from local sport and ways to nominate an athlete in your postcode.
+> TMRWLine helps local businesses back athletes and grassroots clubs through sponsorship. We show how the money is split so businesses and clubs can see where their support goes. Follow for worked sponsorship examples, stories from local sport and ways to nominate an athlete in your postcode. Sponsor enquiries: partners@tmrwline.com
 
 ## Words to use and avoid
 
@@ -72,7 +75,7 @@ Other file names in the table below (`d2-tiktok.mp4` and so on) are what to call
 - [ ] Test all three public links on a phone. Ask the website bot to add the three profiles to the site footer once the domain is live. Use each app's available profile links for the other accounts where practical. Set the same brand picture everywhere.
 - [ ] Instagram: allow Story replies and message requests; turn on Hidden Words and filter abusive terms. Set mentions and tags to a level you can moderate and use manual tag approval if available. After the first Story expires, save it to a **Postcodes** Highlight if the archive is on. Use **launch-ig-story.png** as the source for a cover or use the Story thumbnail; no separate Highlight cover is supplied.
 - [ ] TikTok: use comment filtering and message requests where available. LinkedIn: enable Page messaging if someone is assigned to check it and keep comments on for discussion. App setting names and available controls can vary. If private messaging isn't available, direct people to a monitored private inbox, never to public comments.
-- [ ] Assign a named primary and backup for replies, abusive messages and safeguarding. Check inboxes before posting. Never ask for names or contact details in public. Take nominations privately, postcode first; contact about juniors goes through a parent or guardian. Keep identifying details out of shared logs.
+- [ ] Assign a named primary and backup for replies, abusive messages and safeguarding. Check inboxes before posting. Never ask for names or contact details in public. Move nomination paperwork and consent to athletes@tmrwline.com, sponsor enquiries to partners@tmrwline.com and removal requests to privacy@tmrwline.com. Take nominations privately, postcode first; contact about juniors goes through a parent or guardian. Keep identifying details out of shared logs.
 
 ## 6. Publish week one
 
