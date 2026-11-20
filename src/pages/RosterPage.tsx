@@ -3,14 +3,22 @@ import { fetchAthletes } from '../api';
 import type { Athlete as DbAthlete } from '../types';
 import {
   disciplineLockup,
+  EMPTY_ROSTER_FILTERS,
+  matchesRosterDiscovery,
+  readRosterDiscovery,
+  ROSTER_COMPETITIONS,
   ROSTER_DATA,
   ROSTER_SPECIMENS,
   specimenFor,
   specimenToAthlete,
   suburbForPostcode,
+  writeRosterDiscovery,
   type Athlete,
   type AthleteRecord,
+  type RosterCompetition,
+  type RosterDiscoveryFilters,
 } from '../data/roster';
+import { THE_ROSTER_PATH } from '../lib/routes';
 import { RosterSpecimenCard } from '../components/RosterSpecimenCard';
 import { AthleteDossierDrawer } from '../components/AthleteDossierDrawer';
 import { CapitalDeploymentDrawer } from '../components/CapitalDeploymentDrawer';
@@ -92,14 +100,21 @@ function athleteMatchesDiscipline(sport: string, filter: DisciplineFilter): bool
   return true;
 }
 
-function athleteIdFromLocation(): string | null {
+function rosterParamsFromLocation(): URLSearchParams {
   const hash = window.location.hash;
-  if (hash.startsWith('#roster') || hash.startsWith('#the-roster')) {
-    const query = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
-    const fromHash = new URLSearchParams(query).get('athlete');
-    if (fromHash) return fromHash;
+  if (/^#(?:the-)?roster\?/.test(hash)) {
+    const params = new URLSearchParams(window.location.search);
+    new URLSearchParams(hash.slice(hash.indexOf('?') + 1)).forEach((value, key) => params.set(key, value));
+    return params;
   }
-  return new URLSearchParams(window.location.search).get('athlete');
+  return new URLSearchParams(window.location.search);
+}
+
+function discoveryFromLocation(): RosterDiscoveryFilters {
+  const location = window.location;
+  return location.pathname.replace(/\/+$/, '') === THE_ROSTER_PATH || /^#(?:the-)?roster\?/.test(location.hash)
+    ? readRosterDiscovery(rosterParamsFromLocation())
+    : EMPTY_ROSTER_FILTERS;
 }
 
 const normalise = (s: string | null | undefined) =>
@@ -134,11 +149,14 @@ export const RosterPage: React.FC<RosterPageProps> = ({
   const [tier, setTier] = useState<TierFilter>('all');
   const [discipline, setDiscipline] = useState<DisciplineFilter>('all');
   const [tempDiscipline, setTempDiscipline] = useState<DisciplineFilter>('all');
+  const [discovery, setDiscovery] = useState(discoveryFromLocation);
+  const [tempDiscovery, setTempDiscovery] = useState(discovery);
   const [, setPreferredPackageId] = useState<string | null>(null);
   const [tierNotice, setTierNotice] = useState<string | null>(null);
 
   const [activeDropdown, setActiveDropdown] = useState<'filters' | 'sort' | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const filtersButtonRef = useRef<HTMLButtonElement>(null);
 
   const [activeSort, setActiveSort] = useState<'recent' | 'popular' | 'az' | 'za'>('recent');
   const [tempSort, setTempSort] = useState<'recent' | 'popular' | 'az' | 'za'>('recent');
@@ -210,9 +228,9 @@ export const RosterPage: React.FC<RosterPageProps> = ({
     return cards.filter((card) => {
       if (!athleteMatchesFilter(card.athlete.tier, tier)) return false;
       if (!athleteMatchesDiscipline(card.athlete.sport, discipline)) return false;
-      return true;
+      return matchesRosterDiscovery(card.athlete.record, discovery);
     });
-  }, [cards, tier, discipline]);
+  }, [cards, tier, discipline, discovery]);
 
   const sortedCards = useMemo(() => {
     const copy = [...matchedCards];
@@ -266,17 +284,23 @@ export const RosterPage: React.FC<RosterPageProps> = ({
 
   useEffect(() => {
     const openFromLocation = () => {
-      const athleteId = athleteIdFromLocation();
-      if (!athleteId) return;
+      setDiscovery(discoveryFromLocation());
+      const athleteId = rosterParamsFromLocation().get('athlete');
       const match = ROSTER_DATA.find((entry) => entry.id === athleteId);
       if (match) {
         setDossierInitialMode('audit');
         setActiveDossier(match.record);
+      } else {
+        setActiveDossier(null);
       }
     };
     openFromLocation();
     window.addEventListener('hashchange', openFromLocation);
-    return () => window.removeEventListener('hashchange', openFromLocation);
+    window.addEventListener('popstate', openFromLocation);
+    return () => {
+      window.removeEventListener('hashchange', openFromLocation);
+      window.removeEventListener('popstate', openFromLocation);
+    };
   }, []);
 
   useEffect(() => {
@@ -293,9 +317,23 @@ export const RosterPage: React.FC<RosterPageProps> = ({
     setActiveDossier(athlete);
   };
 
+  const applyDiscovery = (filters: RosterDiscoveryFilters) => {
+    const clean = readRosterDiscovery(writeRosterDiscovery(filters));
+    setDiscovery(clean);
+    if (window.location.pathname.replace(/\/+$/, '') !== THE_ROSTER_PATH) return;
+    const url = new URL(window.location.href);
+    writeRosterDiscovery(clean, url.searchParams);
+    window.history.replaceState(window.history.state, '', url);
+  };
+
+  const discoveryLabels = [
+    discovery.query && `Search: “${discovery.query}”`,
+    discovery.competition !== 'all' && ROSTER_COMPETITIONS.find(({ id }) => id === discovery.competition)?.label,
+    discovery.catchment && `Catchment: ${discovery.catchment}`,
+  ].filter(Boolean);
   const focusedName = focusAthleteId ? specimenFor(focusAthleteId)?.name : null;
   const catalogueCount =
-    focusAthleteId || tier !== 'all' || discipline !== 'all'
+    focusAthleteId || tier !== 'all' || discipline !== 'all' || discoveryLabels.length
       ? visibleCards.length
       : ROSTER_DATA.length;
 
@@ -454,9 +492,12 @@ export const RosterPage: React.FC<RosterPageProps> = ({
             <div className="flex items-center justify-end gap-8 font-sans text-[12.5px] font-normal">
               <div className="roster-filter-anchor relative">
                 <button
+                  ref={filtersButtonRef}
                   type="button"
+                  aria-expanded={activeDropdown === 'filters'}
                   onClick={() => {
                     setTempDiscipline(discipline);
+                    setTempDiscovery(discovery);
                     setActiveDropdown(activeDropdown === 'filters' ? null : 'filters');
                   }}
                   className="flex items-center gap-2 text-[#080808] hover:text-neutral-600 cursor-pointer border-0 bg-transparent p-0"
@@ -479,14 +520,55 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                 </button>
 
                 {activeDropdown === 'filters' && (
-                  <div className="roster-filter-popup absolute right-0 mt-3 w-80 bg-white border border-black/10 rounded-2xl p-5 shadow-2xl z-50">
-                    <div className="grid grid-cols-2 gap-2 mb-6 max-h-64 overflow-y-auto pr-1">
+                  <form
+                    data-lenis-prevent
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      setDiscipline(tempDiscipline);
+                      applyDiscovery(tempDiscovery);
+                      setActiveDropdown(null);
+                      filtersButtonRef.current?.focus();
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'Escape') return;
+                      event.preventDefault();
+                      setActiveDropdown(null);
+                      filtersButtonRef.current?.focus();
+                    }}
+                    className="roster-filter-popup absolute right-0 mt-3 w-80 bg-white border border-black/10 rounded-2xl p-5 shadow-2xl z-50 max-h-[72dvh] overflow-y-auto"
+                  >
+                    <div className="mb-5 grid gap-3">
+                      <label className="grid gap-1 text-xs font-bold">
+                        Search roster
+                        <input type="search" maxLength={100} value={tempDiscovery.query}
+                          onChange={(event) => setTempDiscovery({ ...tempDiscovery, query: event.target.value })}
+                          className="m-0 min-h-11 w-full min-w-0 rounded-lg border border-black/25 bg-white px-3 py-2 text-base font-normal text-[#080808] shadow-none" />
+                      </label>
+                      <label className="grid gap-1 text-xs font-bold">
+                        Competition
+                        <select value={tempDiscovery.competition}
+                          onChange={(event) => setTempDiscovery({ ...tempDiscovery, competition: event.target.value as RosterCompetition })}
+                          className="m-0 min-h-11 w-full min-w-0 rounded-lg border border-black/25 bg-white px-3 py-2 text-base font-normal text-[#080808]">
+                          {ROSTER_COMPETITIONS.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}
+                        </select>
+                      </label>
+                      <label className="grid gap-1 text-xs font-bold">
+                        Catchment
+                        <input type="search" maxLength={80} value={tempDiscovery.catchment}
+                          onChange={(event) => setTempDiscovery({ ...tempDiscovery, catchment: event.target.value })}
+                          aria-label="Catchment suburb or postcode"
+                          placeholder="Suburb or four-digit postcode"
+                          className="m-0 min-h-11 w-full min-w-0 rounded-lg border border-black/25 bg-white px-3 py-2 text-base font-normal text-[#080808] shadow-none" />
+                      </label>
+                    </div>
+                    <div role="group" aria-label="Sport" className="grid grid-cols-2 gap-2 mb-6">
                       {DISCIPLINES.map((item) => {
                         const isSelected = tempDiscipline === item.id;
                         return (
                           <button
                             key={item.id}
                             type="button"
+                            aria-pressed={isSelected}
                             onClick={() => setTempDiscipline(item.id)}
                             className={`rounded-full px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer border ${
                               isSelected
@@ -500,16 +582,12 @@ export const RosterPage: React.FC<RosterPageProps> = ({
                       })}
                     </div>
                     <button
-                      type="button"
-                      onClick={() => {
-                        setDiscipline(tempDiscipline);
-                        setActiveDropdown(null);
-                      }}
+                      type="submit"
                       className="w-full rounded-full bg-[#080808] hover:bg-neutral-700 text-white font-mono font-bold text-xs uppercase tracking-widest py-3 transition-colors cursor-pointer shadow-sm"
                     >
                       Apply
                     </button>
-                  </div>
+                  </form>
                 )}
               </div>
 
@@ -586,6 +664,20 @@ export const RosterPage: React.FC<RosterPageProps> = ({
               </div>
             </div>
           </div>
+
+          {discoveryLabels.length > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1">
+              <p role="status" className="m-0 min-w-0 break-words text-xs text-[#080808]">
+                {discoveryLabels.join(' · ')}
+              </p>
+              <button type="button" onClick={() => {
+                applyDiscovery(EMPTY_ROSTER_FILTERS);
+                filtersButtonRef.current?.focus();
+              }} className="min-h-11 border-0 bg-transparent p-0 text-xs font-semibold underline underline-offset-4 text-[#080808] cursor-pointer">
+                Clear search filters
+              </button>
+            </div>
+          )}
 
           {tierNotice ? (
             <div
@@ -715,7 +807,14 @@ export const RosterPage: React.FC<RosterPageProps> = ({
       <AthleteDossierDrawer
         athlete={activeDossier}
         initialMode={dossierInitialMode}
-        onClose={() => setActiveDossier(null)}
+        onClose={() => {
+          setActiveDossier(null);
+          const url = new URL(window.location.href);
+          if (url.pathname.replace(/\/+$/, '') === THE_ROSTER_PATH && url.searchParams.has('athlete')) {
+            url.searchParams.delete('athlete');
+            window.history.replaceState(window.history.state, '', url);
+          }
+        }}
         onSelectAthlete={(athlete) => {
           setHighlightedCardId(athlete.id);
           setActiveDossier(athlete);
