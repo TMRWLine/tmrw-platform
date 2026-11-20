@@ -111,7 +111,7 @@ test('sandbox capsule checkout returns an example split without calling Stripe',
   assert.equal(result.checkoutUrl, null);
   assert.deepEqual(result.totals, { subtotalCents: 36000, gstCents: 3600, shippingCents: 0, totalCents: 39600 });
   assert.match(result.sessionId, /^cs_demo_capsule_/);
-  assert.deepEqual(result.splits, { grossAud: 360, athleteAud: 148.5, clubAud: 40.5, partnerAud: 40.5 });
+  assert.deepEqual(result.splits, { grossAud: 360, athleteAud: 148.5, clubAud: 40.5, partnerAud: 40.5, netCents: 27000, garmentCostCents: 9000, platformCents: 4050 });
   assert.equal(calls.length, 0);
 }, { stripe: false }));
 
